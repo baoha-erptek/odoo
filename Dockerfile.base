@@ -18,7 +18,10 @@ SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 # Generate locale
 ENV LANG=C.UTF-8
 
-# System dependencies from Odoo 19 debian/control + build deps for pip packages
+# System dependencies + build deps + pip install in one layer
+# Build deps (build-essential, *-dev) are needed for compiling psycopg2, python-ldap, etc.
+# They are purged at the end of this layer to reduce image size.
+COPY requirements.txt /tmp/requirements.txt
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -58,7 +61,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends wkhtmltopdf \
     # Install rtlcss for RTL support
     && npm install -g rtlcss \
-    # Cleanup build deps and apt cache
+    # Install Python deps BEFORE purging build tools
+    && pip3 install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt \
+    # Now purge build deps (compiled .so files are already installed)
     && apt-get purge -y --auto-remove build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -66,15 +72,12 @@ RUN apt-get update \
 # Create odoo system user
 RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
 
-# Install Python dependencies
-COPY requirements.txt /opt/odoo/
-RUN pip3 install --no-cache-dir -r /opt/odoo/requirements.txt
-
 # Copy Odoo 19 source and install
 COPY --chown=odoo:odoo odoo/ /opt/odoo/odoo/
 COPY --chown=odoo:odoo addons/ /opt/odoo/addons/
 COPY --chown=odoo:odoo odoo-bin /opt/odoo/
 COPY --chown=odoo:odoo setup.py setup.cfg /opt/odoo/
+COPY --chown=odoo:odoo setup/ /opt/odoo/setup/
 RUN pip3 install --no-cache-dir -e /opt/odoo/
 
 # Copy enterprise modules (extracted from enterprise.zip before build)
