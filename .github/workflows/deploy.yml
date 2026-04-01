@@ -1,0 +1,143 @@
+# Deploy Odoo 19 Namco
+#
+# Builds the project layer image and optionally deploys to production.
+# Project layer = base image + custom Namco addons + odoo.conf
+#
+# Triggers:
+#   - Push to 19.0 branch (build only, no auto-deploy yet)
+#   - Manual dispatch (build + optional deploy)
+#
+# Secrets required:
+#   CR_PAT         - GitHub PAT with read:packages and write:packages
+#   PROD_SSH_KEY   - SSH private key for production server (.240)
+#
+# Variables required:
+#   PROD_SSH_HOST  - Production server IP (192.168.1.240)
+#   PROD_SSH_USER  - SSH user (it_nwf)
+#   PROD_SSH_PORT  - SSH port (2226)
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - '19.0'
+    paths:
+      - 'custom_addons/**'
+      - 'odoo.conf'
+      - 'Dockerfile'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to production after build?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      modules:
+        description: 'Modules to upgrade (comma-separated, empty = none)'
+        required: false
+        default: ''
+
+env:
+  REGISTRY: ghcr.io
+  PROJECT_IMAGE: ghcr.io/baoha-erptek/odoo19-namco
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.tags.outputs.primary_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: '19.0'
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate tags
+        id: tags
+        run: |
+          DATE_TAG=$(date +%Y%m%d)
+          SHA_SHORT=$(git rev-parse --short HEAD)
+
+          PRIMARY_TAG="latest"
+          TAGS="${{ env.PROJECT_IMAGE }}:latest"
+          TAGS="${TAGS},${{ env.PROJECT_IMAGE }}:${DATE_TAG}"
+          TAGS="${TAGS},${{ env.PROJECT_IMAGE }}:${DATE_TAG}-${SHA_SHORT}"
+
+          echo "primary_tag=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Build and push project image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, lan-deploy]
+    if: github.event.inputs.deploy == 'true'
+
+    steps:
+      - name: Deploy to production
+        env:
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          SSH_HOST: ${{ vars.PROD_SSH_HOST }}
+          SSH_USER: ${{ vars.PROD_SSH_USER }}
+          SSH_PORT: ${{ vars.PROD_SSH_PORT }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+          MODULES: ${{ github.event.inputs.modules }}
+        run: |
+          # Write SSH key
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          SSH_CMD="ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_USER}@${SSH_HOST}"
+
+          echo "=== Deploying Odoo 19 Namco to production ==="
+
+          # Pull new image
+          $SSH_CMD "docker pull ${{ env.PROJECT_IMAGE }}:${IMAGE_TAG}"
+
+          # Restart container
+          $SSH_CMD "cd ~/docker-deploy-namco19 && docker compose -f docker-compose.prod.yml down --timeout 60 && docker compose -f docker-compose.prod.yml up -d"
+
+          # Wait for startup
+          sleep 15
+
+          # Upgrade modules if specified
+          if [[ -n "$MODULES" ]]; then
+            echo "=== Upgrading modules: $MODULES ==="
+            $SSH_CMD "docker exec namco_odoo19 odoo -d namco_odoo19 -u ${MODULES} --stop-after-init"
+            $SSH_CMD "cd ~/docker-deploy-namco19 && docker compose -f docker-compose.prod.yml restart"
+            sleep 10
+          fi
+
+          # Health check
+          $SSH_CMD "curl -sf http://localhost:8169/web/health"
+
+          echo "=== Deployment successful ==="
+
+          # Cleanup
+          rm -f /tmp/deploy_key

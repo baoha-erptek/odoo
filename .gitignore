@@ -51,3 +51,7 @@ package.json
 /man/
 /share/
 /src/
+
+# Enterprise modules (downloaded separately, not committed)
+enterprise/
+enterprise.zip

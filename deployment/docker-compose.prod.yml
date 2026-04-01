@@ -1,0 +1,41 @@
+# Odoo 19 Namco - Production/Test Deployment
+#
+# Single Odoo container connecting to EXTERNAL PostgreSQL via PgBouncer.
+# Runs parallel to Odoo 15 on the same host (.240).
+#
+# Ports: 8169 (HTTP), 8172 (WebSocket/gevent)
+# Odoo 15 uses: 8069 (HTTP), 8072 (longpolling)
+#
+# Usage:
+#   cp .env.prod.example .env    # Fill in real values
+#   docker compose -f docker-compose.prod.yml up -d
+
+services:
+  odoo:
+    image: ghcr.io/baoha-erptek/odoo19-namco:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-namco_odoo19}
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${ODOO_DATA_DIR:-/odoo/namco19/.local/share/Odoo}:/var/lib/odoo
+      - ${ODOO_BACKUP_DIR:-/odoo/namco19/backups}:/odoo/backups
+      - ${ODOO_CONF:-./odoo-server.conf}:/etc/odoo/odoo.conf:ro
+      - ${ODOO_LOG_DIR:-/var/log/odoo19}:/var/log/odoo
+    environment:
+      HOST: ${DB_HOST}
+      PORT: ${DB_PORT:-6432}
+      USER: ${DB_USER}
+      PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      ODOO_RC: /etc/odoo/odoo.conf
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8169/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s

@@ -1,0 +1,7 @@
+.git
+enterprise.zip
+*.pyc
+__pycache__
+.ruff_cache
+.github
+doc

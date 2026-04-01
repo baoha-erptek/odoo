@@ -1,0 +1,103 @@
+# Odoo 19 Base Image
+#
+# Two-layer build strategy (matching Odoo 15 pattern):
+#   Layer 1 (this file): OS + Python + Odoo source + enterprise modules
+#   Layer 2 (Dockerfile): Project config + custom Namco addons
+#
+# Build:
+#   # Extract enterprise first
+#   unzip enterprise.zip -d .
+#   docker build -f Dockerfile.base -t ghcr.io/baoha-erptek/odoo19-base:latest .
+#
+# Requires: enterprise/ directory (extracted from enterprise.zip)
+
+FROM python:3.12-slim-bookworm
+
+SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
+
+# Generate locale
+ENV LANG=C.UTF-8
+
+# System dependencies from Odoo 19 debian/control + build deps for pip packages
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        # Fonts
+        fonts-dejavu-core \
+        fonts-inconsolata \
+        fonts-font-awesome \
+        fonts-roboto-unhinted \
+        fonts-noto-cjk \
+        gsfonts \
+        # Build deps for Python packages (ldap, psycopg2, lxml, Pillow, etc.)
+        build-essential \
+        libldap2-dev \
+        libsasl2-dev \
+        libpq-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        zlib1g-dev \
+        libjpeg62-turbo-dev \
+        libfreetype6-dev \
+        liblcms2-dev \
+        libffi-dev \
+        libssl-dev \
+        # Runtime deps
+        libjs-underscore \
+        lsb-release \
+        postgresql-client \
+        xfonts-75dpi \
+        xfonts-base \
+        fontconfig \
+        libmagic1 \
+        # Node.js for rtlcss
+        npm \
+    # wkhtmltopdf (Debian bookworm package)
+    && apt-get install -y --no-install-recommends wkhtmltopdf \
+    # Install rtlcss for RTL support
+    && npm install -g rtlcss \
+    # Cleanup build deps and apt cache
+    && apt-get purge -y --auto-remove build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create odoo system user
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+
+# Install Python dependencies
+COPY requirements.txt /opt/odoo/
+RUN pip3 install --no-cache-dir -r /opt/odoo/requirements.txt
+
+# Copy Odoo 19 source and install
+COPY --chown=odoo:odoo odoo/ /opt/odoo/odoo/
+COPY --chown=odoo:odoo addons/ /opt/odoo/addons/
+COPY --chown=odoo:odoo odoo-bin /opt/odoo/
+COPY --chown=odoo:odoo setup.py setup.cfg /opt/odoo/
+RUN pip3 install --no-cache-dir -e /opt/odoo/
+
+# Copy enterprise modules (extracted from enterprise.zip before build)
+COPY --chown=odoo:odoo enterprise/ /opt/odoo/enterprise/
+
+# Create empty custom_addons directory (populated by project layer)
+RUN mkdir -p /opt/odoo/custom_addons \
+    && chown odoo:odoo /opt/odoo/custom_addons
+
+# Entrypoint and tools
+COPY entrypoint.sh /
+COPY wait-for-psql.py /usr/local/bin/
+RUN chmod +x /entrypoint.sh /usr/local/bin/wait-for-psql.py
+
+# Create directories for config, data, and logs
+RUN mkdir -p /etc/odoo /var/lib/odoo /var/log/odoo \
+    && chown odoo:odoo /etc/odoo /var/lib/odoo /var/log/odoo
+
+VOLUME ["/var/lib/odoo"]
+EXPOSE 8169 8172
+
+ENV ODOO_RC=/etc/odoo/odoo.conf
+
+USER odoo
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["odoo"]

@@ -1,0 +1,88 @@
+# Build Odoo 19 Base Image
+#
+# Builds the base layer: Debian bookworm + Python 3.12 + Odoo 19 source + enterprise modules
+# Triggered manually (enterprise.zip is downloaded from GitHub Release)
+#
+# Secrets required:
+#   CR_PAT - GitHub PAT with read:packages and write:packages scope
+#
+# Usage: Run manually via GitHub Actions UI, optionally specify a tag
+
+name: Build Base Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (default: latest + date)'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  BASE_IMAGE: ghcr.io/baoha-erptek/odoo19-base
+
+jobs:
+  build-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: '19.0'
+
+      - name: Download enterprise.zip from latest release
+        env:
+          GH_TOKEN: ${{ secrets.CR_PAT }}
+        run: |
+          # Download enterprise.zip from the latest GitHub Release
+          gh release download --repo baoha-erptek/odoo19-namco \
+            --pattern 'enterprise.zip' \
+            --dir .
+
+      - name: Extract enterprise modules
+        run: |
+          unzip -q enterprise.zip -d .
+          echo "Enterprise modules extracted: $(ls enterprise/ | wc -l) modules"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate tags
+        id: tags
+        run: |
+          DATE_TAG=$(date +%Y%m%d)
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          INPUT_TAG="${{ github.event.inputs.tag }}"
+
+          TAGS="${{ env.BASE_IMAGE }}:${INPUT_TAG}"
+          TAGS="${TAGS},${{ env.BASE_IMAGE }}:${DATE_TAG}"
+          TAGS="${TAGS},${{ env.BASE_IMAGE }}:${DATE_TAG}-${SHA_SHORT}"
+
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.base
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify image
+        run: |
+          docker pull ${{ env.BASE_IMAGE }}:${{ github.event.inputs.tag }}
+          docker run --rm ${{ env.BASE_IMAGE }}:${{ github.event.inputs.tag }} odoo --version
