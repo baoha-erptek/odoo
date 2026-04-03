@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Actions                                                       -->
+    <!-- ============================================================ -->
+
+    <record id="action_etsy_orders" model="ir.actions.act_window">
+        <field name="name">Etsy Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_etsy_order', '=', True)]</field>
+        <field name="context">{'default_is_etsy_order': True}</field>
+    </record>
+
+    <record id="action_etsy_shops" model="ir.actions.act_window">
+        <field name="name">Etsy Shops</field>
+        <field name="res_model">etsy.shop</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_etsy_design_queue" model="ir.actions.act_window">
+        <field name="name">Design Queue</field>
+        <field name="res_model">sale.order.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            '|',
+            ('etsy_personalisation', '!=', False),
+            ('order_id.etsy_gift_message', '!=', False)
+        ]</field>
+    </record>
+
+    <record id="action_etsy_email_log" model="ir.actions.act_window">
+        <field name="name">Email Log</field>
+        <field name="res_model">etsy.email.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_etsy_import_orders_wizard" model="ir.actions.act_window">
+        <field name="name">Import Orders</field>
+        <field name="res_model">etsy.import.orders.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Top-level menu: Etsy                                          -->
+    <!-- ============================================================ -->
+
+    <menuitem
+        id="menu_etsy_root"
+        name="Etsy"
+        sequence="50"
+        web_icon="etsy_integration,static/description/icon.png"/>
+
+    <!-- Etsy > Orders -->
+    <menuitem
+        id="menu_etsy_orders"
+        name="Orders"
+        parent="menu_etsy_root"
+        action="action_etsy_orders"
+        sequence="10"/>
+
+    <!-- Etsy > Shops -->
+    <menuitem
+        id="menu_etsy_shops"
+        name="Shops"
+        parent="menu_etsy_root"
+        action="action_etsy_shops"
+        sequence="20"/>
+
+    <!-- Etsy > Design Queue -->
+    <menuitem
+        id="menu_etsy_design_queue"
+        name="Design Queue"
+        parent="menu_etsy_root"
+        action="action_etsy_design_queue"
+        sequence="30"/>
+
+    <!-- Etsy > Email Log -->
+    <menuitem
+        id="menu_etsy_email_log"
+        name="Email Log"
+        parent="menu_etsy_root"
+        action="action_etsy_email_log"
+        sequence="40"/>
+
+    <!-- Etsy > Import Orders -->
+    <menuitem
+        id="menu_etsy_import_orders"
+        name="Import Orders"
+        parent="menu_etsy_root"
+        action="action_etsy_import_orders_wizard"
+        sequence="50"/>
+
+</odoo>

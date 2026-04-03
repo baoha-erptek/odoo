@@ -1,0 +1,7 @@
+from . import etsy_shop
+from . import etsy_email_log
+from . import sale_order
+from . import sale_order_line
+from . import product_product
+from . import res_partner
+from . import res_config_settings

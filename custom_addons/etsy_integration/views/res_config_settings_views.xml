@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Inherit res.config.settings: add Etsy Integration section     -->
+    <!-- ============================================================ -->
+
+    <record id="res_config_settings_view_form_etsy" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.etsy</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Etsy Integration" data-string="Etsy Integration" name="etsy_integration">
+                    <block title="Gmail Connection" name="gmail_connection_container">
+                        <setting id="etsy_gmail_label_setting" string="Gmail Label" help="Gmail label used to filter Etsy order notification emails">
+                            <field name="etsy_gmail_label"/>
+                        </setting>
+                        <setting id="etsy_gmail_client_id_setting" string="Gmail Client ID" help="OAuth2 Client ID for Gmail API access">
+                            <field name="etsy_gmail_client_id" password="True"/>
+                        </setting>
+                        <setting id="etsy_gmail_client_secret_setting" string="Gmail Client Secret" help="OAuth2 Client Secret for Gmail API access">
+                            <field name="etsy_gmail_client_secret" password="True"/>
+                        </setting>
+                        <setting id="etsy_gmail_refresh_token_setting" string="Gmail Refresh Token" help="OAuth2 Refresh Token for Gmail API access">
+                            <field name="etsy_gmail_refresh_token" password="True"/>
+                        </setting>
+                        <setting id="etsy_test_connection_setting" string="Test Connection" help="Verify Gmail credentials are valid">
+                            <button
+                                name="action_test_gmail_connection"
+                                type="object"
+                                string="Test Connection"
+                                class="btn-primary"
+                                icon="fa-plug"/>
+                        </setting>
+                    </block>
+                    <block title="Scheduling" name="scheduling_container">
+                        <setting id="etsy_cron_interval_setting" help="How often to check for new Etsy order emails (in minutes)">
+                            <div>
+                                <label for="etsy_cron_interval"/>
+                                <field name="etsy_cron_interval" class="text-center" style="width: 4rem;"/>
+                                <span class="d-inline-block"> minutes</span>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

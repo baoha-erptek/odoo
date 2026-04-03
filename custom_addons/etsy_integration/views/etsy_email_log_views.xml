@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Email Log: Tree View                                     -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_email_log_view_list" model="ir.ui.view">
+        <field name="name">etsy.email.log.list</field>
+        <field name="model">etsy.email.log</field>
+        <field name="arch" type="xml">
+            <list string="Etsy Email Log"
+                  decoration-danger="parse_status == 'failed'"
+                  decoration-success="parse_status == 'success'"
+                  decoration-muted="parse_status == 'skipped'">
+                <field name="gmail_message_id"/>
+                <field name="subject"/>
+                <field name="date_received"/>
+                <field name="parse_status" widget="badge"
+                       decoration-danger="parse_status == 'failed'"
+                       decoration-success="parse_status == 'success'"
+                       decoration-muted="parse_status == 'skipped'"/>
+                <field name="error_message" widget="char"/>
+                <field name="sale_order_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Email Log: Form View                                     -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_email_log_view_form" model="ir.ui.view">
+        <field name="name">etsy.email.log.form</field>
+        <field name="model">etsy.email.log</field>
+        <field name="arch" type="xml">
+            <form string="Etsy Email Log">
+                <header>
+                    <button
+                        name="action_retry_parse"
+                        type="object"
+                        string="Retry Parse"
+                        class="btn-primary"
+                        invisible="parse_status != 'failed'"/>
+                    <button
+                        name="action_view_order"
+                        type="object"
+                        string="View Order"
+                        class="btn-secondary"
+                        invisible="not sale_order_id"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="gmail_message_id"/>
+                            <field name="subject"/>
+                            <field name="date_received"/>
+                        </group>
+                        <group>
+                            <field name="parse_status" widget="badge"
+                                   decoration-danger="parse_status == 'failed'"
+                                   decoration-success="parse_status == 'success'"
+                                   decoration-muted="parse_status == 'skipped'"/>
+                            <field name="retry_count"/>
+                            <field name="sale_order_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="error_message" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Raw Body (Text)" name="raw_text">
+                            <field name="raw_body_text" readonly="1"/>
+                        </page>
+                        <page string="Raw Body (HTML)" name="raw_html">
+                            <field name="raw_body_html" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Email Log: Search View                                   -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_email_log_view_search" model="ir.ui.view">
+        <field name="name">etsy.email.log.search</field>
+        <field name="model">etsy.email.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Email Logs">
+                <field name="gmail_message_id"/>
+                <field name="subject"/>
+                <field name="sale_order_id"/>
+                <separator/>
+                <filter name="filter_all" string="All" domain="[]"/>
+                <filter name="filter_success" string="Success" domain="[('parse_status', '=', 'success')]"/>
+                <filter name="filter_failed" string="Failed" domain="[('parse_status', '=', 'failed')]"/>
+                <filter name="filter_skipped" string="Skipped" domain="[('parse_status', '=', 'skipped')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="groupby_status" string="Status" context="{'group_by': 'parse_status'}"/>
+                    <filter name="groupby_date" string="Date Received" context="{'group_by': 'date_received:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Shop: Tree View                                          -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_shop_view_list" model="ir.ui.view">
+        <field name="name">etsy.shop.list</field>
+        <field name="model">etsy.shop</field>
+        <field name="arch" type="xml">
+            <list string="Etsy Shops">
+                <field name="name"/>
+                <field name="order_count"/>
+                <field name="revenue_total" widget="monetary"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Shop: Form View                                          -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_shop_view_form" model="ir.ui.view">
+        <field name="name">etsy.shop.form</field>
+        <field name="model">etsy.shop</field>
+        <field name="arch" type="xml">
+            <form string="Etsy Shop">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            name="action_view_orders"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-shopping-cart">
+                            <field name="order_count" widget="statinfo" string="Orders"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Shop Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="revenue_total" widget="monetary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Orders" name="orders">
+                            <field name="order_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="date_order"/>
+                                    <field name="amount_total" widget="monetary"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Etsy Shop: Search View                                        -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_shop_view_search" model="ir.ui.view">
+        <field name="name">etsy.shop.search</field>
+        <field name="model">etsy.shop</field>
+        <field name="arch" type="xml">
+            <search string="Search Etsy Shops">
+                <field name="name"/>
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

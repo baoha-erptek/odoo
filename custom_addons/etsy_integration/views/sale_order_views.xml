@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Inherit sale.order form: add Etsy tab                         -->
+    <!-- ============================================================ -->
+
+    <record id="view_order_form_etsy_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.etsy.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add Etsy notebook page before the closing notebook tag -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Etsy" name="etsy_tab" invisible="not is_etsy_order">
+                    <group>
+                        <group string="Etsy Order">
+                            <field name="is_etsy_order" invisible="1"/>
+                            <field name="etsy_order_id"/>
+                            <field name="etsy_shop_id"/>
+                            <field name="etsy_email_log_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Shipping">
+                            <field name="etsy_shipping_service"/>
+                            <field name="etsy_processing_time"/>
+                            <field name="etsy_shipping_cost"/>
+                        </group>
+                        <group string="Pricing">
+                            <field name="etsy_discount_code"/>
+                            <field name="etsy_subtotal"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Notes">
+                            <field name="etsy_note_from_buyer"/>
+                            <field name="etsy_gift_message"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- Add Etsy columns to the order line tree -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='name']" position="after">
+                <field name="etsy_transaction_id" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_personalisation" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_color" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_size" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_option" optional="hide" column_invisible="not parent.is_etsy_order"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Inherit sale.order search: add Etsy filters                   -->
+    <!-- ============================================================ -->
+
+    <record id="view_sales_order_filter_etsy_inherit" model="ir.ui.view">
+        <field name="name">sale.order.search.etsy.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='my_sale_orders_filter']" position="after">
+                <separator/>
+                <filter name="filter_etsy_orders" string="Etsy Orders" domain="[('is_etsy_order', '=', True)]"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter name="groupby_etsy_shop" string="Etsy Shop" context="{'group_by': 'etsy_shop_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

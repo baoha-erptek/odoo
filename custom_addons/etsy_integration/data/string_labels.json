@@ -1,0 +1,21 @@
+{
+    "PRODUCT_NAME": ["Item:"],
+    "OPTION": ["Option:","option:","OPTION:"],
+    "PERSONALISATION": ["Personalization:","Personalisation:","personalisation:","Personalisierun:","Personalisierung:"],
+    "QUANTITY": ["Quantity:","quantity:"],
+    "PRICE": ["Item price:"],
+    "TRANSACTION_ID": ["Transaction ID:"],
+    "FACE_MASK_SIZE": ["Face mask size:","Face Mask Size:","face mask size:"],
+    "SIZE": ["Size:","size:","SIZE:"],
+    "CAPACITY": ["Capacity:","capacity:","CAPACITY:"],
+    "VOLUME": ["Volume:","volume:","VOLUME:"],
+    "STYLE": ["Style:","style:","STYLE:"],
+    "PACK": ["Pack:","pack:","PACK:"],
+    "SHAPE": ["Shape:","shape:","SHAPE:"],
+    "INCLUDES": ["Includes:","includes:","INCLUDES:"],
+    "DESIGN": ["Design:","design:","DESIGN:"],
+    "COLOR": ["Color:","Colour:","color:","COLOR:","COLOUR:"],
+    "SIDE": ["Side:","side:"],
+    "SUBTOTAL": ["Subtotal:","subtotal:"],
+    "DISCOUNT_CODE": ["Applied discounts:"]
+}
