@@ -203,5 +203,178 @@ class TestParseError(unittest.TestCase):
         self.assertIsInstance(result, ParseError)
 
 
+# ---------------------------------------------------------------------------
+# German-labeled email samples
+# ---------------------------------------------------------------------------
+
+SAMPLE_TEXT_GERMAN_PERSONALISIERUNG = """Note from Klara Meier:
+Klara Meier - The buyer did not leave a note.
+
+Order details
+Shop: Viktor
+Transaction ID: 4630001001
+Item: Engraved Silver Bracelet Custom Name Gift
+Size: Medium
+Personalisierung: Frohe Weihnachten 2025
+Quantity: 1
+Item price: €22.50
+
+Item total: €22.50
+Shipping: €4.10 (Standard)
+Subtotal: €20.35
+
+http://www.etsy.com/your/orders/3720001001
+"""
+
+SAMPLE_TEXT_GERMAN_PERSONALISIERUN = """Note from Hans Weber:
+Hans Weber - Bitte mit Geschenkverpackung.
+
+Order details
+Shop: Julien
+Transaction ID: 4630002001
+Item: Personalized Wooden Music Box Melody Engraving
+Option: Walnut
+Personalisierun: Alles Gute zum Geburtstag, Oma
+Quantity: 1
+Item price: €35.80
+
+Item total: €35.80
+Shipping: €5.20 (Express)
+Subtotal: €32.40
+
+http://www.etsy.com/your/orders/3720002001
+"""
+
+
+class TestMultiLanguageLabels(unittest.TestCase):
+    """Verify the parser extracts personalisation from German-labeled emails."""
+
+    def test_personalisierung_label(self):
+        """Parse email using 'Personalisierung:' (full German label)."""
+        raw = RawEmail(
+            message_id='msg_de_001',
+            subject='New order [3720001001]',
+            date='Mon, 15 Dec 2025 09:00:00 +0000 (UTC)',
+            text_body=SAMPLE_TEXT_GERMAN_PERSONALISIERUNG,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertEqual(len(result.transactions), 1)
+        txn = result.transactions[0]
+        self.assertEqual(txn.personalisation, 'Frohe Weihnachten 2025')
+
+    def test_personalisierun_label(self):
+        """Parse email using 'Personalisierun:' (truncated German label)."""
+        raw = RawEmail(
+            message_id='msg_de_002',
+            subject='New order [3720002001]',
+            date='Tue, 16 Dec 2025 14:30:00 +0000 (UTC)',
+            text_body=SAMPLE_TEXT_GERMAN_PERSONALISIERUN,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertEqual(len(result.transactions), 1)
+        txn = result.transactions[0]
+        self.assertEqual(txn.personalisation, 'Alles Gute zum Geburtstag, Oma')
+
+    def test_personalisierung_order_fields(self):
+        """Verify order-level fields are correct for a German-labeled email."""
+        raw = RawEmail(
+            message_id='msg_de_003',
+            subject='New order [3720001001]',
+            date='Mon, 15 Dec 2025 09:00:00 +0000 (UTC)',
+            text_body=SAMPLE_TEXT_GERMAN_PERSONALISIERUNG,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertEqual(result.order_id, '3720001001')
+        self.assertEqual(result.shop, 'Viktor')
+        self.assertAlmostEqual(result.shipping_cost, 4.10)
+        self.assertEqual(result.shipping_service, 'Standard')
+
+    def test_personalisierun_transaction_fields(self):
+        """Verify transaction fields are correct for the truncated German label."""
+        raw = RawEmail(
+            message_id='msg_de_004',
+            subject='New order [3720002001]',
+            date='Tue, 16 Dec 2025 14:30:00 +0000 (UTC)',
+            text_body=SAMPLE_TEXT_GERMAN_PERSONALISIERUN,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        txn = result.transactions[0]
+        self.assertIn('4630002001', txn.transaction_id)
+        self.assertIn('Music Box', txn.product_name)
+        self.assertEqual(txn.option, 'Walnut')
+        self.assertEqual(txn.quantity, 1)
+        self.assertAlmostEqual(txn.price, 35.80)
+
+    def test_personalisierun_note_from_buyer(self):
+        """German note is extracted when buyer leaves a message."""
+        raw = RawEmail(
+            message_id='msg_de_005',
+            subject='New order [3720002001]',
+            date='Tue, 16 Dec 2025 14:30:00 +0000 (UTC)',
+            text_body=SAMPLE_TEXT_GERMAN_PERSONALISIERUN,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertIn('Geschenkverpackung', result.note_from_buyer)
+
+
+class TestSampleDataFiles(unittest.TestCase):
+    """Verify that the sample data files parse correctly through the parser."""
+
+    _DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
+    def _read_sample(self, filename):
+        path = os.path.join(self._DATA_DIR, filename)
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_sample_single_order_parses(self):
+        text = self._read_sample('sample_single_order.txt')
+        raw = RawEmail(
+            message_id='msg_file_001',
+            subject='New order [3708050001]',
+            date='Wed, 10 Jun 2025 08:00:00 +0000 (UTC)',
+            text_body=text,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertEqual(len(result.transactions), 1)
+
+    def test_sample_multi_order_parses(self):
+        text = self._read_sample('sample_multi_order.txt')
+        raw = RawEmail(
+            message_id='msg_file_002',
+            subject='New order [3710050002]',
+            date='Thu, 11 Jun 2025 12:00:00 +0000 (UTC)',
+            text_body=text,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseResult)
+        self.assertGreaterEqual(len(result.transactions), 2)
+
+    def test_sample_malformed_fails(self):
+        text = self._read_sample('sample_malformed.txt')
+        raw = RawEmail(
+            message_id='msg_file_003',
+            subject='Some notification',
+            date='Fri, 12 Jun 2025 15:00:00 +0000 (UTC)',
+            text_body=text,
+            html_body='<html><body></body></html>',
+        )
+        result = parse_etsy_email(raw)
+        self.assertIsInstance(result, ParseError)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,30 @@
+Note from Sarah Mitchell:
+Sarah Mitchell - The buyer did not leave a note.
+
+Order details
+Shop: Julien
+Transaction ID: 4618001001
+Item: Sterling Silver Initial Necklace Dainty Letter Pendant
+Size: 18 inch
+Personalization: Letter S
+Quantity: 1
+Item price: €18.50
+
+Transaction ID: 4618001002
+Item: Custom Engraved Wooden Bookmark Gift For Book Lovers
+Option: Maple
+Personalization: Read More Worry Less
+Quantity: 3
+Item price: €9.80
+
+Transaction ID: 4618001003
+Item: Wildflower Seed Packet Wedding Favor Eco Friendly
+Color: Lavender Mix
+Quantity: 2
+Item price: €6.20
+
+Item total: €67.50
+Shipping: €5.90 (Standard)
+Subtotal: €60.70
+
+http://www.etsy.com/your/orders/3710050002
