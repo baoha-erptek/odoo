@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Inherit res.partner form: add Etsy smart button               -->
+    <!-- ============================================================ -->
+
+    <record id="view_partner_form_etsy_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.etsy.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button
+                    name="action_view_etsy_orders"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-shopping-cart"
+                    invisible="not is_etsy_customer">
+                    <field name="etsy_order_count" widget="statinfo" string="Etsy Orders"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Inherit res.partner search: add Etsy Customers filter         -->
+    <!-- ============================================================ -->
+
+    <record id="view_partner_search_etsy_inherit" model="ir.ui.view">
+        <field name="name">res.partner.search.etsy.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='type_company']" position="after">
+                <separator/>
+                <filter name="filter_etsy_customers" string="Etsy Customers" domain="[('is_etsy_customer', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

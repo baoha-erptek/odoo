@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ResPartner(models.Model):
@@ -9,6 +9,16 @@ class ResPartner(models.Model):
     etsy_buyer_name = fields.Char(
         string='Etsy Buyer Name',
         help='Original buyer name from Etsy (may differ from shipping name)')
+    etsy_order_count = fields.Integer(
+        string='Etsy Order Count', compute='_compute_etsy_order_count')
+
+    @api.depends('sale_order_ids')
+    def _compute_etsy_order_count(self):
+        for partner in self:
+            partner.etsy_order_count = self.env['sale.order'].search_count([
+                ('partner_id', '=', partner.id),
+                ('is_etsy_order', '=', True),
+            ])
 
     def action_view_etsy_orders(self):
         self.ensure_one()
