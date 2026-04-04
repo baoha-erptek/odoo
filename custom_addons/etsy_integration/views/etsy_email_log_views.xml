@@ -99,10 +99,8 @@
                 <filter name="filter_failed" string="Failed" domain="[('parse_status', '=', 'failed')]"/>
                 <filter name="filter_skipped" string="Skipped" domain="[('parse_status', '=', 'skipped')]"/>
                 <separator/>
-                <group expand="0" string="Group By">
-                    <filter name="groupby_status" string="Status" context="{'group_by': 'parse_status'}"/>
-                    <filter name="groupby_date" string="Date Received" context="{'group_by': 'date_received:day'}"/>
-                </group>
+                <filter name="groupby_status" string="Status" context="{'group_by': 'parse_status'}"/>
+                <filter name="groupby_date" string="Date Received" context="{'group_by': 'date_received:day'}"/>
             </search>
         </field>
     </record>

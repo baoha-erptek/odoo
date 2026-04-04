@@ -28,8 +28,7 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_search_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//filter[@name='consumable']" position="after">
-                <separator/>
+            <xpath expr="//filter[@name='services']" position="after">
                 <filter name="filter_etsy_products" string="Etsy Products" domain="[('is_etsy_product', '=', True)]"/>
             </xpath>
         </field>
