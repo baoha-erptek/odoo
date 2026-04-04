@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Graph View: Etsy Orders by Date                               -->
+    <!-- ============================================================ -->
+
+    <record id="view_etsy_order_graph" model="ir.ui.view">
+        <field name="name">sale.order.etsy.graph</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <graph string="Etsy Orders" type="bar">
+                <field name="date_order" interval="month"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Pivot View: Etsy Orders by Shop and Date                      -->
+    <!-- ============================================================ -->
+
+    <record id="view_etsy_order_pivot" model="ir.ui.view">
+        <field name="name">sale.order.etsy.pivot</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <pivot string="Etsy Orders">
+                <field name="etsy_shop_id" type="row"/>
+                <field name="date_order" interval="month" type="col"/>
+                <field name="amount_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Search View: Dashboard Filters (T051)                         -->
+    <!-- ============================================================ -->
+
+    <record id="view_etsy_dashboard_search" model="ir.ui.view">
+        <field name="name">sale.order.etsy.dashboard.search</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <search string="Etsy Dashboard">
+                <field name="etsy_shop_id"/>
+                <filter name="filter_this_month" string="This Month"
+                        domain="[
+                            ('date_order', '&gt;=', (context_today()).strftime('%%Y-%%m-01')),
+                            ('date_order', '&lt;', (context_today() + relativedelta(months=1)).strftime('%%Y-%%m-01'))
+                        ]"/>
+                <filter name="filter_this_quarter" string="This Quarter"
+                        domain="[
+                            ('date_order', '&gt;=', (context_today() - relativedelta(months=(context_today().month - 1) %% 3)).strftime('%%Y-%%m-01')),
+                            ('date_order', '&lt;', (context_today() + relativedelta(months=3 - (context_today().month - 1) %% 3)).strftime('%%Y-%%m-01'))
+                        ]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="groupby_shop" string="Shop"
+                            context="{'group_by': 'etsy_shop_id'}"/>
+                    <filter name="groupby_date_month" string="Date (Month)"
+                            context="{'group_by': 'date_order:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Action: Etsy Dashboard                                        -->
+    <!-- ============================================================ -->
+
+    <record id="action_etsy_dashboard" model="ir.actions.act_window">
+        <field name="name">Etsy Dashboard</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="domain">[('is_etsy_order', '=', True)]</field>
+        <field name="search_view_id" ref="view_etsy_dashboard_search"/>
+    </record>
+
+</odoo>

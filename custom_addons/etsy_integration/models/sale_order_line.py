@@ -16,6 +16,11 @@ class SaleOrderLine(models.Model):
     etsy_image_url = fields.Char(string='Image URL')
     etsy_design_link_front = fields.Char(string='Design Link (Front)')
     etsy_design_link_back = fields.Char(string='Design Link (Back)')
+    etsy_gift_message = fields.Text(
+        string='Gift Message',
+        related='order_id.etsy_gift_message',
+        readonly=True,
+    )
 
     _sql_constraints = [
         ('etsy_transaction_id_unique',

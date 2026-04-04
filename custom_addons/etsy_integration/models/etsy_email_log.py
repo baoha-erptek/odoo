@@ -7,6 +7,7 @@ _logger = logging.getLogger(__name__)
 
 class EtsyEmailLog(models.Model):
     _name = 'etsy.email.log'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Etsy Email Processing Log'
     _order = 'create_date desc'
 
@@ -14,8 +15,12 @@ class EtsyEmailLog(models.Model):
         string='Gmail Message ID', required=True, index=True)
     subject = fields.Char(string='Email Subject')
     date_received = fields.Datetime(string='Date Received')
-    raw_body_text = fields.Text(string='Raw Body (Text)')
-    raw_body_html = fields.Text(string='Raw Body (HTML)')
+    raw_body_text = fields.Text(
+        string='Raw Body (Text)',
+        groups='sales_team.group_sale_manager')
+    raw_body_html = fields.Text(
+        string='Raw Body (HTML)',
+        groups='sales_team.group_sale_manager')
     parse_status = fields.Selection([
         ('success', 'Success'),
         ('failed', 'Failed'),
@@ -30,6 +35,43 @@ class EtsyEmailLog(models.Model):
         ('gmail_message_id_unique', 'UNIQUE(gmail_message_id)',
          'Gmail Message ID must be unique!'),
     ]
+
+    def _check_parse_failures(self):
+        """Check for consecutive parse failures and alert admin if threshold exceeded."""
+        recent_logs = self.search([], order='create_date desc', limit=20)
+        consecutive_failures = 0
+        for log in recent_logs:
+            if log.parse_status == 'failed':
+                consecutive_failures += 1
+            else:
+                break
+
+        if consecutive_failures >= 5:
+            first_failed = self.search(
+                [('parse_status', '=', 'failed')],
+                order='create_date desc',
+                limit=1,
+            )
+            if first_failed:
+                existing_activity = self.env['mail.activity'].search([
+                    ('res_model', '=', self._name),
+                    ('res_id', '=', first_failed.id),
+                    ('activity_type_id', '=',
+                     self.env.ref('mail.mail_activity_data_warning').id),
+                    ('summary', '=', 'Etsy parse failures detected'),
+                ], limit=1)
+                if not existing_activity:
+                    admin = self.env.ref(
+                        'base.user_admin', raise_if_not_found=False)
+                    first_failed.activity_schedule(
+                        'mail.mail_activity_data_warning',
+                        user_id=admin.id if admin else self.env.uid,
+                        summary='Etsy parse failures detected',
+                        note=(
+                            f'{consecutive_failures} consecutive parse failures. '
+                            'Etsy email format may have changed.'
+                        ),
+                    )
 
     def action_view_order(self):
         self.ensure_one()

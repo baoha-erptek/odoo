@@ -42,6 +42,8 @@ class SaleOrder(models.Model):
         from ..services.email_parser import parse_etsy_email
         from ..services.order_creator import OrderCreator
 
+        # Sudo required: reading system config parameters (gmail credentials)
+        # not accessible to regular users via ACLs
         ICP = self.env['ir.config_parameter'].sudo()
         client_id = ICP.get_param('etsy_integration.gmail_client_id', '')
         client_secret = ICP.get_param('etsy_integration.gmail_client_secret', '')
@@ -141,3 +143,5 @@ class SaleOrder(models.Model):
         _logger.info(
             'Etsy Integration: Cycle complete. %d/%d emails processed.',
             len(processed_ids), len(raw_emails))
+
+        self.env['etsy.email.log']._check_parse_failures()

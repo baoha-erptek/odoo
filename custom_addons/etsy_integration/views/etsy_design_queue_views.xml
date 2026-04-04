@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Tree View: Design Queue                                       -->
+    <!-- ============================================================ -->
+
+    <record id="etsy_design_queue_view_list" model="ir.ui.view">
+        <field name="name">sale.order.line.etsy.design.queue.list</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <list string="Design Queue">
+                <field name="order_id"/>
+                <field name="etsy_image_url" widget="url"/>
+                <field name="product_id"/>
+                <field name="etsy_personalisation"/>
+                <field name="etsy_color"/>
+                <field name="etsy_size"/>
+                <field name="etsy_option"/>
+                <field name="etsy_gift_message"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

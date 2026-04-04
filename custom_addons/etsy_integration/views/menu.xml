@@ -23,6 +23,7 @@
         <field name="name">Design Queue</field>
         <field name="res_model">sale.order.line</field>
         <field name="view_mode">list,form</field>
+        <field name="view_id" ref="etsy_design_queue_view_list"/>
         <field name="domain">[
             '|',
             ('etsy_personalisation', '!=', False),
@@ -52,6 +53,14 @@
         name="Etsy"
         sequence="50"
         web_icon="etsy_integration,static/description/icon.png"/>
+
+    <!-- Etsy > Dashboard -->
+    <menuitem
+        id="menu_etsy_dashboard"
+        name="Dashboard"
+        parent="menu_etsy_root"
+        action="action_etsy_dashboard"
+        sequence="5"/>
 
     <!-- Etsy > Orders -->
     <menuitem
