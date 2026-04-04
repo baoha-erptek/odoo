@@ -6,6 +6,7 @@ to the product.template ``image_1920`` field.
 import base64
 import logging
 import time
+from urllib.parse import urlparse
 
 import requests
 
@@ -13,6 +14,13 @@ _logger = logging.getLogger(__name__)
 
 _DOWNLOAD_TIMEOUT = 20
 _DELAY_BETWEEN_DOWNLOADS = 1  # seconds
+
+# Allowlisted domains for image downloads (SSRF prevention)
+_ALLOWED_DOMAINS = {
+    'i.etsystatic.com',
+    'img.etsystatic.com',
+    'www.etsy.com',
+}
 
 
 class ImageDownloader:
@@ -37,6 +45,14 @@ class ImageDownloader:
             False otherwise.
         """
         if not image_url:
+            return False
+
+        # Validate URL domain to prevent SSRF
+        parsed = urlparse(image_url)
+        if parsed.hostname not in _ALLOWED_DOMAINS:
+            _logger.warning(
+                'Blocked image download from untrusted domain %s for product %s',
+                parsed.hostname, product_tmpl.display_name)
             return False
 
         if product_tmpl.image_1920:
