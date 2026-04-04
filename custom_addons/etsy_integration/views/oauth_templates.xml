@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- OAuth2 error page template                                    -->
+    <!-- ============================================================ -->
+
+    <template id="oauth_error_page" name="Gmail OAuth Error">
+        <t t-call="web.frontend_layout">
+            <div class="container mt-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <h4 class="mb-0">
+                                    <i class="fa fa-exclamation-triangle me-2"/>
+                                    Gmail Authorization Error
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text" t-esc="error_message"/>
+                                <hr/>
+                                <p class="text-muted mb-0">
+                                    Return to
+                                    <a href="/odoo/settings">Settings</a>
+                                    to review your configuration and try again.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

@@ -1,3 +1,6 @@
+import secrets
+from urllib.parse import urlencode
+
 from odoo import fields, models
 
 
@@ -22,6 +25,60 @@ class ResConfigSettings(models.TransientModel):
         string='Fetch Interval (minutes)',
         config_parameter='etsy_integration.cron_interval',
         default=10)
+
+    def action_start_oauth_flow(self):
+        """Initiate the Google OAuth2 authorization flow.
+
+        Builds the authorization URL with the required parameters and
+        redirects the user to Google's consent screen. On approval,
+        Google redirects back to /etsy/oauth/callback with the code.
+
+        Returns:
+            An ir.actions.act_url action that opens the Google consent page.
+        """
+        self.ensure_one()
+        # Sudo required: reading system config parameters (gmail credentials)
+        # not accessible to regular users via ACLs
+        icp = self.env['ir.config_parameter'].sudo()
+        client_id = icp.get_param('etsy_integration.gmail_client_id', '')
+
+        if not client_id:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'OAuth Setup Incomplete',
+                    'message': (
+                        'Please configure the Gmail Client ID first, '
+                        'then save the settings before authorizing.'
+                    ),
+                    'type': 'danger',
+                },
+            }
+
+        base_url = icp.get_param('web.base.url', '')
+        redirect_uri = base_url + '/etsy/oauth/callback'
+
+        # Generate and store a cryptographic nonce to prevent CSRF
+        state = secrets.token_urlsafe(32)
+        icp.set_param('etsy_integration.oauth_state', state)
+
+        params = {
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+            'scope': 'https://www.googleapis.com/auth/gmail.modify',
+            'access_type': 'offline',
+            'prompt': 'consent',
+            'state': state,
+        }
+        auth_url = 'https://accounts.google.com/o/oauth2/auth?' + urlencode(params)
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': auth_url,
+            'target': 'self',
+        }
 
     def action_test_gmail_connection(self):
         self.ensure_one()

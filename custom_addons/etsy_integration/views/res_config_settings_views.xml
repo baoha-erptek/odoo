@@ -25,6 +25,14 @@
                         <setting id="etsy_gmail_refresh_token_setting" string="Gmail Refresh Token" help="OAuth2 Refresh Token for Gmail API access">
                             <field name="etsy_gmail_refresh_token" password="True"/>
                         </setting>
+                        <setting id="etsy_authorize_gmail_setting" string="Authorize Gmail" help="Start the OAuth2 flow to grant Gmail access. Requires Client ID and Client Secret to be saved first.">
+                            <button
+                                name="action_start_oauth_flow"
+                                type="object"
+                                string="Authorize Gmail"
+                                class="btn-secondary"
+                                icon="fa-google"/>
+                        </setting>
                         <setting id="etsy_test_connection_setting" string="Test Connection" help="Verify Gmail credentials are valid">
                             <button
                                 name="action_test_gmail_connection"
