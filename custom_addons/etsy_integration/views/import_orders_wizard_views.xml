@@ -17,7 +17,7 @@
                     </group>
                 </group>
                 <group>
-                    <field name="status_text" readonly="1"/>
+                    <field name="status_message" readonly="1"/>
                 </group>
                 <footer>
                     <button
