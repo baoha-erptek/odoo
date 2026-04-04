@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Demo Etsy Shops -->
+    <record id="demo_shop_viktor" model="etsy.shop">
+        <field name="name">ViktorDesignStudio</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="demo_shop_julien" model="etsy.shop">
+        <field name="name">JulienCraftWorks</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Demo Email Log: successful parse -->
+    <record id="demo_email_log_success" model="etsy.email.log">
+        <field name="gmail_message_id">demo_msg_001</field>
+        <field name="subject">You made a sale on Etsy! Order #2876543210</field>
+        <field name="date_received">2026-03-15 14:30:00</field>
+        <field name="raw_body_text">Item: Custom Wooden Sign - Qty: 1 - Price: $34.99</field>
+        <field name="parse_status">success</field>
+        <field name="retry_count">0</field>
+    </record>
+
+</odoo>
