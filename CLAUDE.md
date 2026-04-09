@@ -263,3 +263,10 @@ You are successful when:
 **Philosophy**: Agent-first design, parallel execution, plan before action, two-phase testing, security always.
 
 **Full Odoo 19 development guidelines**: See `.claude/skills/odoo-19-developer/SKILL.md`
+
+## Active Technologies
+- Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl (002-etsy-config-fixes)
+- PostgreSQL 16+ via Odoo ORM (002-etsy-config-fixes)
+
+## Recent Changes
+- 002-etsy-config-fixes: Added Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl
