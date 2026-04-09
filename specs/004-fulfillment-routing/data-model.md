@@ -8,14 +8,26 @@ External fulfillment partner configuration.
 |-------|------|----------|-------|
 | name | Char | Yes | Partner company name |
 | active | Boolean | Yes | Default: True. Inactive partners hidden from routing dropdown |
+| partner_priority | Selection | Yes | primary / secondary (default: secondary). At most one partner can be primary |
 | contact_person | Char | No | Primary contact name |
 | email | Char | No | Contact email |
 | phone | Char | No | Contact phone |
 | supported_formats | Char | No | Comma-separated: png,pdf,ai,jpg |
 | sync_method | Selection | Yes | manual / api (default: manual) |
+| auth_method | Selection | Yes | bearer / header_keys (default: bearer). Determines authentication approach |
+| adapter_type | Selection | Yes | generic / gearment (default: generic). Determines which sync adapter class to use |
 | api_endpoint | Char | No | REST API URL (required when sync_method = 'api') |
-| api_key | Char | No | API authentication key (stored encrypted) |
+| api_version | Char | No | API version string (e.g., "v3") |
+| api_key | Char | No | Bearer token (used when auth_method = 'bearer'). Stored encrypted |
+| api_client_key | Char | No | Client key header (used when auth_method = 'header_keys', e.g., X-Gearment-Client-Key). Stored encrypted |
+| api_client_secret | Char | No | Client secret header (used when auth_method = 'header_keys', e.g., X-Gearment-Client-Secret). Stored encrypted |
 | webhook_secret | Char | No | HMAC secret for validating partner callbacks |
+| webhook_endpoint | Char | No | Partner's webhook management endpoint (e.g., /api/v3/webhooks) |
+| webhook_ids_json | Text | No | JSON list of registered webhook IDs at the partner |
+| rate_limit_requests | Integer | No | Max requests per rate window (e.g., 100) |
+| rate_limit_window | Integer | No | Rate limit window in seconds (e.g., 10) |
+| platform_code | Char | No | Platform identifier sent to partner (e.g., "etsy") |
+| store_id | Char | No | Store ID sent to partner API |
 | notes | Text | No | Internal notes about this partner |
 | order_count | Integer | No | Computed: count of orders routed to this partner |
 
@@ -23,7 +35,9 @@ External fulfillment partner configuration.
 
 **Constraints**:
 - api_endpoint required when sync_method = 'api'
-- api_key required when sync_method = 'api'
+- api_key required when auth_method = 'bearer' and sync_method = 'api'
+- api_client_key + api_client_secret required when auth_method = 'header_keys' and sync_method = 'api'
+- At most one partner can have partner_priority = 'primary' (SQL constraint or Python constraint)
 
 **Security**:
 - Full CRUD: group_sale_manager
@@ -87,9 +101,118 @@ Customer return/refund request on a shipped order.
 
 ---
 
+## New Model: shipping.carrier
+
+Shipping carrier configuration for tracking number auto-detection.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| name | Char | Yes | Carrier display name (e.g., "USPS", "UniUni", "YunExpress") |
+| code | Char | Yes | Unique short code for programmatic use (e.g., "usps", "uniuni", "yunexpress") |
+| active | Boolean | Yes | Default: True |
+| tracking_prefix | Char | No | Simple prefix match (e.g., "UU" for UniUni). Checked before regex |
+| tracking_pattern | Char | No | Regex pattern for tracking numbers (e.g., `^\d{20,22}$` for USPS) |
+
+**Inherits**: mail.thread (for chatter audit trail)
+
+**Constraints**:
+- code must be unique
+- At least one of tracking_prefix or tracking_pattern should be set
+
+**Pre-seeded Data** (via `data/shipping_carrier_data.xml`):
+- USPS: code="usps", tracking_pattern=`^\d{20,22}$`
+- UniUni: code="uniuni", tracking_prefix="UU"
+- YunExpress: code="yunexpress", tracking_prefix="YT"
+
+**Security**:
+- Full CRUD: group_sale_manager
+- Read only: group_sale_salesman
+
+---
+
+## New Model: logistics.partner
+
+External logistics company that provides tracking data via Google Drive Excel files.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| name | Char | Yes | Logistics partner name (e.g., "GKE Logistics") |
+| active | Boolean | Yes | Default: True |
+| gdrive_folder_id | Char | No | Google Drive folder ID containing tracking files |
+| gdrive_sync_enabled | Boolean | No | Default: False. Whether to auto-sync from Google Drive |
+| gdrive_last_sync | Datetime | No | Timestamp of last successful Google Drive sync |
+| notes | Text | No | Internal notes |
+
+**Inherits**: mail.thread (for chatter audit trail)
+
+**Configuration**:
+- Google Drive service account credentials stored in `ir.config_parameter` (key: `etsy_integration.gdrive_service_account_path`)
+
+**Security**:
+- Full CRUD: group_sale_manager
+- Read only: group_sale_salesman
+
+---
+
+## New Model: tracking.import.log
+
+Audit log for each tracking Excel file import session.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| name | Char | Yes | Auto-generated reference (e.g., "TRACK-IMP-00001") |
+| import_date | Datetime | Yes | When the import ran |
+| source | Selection | Yes | manual_upload / google_drive |
+| source_filename | Char | No | Original filename |
+| logistics_partner_id | Many2one(logistics.partner) | No | If imported from a logistics partner's Drive folder |
+| total_rows | Integer | Yes | Total data rows in the file |
+| matched_count | Integer | Yes | Orders successfully matched |
+| unmatched_count | Integer | Yes | ORDER NUMBERs not found |
+| tracking_written | Integer | Yes | Tracking numbers actually written (new or updated) |
+| carrier_summary_json | Text | No | JSON summary of carrier detection counts, e.g., {"usps": 45, "uniuni": 12} |
+| error_details | Text | No | Error/warning details |
+| imported_by | Many2one(res.users) | Yes | User who triggered the import |
+| state | Selection | Yes | draft / done / error (default: draft) |
+| line_ids | One2many(tracking.import.line) | - | Per-row import details |
+
+**Inherits**: mail.thread (for chatter audit trail)
+
+**Security**:
+- Full CRUD: group_sale_manager
+- Read only: group_sale_salesman
+
+---
+
+## New Model: tracking.import.line
+
+Per-row detail for each tracking import (child of tracking.import.log).
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| import_log_id | Many2one(tracking.import.log) | Yes | Parent import log (ondelete='cascade') |
+| row_number | Integer | Yes | Excel row number (for debugging) |
+| order_number | Char | No | ORDER NUMBER from Excel |
+| tracking_number | Char | No | TRACKING NUMBER from Excel |
+| sale_order_id | Many2one(sale.order) | No | Matched sale order (ondelete='set null') |
+| carrier_id | Many2one(shipping.carrier) | No | Detected or explicit carrier |
+| match_status | Selection | Yes | matched / unmatched / duplicate / replacement |
+| is_replacement | Boolean | No | Default: False. True if ORDER NUMBER had "-replace" suffix |
+| consignee_name | Char | No | CONSIGNEE NAME from Excel (for verification) |
+| country | Char | No | COUNTRY from Excel |
+| gke_cost_vnd | Float | No | COST column from Excel (VND) |
+| label_url | Char | No | Label PDF URL from Excel |
+| qrcode_url | Char | No | QR code URL from Excel |
+| notes | Text | No | Any warnings or issues for this row |
+
+**Security**:
+- Full CRUD: group_sale_manager
+- Read only: group_sale_salesman
+
+---
+
 ## Extended Model: sale.order
 
-New fields for fulfillment routing, production tracking, and returns.
+New fields for fulfillment routing, production tracking, tracking import, and returns.
 
 ### Fulfillment Routing Fields
 
@@ -115,6 +238,24 @@ New fields for fulfillment routing, production tracking, and returns.
 | partner_sync_status | Selection | No | | pending / synced / failed / escalated |
 | partner_sync_date | Datetime | No | | Last successful sync timestamp |
 | partner_ref | Char | No | | Reference from partner system |
+
+### Gearment-Specific Fields
+
+| Field | Type | Required | Default | Notes |
+|-------|------|----------|---------|-------|
+| gearment_order_id | Char | No | | Gearment's order ID returned on draft creation |
+| gearment_price_quote | Float | No | | Price quoted by Gearment for this order (for manual approval) |
+
+### Tracking Import Fields
+
+| Field | Type | Required | Default | Notes |
+|-------|------|----------|---------|-------|
+| label_url | Char | No | | Shipping label PDF URL from logistics partner import |
+| qrcode_url | Char | No | | QR code URL from logistics partner import |
+| gke_shipping_cost_vnd | Float | No | | Shipping cost in VND from GKE Excel (reference only, not reconciled) |
+| tracking_import_date | Datetime | No | | When tracking was imported from Excel |
+| is_replacement_order | Boolean | No | False | True if imported with "-replace" suffix |
+| original_order_id | Many2one(sale.order) | No | | Link to original order if this is a replacement |
 
 ### Computed Fields
 
@@ -151,6 +292,13 @@ When partner callback provides tracking_number:
 - Set `shipping_carrier` on sale.order (Spec 003 field)
 - Set `fulfillment_status` = 'da_gui' (Shipped)
 
+### Auto-Transition: Tracking Import -> Fulfillment Status
+
+When `tracking_number` is written via Excel import and was previously empty:
+- Set `fulfillment_status` = 'da_gui' (Shipped) if currently in 'dang_san_xuat' or 'da_san_xuat' or 'da_dong_goi'
+- Set `shipping_date` = import date (if not already set)
+- Auto-detect carrier from tracking pattern and write `shipping_carrier`
+
 ---
 
 ## Security: Updated ACLs
@@ -166,6 +314,14 @@ When partner callback provides tracking_number:
 | partner.sync.log | sale_team.group_sale_salesman | 1 | 0 | 0 | 0 |
 | order.return | group_sale_manager | 1 | 1 | 1 | 1 |
 | order.return | sale_team.group_sale_salesman | 1 | 0 | 1 | 0 |
+| shipping.carrier | group_sale_manager | 1 | 1 | 1 | 1 |
+| shipping.carrier | sale_team.group_sale_salesman | 1 | 0 | 0 | 0 |
+| logistics.partner | group_sale_manager | 1 | 1 | 1 | 1 |
+| logistics.partner | sale_team.group_sale_salesman | 1 | 0 | 0 | 0 |
+| tracking.import.log | group_sale_manager | 1 | 1 | 1 | 1 |
+| tracking.import.log | sale_team.group_sale_salesman | 1 | 0 | 0 | 0 |
+| tracking.import.line | group_sale_manager | 1 | 1 | 1 | 1 |
+| tracking.import.line | sale_team.group_sale_salesman | 1 | 0 | 0 | 0 |
 
 ---
 
@@ -175,6 +331,7 @@ When partner callback provides tracking_number:
 sale.order
   |-- fulfillment_partner_id --> fulfillment.partner
   |-- routed_by --> res.users
+  |-- original_order_id --> sale.order (self-ref, for replacements)
   |-- sync_log_ids <-- partner.sync.log (One2many)
   |-- return_ids <-- order.return (One2many)
   |-- design_file_ids <-- order.design.file (Spec 003)
@@ -190,7 +347,27 @@ sale.order
   |    |-- partner_id --> fulfillment.partner
   |
   +-- fulfillment.partner
-       |-- (standalone configuration model)
+  |    |-- partner_priority (primary/secondary)
+  |    |-- adapter_type (generic/gearment)
+  |    |-- auth_method (bearer/header_keys)
+  |
+  +-- shipping.carrier
+  |    |-- tracking_prefix, tracking_pattern
+  |    |-- (standalone config, pre-seeded: USPS, UniUni, YunExpress)
+  |
+  +-- logistics.partner
+  |    |-- gdrive_folder_id, gdrive_sync_enabled
+  |    |-- (standalone config for Google Drive sources)
+  |
+  +-- tracking.import.log
+  |    |-- logistics_partner_id --> logistics.partner
+  |    |-- imported_by --> res.users
+  |    |-- line_ids <-- tracking.import.line (One2many)
+  |
+  +-- tracking.import.line
+       |-- import_log_id --> tracking.import.log
+       |-- sale_order_id --> sale.order
+       |-- carrier_id --> shipping.carrier
 
 Spec 003 models (context):
   +-- order.design.file (approval must be complete before routing)
@@ -221,3 +398,37 @@ Response: {"status": "ok"} or {"status": "error", "message": "..."}
 3. Verify order is routed to the partner matching the webhook secret
 4. Create partner.sync.log record (type=callback)
 5. Update tracking/carrier/fulfillment_status on sale.order
+
+---
+
+## Gearment-Specific Webhook Endpoint
+
+```
+POST /fulfillment/gearment/webhook
+Headers:
+  Content-Type: application/json
+  X-Gearment-Signature: {hmac_signature}
+Body: {
+  "event": "tracking.updated",
+  "data": {
+    "reference_id": "SO12345",
+    "order_id": "GEAR-789",
+    "tracking_number": "9214490407314855743961",
+    "carrier": "USPS",
+    "status": "shipped"
+  }
+}
+Response: {"status": "ok"} or {"status": "error", "message": "..."}
+```
+
+**Supported Events**:
+- `order.completed` -- Partner finished production
+- `order.cancelled` -- Partner cancelled the order
+- `tracking.updated` -- Tracking number available / shipment status changed
+
+**Validation**:
+1. Verify Gearment-specific signature header
+2. Map `reference_id` to sale.order.name
+3. Map `event` type to appropriate handler
+4. Create partner.sync.log record (type=callback)
+5. Update order fields based on event type

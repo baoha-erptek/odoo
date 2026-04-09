@@ -5,12 +5,12 @@
 
 ## Summary
 
-After design files are approved (Spec 003), add fulfillment routing to direct orders to either external partners (with API sync for design files and tracking) or internal production (with stage tracking and material awareness). Also add CRM messaging foundation and returns workflow. This spec defines 3 new models (fulfillment.partner, partner.sync.log, order.return), extends sale.order with routing fields, and adds production queue views.
+After design files are approved (Spec 003), add fulfillment routing to direct orders to either external partners (with API sync for design files and tracking) or internal production (with stage tracking and material awareness). Primary partner is Gearment (API v3, multi-step draft/quote/confirm flow). Import tracking numbers from GKE Logistics Excel files with carrier auto-detection (USPS, UniUni, YunExpress). Google Drive sync for automated tracking file pickup. Also add CRM messaging foundation and returns workflow. This spec defines 7 new models (fulfillment.partner, partner.sync.log, order.return, shipping.carrier, logistics.partner, tracking.import.log, tracking.import.line), extends sale.order with routing and tracking import fields, and adds production queue, carrier config, and tracking import views.
 
 ## Technical Context
 
 **Language/Version**: Python 3.12+ (Odoo 19 CE)
-**Primary Dependencies**: Odoo 19 CE (sale_management, stock, contacts, mail)
+**Primary Dependencies**: Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl, google-api-python-client, google-auth
 **Storage**: PostgreSQL 16+ via Odoo ORM
 **Testing**: Odoo TransactionCase, HttpCase
 **Target Platform**: Linux Docker container (Odoo 19 CE)
@@ -53,38 +53,55 @@ specs/004-fulfillment-routing/
 ```text
 custom_addons/etsy_integration/
 ├── models/
-│   ├── sale_order.py              # MODIFY: Add routing fields (fulfillment_partner_id, fulfillment_route, production_stage)
-│   ├── fulfillment_partner.py     # NEW: External partner configuration model
+│   ├── sale_order.py              # MODIFY: Add routing, Gearment, and tracking import fields
+│   ├── fulfillment_partner.py     # NEW: External partner config (priority, auth, adapter, rate limits)
 │   ├── partner_sync_log.py        # NEW: API sync attempt audit log
-│   └── order_return.py            # NEW: Return/refund request model
+│   ├── order_return.py            # NEW: Return/refund request model
+│   ├── shipping_carrier.py        # NEW: Carrier config with tracking patterns
+│   ├── logistics_partner.py       # NEW: Logistics partner with Google Drive config
+│   ├── tracking_import_log.py     # NEW: Tracking import audit log
+│   └── tracking_import_line.py    # NEW: Per-row tracking import detail
 ├── services/
-│   └── partner_sync.py            # NEW: Partner API sync service (push files, receive callbacks)
+│   ├── partner_sync.py            # NEW: Base adapter + adapter registry/factory
+│   ├── gearment_adapter.py        # NEW: Gearment API v3 adapter (draft/quote/confirm)
+│   ├── carrier_detector.py        # NEW: Carrier auto-detection from tracking patterns
+│   ├── tracking_importer.py       # NEW: Excel parsing + order matching for tracking import
+│   └── gdrive_client.py           # NEW: Google Drive file listing + download
 ├── controllers/
-│   └── partner_webhook.py         # NEW: Webhook endpoint for partner callbacks
+│   └── partner_webhook.py         # NEW: Webhook endpoint (generic + Gearment-specific)
 ├── views/
 │   ├── fulfillment_partner_views.xml   # NEW: Partner config form/list
 │   ├── production_queue_views.xml      # NEW: Internal production queue (list + kanban)
 │   ├── partner_sync_log_views.xml      # NEW: Sync log list view
 │   ├── order_return_views.xml          # NEW: Return request form/list
-│   ├── sale_order_views.xml            # MODIFY: Add routing fields to order form
-│   ├── operational_dashboard_views.xml # MODIFY: Add route/production filters
-│   └── menu.xml                        # MODIFY: Add production queue and partner menus
+│   ├── shipping_carrier_views.xml      # NEW: Carrier config form/list
+│   ├── tracking_import_views.xml       # NEW: Import log list/form + wizard view
+│   ├── logistics_partner_views.xml     # NEW: Logistics partner config form/list
+│   ├── sale_order_views.xml            # MODIFY: Add routing + tracking fields to order form
+│   ├── operational_dashboard_views.xml # MODIFY: Add route/production/carrier filters
+│   └── menu.xml                        # MODIFY: Add production queue, partner, carrier, import menus
 ├── security/
-│   ├── etsy_security.xml          # MODIFY: Add record rules for partner sync logs
-│   └── ir.model.access.csv        # MODIFY: Add ACL for new models
+│   ├── etsy_security.xml          # MODIFY: Add record rules for new models
+│   └── ir.model.access.csv        # MODIFY: Add ACL for 7 new models
 ├── data/
-│   └── ir_cron_partner_sync.xml   # NEW: Cron job for partner sync retry
+│   ├── ir_cron_partner_sync.xml   # NEW: Cron job for partner sync retry
+│   ├── ir_cron_gdrive_sync.xml    # NEW: Cron job for Google Drive tracking sync
+│   └── shipping_carrier_data.xml  # NEW: Pre-seeded carriers (USPS, UniUni, YunExpress)
 ├── wizards/
-│   └── return_wizard.py           # NEW: Return initiation wizard
+│   ├── return_wizard.py           # NEW: Return initiation wizard
+│   └── tracking_import_wizard.py  # NEW: Upload tracking Excel file wizard
 └── tests/
     ├── test_fulfillment_routing.py # NEW: Routing logic, constraints, auto-transitions
     ├── test_partner_sync.py        # NEW: API sync service, retry logic
+    ├── test_gearment_adapter.py    # NEW: Gearment adapter (draft/quote/confirm flow)
     ├── test_production_queue.py    # NEW: Production stage transitions
-    └── test_order_return.py        # NEW: Return/refund workflow
+    ├── test_order_return.py        # NEW: Return/refund workflow
+    ├── test_tracking_import.py     # NEW: Excel import + order matching + carrier detection
+    └── test_carrier_detection.py   # NEW: Carrier pattern matching tests
 ```
 
-**Structure Decision**: Extend existing `etsy_integration` module. Three new models (fulfillment.partner, partner.sync.log, order.return), one new service (partner_sync), one new controller (webhook), extended fields on sale.order.
+**Structure Decision**: Extend existing `etsy_integration` module. Seven new models (fulfillment.partner, partner.sync.log, order.return, shipping.carrier, logistics.partner, tracking.import.log, tracking.import.line), five new services (partner_sync, gearment_adapter, carrier_detector, tracking_importer, gdrive_client), one controller (webhook), two wizards, extended fields on sale.order.
 
 ## Complexity Tracking
 
-No constitution violations. All features use standard Odoo patterns (model extensions, list/kanban views, security groups, cron jobs, HTTP controllers for webhooks).
+No constitution violations. All features use standard Odoo patterns (model extensions, list/kanban views, security groups, cron jobs, HTTP controllers for webhooks). Gearment adapter adds moderate complexity (specific API contract, multi-step order flow, rate limiting) mitigated by adapter pattern isolating partner-specific logic. Google Drive adds external dependency (google-api-python-client) declared in requirements.txt. Tracking import reuses the proven wizard pattern from Spec 001's import_orders_wizard.

@@ -3,7 +3,7 @@
 **Feature Branch**: `004-fulfillment-routing`
 **Created**: 2026-04-07
 **Status**: Draft
-**Input**: After design files are approved (Spec 003), route orders to external fulfillment partners (via API) or internal production. Add CRM messaging foundation and returns workflow.
+**Input**: After design files are approved (Spec 003), route orders to external fulfillment partners (via API) or internal production. Primary partner is Gearment (API v3). Import tracking numbers from logistics partner Excel files (GKE Logistics). Auto-detect shipping carriers (USPS, UniUni, YunExpress). Add CRM messaging foundation and returns workflow.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -28,18 +28,21 @@ As an operations manager, I need to assign each approved order to either an exte
 
 ### User Story 2 - External Partner Configuration (Priority: P1)
 
-As an administrator, I need to configure external fulfillment partners with their contact details, supported file formats, and API credentials, so the system can auto-sync design files and order data to them.
+As an administrator, I need to configure external fulfillment partners with their contact details, supported file formats, API credentials, and priority level (primary/secondary), so the system can auto-sync design files and order data to the correct partner.
 
-**Why this priority**: Partners must be configured before orders can be routed to them. This is a prerequisite for the routing workflow.
+**Why this priority**: Partners must be configured before orders can be routed to them. This is a prerequisite for the routing workflow. The primary partner (Gearment) requires specific configuration for its API authentication and rate limits.
 
-**Independent Test**: Create a new fulfillment partner record with name, contact info, supported file formats (PNG, PDF), and API endpoint URL. Verify the partner appears in the routing dropdown when assigning orders.
+**Independent Test**: Create a new fulfillment partner record with name, contact info, supported file formats (PNG, PDF), priority = "Primary", auth method = "Header Keys", and API endpoint URL. Verify the partner appears first in the routing dropdown when assigning orders. Test the connection using the partner's specific auth method.
 
 **Acceptance Scenarios**:
 
-1. **Given** the Settings or Configuration menu, **When** an administrator creates a new fulfillment partner, **Then** the required fields are: name, contact person, email, supported file formats, and API sync method (manual/API)
-2. **Given** a configured partner with API sync method, **When** the administrator enters API endpoint URL and credentials, **Then** a "Test Connection" button verifies the API is reachable
+1. **Given** the Settings or Configuration menu, **When** an administrator creates a new fulfillment partner, **Then** the required fields are: name, contact person, email, supported file formats, API sync method (manual/API), and partner priority (primary/secondary)
+2. **Given** a configured partner with API sync method, **When** the administrator selects auth method "Header Keys" and enters client key + client secret, **Then** a "Test Connection" button verifies the API is reachable using the partner's specific authentication headers
 3. **Given** a partner with supported file formats = [PNG, PDF], **When** an order with an AI-format design file is routed to this partner, **Then** the system warns: "Design file format (.ai) is not supported by this partner"
 4. **Given** the partner list, **When** an administrator deactivates a partner, **Then** that partner no longer appears in the routing dropdown for new orders, but existing routed orders retain the historical assignment
+5. **Given** a partner with API sync and webhook support, **When** the administrator enables webhooks and clicks "Register Webhooks", **Then** the system registers webhook subscriptions at the partner's webhook endpoint for order completion, cancellation, and tracking update events
+6. **Given** a partner configured as "Primary", **When** an operations manager opens the routing dropdown for an order, **Then** the primary partner appears first/default in the list
+7. **Given** a partner with API rate limits configured (e.g., 100 requests per 10 seconds), **When** viewing the partner record, **Then** the rate limit configuration is visible and enforced during sync operations
 
 ---
 
@@ -47,18 +50,20 @@ As an administrator, I need to configure external fulfillment partners with thei
 
 As a fulfillment coordinator, I need the system to automatically push approved design files and order details to the assigned external partner via API, and receive tracking numbers and production status updates back, so I do not have to manually transfer files or check partner portals.
 
-**Why this priority**: Manual file transfer and status checking is the current bottleneck. Automation reduces errors and saves hours of daily work. However, manual routing (US1) works without this -- operators can email files to partners as a fallback.
+**Why this priority**: Manual file transfer and status checking is the current bottleneck. Automation reduces errors and saves hours of daily work. However, manual routing (US1) works without this -- operators can email files to partners as a fallback. The primary partner (Gearment) has a multi-step order flow requiring draft creation, price quoting, and manual approval before confirmation.
 
-**Independent Test**: Route an order to a partner with API sync enabled. Trigger the sync. Verify design files are pushed to the partner API. Simulate a partner callback with tracking number. Verify tracking number appears on the order in the Odoo dashboard.
+**Independent Test**: Route an order to a partner with API sync enabled. Trigger the sync. Verify design files are pushed to the partner API as URL references. Verify the system retrieves a price quote and displays it for operator approval. Simulate a partner webhook with tracking number. Verify tracking number appears on the order in the Odoo dashboard.
 
 **Acceptance Scenarios**:
 
-1. **Given** an order routed to a partner with API sync enabled, **When** the sync runs (manually triggered or via cron), **Then** approved design files and order details (product, quantity, shipping address) are sent to the partner's API endpoint
-2. **Given** a successful API push, **When** the partner's API returns a confirmation, **Then** the sync status on the order is marked "Synced" with a timestamp
+1. **Given** an order routed to a partner with API sync enabled, **When** the sync runs (manually triggered or via cron), **Then** approved design files (as publicly accessible URLs), product details, quantity, and shipping address are sent to the partner's API endpoint
+2. **Given** a successful API push, **When** the partner's API returns a confirmation, **Then** the sync status on the order is marked "Synced" with a timestamp and the partner's reference ID is stored
 3. **Given** a failed API push (timeout, 500 error), **When** the sync fails, **Then** the system logs the error, marks sync status as "Failed", and retries up to 3 times with exponential backoff
-4. **Given** a partner that sends a callback/webhook with tracking info, **When** the callback is received, **Then** the tracking number and carrier are written to the sale order and fulfillment_status advances to "Da gui" (Shipped)
+4. **Given** a partner that sends a webhook with tracking info, **When** the webhook is received, **Then** the tracking number and carrier are written to the sale order and fulfillment_status advances to "Da gui" (Shipped)
 5. **Given** a partner without API sync (manual mode), **When** the order is routed, **Then** the system generates a downloadable package (ZIP) of design files for manual transfer
 6. **Given** a partner API that is unreliable (down for >24 hours), **When** all retries fail, **Then** the system escalates by creating an activity notification for the PIC user and keeps the sync status as "Failed - Needs Manual Action"
+7. **Given** a partner with a multi-step order flow (e.g., Gearment: draft -> price quote -> confirm), **When** the sync runs, **Then** the system creates a draft order at the partner, retrieves the price quote, and presents the quoted price to the operator for manual approval before confirming
+8. **Given** a partner API with rate limits (e.g., 100 requests per 10 seconds), **When** pushing multiple orders in bulk, **Then** the system respects the configured rate limit and queues excess requests rather than exceeding the limit
 
 ---
 
@@ -132,6 +137,43 @@ As an operations manager, I need to process customer returns and refunds within 
 
 ---
 
+### User Story 8 - Shipping Carrier Tracking Import (Priority: P2)
+
+As an operations manager, I need to import tracking numbers and shipping details from a standardized Excel file provided by the logistics partner (GKE Logistics), so that tracking numbers are automatically matched to existing orders and the carrier is identified without manual data entry.
+
+**Why this priority**: Tracking numbers currently require manual entry per order. With hundreds of orders per week, importing from the logistics partner's Excel file and auto-matching to orders saves significant time and eliminates transcription errors. This is independent of partner API sync (US3) -- tracking can come from either source.
+
+**Independent Test**: Upload a GKE Logistics Excel file with 10 rows. Verify the system matches ORDER NUMBERs to existing sale orders, writes tracking numbers, auto-detects carriers (USPS vs UniUni vs YunExpress), and shows a summary of 8 matched / 2 unmatched.
+
+**Acceptance Scenarios**:
+
+1. **Given** a standardized Excel file with columns matching the GKE format (ORDER NUMBER, TRACKING NUMBER, COUNTRY, CONSIGNEE NAME, STATE, CITY, ADDRESS, POSTCODE, PRODUCT NAME, VALUE, QUANTITY, WEIGHT, COST, CREATIVE date, warehouse date, order status, label URL, QR code URL), **When** the operator uploads the file via the import wizard, **Then** the system parses each row and matches ORDER NUMBER to `sale.order.etsy_order_id`
+2. **Given** a matched order, **When** the tracking number is written, **Then** the system auto-detects the shipping carrier from the tracking pattern (USPS: 20-22 digit numeric; UniUni: starts with "UU"; YunExpress: starts with "YT") and writes both tracking number and shipping carrier to the sale order
+3. **Given** an ORDER NUMBER with suffix "-replace" (e.g., "4005375073-replace"), **When** importing, **Then** the system strips the suffix for matching, flags the order as a replacement, and links it to the original order
+4. **Given** import completion, **When** the operator reviews results, **Then** a summary shows: N orders matched, N tracking numbers written, N orders not found, and carrier detection counts by carrier type
+5. **Given** an Excel row where the ORDER NUMBER does not match any existing sale order, **When** importing, **Then** the row is logged as unmatched with the ORDER NUMBER for manual review
+6. **Given** the import file contains label URLs (column: link label) and QR code URLs (column: link QR code), **When** importing, **Then** these URLs are stored on the sale order for shipping label access
+7. **Given** an Excel file with 20 columns (including an explicit SHIPPING CARRIER column), **When** importing, **Then** the explicit carrier value overrides the auto-detected carrier. If the carrier column is missing (19-column format), auto-detection is used as fallback
+
+---
+
+### User Story 9 - Logistics Partner Google Drive Sync (Priority: P3)
+
+As an operations manager, I need the system to automatically read tracking Excel files from per-logistics-partner Google Drive folders, so that tracking import happens without manual file download and upload.
+
+**Why this priority**: Currently operators must download Excel files from Google Drive and re-upload them into the system. Automating this removes a manual step. However, manual upload (US8) provides the same functionality -- this story adds convenience automation. P3 because manual import is a viable workflow for current volume.
+
+**Independent Test**: Configure a Google Drive folder for "GKE Logistics". Place a new Excel file in the folder. Wait for the sync cron to run. Verify the file is downloaded, processed using the same logic as manual import (US8), and marked as processed.
+
+**Acceptance Scenarios**:
+
+1. **Given** a configured logistics partner with a Google Drive folder ID and sync enabled, **When** the sync cron runs, **Then** the system authenticates with Google Drive, lists files in the folder, and identifies unprocessed files (new since last sync)
+2. **Given** an unprocessed file in a logistics partner's Drive folder, **When** the sync downloads it, **Then** the file is processed using the same matching and carrier detection logic as manual Excel import (US8)
+3. **Given** a processed file, **When** the import completes successfully, **Then** the file is marked as processed (moved to a "processed" subfolder or flagged by name prefix) to prevent re-import on the next sync cycle
+4. **Given** the logistics partner configuration screen, **When** an administrator sets up a new logistics partner, **Then** they provide: partner name, Google Drive folder ID, and sync enabled toggle
+
+---
+
 ### Edge Cases
 
 - What happens when an order is routed to a partner but the partner is deactivated before fulfillment completes? The routing remains valid for that order; only new routing is prevented.
@@ -140,6 +182,12 @@ As an operations manager, I need to process customer returns and refunds within 
 - What happens when a return is initiated on an order still in production? The system allows the return request but warns: "Order is still in production. Cancel production first?"
 - What happens when stock reaches zero mid-production? Orders in "In Progress" stage continue (materials already consumed), but "Queued" orders are flagged as blocked.
 - What happens when a partner sends a callback for an order that was rerouted away from them? The system logs the callback but does not update the order (stale route check).
+- What happens when the same ORDER NUMBER appears in multiple Excel import files? The system overwrites the tracking number if a newer file has a different value, and logs the change in chatter.
+- What happens when an Excel row has a tracking number but no ORDER NUMBER? The row is skipped and logged as invalid.
+- What happens when auto-detection cannot determine the carrier (tracking pattern does not match known patterns)? The shipping carrier is set to "Other" and flagged for manual review.
+- What happens when the GKE Excel has costs in VND (COST column) but the order is in EUR? The VND cost is stored in a separate field for reference and does NOT overwrite the order's sale price.
+- What happens when Google Drive API authentication expires? The system logs the auth failure and creates an activity notification for the admin, similar to Gmail OAuth handling in Spec 001.
+- What happens when the Gearment price quote is significantly higher than expected? The operator reviews the quote and can reject/cancel the draft order without confirming.
 
 ## Requirements *(mandatory)*
 
@@ -165,6 +213,18 @@ As an operations manager, I need to process customer returns and refunds within 
 - **FR-018**: System MUST log all routing changes, sync attempts, and return actions in the audit trail (chatter)
 - **FR-019**: System MUST enforce a single active fulfillment route per order (rerouting replaces previous)
 - **FR-020**: System MUST sync Etsy buyer messages to the sale order chatter and allow replies back to Etsy
+- **FR-021**: System MUST support configuring partners with primary/secondary priority designation, with the primary partner appearing first in routing dropdowns
+- **FR-022**: System MUST support multiple authentication methods per partner: Bearer token and custom header keys (e.g., client key + client secret)
+- **FR-023**: System MUST respect per-partner API rate limits when pushing orders in bulk (e.g., max 100 requests per 10 seconds for Gearment)
+- **FR-024**: System MUST support multi-step partner order flows: create draft, retrieve price quote for operator review, and confirm only after manual approval
+- **FR-025**: System MUST register and manage webhook subscriptions at partner APIs for order completion, cancellation, and tracking update events
+- **FR-026**: System MUST provide an Excel import wizard for logistics partner tracking files supporting both 19-column (legacy, no carrier) and 20-column (with explicit carrier) formats
+- **FR-027**: System MUST match imported ORDER NUMBERs to existing sale orders via `etsy_order_id` and write tracking numbers to matched orders
+- **FR-028**: System MUST auto-detect shipping carrier from tracking number patterns: USPS (20-22 digit numeric), UniUni (prefix "UU"), YunExpress (prefix "YT"), with "Other" as fallback
+- **FR-029**: System MUST handle "-replace" suffix in ORDER NUMBERs by stripping the suffix for matching and flagging the order as a replacement
+- **FR-030**: System MUST store label URLs and QR code URLs from the import file on the sale order for shipping label access
+- **FR-031**: System MUST support reading tracking files from per-logistics-partner Google Drive folders via automated cron sync
+- **FR-032**: System MUST log all tracking imports with an audit trail including match/unmatch counts, carrier detection results, and per-row details
 
 ### Key Entities
 
@@ -173,6 +233,9 @@ As an operations manager, I need to process customer returns and refunds within 
 - **Partner Sync Log**: A record of each API sync attempt (push or callback), including status (pending/success/failed), timestamps, error messages, and retry count.
 - **Production Stage**: The current manufacturing status for internally-routed orders, from Queued through Completed.
 - **Return Request**: A customer return or refund request on a shipped order, with reason, action (refund/replace/discount), and resolution status.
+- **Shipping Carrier**: A known shipping carrier (e.g., USPS, UniUni, YunExpress) with name, code, and tracking number pattern (prefix or regex) for auto-detection. Extensible -- new carriers added by creating a new record.
+- **Logistics Partner**: An external logistics company (e.g., GKE Logistics) that provides tracking data via Excel files stored in Google Drive. Configured with folder ID and sync settings.
+- **Tracking Import Log**: A record of each Excel file import session, including source (manual upload or Google Drive), file name, match/unmatch counts, carrier detection summary, and per-row detail lines.
 
 ## Success Criteria *(mandatory)*
 
@@ -186,6 +249,9 @@ As an operations manager, I need to process customer returns and refunds within 
 - **SC-006**: Operations team can filter the dashboard by fulfillment route, production stage, sync status, and return status in one click
 - **SC-007**: Material shortage warnings appear before production begins, preventing blocked production starts
 - **SC-008**: 100% of routing changes and sync attempts are logged in the audit trail for accountability
+- **SC-009**: Tracking numbers from logistics partner Excel files are matched to orders and populated within 2 minutes of import completion
+- **SC-010**: Carrier auto-detection correctly identifies USPS, UniUni, and YunExpress from tracking number patterns with 99%+ accuracy for known patterns
+- **SC-011**: Google Drive sync picks up new tracking files within one sync cycle (configurable interval, default 30 minutes)
 
 ## Assumptions
 
@@ -200,6 +266,13 @@ As an operations manager, I need to process customer returns and refunds within 
 - Partner callbacks use standard HTTP webhooks (POST to an Odoo controller endpoint)
 - The system handles at most 5-10 external partners in the near term
 - Fulfillment routing to partners is a manual decision by operations managers, not automated rules (automated routing is a future enhancement)
+- Gearment is the primary fulfillment partner with a stable v3 API at `https://apiv2.gearment.com/integration-handler`, authenticated via `X-Gearment-Client-Key` + `X-Gearment-Client-Secret` headers
+- GKE Logistics provides tracking data in standardized Excel files with the 19-column format described in US8; a 20-column format with explicit carrier column is being adopted
+- Google Drive API is available via service account for unattended server-side access to logistics partner folders
+- The `openpyxl` library is already available in the system (used by existing Excel import wizard in Spec 001)
+- Carrier tracking patterns are stable and distinctive: USPS (20-22 digit pure numeric), UniUni (prefix "UU"), YunExpress (prefix "YT")
+- New carriers can be added by configuring a name + tracking pattern record (extensible without code changes)
+- Google Drive folders are organized per logistics partner (not per carrier); one folder may contain files with mixed carriers
 
 ## Out of Scope
 
@@ -209,3 +282,7 @@ As an operations manager, I need to process customer returns and refunds within 
 - **Multi-warehouse stock management** -- uses single stock location for raw materials
 - **Amazon/WooCommerce channel-specific return workflows** -- only generic returns covered; channel-specific logic is future specs
 - **Etsy API approval process** -- obtaining Etsy API access for messaging is a business process, not a technical spec
+- **Direct GKE Logistics API integration** -- tracking data comes via Excel files, not a GKE API; GKE does not expose a REST API
+- **Shipping label generation** -- labels and QR codes are provided by GKE Logistics; the system stores their URLs but does not generate labels
+- **Shipping cost reconciliation** -- VND costs from the GKE Excel are stored for reference but not converted or reconciled with order prices in EUR
+- **Multi-carrier rate shopping** -- no comparison of shipping rates across carriers; carrier is determined by the logistics partner
