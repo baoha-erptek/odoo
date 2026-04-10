@@ -267,6 +267,7 @@ You are successful when:
 ## Active Technologies
 - Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl (002-etsy-config-fixes)
 - PostgreSQL 16+ via Odoo ORM (002-etsy-config-fixes)
+- Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), requests (bundled) (005-etsy-api-channel)
 
 ## Recent Changes
 - 002-etsy-config-fixes: Added Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl
