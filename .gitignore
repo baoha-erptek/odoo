@@ -8,6 +8,10 @@ _build/
 !.github
 !.mailmap
 !.weblate.json
+# project-scoped Claude Code config (agents, skills, rules, hooks)
+!.claude/
+# per-machine permissions — keep out of version control
+.claude/settings.local.json
 # compiled python files
 *.py[co]
 __pycache__/
