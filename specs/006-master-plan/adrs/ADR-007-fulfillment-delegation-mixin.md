@@ -1,7 +1,8 @@
 # ADR-007: `sale.order.fulfillment` Delegation Mixin
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect
 - **Affects**: Spec 003 (dashboard + channel fields), Spec 004 (fulfillment routing + partner + tracking)
 - **Related**: [tech-architect.md §1 "Is sale.order becoming a god object?"](../agent-reports/tech-architect.md)

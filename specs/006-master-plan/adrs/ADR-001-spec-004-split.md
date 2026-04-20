@@ -1,7 +1,8 @@
 # ADR-001: Split Spec 004 into 004a / 004b / 004c
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect, BA lead
 - **Supersedes**: Spec 004 monolithic structure (79 tasks)
 - **Related**: [MASTER_PLAN.md §4](../MASTER_PLAN.md), [devils-advocate.md §3.3](../agent-reports/devils-advocate.md)

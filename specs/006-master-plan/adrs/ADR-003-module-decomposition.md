@@ -1,7 +1,8 @@
 # ADR-003: Decompose `etsy_integration` into Four Modules
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect
 - **Affects**: All specs 002–005 and future 006+
 - **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §2](../agent-reports/tech-architect.md)

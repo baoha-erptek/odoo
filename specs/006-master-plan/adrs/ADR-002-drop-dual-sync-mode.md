@@ -1,7 +1,8 @@
 # ADR-002: Drop Dual-Mode Sync; Keep Only `email_only` / `api_only`
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect, BA lead
 - **Affects**: Spec 005 (Etsy API v3 channel integration)
 - **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §4](../agent-reports/tech-architect.md), [devils-advocate.md §1.3](../agent-reports/devils-advocate.md)
@@ -33,7 +34,7 @@ The BA lens concurs indirectly: "Defer Spec 005 entirely past MVP and ship the d
 
 ## Decision
 
-1. **`sync_mode` has exactly two values**: `email_only` and `api_only`.
+1. **`sync_mode` has exactly two values**: `email_only` and `api_only`. **Default for new `etsy.shop` records is `api_only`** (the forward-looking state). Existing 19 shops remain `email_only` post-install and are migrated individually via the cutover procedure below.
 2. Per-shop, the switch is **one-way**: once flipped to `api_only`, it cannot return to `email_only` without explicit admin override.
 3. For the transitional period (one shop at a time, during validation), a **separate one-off field** `sync_audit_mode = Boolean` is added. When `True` on a shop that is still `email_only`, the API client runs **read-only** and writes comparison results to `etsy.api.log` (source='audit'). No writes to `sale.order`. This is a 1-week validation tool, not a permanent state.
 4. **Cutover procedure** per shop:
@@ -71,8 +72,9 @@ The BA lens concurs indirectly: "Defer Spec 005 entirely past MVP and ship the d
 
 ## Implementation notes
 
-- Update `specs/005-etsy-api-channel/spec.md` to remove `dual` from `sync_mode` enum and add the `sync_audit_mode` Boolean field.
-- Update `specs/005-etsy-api-channel/data-model.md` to match.
+- Update `specs/005-etsy-api-channel/spec.md` to remove `dual` from `sync_mode` enum, set `default='api_only'`, and add the `sync_audit_mode` Boolean field.
+- Update `specs/005-etsy-api-channel/data-model.md` to match, including default-value note.
+- Spec 002 migration wizard (or Spec 005 install hook) must explicitly set `sync_mode='email_only'` on the 19 existing shops so they are not forced onto the API default prematurely.
 - Update Spec 005 US8 ("Sync mode selection") wording: "Per-shop switch between `email_only` and `api_only` with optional 1-week audit period."
 - Update Spec 005's `etsy_order_syncer.py` contract to always be a single writer; no merge logic.
 - Add a new Spec 005 user story (or amend US2): "Sync audit mode — API client runs read-only, logs field diffs to `etsy.api.log`, no writes to sale.order."

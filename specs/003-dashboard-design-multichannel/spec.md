@@ -1,223 +1,300 @@
-# Feature Specification: Operational Dashboard, Design File Workflow, and Multi-Channel Foundation
+# Feature Specification: Three Operational Dashboards, Design & Address-Change Workflows, Multi-Channel Foundation
 
 **Feature Branch**: `003-dashboard-design-multichannel`
-**Created**: 2026-04-06
-**Status**: Draft
-**Input**: Replace Google Sheets-based order management with an Odoo operational dashboard, add design file upload and production team approval workflow, and lay the multi-channel foundation for future Amazon/WooCommerce integration.
+**Created**: 2026-04-06 (v1), rewritten 2026-04-13 after master-plan review
+**Status**: Draft (Wave B — pending plan.md + data-model.md refresh)
+**Supersedes**: `_archive/spec-2026-04-06.md`
+**Authority**: [master plan 006](../006-master-plan/MASTER_PLAN.md), ADRs [003](../006-master-plan/adrs/ADR-003-module-decomposition.md) [004](../006-master-plan/adrs/ADR-004-enterprise-alternatives.md) [005](../006-master-plan/adrs/ADR-005-carrier-unification.md) [006](../006-master-plan/adrs/ADR-006-design-file-storage.md) [007](../006-master-plan/adrs/ADR-007-fulfillment-delegation-mixin.md)
+**Input**: Replace the Google Sheet (BA/PD/MP/Audit tabs) with a coherent set of role-specific Odoo dashboards, ship the safety-critical address-change approval workflow, formalise the design file + 3-state approval flow, and lay a multi-channel foundation that Amazon / Website channels can plug into without schema churn.
+
+---
+
+## What changed vs the 2026-04-06 version
+
+1. **Three dashboards, not one**: end-user feedback from BA, PD, and MP explicitly asked for distinct Order / Tracking / Process views with different columns, filters, and default sorts. Trying to serve all three roles from a single 21-column list was the original spec's scope miss.
+2. **Address-change approval workflow added (P1, safety-critical)**: BA flagged that Marketing currently edits shipping addresses directly on `sale.order`, occasionally after a label has already been purchased. Duplicate-label spend is a recurring, unauditable incident. Requires a gated `etsy.address.change.request` model with BA approval.
+3. **Product images + row decorations**: Marketing asked twice for `image_128` in list views and for colour-coded rows (qty≥2, duplicate buyer, Push order, Amazon order).
+4. **Fulfillment-lifecycle fields live on a delegation sibling** (`sale.order.fulfillment`, ADR-007), not directly on `sale.order`. Prevents god-object bloat as specs 004a/004b/005 add fields.
+5. **Unified carrier via `shipping.carrier`** (ADR-005) — the original spec's `shipping_carrier` Char is gone.
+6. **Design-file storage policy codified** (ADR-006): 10 MB cap, URL-mode for large files, filestore only.
+7. **Vietnamese UI + audit log elevated to explicit FRs** — previously implicit, now cross-cutting requirements.
+
+## Clarifications captured from end-user feedback review (2026-04-10)
+
+- Q: Should the three dashboards share a single data model or back each one with a separate report view? → A: Same data model; three saved views (`ir.actions.act_window`) with different column sets, default filters, and decorations.
+- Q: Are PD's 18 columns a subset/superset of BA's Order dashboard? → A: Overlap but not subset; Process dashboard adds production stage + block reason + PD note and hides financial/MP columns.
+- Q: Does the address-change workflow freeze ALL shipping fields or just the destination address? → A: All destination address fields (partner_shipping_id, street, street2, city, zip, state_id, country_id). Carrier + tracking remain editable because ops may still need to cancel a bought label.
+- Q: On failed edits during a pending address change, do we block at UI level, ORM level, or both? → A: Both — `readonly` attrs on the form (UI hint) AND a server-side `@api.constrains` on `sale.order` write (hard enforcement).
+
+---
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Operational Order Dashboard (Priority: P1)
+### User Story 1 — Order Dashboard for BA daily triage (Priority: P1)
 
-As an operations team member, I need a single working list view of all orders with both auto-populated order data and manually editable fulfillment fields, so I can manage daily order processing without switching to Google Sheets.
+As a BA team member, I need a single list view that shows every order's commercial state (channel, shop, buyer, price, discount, MP note, PIC, overdue-approval flag) with product thumbnails and row-level colour cues, so I can triage hundreds of orders per day without opening each one.
 
-**Why this priority**: The team currently manages all order fulfillment in Google Sheets (21 columns). This is the primary pain point -- without this dashboard, Odoo does not replace the existing workflow. The current Odoo dashboard shows only analytics (graph/pivot), not an actionable order management view.
+**Why this priority**: The BA team is the largest daily consumer of the Google Sheet. Until this view lands, Odoo is a secondary system and the team keeps the sheet alive — defeating the whole project.
 
-**Independent Test**: Open the operational dashboard, verify all 21 columns are visible. Inline-edit the shipping date, tracking number, carrier, label status, fulfillment status, and note fields on an existing Etsy order. Verify changes persist after page reload.
+**Independent Test**: Open the Order Dashboard with 17K+ orders. Verify the first page renders in <3 s. Verify the product image column shows `image_128` inline. Verify a qty≥2 order shows the expected row decoration. Inline-edit the MP note, PIC, and priority on three arbitrary rows and confirm persistence after reload.
 
 **Acceptance Scenarios**:
 
-1. **Given** an existing Etsy sale order, **When** a team member opens the operational dashboard, **Then** all 21 fields are visible in a single list row: shipping date, tracking number, carrier, label status, fulfillment status, note, order image, date, buyer note, gift message, personalisation, quantity, shipping service, PIC, shop, order ID, country, sale price, shipping cost, promotion, total price
-2. **Given** the operational dashboard, **When** a team member edits columns A-F (shipping date, tracking number, carrier, label status, fulfillment status, note) inline, **Then** the changes are saved immediately without opening a form view
-3. **Given** the operational dashboard, **When** a team member assigns a PIC (Person In Charge) to an order, **Then** the assigned user appears in the PIC column and can filter the dashboard to see only their assigned orders
-4. **Given** the operational dashboard, **When** filtering by fulfillment status "Cho file" (Waiting for file), **Then** only orders with that status appear
-5. **Given** orders from multiple shops, **When** a team member groups by shop, **Then** orders are grouped with subtotals for order count and total price per shop
+1. **Given** an authenticated BA user, **When** they open the Order Dashboard, **Then** the list shows at minimum: product image (thumbnail), shop, channel, order date, buyer, country, amount (in shop currency), discount flag, PIC, priority, MP note, design-status summary, overdue-approval marker, and tracking state.
+2. **Given** an order with `product_uom_qty >= 2` on any line, **When** rendered, **Then** the row is decorated (e.g., `decoration-info`) so qty-multi orders stand out.
+3. **Given** two orders from the same buyer in the last 7 days, **When** rendered, **Then** both rows carry a "duplicate buyer" decoration.
+4. **Given** an order flagged Push by the store manager, **When** rendered, **Then** a dedicated avatar/icon column shows the store manager, and the row has a `decoration-danger` (Push) variant distinct from Urgent priority.
+5. **Given** an order whose design-approval activity is >24 h overdue, **When** rendered, **Then** the overdue-approval marker column shows a warning glyph and the row sorts to the top of the "Overdue" saved filter.
+6. **Given** 17,000+ orders exist, **When** the dashboard opens, **Then** the server-side paginated view returns the first 80 rows within 3 s without loading all records.
+7. **Given** the BA user edits the MP note, PIC, or priority inline, **When** they leave the cell, **Then** the change saves and a chatter entry is recorded on the order (audit).
 
 ---
 
-### User Story 2 - Design File Upload and Preview (Priority: P1)
+### User Story 2 — Tracking Dashboard for shipping ops (Priority: P1)
 
-As a production team member, I need to upload design files and preview images to specific order lines, so the design team can see what needs to be produced for each item.
+As a BA-shipping team member, I need a dedicated view focused on tracking + carrier + label state, with bulk actions to change state across many rows and with search by tracking number, so I can reconcile daily shipments from GKE and push batches of statuses efficiently.
 
-**Why this priority**: The print-on-demand workflow requires design files attached to orders before production can start. Without file upload, the team must manage design files outside Odoo (Google Drive, email), breaking the single-system workflow.
+**Why this priority**: Tracking reconciliation is the single biggest daily pain after order triage. BA's current workflow is: copy-paste tracking from GKE Excel into the sheet, then manually toggle label state per row. Without a dedicated Odoo view, this workflow stays in the sheet.
 
-**Independent Test**: Open a sale order form, navigate to the design files tab. Upload a design file (PNG/PDF) to an order line. Upload a preview image. Verify both files appear in the order detail and can be downloaded.
+**Independent Test**: Open the Tracking Dashboard. Verify columns match BA's expected set (buyer, shop, tracking number, carrier, shipping date, label status, tracking state, has-pending-address-change flag). Enter a tracking number in the search box and confirm the row filters correctly. Select 10 rows and apply a bulk state change; verify all 10 update atomically.
 
 **Acceptance Scenarios**:
 
-1. **Given** a sale order with order lines, **When** a team member uploads a design file to an order line, **Then** the file is stored as an attachment linked to that specific order line
-2. **Given** an order line with a design file, **When** a team member uploads a preview/thumbnail image, **Then** the preview is displayed inline in the order line list within the sale order form
-3. **Given** an order line, **When** multiple design files are uploaded (e.g., front and back designs), **Then** all files are listed under that order line with their filenames and upload dates
-4. **Given** the design queue list view, **When** a team member views orders with design files, **Then** a visual indicator shows which lines have files attached and which are still missing files
-5. **Given** a design file attachment, **When** a team member clicks on it, **Then** they can download the original file or preview it in the browser (for images)
+1. **Given** the Tracking Dashboard, **When** rendered, **Then** the columns are: buyer, shop, channel, tracking number, carrier, shipping date, label status, tracking state (merged column: none/label-requested/label-ready/shipped/in-transit/delivered), has-pending-address-change flag, overdue-approval marker.
+2. **Given** a tracking number typed in the search box, **When** the user presses Enter, **Then** the list filters to rows whose tracking number contains the query (case-insensitive, indexed lookup).
+3. **Given** ≥2 selected rows, **When** the user invokes "Bulk → Mark shipped", **Then** all selected rows transition atomically, chatter is updated on each, and any row with `has_pending_address_change == True` is skipped with an on-screen warning.
+4. **Given** an export request, **When** the user clicks "Export to Excel", **Then** the current filtered set is exported with columns matching the GKE import format so a round-trip is trivial.
+5. **Given** an import of a GKE tracking Excel (delegated to Spec 004a), **When** it completes, **Then** the Tracking Dashboard reflects the newly-written tracking numbers within 5 minutes and the same rows visible in the Order Dashboard also show the updated state.
 
 ---
 
-### User Story 3 - Design Approval Workflow (Priority: P1)
+### User Story 3 — Process Dashboard for Production (VN+US) (Priority: P1)
 
-As a production team lead, I need to review design files and mark them as approved, pending, or needing adjustment, so the team knows which orders are ready for production.
+As a production team member (PD), I need a dedicated view that unifies VN and US production queues with my 18 operational columns, status enum with Vietnamese labels + colours, production stage, block reason, and PD note, so I can see what to make today without switching between shops or filtering a generic list.
 
-**Why this priority**: The approval workflow gates the production pipeline. Without it, there is no way to track which designs have been reviewed and approved, leading to production errors and rework.
+**Why this priority**: PD cannot currently use the BA-centric Google Sheet; they maintain a separate PD tab. Without a dedicated Odoo Process Dashboard, PD's adoption is zero and the existing sheet stays alive.
 
-**Independent Test**: Open the design queue, find an order line with a design file. Change the approval status to "Approved". Verify the status persists. Set another to "Needs Adjustment" with a rejection note. Filter by "Pending Review" status and verify only unreviewed items appear.
+**Independent Test**: Open the Process Dashboard, verify PD's 18 columns are visible. Verify the status enum shows Vietnamese labels (Mới / Chờ file / Đang sản xuất / Đã sản xuất / Đã đóng gói / Đã gửi / Huỷ) with distinct colours. Move a row from "Đang sản xuất" to "Đã sản xuất" and verify a `stock.move` is generated (Spec 004a delivers the stock-move integration; here we only verify the state change writes correctly).
 
 **Acceptance Scenarios**:
 
-1. **Given** a design file on an order line, **When** a production team member reviews it, **Then** they can set the approval status to one of: "Cho duyet" (Pending Review), "Duyet" (Approved), or "Can chinh lai" (Needs Adjustment)
-2. **Given** a design file set to "Can chinh lai" (Needs Adjustment), **When** the team member sets this status, **Then** they must provide a rejection note explaining what needs to change
-3. **Given** a design file set to "Duyet" (Approved), **When** the status is saved, **Then** the system records which user approved it and when
-4. **Given** the design queue, **When** filtering by "Cho duyet" (Pending Review), **Then** only order lines with unreviewed or pending design files appear
-5. **Given** the design queue, **When** viewed as a kanban board, **Then** three columns appear: "Cho duyet", "Duyet", and "Can chinh lai", with order line cards that can be dragged between columns
-6. **Given** a non-production team member (e.g., sales user), **When** they view a design file, **Then** they can see the approval status but cannot change it
+1. **Given** the Process Dashboard, **When** rendered, **Then** the columns are: order date, shop, product image, product name, variant attributes, qty, personalisation, PD note, design-status summary, production stage, production blocked flag, block reason, PIC (PD), priority, row-decorations (qty≥2, Push, Amazon), and the unified VN+US warehouse indicator.
+2. **Given** a multi-warehouse environment, **When** PD applies the "Warehouse" filter, **Then** rows show per-warehouse queues and can be grouped by warehouse.
+3. **Given** the Process Dashboard list, **When** PD changes a row's production stage via inline edit, **Then** the new value persists, chatter records the transition with user and timestamp, and if the new value is "Đã sản xuất" the system delegates to Spec 004a's hook for `stock.move` generation (MVP: emit a signal; full integration in 004a).
+4. **Given** a row with `production_blocked = True`, **When** rendered, **Then** the row is decorated red and the block reason is visible in a tooltip or dedicated column.
+5. **Given** Vietnamese is the user's language, **When** status labels render, **Then** all values use diacritics (e.g., "Đang sản xuất", not "Dang san xuat"). UTF-8 is preserved across export/import round-trips.
 
 ---
 
-### User Story 4 - Multi-Channel Foundation (Priority: P2)
+### User Story 4 — Address-Change Approval Workflow (Priority: P1, safety-critical)
 
-As a business owner, I need each order to be tagged with its sales channel (Etsy, Amazon, Website) so I can filter, report, and manage orders by channel, even though only Etsy is active now.
+As a Marketing team member (MP) who received a buyer request to change the shipping address, I need to file an address-change request that a BA lead approves before the order's destination fields are overwritten, so we never buy a label against stale data and never silently corrupt a shipped order's audit trail.
 
-**Why this priority**: Adding the channel field now prevents a costly retrofit when Amazon and Website channels are added later. All dashboard views, reports, and fulfillment workflows must be channel-aware from the start.
+**Why this priority**: The current process lets any MP edit `sale.order.partner_shipping_id` directly. Incidents happen: a label is bought, then the address changes, producing a second label and an unrecoverable logistics mistake. BA flagged this as the top safety gap.
 
-**Independent Test**: View an existing Etsy order and verify it shows "Etsy" in the sales channel field. Create a test order manually and set the channel to "Amazon". Filter the dashboard by channel and verify only the correct orders appear.
+**Independent Test**: As an MP user, open a shipped-but-not-delivered order, attempt to edit the shipping address directly — verify the form fields are read-only and a banner instructs the user to file an address-change request. File the request with new values and a reason. Log in as a BA lead; see a `mail.activity` on the order; approve the request. Verify the order's destination fields update and the request state becomes `approved`. Attempt to buy a label on the Tracking Dashboard while a request is `requested` — verify the row is skipped with a warning.
 
 **Acceptance Scenarios**:
 
-1. **Given** any existing Etsy order, **When** viewing the order form or dashboard, **Then** the "Sales Channel" field displays "Etsy"
-2. **Given** a new order being created, **When** the user selects a sales channel, **Then** the options are: Etsy, Amazon, Website, Other
-3. **Given** the operational dashboard, **When** filtering by "Sales Channel = Etsy", **Then** only Etsy orders appear
-4. **Given** the operational dashboard, **When** grouping by sales channel, **Then** orders are grouped with subtotals per channel
-5. **Given** all 17,659+ existing Etsy orders, **When** the channel backfill migration runs, **Then** all orders have sales_channel set to "etsy" and channel_order_ref set to the value of etsy_order_id
+1. **Given** an order with no pending address-change request, **When** an authorised user (BA/Manager) edits a destination field, **Then** the write succeeds and chatter records the change (`tracking=True`).
+2. **Given** an order with no pending request, **When** an MP user (Marketing group, not BA) attempts to edit a destination field, **Then** the UI shows the fields as read-only and offers a "Request address change" button.
+3. **Given** the MP user opens the request form, **When** they submit new values (partner_shipping_id, street, street2, city, zip, state_id, country_id) plus a reason, **Then** an `etsy.address.change.request` record is created in state `requested`, a `mail.activity` is assigned to the BA approver group with type "To Do" and summary "Approve address change for order <ref>", and the order's destination fields become read-only for everyone.
+4. **Given** a request in state `requested`, **When** a BA lead clicks "Approve" on the request form, **Then** the stored new values are applied to the `sale.order` in a single transaction, the request transitions to `approved`, chatter records both the approval and the old→new value deltas, and the destination fields become editable again (subject to standard ACLs).
+5. **Given** a request in state `requested`, **When** a BA lead clicks "Reject" with a rejection reason, **Then** the request transitions to `rejected`, the order's destination fields remain unchanged and become editable again, and the MP user receives a chatter @mention with the rejection reason.
+6. **Given** the Tracking Dashboard bulk "Mark shipped" action, **When** the operation runs, **Then** orders with `has_pending_address_change == True` are excluded from the batch with an on-screen warning listing the skipped order references.
+7. **Given** a server-side `sale.order.write` call, **When** a destination field change is attempted while a request is `requested`, **Then** a `UserError` is raised (hard enforcement independent of UI).
 
 ---
 
-### User Story 5 - Order Priority and Sorting (Priority: P2)
+### User Story 5 — Design Files + 3-State Approval (Priority: P1)
 
-As an operations manager, I need to assign priority levels to orders and sort the dashboard by priority, so the team processes urgent orders first.
+As a production team lead, I need designers to upload front/back design files (or paste URLs to existing CDN assets) and I need to approve / reject each file with a rejection note, so production only runs on verified designs and stale URLs are caught before printing.
 
-**Why this priority**: Without priority management, the team processes orders in arbitrary order. Urgent or time-sensitive orders (e.g., rush shipping, VIP customers) may be delayed.
+**Why this priority**: Gating print production on explicit design approval is what prevents expensive mis-prints. The workflow exists informally today (over email + Drive) and is invisible in Odoo.
 
-**Independent Test**: Set one order to "Urgent" priority and another to "Normal". Sort the dashboard by priority and verify urgent orders appear first.
+**Independent Test**: On an order, upload a 200 KB preview and paste a URL for the 80 MB print-res TIFF. Verify the system accepts the URL (ADR-006 storage policy). Attempt to upload a 15 MB binary and verify it is rejected with a clear message. As a production lead, approve one file and reject another with a note. Verify the kanban shows the three states and the order rolls up to the least-approved child.
 
 **Acceptance Scenarios**:
 
-1. **Given** a sale order, **When** an operations manager sets the priority, **Then** the options are: "Binh thuong" (Normal), "Cao" (High), "Khan cap" (Urgent)
-2. **Given** the operational dashboard, **When** sorting by priority, **Then** urgent orders appear first, then high, then normal
-3. **Given** the operational dashboard, **When** filtering by priority "Khan cap" (Urgent), **Then** only urgent orders are shown
-4. **Given** a new order imported from Etsy, **When** it enters the system, **Then** it defaults to "Binh thuong" (Normal) priority
+1. **Given** a sale order, **When** a user uploads a design file ≤ 10 MB, **Then** the binary is stored via `ir.attachment` on filestore (not in PG) and a preview thumbnail (≤ 2 MB) is generated/attached.
+2. **Given** a user attempts to upload a design file > 10 MB on a restricted model (`order.design.file`, `sale.order`, `tracking.import.line`), **When** the write is attempted, **Then** a `ValidationError` is raised with text: "File exceeds 10 MB limit. Use URL mode or Drive/S3 link instead."
+3. **Given** a large design file, **When** the user pastes a URL instead, **Then** the design-file record stores `storage_mode='url'`, `file_url`, `file_name`, `file_size`, `file_checksum` (SHA-256 if reachable), and the preview thumbnail alone is stored locally.
+4. **Given** a design-file record, **When** a production-team user sets approval state to `approved`, `rejected`, or `pending`, **Then** the record tracks user and timestamp; `rejected` requires a non-empty `rejection_reason`.
+5. **Given** multiple design-file children under an order line, **When** any child is `pending` or `rejected`, **Then** the line's rolled-up design status is the lowest of its children (order: `rejected` < `pending` < `approved`).
+6. **Given** the kanban view, **When** rendered, **Then** three columns exist (`Chờ duyệt`, `Duyệt`, `Cần chỉnh lại`) and design-file cards can be dragged between columns by production-team members only.
+7. **Given** a non-production user, **When** they view the kanban, **Then** they see approval states but cannot change them (ACL enforced).
+8. **Given** the historical 17,659 orders, **When** the Spec 002 migration wizard runs, **Then** design files are created with `storage_mode='url'` populated from the source Excel's `DESIGN_LINK_FRONT` / `DESIGN_LINK_BACK` columns; no download, no rehosting.
 
 ---
 
-### User Story 6 - Fulfillment Status Tracking (Priority: P2)
+### User Story 6 — Multi-Channel Foundation (Priority: P2)
 
-As an operations team member, I need to track each order through fulfillment stages on the dashboard, so I can see at a glance which orders need attention at each stage.
+As an owner, I need every sale order to be tagged with a sales channel (Etsy / Amazon / Website / Other) plus a generic `channel_order_ref`, so the three dashboards, future channel connectors, and all reports operate on a channel-aware schema from day one.
 
-**Why this priority**: The Google Sheet workflow tracks status with column E. Without equivalent status tracking in Odoo, the team loses visibility into where each order is in the fulfillment pipeline.
+**Why this priority**: Deferring channel fields forces a second migration once Amazon/Website arrive — and every dashboard view, search, and report must then be retrofitted. Cheap to do now, expensive to do later.
 
-**Independent Test**: Set an order's fulfillment status to "Cho file" (Waiting for file), then change it through each stage. Verify dashboard filters work for each status.
+**Independent Test**: Open any Etsy order; verify `sales_channel='etsy'` and `channel_order_ref == etsy_order_id`. Create a test order manually and set `sales_channel='amazon'`; filter the Order Dashboard by channel and verify the split. Run the backfill migration and verify idempotency (re-run is a no-op).
 
 **Acceptance Scenarios**:
 
-1. **Given** a sale order, **When** a team member sets the fulfillment status, **Then** the options include at minimum: "Moi" (New), "Cho file" (Waiting for design file), "Dang san xuat" (In Production), "Da san xuat" (Produced), "Da dong goi" (Packed), "Da gui" (Shipped), "Huy" (Cancelled)
-2. **Given** the operational dashboard, **When** filtering by fulfillment status, **Then** only orders matching the selected status appear
-3. **Given** the operational dashboard, **When** viewing the dashboard with color coding, **Then** different fulfillment statuses are visually distinguishable (e.g., status badge colors)
-4. **Given** an order with fulfillment status "Da gui" (Shipped), **When** viewing the order, **Then** the shipping date and tracking number are populated
+1. **Given** a new sale order, **When** created, **Then** `sales_channel` is a Selection with values `etsy`, `amazon`, `website`, `other`, indexed and required.
+2. **Given** any existing Etsy order post-backfill, **When** viewed, **Then** `sales_channel='etsy'` and `channel_order_ref == etsy_order_id`.
+3. **Given** the backfill migration is re-run, **When** it iterates existing orders, **Then** rows with a non-empty `sales_channel` are skipped (idempotent).
+4. **Given** an Amazon-tagged order, **When** the Order Dashboard renders, **Then** the row shows an `decoration-warning` (Amazon) variant distinct from Push/Urgent decorations.
+5. **Given** the three dashboards, **When** the user applies "Channel = Etsy", **Then** only Etsy rows render. Channel is available as a group-by key on all three dashboards.
 
 ---
 
-### User Story 7 - Label Status Management (Priority: P3)
+### User Story 7 — Audit Log + Vietnamese UI as cross-cutting FRs (Priority: P2)
 
-As a shipping team member, I need to track label status for each order so I know which orders need shipping labels generated, which have labels ready, and which do not need labels.
+As a compliance-conscious owner, I need every edit to a tracked field on orders, design files, address-change requests, and fulfillment state to appear in the chatter with old/new values and user attribution, and I need every form label / button / menu / status value to be available in Vietnamese (the team's working language), so we have a defensible audit trail and zero English-only friction for daily operators.
 
-**Why this priority**: Label management is part of the Google Sheet workflow (Column D). Important for shipping efficiency but not blocking core operations.
+**Why this priority**: Audit is implicit in Odoo but only if `tracking=True` is set on each field; omitting it is silent and unrecoverable later. Vietnamese labels are not optional for this team — English-only menus have been the top user-adoption friction reported by BA and PD.
 
-**Independent Test**: Set an order's label status to "Can get label" (Need to get label). Verify it appears in the "need label" filter. Change to "Da get" (Label ready). Verify it moves to the correct filter.
+**Independent Test**: Edit an order's PIC, priority, fulfillment stage, and shipping address via the approval workflow. Open the chatter tab; verify one entry per tracked change with old/new values and the editor's name. Switch the Odoo language to Vietnamese; verify every new label (dashboards, buttons, status values, kanban columns, error messages) shows the translated string.
 
 **Acceptance Scenarios**:
 
-1. **Given** a sale order, **When** a team member sets the label status, **Then** the options are: "Khong can" (Not needed), "Can get label" (Need to get label), "Da get" (Label ready)
-2. **Given** the operational dashboard, **When** filtering by label status "Can get label", **Then** only orders needing labels appear
-3. **Given** a new order entering the system, **When** no label action has been taken, **Then** the default label status is empty/unset
+1. **Given** every model introduced by this spec, **When** declared, **Then** the model inherits `mail.thread` and `mail.activity.mixin`; every user-visible field sets `tracking=True` unless it is a Binary or a technical counter.
+2. **Given** a tracked-field edit (PIC, priority, fulfillment stage, design status, address-change state, shipping carrier, tracking state), **When** the write commits, **Then** a `mail.tracking.value` row is created and visible in the chatter with old/new values and editor.
+3. **Given** a user switches their preferred language to Vietnamese, **When** they open any dashboard or form introduced by this spec, **Then** every label, button, status value, menu entry, kanban column title, error message, and help text renders in Vietnamese with correct diacritics.
+4. **Given** the module's `i18n/` directory, **When** packaged, **Then** `vi_VN.po` is present, non-empty, and covers 100% of new strings introduced by this spec. A CI check asserts coverage.
+5. **Given** round-trip data flows (Excel import, Excel export, CSV export, chatter email notifications), **When** Vietnamese strings pass through, **Then** UTF-8 encoding is preserved end-to-end (no mojibake, no diacritic loss).
 
 ---
 
 ### Edge Cases
 
-- What happens when a design file upload exceeds the Odoo attachment size limit? The system should reject the upload with a clear error message indicating the maximum file size.
-- What happens when a team member tries to approve a design file that has already been approved? The system should allow re-approval (updating the approver and date) without error.
-- What happens when an order line has multiple design files with different approval statuses? The overall order line design status should reflect the least-approved file (e.g., if one is "Pending" and one is "Approved", the line status shows "Pending").
-- What happens when the sales_channel backfill migration runs on orders that already have a channel set? The migration should be idempotent -- skip orders that already have a sales_channel value.
-- What happens when a user deletes a design file that has been approved? The system should allow deletion but log it in the chatter for audit trail.
-- What happens when the dashboard has 17,000+ orders? The view should use server-side pagination and not attempt to load all records at once. Default page size of 80 records.
-- What happens when a design file upload exceeds 10MB? The system should validate file size before storage and reject uploads exceeding the configured maximum with a clear error message.
-- What happens when a design file is rejected (can_chinh_lai) and a new version is uploaded? The new file is a separate record; the rejected file remains for audit trail. No parent-child link between versions (simplicity over completeness).
+- A duplicate-buyer decoration must NOT false-positive on repeat loyal customers; the "duplicate" signal is a 7-day sliding window on `partner_id + shipping address hash`, not on name-only match.
+- Overdue-approval markers must exclude orders whose `sales_channel` is `amazon` (no design approval workflow there yet) and orders in final states (`shipped`, `done`, `cancel`).
+- Inline edit on the dashboards must honour ACLs — an MP user inline-editing a destination field should see the value render read-only with the approval-workflow hint, not a silent write failure.
+- A design file whose URL becomes unreachable (Etsy CDN 404) must surface a warning chip in the kanban without failing the render.
+- Process Dashboard's stage transition to "Đã sản xuất" must be idempotent — accidental double-click or double-submit must not generate two `stock.move` records (Spec 004a implements the guard; this spec verifies the behaviour).
+- Address-change request filed on an already-shipped order must be rejected by a constraint with a helpful message ("Order already shipped — create a return/ticket instead").
+- If the Etsy CDN URLs in historical orders are empty (missing `DESIGN_LINK_FRONT` / `BACK`), the migration wizard creates an empty `order.design.file` placeholder with `storage_mode='url'` and `file_url=NULL`, flagged for later manual fill.
+
+---
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST provide an operational list view with 21 columns matching the Google Sheet layout, with columns A-F editable inline
-- **FR-002**: System MUST allow uploading design files (Binary) to individual sale order lines
-- **FR-003**: System MUST allow uploading preview/thumbnail images for design files
-- **FR-004**: System MUST support a 3-state design approval workflow: "Cho duyet" (Pending Review), "Duyet" (Approved), "Can chinh lai" (Needs Adjustment)
-- **FR-005**: System MUST require a rejection note when setting approval status to "Can chinh lai"
-- **FR-006**: System MUST record the approving user and timestamp when a design file is approved
-- **FR-007**: System MUST restrict design approval actions to members of the production team security group
-- **FR-008**: System MUST provide a kanban view for the design queue with 3 columns by approval status
-- **FR-009**: System MUST add a "sales_channel" field to sale orders with values: etsy, amazon, website, other
-- **FR-010**: System MUST add a "channel_order_ref" field to store the external order reference generically
-- **FR-011**: System MUST backfill existing Etsy orders with sales_channel="etsy" and channel_order_ref from etsy_order_id
-- **FR-012**: System MUST support PIC (Person In Charge) assignment per sale order
-- **FR-013**: System MUST support order priority levels: Normal, High, Urgent
-- **FR-014**: System MUST support fulfillment status tracking with at minimum 7 stages
-- **FR-015**: System MUST support label status tracking with 3 states
-- **FR-016**: System MUST provide dashboard filters for: sales channel, shop, PIC, priority, fulfillment status, label status, date range
-- **FR-017**: System MUST compute an overall design status per order line from its attached design files
-- **FR-018**: System MUST allow grouping the dashboard by shop, channel, PIC, priority, or fulfillment status
-- **FR-019**: System MUST handle 17,000+ orders with server-side pagination in the dashboard view
+#### Dashboards
+
+- **FR-001**: System MUST provide three distinct dashboards — Order, Tracking, Process — backed by the same `sale.order` + `sale.order.fulfillment` data, each with its own column set, default filters, default sort, and row decorations.
+- **FR-002**: System MUST render product thumbnails (`image_128`) inline on the Order Dashboard and the Process Dashboard without additional form-open navigation.
+- **FR-003**: System MUST support list-row decorations driven by: `product_uom_qty >= 2`, duplicate-buyer 7-day window, `order_priority IN ('push','urgent')`, and `sales_channel = 'amazon'`. Decorations compose (e.g., Push + Amazon = stacked badges).
+- **FR-004**: System MUST paginate dashboards server-side at 80 rows per page; initial load of the first page MUST complete within 3 seconds for a 17,000+ row dataset on the target environment.
+- **FR-005**: System MUST allow inline edit on Order Dashboard for: MP note, PIC, priority, fulfillment stage, label status — subject to ACL.
+- **FR-006**: System MUST allow inline edit on Tracking Dashboard for: tracking number, carrier (M2O to `shipping.carrier`), shipping date, label status, tracking state.
+- **FR-007**: System MUST allow inline edit on Process Dashboard for: production stage, PD note, `production_blocked`, block reason, PIC (PD).
+- **FR-008**: System MUST provide a merged Tracking State column (Selection: none / label_requested / label_ready / shipped / in_transit / delivered) that is read on all three dashboards and writable via Tracking Dashboard.
+- **FR-009**: System MUST display an overdue-approval marker on any order whose design-approval `mail.activity` is ≥ 24 hours past due date (excluding final-state orders and non-etsy channels).
+- **FR-010**: System MUST display a store-manager avatar column on Order and Process dashboards, sourced from `etsy.shop.manager_user_id` (or the channel-specific equivalent).
+
+#### Address-Change Approval
+
+- **FR-011**: System MUST introduce model `etsy.address.change.request` with at minimum: `order_id` (M2O sale.order), `requested_fields` (JSON listing changed keys), `new_values` (JSON with new scalar values), `state` (Selection: requested / approved / rejected), `requested_by`, `approved_by`, `rejection_reason`, `mail.thread` + `mail.activity.mixin` inheritance.
+- **FR-012**: System MUST compute a boolean `has_pending_address_change` on `sale.order` driven by the presence of any related request in state `requested`.
+- **FR-013**: System MUST render `partner_shipping_id`, `street`, `street2`, `city`, `zip`, `state_id`, `country_id` as read-only on `sale.order` form + Order Dashboard + Tracking Dashboard when `has_pending_address_change == True`.
+- **FR-014**: System MUST enforce at ORM level (via `@api.constrains` or `_write` override on `sale.order`) that a write to any destination field fails with `UserError` when `has_pending_address_change == True`, regardless of UI state.
+- **FR-015**: System MUST post a `mail.activity` to the BA-approver group on request creation and auto-complete the activity on approve/reject.
+- **FR-016**: System MUST reject creation of an address-change request on orders in final states (`shipped`, `done`, `cancel`) via a `@api.constrains` hook, with a message pointing to the returns/ticket flow.
+- **FR-017**: Tracking Dashboard bulk actions (mark shipped, request label, etc.) MUST exclude rows with `has_pending_address_change == True` and warn the operator on-screen.
+
+#### Design Files
+
+- **FR-018**: System MUST introduce model `order.design.file` with at minimum: `order_line_id` (M2O), `storage_mode` (Selection: `small` / `url`), `design_file` (Binary, `attachment=True`), `preview_file` (Binary, `attachment=True`), `file_url` (Char), `file_name` (Char), `file_size` (Integer bytes), `file_checksum` (Char SHA-256), `state` (Selection: pending / approved / rejected), `rejection_reason` (Text), `approved_by`, `approved_at`, chatter mixins.
+- **FR-019**: System MUST override `ir.attachment.create` to reject writes > 10 MB attached to `order.design.file`, `sale.order`, or `tracking.import.line` with `ValidationError` — threshold configurable via `ir.config_parameter` (`multichannel_hub.large_file_threshold_bytes`).
+- **FR-020**: System MUST support URL-mode storage (`storage_mode='url'`) with locally-stored preview thumbnail ≤ 2 MB.
+- **FR-021**: System MUST compute a roll-up `design_status` on `sale.order.line` equal to the lowest child state (order: `rejected` < `pending` < `approved`).
+- **FR-022**: System MUST provide a kanban view on `order.design.file` with three Vietnamese-labelled columns; drag-drop restricted to the production-team ACL group.
+- **FR-023**: System MUST be compatible with the Spec 002 migration: historical orders seed `order.design.file` rows with `storage_mode='url'` from `DESIGN_LINK_FRONT` / `DESIGN_LINK_BACK`.
+
+#### Multi-Channel Foundation
+
+- **FR-024**: System MUST add `sales_channel` (Selection: `etsy`, `amazon`, `website`, `other`, indexed, required) and `channel_order_ref` (Char, indexed) to `sale.order`.
+- **FR-025**: System MUST provide a backfill migration setting `sales_channel='etsy'` + `channel_order_ref = etsy_order_id` on existing Etsy orders; the migration MUST be idempotent.
+- **FR-026**: Dashboards MUST expose `sales_channel` as a filter and group-by key; all saved searches MUST be channel-aware.
+
+#### Unified Carrier
+
+- **FR-027**: System MUST introduce model `shipping.carrier` with `name`, `code` (unique), `is_active`, `tracking_url_template`, `tracking_prefix_regex`, `etsy_carrier_name` (Selection mapping to Etsy enum), `gearment_carrier_name`, `notes` — owned by the shared core module (ADR-003).
+- **FR-028**: System MUST replace any previous `sale.order.shipping_carrier` Char with `shipping_carrier_id` M2O to `shipping.carrier`, stored on the `sale.order.fulfillment` delegation sibling (ADR-005 + ADR-007).
+- **FR-029**: System MUST ship seed carriers covering USPS, UniUni, YunExpress, 4PX, DHL eCommerce, FedEx SmartPost, GKE Local, each with the correct `etsy_carrier_name` mapping or explicit `other` fallback.
+
+#### Delegation Mixin
+
+- **FR-030**: System MUST introduce `sale.order.fulfillment` via `_inherits = {'sale.order': 'order_id'}` hosting fulfillment-lifecycle fields (production stage, tracking number, `shipping_carrier_id`, shipping date, label status, fulfillment status, PD note, MP note, PIC, priority, `production_blocked`, block reason, `has_pending_address_change` mirror) per ADR-007. Auto-create the sibling on `sale.order` create.
+
+#### Audit & i18n (cross-cutting)
+
+- **FR-031**: Every model introduced by this spec MUST inherit `mail.thread` + `mail.activity.mixin`. Every user-visible scalar field MUST set `tracking=True` unless it is a Binary or a pure technical counter.
+- **FR-032**: System MUST ship `i18n/vi_VN.po` with 100% coverage of new strings. CI MUST fail on missing translations.
+- **FR-033**: System MUST preserve UTF-8 end-to-end across Excel/CSV import/export and email notifications; tests MUST include diacritic round-trip fixtures.
 
 ### Key Entities
 
-- **Design File**: A file (image, PDF, or design format) attached to a sale order line, with approval status tracking. Has a parent order line, optional preview image, approval status, approver, and rejection note.
-- **Sales Channel**: A classification of the sales source (Etsy, Amazon, Website, Other) stored on each sale order for filtering and reporting.
-- **Fulfillment Status**: The current stage of order fulfillment, from "New" through "Shipped", tracked per sale order.
-- **PIC Assignment**: The team member responsible for managing a specific order through its fulfillment lifecycle.
+- **Order Dashboard view** — a saved `ir.actions.act_window` on `sale.order` with a channel-aware default filter, 80-row pagination, inline-editable BA columns, product thumbnails, row decorations, overdue-approval marker, store-manager avatar.
+- **Tracking Dashboard view** — saved view on `sale.order.fulfillment` (through delegated access) focused on tracking fields; bulk-action-capable; import/export-aware; skips rows with pending address changes.
+- **Process Dashboard view** — saved view for PD with 18 operational columns, warehouse grouping, Vietnamese-coloured status chips, production-stage inline edit that delegates to Spec 004a's stock-move hook.
+- **`etsy.address.change.request`** — gated destination-change model with approval state, JSON new-value payload, BA-activity integration, ORM-level write guard on `sale.order`.
+- **`order.design.file`** — file record with dual small/URL storage mode, 3-state approval, chatter mixins, kanban.
+- **`shipping.carrier`** — unified carrier master data with Etsy and Gearment name mappings (replaces the old `shipping_carrier` Char and Spec 005's `etsy.carrier.mapping`).
+- **`sale.order.fulfillment`** — delegation sibling hosting the fulfillment-lifecycle fields; keeps `sale.order` lean per ADR-007.
 
 ## Success Criteria *(mandatory)*
 
-### Measurable Outcomes
-
-- **SC-001**: Operations team no longer uses Google Sheets for daily order management -- 100% of order processing happens in the Odoo dashboard
-- **SC-002**: All 21 columns from the Google Sheet are accessible in the Odoo operational dashboard
-- **SC-003**: Design files can be uploaded, previewed, and approved within the Odoo interface without external tools
-- **SC-004**: Production team approval/rejection cycle for design files completes in under 30 seconds per file
-- **SC-005**: Dashboard loads and is interactive within 3 seconds for a dataset of 17,000+ orders
-- **SC-006**: 100% of existing Etsy orders display the correct sales channel after backfill migration
-- **SC-007**: Dashboard filters reduce the visible order set to the operator's working scope (by PIC, status, shop) in one click
-- **SC-008**: Design queue shows real-time status of pending, approved, and needs-adjustment items with zero manual status tracking
+- **SC-001**: BA team runs daily order triage, tracking reconciliation, and production handoff entirely in Odoo for ≥ 10 consecutive business days with the Google Sheet in read-only mode.
+- **SC-002**: First-page Order Dashboard render ≤ 3 s on the target environment against the full 17K+ order dataset.
+- **SC-003**: Zero duplicate-label incidents caused by silent address edits during a 60-day post-launch window.
+- **SC-004**: Address-change requests reach a decision (approve / reject) in under 4 business hours median, measured on activity close timestamps over a rolling 30-day window.
+- **SC-005**: 100% of historical Etsy orders display the correct `sales_channel` and a non-null `channel_order_ref` post-backfill.
+- **SC-006**: 100% of new user-visible strings are translated in `vi_VN.po`; CI enforces. Zero reported mojibake incidents in Excel/CSV round-trips.
+- **SC-007**: Audit — every approval, rejection, or destination-field change produces at least one chatter entry with old/new values and the acting user; randomised sampling of 50 edits finds 100% chatter coverage.
+- **SC-008**: Three dashboards' column sets, filters, and decorations match the BA/PD/MP feedback documents without ad-hoc local customisation by end users after training.
 
 ## Assumptions
 
-- The existing etsy_integration module (Spec 001) is installed and functional with 17,659+ orders in the database
-- Spec 002 (config fixes) will be completed before or concurrently with this spec, providing correct financial data, product categories, and order confirmation
-- The Odoo instance has the `sale_management`, `stock`, `contacts`, and `mail` modules installed
-- Design files are typically PNG, JPG, PDF, or AI format, under 10MB per file
-- The production team is a small group (5-15 people) who need a dedicated security group
-- Amazon and WooCommerce channel adapters will be separate future specs that extend the sales_channel selection field
-- The operational dashboard replaces (not supplements) the Google Sheets workflow
-- The team works primarily in Vietnamese; field labels should use Vietnamese with English technical names
-- Fulfillment routing (push to partner vs internal production) is Spec 004 scope; this spec only adds the fulfillment status field for tracking
-- Spec 004 data model (fulfillment routing, partner config, production stages) should be reviewed before implementing Spec 003's design approval workflow to ensure the handoff point is coherent
+- Spec 002 is shipped or concurrent; financial data, product categories, and order confirmation are in place.
+- Spec 004a will deliver the tracking import wizard and the `stock.move` integration that the Process Dashboard's stage transition delegates to.
+- The team keeps a single Odoo company; multi-company partitioning is out of scope.
+- Odoo 19 CE only — no Enterprise modules (`helpdesk`, `documents`, `approvals`) per ADR-004.
+- Warehouse structure: two logical warehouses (VN production, US production / dropship). A master-plan open question asks whether this is logical-only or true `stock.location` per warehouse; resolution expected before Process Dashboard implementation.
+- BA approver group has ≤ 5 members; routing the approval activity to the group (not a specific user) is acceptable.
+- Design-file URLs referenced in historical data are Etsy CDN links (`etsystatic.com`) that remain reachable during the 12-month horizon; a future archival task (post-MVP) may localise them to filestore.
+- `image_128` on `product.template` is reliably populated during Spec 002 categorisation; if not, Order Dashboard falls back to a placeholder glyph rather than failing render.
 
 ## Out of Scope
 
-The following items were identified during the three-angle investigation (BA, Technical Architecture, Devil's Advocate) and are explicitly excluded from Spec 003:
+- **Fulfillment routing, partner integrations** — Spec 004b (Gearment) and beyond.
+- **Tracking import wizard itself** — Spec 004a. This spec defines the Tracking Dashboard that consumes the imported data.
+- **Returns / refunds / replace tickets** — Spec 004c (ADR-004 custom `etsy.order.ticket`).
+- **Etsy messaging / 2-way CRM** — deferred with Spec 005 (conversations scope not granted).
+- **Raw-material inventory + forecasting** — Spec 007 (PD feedback; native `stock_forecasted`).
+- **Sales pricing audit dashboard** — Spec 006.
+- **Amazon / Website channel connectors** — Specs 010 / 011; this spec only ensures the foundation is ready.
+- **Google Drive auto-sync of design files** — permanently deferred (ADR-004, ADR-006).
 
-- **CRM / 2-way Etsy messaging** -- Owner wants this (visible in system architecture diagram under "Dashboard > CRM"). Addressed in Spec 004 US6 (contingent on Etsy API approval).
-- **Fulfillment routing / push logic** -- Deciding whether orders go to external partners or internal production. Fully covered in Spec 004 (US1-US4).
-- **Partner API integration** -- Auto-syncing design files and tracking to/from external partners. Covered in Spec 004 (US3).
-- **Internal production tracking** -- Manufacturing stages and production queue. Covered in Spec 004 (US4).
-- **Raw material inventory** -- Stock level visibility for production. Covered in Spec 004 (US5).
-- **Returns/refunds workflow** -- Reverse flow for shipped orders. Covered in Spec 004 (US7).
-- **Inventory sync across channels** -- Overselling prevention when multiple channels share inventory. Future spec (005+).
-- **Amazon/WooCommerce connectors** -- Actual channel adapters beyond the sales_channel field. Future spec (005+).
-- **Google Sheet tabs MP, BA, PD, Policy/Audit** -- The operational dashboard replaces the "Dashboard v1" tab and partially covers "Dashboard PD". The remaining 4 tabs (Marketing, Business Analysis, Policy/Audit, Other Proposals) are future scope.
-- **Design file version control** -- Tracking v1/v2/v3 of design files with parent-child relationships. Considered but deferred to keep the design file model simple.
+## Dependencies
 
-## Investigation Reference
+| This spec needs | From | Why |
+|---|---|---|
+| Confirmed financial data + product categorisation | Spec 002 | Order Dashboard shows correct `amount_total`, image, category |
+| Delegation mixin `sale.order.fulfillment` | ADR-007 (this spec owns the mixin) | All fulfillment-lifecycle fields live here |
+| Unified `shipping.carrier` model + seed | ADR-005 (this spec owns it) | Tracking Dashboard + future Etsy push + Gearment |
+| 10 MB attachment guard | ADR-006 (this spec owns it) | Design-file storage policy |
+| Module decomposition into `multichannel_hub_core` | ADR-003 | Mixin + carrier + dashboards ship in the shared core so Amazon/Website reuse |
 
-A comprehensive three-angle analysis (BA/Odoo Consultant, Technical Architect, Devil's Advocate) was conducted on 2026-04-07. See `specs/003-dashboard-design-multichannel/investigation.md` for the full report covering:
-- 16-item gap analysis between owner's vision and spec coverage
-- 6 CRITICAL risks and 9 HIGH risks identified
-- Architecture assessment (8.5/10 separation of concerns, 7/10 multi-channel readiness)
-- Google Sheet tab mapping (6 tabs, 1.5 covered by this spec)
-- Recommended phasing: Spec 003 -> 004 -> 005+
+| Other specs need from this | What |
+|---|---|
+| Spec 004a | `shipping.carrier` seed; `sale.order.fulfillment` mixin; Tracking Dashboard to surface imports; Process Dashboard stage enum |
+| Spec 004b (Gearment) | Delegation mixin + carrier + dashboards to surface partner state |
+| Spec 004c (returns/tickets) | Chatter / activity scaffolding + dashboards to link tickets |
+| Spec 005 (Etsy API) | `shipping.carrier.etsy_carrier_name` for tracking push; `sales_channel` for channel tagging; dashboards to surface API sync state |
+| Specs 010 / 011 (Amazon / Website) | Channel foundation + delegation mixin reuse |
+
+## Revision History
+
+- **2026-04-06**: v1 authored (single dashboard, 7 user stories). Archived under `_archive/spec-2026-04-06.md`.
+- **2026-04-13**: Full rewrite per master-plan Wave B. Three dashboards, address-change approval workflow, delegation mixin adoption, unified carrier, 10 MB file cap, Vietnamese i18n + audit as explicit FRs.

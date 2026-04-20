@@ -1,7 +1,8 @@
 # ADR-004: Enterprise Alternatives — Custom Minimal Implementations
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect, BA lead
 - **Affects**: Spec 003 (design file + approval), Spec 004c (ticket system), future inventory and documents work
 - **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [ba-consultant.md §3](../agent-reports/ba-consultant.md), [devils-advocate.md §7](../agent-reports/devils-advocate.md)

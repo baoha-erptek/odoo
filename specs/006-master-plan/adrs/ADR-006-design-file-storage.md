@@ -1,10 +1,31 @@
-# ADR-006: Design File Storage — Filestore/URL Only, 10 MB Cap
+# ADR-006: Design File Storage — Google Drive Primary, Filestore Fallback, 10 MB Cap
 
-- **Status**: Proposed (awaiting owner sign-off)
-- **Date**: 2026-04-10
+- **Status**: Accepted (Revised 2026-04-13)
+- **Date**: 2026-04-10 (initial) · **Revised**: 2026-04-13 (owner confirmed GDrive is the primary store — see §0 below)
+- **Sign-off**: 2026-04-13 (owner, both initial and revision)
 - **Deciders**: Owner, architect, ops
-- **Affects**: Spec 003 (order.design.file), Spec 004 (tracking file attachments)
-- **Related**: [devils-advocate.md §1.7](../agent-reports/devils-advocate.md), [MASTER_PLAN.md §5 R6](../MASTER_PLAN.md)
+- **Affects**: Spec 003 (order.design.file), Spec 004 (tracking file attachments), Spec 004a (GDrive polling for tracking Excel — separate use case but shares auth)
+- **Related**: [devils-advocate.md §1.7](../agent-reports/devils-advocate.md), [MASTER_PLAN.md §5 R6](../MASTER_PLAN.md), [ADR-008](ADR-008-api-first-pivot.md)
+
+## 0. Revision 2026-04-13 — Google Drive is the primary store
+
+Owner answer to MASTER_PLAN Q4 (design file size reality): design files will live on **Google Drive**, not in the Odoo filestore or `ir_attachment.db_datas`. Odoo stores a **GDrive file reference** (file ID + preview URL) plus a small local thumbnail.
+
+What changes from the initial (2026-04-10) version of this ADR:
+
+- Section 3 (URL-based design file references) — **promoted from optional escape hatch to the default path**. `storage_mode='gdrive'` is added as the primary mode; `storage_mode='url'` stays as a generic-URL option for non-GDrive links (e.g., direct `etsystatic.com` CDN links captured from Etsy); `storage_mode='small'` stays for tiny on-filestore binaries.
+- Section 2 (10 MB cap) — unchanged. The cap remains insurance against anyone bypassing the GDrive path and dumping a large file into `ir_attachment`.
+- Section 4 (thumbnails local) — unchanged.
+- New Section 6 — GDrive auth, folder structure, and polling policy shared with Spec 004a's logistics tracking imports.
+
+What does **not** change:
+
+- Filestore location stays `file` (the Odoo default) — section 1.
+- 10 MB hard cap on `ir_attachment` writes for restricted models — section 2.
+- Small thumbnails stored locally regardless of main-file mode — section 4.
+- Upload UX guidance — section 5.
+
+Rationale for the revision: (a) actual design files run 30–150 MB TIFF/PSD with 17K+ orders ⇒ 1.36 TB order-of-magnitude storage that Odoo shouldn't own; (b) GDrive already has org-level retention, versioning, and sharing that we do not want to re-invent; (c) the same GDrive account is being used for logistics partners' tracking-Excel uploads (Spec 004a per Q7 answer), so authenticating once and polling folders is cheaper than maintaining two storage backends.
 
 ## Context
 
@@ -72,26 +93,34 @@ class IrAttachment(models.Model):
 
 The threshold is configurable via `ir.config_parameter` (`multichannel_hub.large_file_threshold_bytes`) with a sensible default.
 
-### 3. URL-based design file references
+### 3. Storage modes (revised 2026-04-13)
 
-Extend `order.design.file` to support **URL-mode** storage alongside small-file mode:
+Extend `order.design.file` to support three storage modes with GDrive as the primary:
 
 ```
 order.design.file
-  storage_mode        Selection: 'small' (default, up to 10 MB binary), 'url' (external link)
+  storage_mode        Selection:
+                        'gdrive' (DEFAULT for new orders — file lives in GDrive)
+                        'url'    (external non-GDrive link, e.g. Etsy CDN)
+                        'small'  (rare — small binary inside ir_attachment, <=10 MB)
+  gdrive_file_id      Char                    # Google Drive file ID (required if storage_mode='gdrive')
+  gdrive_preview_url  Char                    # GDrive preview/webViewLink (computed from file ID)
+  gdrive_folder_id    Char                    # parent folder ID for context / policy enforcement
+  file_url            Char                    # generic external URL (if storage_mode='url')
   design_file         Binary                  # only if storage_mode='small'
-  preview_file        Binary                  # small preview/thumbnail, <= 2 MB
-  file_url            Char                    # Google Drive / S3 / etc. link, if storage_mode='url'
+  preview_file        Binary                  # small thumbnail, always local, <=2 MB
   file_name           Char                    # original filename
   file_size           Integer                 # bytes, for display
   file_checksum       Char                    # SHA-256 for integrity
 ```
 
-Form view renders a preview (thumbnail always stored locally) and either an inline download link (`small` mode) or an external link (`url` mode).
+Form view renders the always-local thumbnail plus either a GDrive-aware viewer (`gdrive` mode — embedded preview + "Open in Drive" button), an external-link button (`url` mode), or an inline download (`small` mode).
 
-**For the historical 17K orders**: reuse the existing `DESIGN_LINK_FRONT`/`DESIGN_LINK_BACK` URLs from the source Excel. Migration wizard (Spec 002) populates `storage_mode='url'` + `file_url` from those columns. No download, no re-upload.
+**For new orders (Phase 1+)**: designer uploads the final design file via the Spec 003 wizard. The wizard uploads to the per-order GDrive folder via the GDrive API service account, captures the returned `file_id`, generates a thumbnail locally (resize to <=2 MB), and stores the record with `storage_mode='gdrive'`. No design bytes pass through Odoo's filestore.
 
-**For new orders** (API-sourced via Spec 005 or email-sourced via Spec 001): parser captures the CDN URL (Etsy `etsystatic.com` links) and stores as `storage_mode='url'` by default. Only flip to `small` mode if the designer manually uploads a local file after review.
+**For API-captured CDN links (Spec 005)**: when the Etsy API returns a design listing image URL (`etsystatic.com` CDN), it is stored with `storage_mode='url'` + `file_url=<cdn link>`. If the designer uploads a replacement / refined file, a new record is created with `storage_mode='gdrive'` and the old CDN-URL record is archived (not deleted — preserves audit trail).
+
+**For the historical 17K orders (Spec 002 migration)**: reuse the existing `DESIGN_LINK_FRONT`/`DESIGN_LINK_BACK` URLs from the source Excel. Migration wizard populates `storage_mode='url'` + `file_url` from those columns. **No download, no re-upload, no GDrive migration** — historical URLs are preserved as-is to avoid 17K GDrive API calls and associated quota consumption. A one-off later task can bulk-copy historical designs to GDrive if the CDN URLs start expiring.
 
 ### 4. Preview thumbnails are always stored locally
 
@@ -101,10 +130,54 @@ Small thumbnails (<=2 MB) are stored in `preview_file` (Binary) regardless of th
 
 Design file upload wizards (Spec 003) must show:
 - Current file size as user uploads (JS file input event)
-- The 10 MB cap as a form hint
-- A link to "Use URL instead" that switches to the URL input mode when the file is large
+- Default upload target: **GDrive via service account** (`storage_mode='gdrive'`)
+- Visible progress for uploads > 10 MB (GDrive upload can take minutes on slow networks)
+- Fallback affordance: paste-an-external-URL input for `storage_mode='url'` (e.g., a designer who already has the file hosted elsewhere)
+- The 10 MB cap is enforced only on the rare `storage_mode='small'` path (not surfaced in the default UX)
 
-This prevents the user from wasting time uploading a 100 MB TIFF only to see an error.
+### 6. Google Drive integration policy (new 2026-04-13)
+
+Single GDrive organisation account, shared by design-file storage (this ADR) and logistics-partner tracking Excel ingestion (Spec 004a). Authentication and folder conventions are owned by `multichannel_hub_core`:
+
+**Auth**:
+- Service-account JSON key stored in an `ir.config_parameter` row (`multichannel_hub.gdrive_service_account_json`), admin-only read ACL, never logged.
+- Scopes: `https://www.googleapis.com/auth/drive.file` (minimum — app-created files only) for design uploads; `https://www.googleapis.com/auth/drive.readonly` for logistics-folder polling. Two separate service accounts if necessary to minimise blast radius.
+- Token refresh handled by the `google-auth` library; refresh failures surface on `etsy.sync.health` (`name='gdrive_integration'`).
+
+**Folder structure** (canonical):
+```
+GDrive root /
+  Multichannel Hub /
+    Design Files /
+      <etsy_shop_code> /
+        <YYYY> /
+          <order_number>_<design_role>.{tiff,psd,jpg}   # e.g. ETSY1234_front.tiff
+    Logistics Inbox /
+      GKE /
+        <YYYY-MM-DD>_GKE_tracking.xlsx                  # polled by Spec 004a cron
+      UniUni /
+      YunExpress /
+      USPS /
+    Logistics Archive /                                 # poller moves processed files here
+      GKE / <YYYY> / <filename>.xlsx
+```
+
+**Write policy (design files)**:
+- Designs are written under `Design Files/<shop>/<year>/`. The write is done by the service account. The path's `folder_id` is cached on the shop record (`etsy.shop.gdrive_design_folder_id`) to avoid a folder-lookup call per upload.
+- Deletes from Odoo do not delete from GDrive (soft delete only — preserves design-file audit trail).
+
+**Read policy (logistics inbox)** — Spec 004a owns the consumer:
+- Cron poll cadence per partner (default: every 15 min for GKE, configurable).
+- Poller lists files in the partner's `Logistics Inbox/<partner>/` folder, filters by `modifiedTime > last_run_at`, imports each new file via the tracking-import wizard, moves the processed file to `Logistics Archive/<partner>/<year>/` on success, and writes an error marker alongside on failure.
+- Idempotent: if the poller sees a `file_id` it has already processed (tracked in `tracking.import.log.source_gdrive_file_id`), it skips.
+
+**Quota & rate limits**:
+- GDrive API: 1,000 requests per 100 seconds per user. The poller and the upload path share the same service account; both respect the project-wide rate limiter from Spec 005's `multichannel_hub_core/utils/rate_limiter.py`.
+- Upload thresholds: resumable uploads mandatory for files > 5 MB (Google's own recommendation); single-shot for smaller.
+
+**Observability**:
+- `etsy.sync.health` row `name='gdrive_integration'` tracks: `last_successful_auth_at`, `last_upload_at`, `last_poll_at`, `upload_error_count_24h`, `poll_error_count_24h`, `quota_used_ratio`.
+- Dashboard tile (Spec 002 / ADR-008) surfaces red on auth failure or >10% error rate in the last hour.
 
 ## Consequences
 

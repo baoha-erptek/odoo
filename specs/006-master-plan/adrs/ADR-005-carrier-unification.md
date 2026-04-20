@@ -1,7 +1,8 @@
 # ADR-005: Unified Carrier Model via `shipping.carrier`
 
-- **Status**: Proposed (awaiting owner sign-off)
+- **Status**: Accepted
 - **Date**: 2026-04-10
+- **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect
 - **Affects**: Spec 003 (sale.order fields), Spec 004a (shipping.carrier), Spec 005 (Etsy tracking push)
 - **Related**: [tech-architect.md §1 CONFLICT-1](../agent-reports/tech-architect.md)

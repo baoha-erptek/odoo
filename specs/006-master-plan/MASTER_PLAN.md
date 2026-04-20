@@ -1,10 +1,12 @@
 # Master Plan — odoo19_esty Multichannel E-Commerce Hub
 
-**Date**: 2026-04-10
+**Date**: 2026-04-10 (original) · **Last revised**: 2026-04-13 ([ADR-008 API-first pivot](adrs/ADR-008-api-first-pivot.md))
 **Branch**: `005-etsy-api-channel`
 **Inputs**: End-user feedback (5 departments, `.0temp/end_user_feed_back/`) + Specs 001–005 + current module state
 **Method**: Three-agent review (BA/Odoo consultant, Technical architect, Devil's advocate)
 **Agent reports**: [ba-consultant.md](agent-reports/ba-consultant.md), [tech-architect.md](agent-reports/tech-architect.md), [devils-advocate.md](agent-reports/devils-advocate.md)
+
+> **Pivot notice (2026-04-13)**: Spec 005 (Etsy API v3) moves from Phase 3 to **Phase 0 sandbox + Phase 1 production cutover**. Email parsing enters maintenance mode for legacy shops only — no new features, only production-breaking fixes. Etsy app scope review becomes the critical-path external dependency. See [ADR-008](adrs/ADR-008-api-first-pivot.md) for the full decision.
 
 ---
 
@@ -100,28 +102,34 @@ A central hub on Odoo 19 CE ingesting orders from **Etsy / Amazon / Website**, r
 
 All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. Slack for triage and review.
 
-### Phase 0 — "Make Spec 001 real" (4-6 weeks)
+### Phase 0 — "Make Spec 001 real" + Spec 005 sandbox scaffolding (5-7 weeks)
 
-**Goal**: 17,659 orders become usable; observability in place; external dependencies unblocked.
+**Goal**: 17,659 orders become usable; observability in place; external dependencies unblocked; Etsy API client scaffolding landed against a dev token so Phase 1 cutover starts the moment scopes are approved.
+
+**Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md)**: Spec 005 Phase 0 work (OAuth scaffolding, client library, order syncer against dev shop, test harness) lands in parallel with Spec 002 cleanup. Etsy scope review is now **critical path**, not parallel-nice-to-have.
 
 | Work | Spec | Why |
 |---|---|---|
+| **Priority 1 — submit Etsy app scope review this week** (all scopes: `transactions_r/w`, `listings_r/w`, `shops_r`, `email_r`, optional `conversations_r`) | 005 | ADR-008 §4, C9 |
 | Spec 002 US1 (financial data) + US2 (confirm workflow) + US6 (migration wizard) | 002 | C1 — unblock the 17K |
 | Build batch-resumable migration wizard with per-500 savepoints and `last_processed_id` checkpoint; drop 30-min SLA | 002 | DA #3 |
 | Manual triage / archive of 423 $0 orders; freeze 500-order known-good sample | 002 | DA #2 |
 | Customer-dedup wizard producing CSV of proposed merges for BA approval (never auto-merge) | 002 | DA #9 |
-| **New**: `multichannel.sync.health` model + single dashboard tile (last_run, row_count, error_count per integration) | 002 | DA #6 |
-| **Parallel**: Submit Etsy app review with all required scopes (`transactions_r/w`, `listings_r`, `shops_r`, `email_r`) | 005 | DA #1, C9 |
+| **New**: `multichannel.sync.health` model + single dashboard tile (last_run, row_count, error_count per integration, `parser_template_drift` metric per ADR-008 §7) | 002 | DA #6, ADR-008 |
+| **Spec 005 sandbox**: OAuth2 PKCE flow against dev token, `EtsyApiClient`, shared rate limiter, `EtsyOrderSyncer` against owner's dev shop, `etsy.api.log`, VCR-style test fixtures recorded from dev shop (2-3 representative shops read-only where owner is collaborator) | 005 | ADR-008 §2 |
 | **Parallel**: Gearment sandbox POC — 3-day spike verifying auth, rate limits, HMAC format, draft/quote/confirm idempotency | 004b | DA #4 |
 | **Parallel**: GKE Excel schema fingerprinting — hash column layout on import, hard-fail on unknown | 004a | DA #4.3 |
 | Ban `_logger.info(` in `models/` and `services/` via pre-commit hook; fix 6 existing violations | — | Tech #7 |
 | Add `tracking_number` index + composite `(etsy_shop_id, etsy_last_modified DESC)` | — | Tech #9 |
+| Provision staging instance at `129.150.63.207` with nightly prod DB snapshot restore; point outbound calls at Etsy/Gearment sandboxes | infra | Q10 answer 2026-04-13 |
 
-**Exit criteria**: BA lead signs off on reconciliation report (Odoo totals vs Excel per shop). Health dashboard shows green. 17K orders confirmed with correct fiscal config. 423 $0 orders resolved (fixed or archived).
+**Exit criteria**: BA lead signs off on reconciliation report (Odoo totals vs Excel per shop). Health dashboard shows green. 17K orders confirmed with correct fiscal config. 423 $0 orders resolved. Etsy scope review **submitted** (acceptance ≠ received). Spec 005 client passes integration tests against dev-token shop with zero writes to any non-dev shop.
 
-### Phase 1 — Three Dashboards + Approval Workflows (4-6 weeks)
+### Phase 1 — Three Dashboards + Approval Workflows + Spec 005 production cutover (5-8 weeks)
 
-**Goal**: Replace the Google Sheet entirely for BA and Marketing. Ship the safety-critical workflows.
+**Goal**: Replace the Google Sheet entirely for BA and Marketing. Ship the safety-critical workflows. **And** begin per-shop cutover to `api_only` as soon as Etsy scopes are approved.
+
+**Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md)**: Spec 005 production cutover runs in parallel with dashboard work once scopes arrive. Dashboards don't block on scopes; cutover doesn't block on dashboards (but benefits from the Tracking Dashboard being live).
 
 | Work | Spec | Why |
 |---|---|---|
@@ -134,13 +142,17 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 | Extract `sale.order.fulfillment` delegation mixin before code is written | 003/004 | Tech #3 |
 | Unify carrier model: promote `sale.order.shipping_carrier` to `Many2one('shipping.carrier')`, delete `etsy.carrier.mapping` | 003 | Tech #1 |
 | Vietnamese UI: wrap all strings in `_()`, commit `.po` file | 003 | BA R10 |
-| Design file storage policy: filestore/URL only, hard-fail if >10 MB to `ir_attachment` | 003 | DA #10 |
+| Design file storage policy: GDrive-URL primary, filestore fallback, hard-fail if >10 MB to `ir_attachment` | 003 | [ADR-006 revised 2026-04-13](adrs/ADR-006-design-file-storage.md) |
+| **Spec 005 production cutover** (gated on scope approval): pilot shop flips `sync_audit_mode=True` (1–2 weeks), BA reviews audit log, flip to `sync_mode='api_only'`. Target: 3-5 shops cutover by end of Phase 1, rest in Phase 2. | 005 | ADR-008 §2 |
+| **Spec 005 production OAuth**: replace dev token with per-shop production OAuth flow; wire `EtsyTrackingPusher` to the Tracking Dashboard's tracking writes (reads `shipping.carrier.etsy_carrier_name`) | 005 | ADR-008 |
 
-**Exit criteria**: BA team working primarily in Odoo for order review, tracking management, and address-change approvals. Google Sheet in read-only mode. 4-week parallel run complete. Drift <1% for 10 consecutive days.
+**Exit criteria**: BA team working primarily in Odoo for order review, tracking management, and address-change approvals. Google Sheet in read-only mode. 4-week parallel run complete. Drift <1% for 10 consecutive days. At least one pilot shop running `sync_mode='api_only'` in production with zero data loss over the 30-day shadow-logging window.
 
-### Phase 2 — Tracking Import + Process Dashboard (3-4 weeks)
+### Phase 2 — Tracking Import + Process Dashboard + remaining shop cutovers (4-5 weeks)
 
-**Goal**: Close PD's biggest daily pain (tracking reconciliation) and give BA+PD a shared production view.
+**Goal**: Close PD's biggest daily pain (tracking reconciliation) and give BA+PD a shared production view. **Complete the per-shop cutover to `api_only` for the remaining 14-16 shops.**
+
+**Revised 2026-04-13**: Spec 004a now includes the GDrive polling service (per [Q7 answer](#8-open-questions-for-follow-up)). Remaining shop cutovers run in the background against the already-live Spec 005 pipeline.
 
 | Work | Spec | Why |
 |---|---|---|
@@ -150,12 +162,22 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 | `tracking.import.log` + `tracking.import.line` with manual conflict resolution UI | 004a | Spec 004 |
 | **Process Dashboard** (NEW): unified VN+US production view with PD's 18 columns, status enum with Vietnamese labels and color coding, row tags from Phase 1 | 004a | BA #14, PD feedback |
 | Production status state machine with stock moves on transition to "Đã sản xuất" (reuse Odoo stock.move) | 004a | PD, Tech |
+| **GDrive polling service** (NEW per Q7 answer 2026-04-13): cron-driven poll of per-partner GDrive folders (GKE first, UniUni/YunExpress/USPS later), detect new Excel files by `file_id` + `modified_time`, auto-ingest via the Spec 004a wizard. OAuth via service account. Manual upload remains fallback. | 004a | Q7 answer |
+| Remaining per-shop cutovers to `sync_mode='api_only'` (14-16 shops) | 005 | ADR-008 §2 |
 
-**Exit criteria**: Daily GKE Excel imports run via wizard. BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders.
+**Exit criteria**: Daily GKE Excel imports run via wizard (manual OR auto-polled from GDrive). BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders. All 19 shops flipped to `api_only`; Gmail cron stops polling any live shop.
 
-### Phase 3 — Etsy API v3 (after scope approval, 6-8 weeks)
+### Phase 3 — REMOVED per [ADR-008](adrs/ADR-008-api-first-pivot.md)
 
-**Prerequisite**: Etsy app scopes approved.
+**2026-04-13**: Spec 005 work has been redistributed across Phases 0–2. The freed Phase 3 capacity moves directly into Phase 4 (Gearment + returns + pricing audit), effectively accelerating that phase by ~4 weeks.
+
+The original Phase 3 content is preserved below for traceability but is no longer a distinct phase in the execution plan.
+
+---
+
+#### ~~Original Phase 3 — Etsy API v3 (after scope approval, 6-8 weeks)~~
+
+**~~Prerequisite~~**: ~~Etsy app scopes approved.~~
 
 | Work | Spec | Why |
 |---|---|---|
@@ -217,36 +239,71 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 ## 6. Decisions required from owner (this week)
 
-1. **Timeline reset**: Confirm 12-18 month realistic estimate (not 3-6). Commit to Phases 0-2 as MVP (13-16 weeks).
-2. **Spec 004 split approval**: Approve splitting Spec 004 into 004a / 004b / 004c.
-3. **Spec 005 deferral approval**: Approve deferring Spec 005 implementation to Phase 3, but starting Etsy app review **now**.
-4. **New specs approval**: Approve creating Spec 006 (Pricing Audit), 007 (Inventory), 008+ (Catalog, Scan, Amazon, Website).
-5. **Module decomposition approval**: Approve splitting `etsy_integration` into 4 modules before Phase 1 code starts.
-6. **Enterprise vs Custom decision**: Commit to custom minimal implementations for helpdesk, documents, approvals, documents_google_drive (do not buy Enterprise).
-7. **Vietnamese UI commitment**: Accept that VN `.po` translation is a cross-cutting FR, not a nice-to-have, for every spec.
-8. **Spec 002 target revision**: Drop "17K in <30 min" SLA; accept "batch-resumable overnight run with reconciliation sign-off".
-9. **Gearment sandbox access**: Obtain sandbox credentials and hand them to the dev team for the 3-day spike in Phase 0.
+**Status: ALL SIGNED OFF — 2026-04-13.**
+
+| # | Decision | Outcome |
+|---|---|---|
+| 1 | **Timeline reset** — 12–18 months realistic; Phases 0–2 (13–16 weeks) as MVP | Approved |
+| 2 | **Spec 004 split** into 004a / 004b / 004c | Approved ([ADR-001](adrs/ADR-001-spec-004-split.md)) |
+| 3 | **Spec 005 deferral** to Phase 3; Etsy app review submission runs in parallel now | Approved ([ADR-002](adrs/ADR-002-drop-dual-sync-mode.md) + spec.md deferral banner) |
+| 4 | **New specs** 006 (Pricing Audit), 007 (Inventory), 008+ (Catalog, Scan, Amazon, Website) | Approved |
+| 5 | **Module decomposition** into 4 modules before Phase 1 code | Approved ([ADR-003](adrs/ADR-003-module-decomposition.md)) |
+| 6 | **Enterprise vs Custom** — build custom minimal implementations (no Enterprise buy) | Approved ([ADR-004](adrs/ADR-004-enterprise-alternatives.md)) |
+| 7 | **Vietnamese UI** as cross-cutting FR for every spec | Approved |
+| 8 | **Spec 002 SLA revision** — drop `<30 min`, adopt batch-resumable overnight + reconciliation sign-off | Approved (already reflected in plan.md 2026-04-10 revision) |
+| 9 | **Gearment sandbox access** — owner to obtain credentials for Phase 0 spike | Committed |
+
+Clarification applied to decision 3: `sync_mode` keeps exactly two values (`email_only`, `api_only`), with **`api_only` as the default for new shops**; existing 19 shops remain `email_only` until per-shop cutover (see [ADR-002](adrs/ADR-002-drop-dual-sync-mode.md)).
+
+Additional ADRs accepted at the same sign-off (not in original §6 list but flagged during review):
+- [ADR-005](adrs/ADR-005-carrier-unification.md) — Unified `shipping.carrier`; delete `etsy.carrier.mapping`
+- [ADR-006](adrs/ADR-006-design-file-storage.md) — **Revised 2026-04-13**: GDrive-URL primary, filestore fallback, 10 MB cap
+- [ADR-007](adrs/ADR-007-fulfillment-delegation-mixin.md) — `sale.order.fulfillment` delegation mixin
+
+**Pivot sign-off 2026-04-13 (supersedes decision 3):**
+
+| # | Decision | Outcome |
+|---|---|---|
+| 10 | **API-first pivot** — email parsing enters maintenance mode; Spec 005 moves to Phase 0 (sandbox) + Phase 1 (cutover); scope review is critical path | Approved ([ADR-008](adrs/ADR-008-api-first-pivot.md)) |
+| 11 | **GDrive for design files + tracking Excel** — ADR-006 revised: design files primary-store on GDrive with URL in Odoo; Spec 004a expanded with GDrive polling cron (Q7 answer) | Approved (ADR-006 revision, Spec 004a amendment) |
+| 12 | **Amazon + Website** — architecture-planning only during Phases 0–2; implementation after all 19 Etsy shops on `api_only` in production | Approved (Q5 answer) |
+| 13 | **Staging environment** — confirmed at `129.150.63.207`; nightly prod snapshot restore is a Phase 0 infra task (Q10 answer) | Approved |
 
 ---
 
 ## 7. Immediate next steps (this week, before any code)
 
-1. **Owner signs off** on this master plan (decisions 1-9 above).
-2. **Submit Etsy app review** with all required scopes. Start the 3-8 week clock.
-3. **Request Gearment sandbox credentials**.
-4. **Create ADR docs**:
-   - ADR-001: "Spec 004 split into 004a/004b/004c"
-   - ADR-002: "Drop dual-mode sync; email_only / api_only only"
-   - ADR-003: "Module decomposition: core/fulfillment/etsy_channel/etsy_channel_migration"
-   - ADR-004: "Enterprise alternatives: custom minimal implementations"
-   - ADR-005: "Carrier unification — single `shipping.carrier` model"
-   - ADR-006: "Design file storage: filestore/URL only, 10 MB cap"
-   - ADR-007: "Sale.order delegation mixin `sale.order.fulfillment`"
-5. **Update Spec 002** `plan.md` with batch-resumable wizard design and reconciliation sign-off criterion.
-6. **Add `multichannel.sync.health` stub** to Spec 002's data-model.md.
-7. **Archive / freeze** specs 003, 004, 005 `tasks.md` files — they will be regenerated after the master plan is approved.
-8. **Dispatch `/speckit-specify`** for Spec 003 rewrite (three dashboards, delegation mixin, address-change approval, image+decoration pack).
-9. **Create `.claude/plans/006-master-plan-tracking.md`** to track execution of this plan.
+**Wave A (completed 2026-04-13):**
+
+1. ✅ Owner signed off on all 9 decisions.
+2. ✅ ADRs 001–007 authored, reviewed, and marked Accepted.
+3. ✅ Spec 002 `plan.md` — already contains batch-resumable wizard, R8/R9/R10 revisions, reconciliation sign-off criterion.
+4. ✅ Spec 002 `data-model.md` — added `etsy_price_anomaly`, `etsy.sync.health` model, wizard resume/anomaly/health fields, ACL rows.
+5. ✅ Spec 005 `spec.md` + `plan.md` — deferral banner; `sync_mode` reduced to 2 values with `api_only` default; `sync_audit_mode` added; US4 webhooks P1→P2; `etsy.carrier.mapping` removed per ADR-005.
+6. ✅ Spec 003 `tasks.md` — frozen with SUPERSEDED banner pointing to Wave B rewrite.
+7. ✅ Spec 004 `tasks.md` — frozen with SUPERSEDED banner; 004a/004b/004c split noted.
+
+**Still to do (actions, not spec-edits):**
+
+8. **Submit Etsy app review** with all required scopes — **CRITICAL PATH** per [ADR-008](adrs/ADR-008-api-first-pivot.md). Start the 3–8 week clock. Guide for owner: [guides/vi/etsy-app-review-guide.md](guides/vi/etsy-app-review-guide.md).
+9. **Request Gearment sandbox credentials** (owner task per decision 9). Guide for owner: [guides/vi/gearment-sandbox-guide.md](guides/vi/gearment-sandbox-guide.md).
+10. **Create `.claude/plans/006-master-plan-tracking.md`** to track execution of this plan. *(Created 2026-04-13.)*
+11. **Provision staging environment** at `129.150.63.207` with nightly prod DB snapshot restore (Q10 answer, decision 13).
+12. **Revise ADR-006** to add GDrive-URL primary mode (decision 11). *(Completed 2026-04-13.)*
+13. **Amend Spec 004a** scope to include GDrive polling cron for logistics partners (decision 11). *(Completed 2026-04-13.)*
+
+**Wave B (completed 2026-04-13):**
+
+11. ✅ Spec 003 `spec.md` rewritten — 7 user stories covering three dashboards (Order / Tracking / Process), address-change approval workflow (safety-critical), design-file 3-state approval with 10 MB cap + URL mode (ADR-006), multi-channel foundation, audit + Vietnamese i18n as cross-cutting FRs, delegation mixin + unified carrier alignment (ADRs 003 / 005 / 007). Old spec archived under `_archive/`.
+12. ✅ Spec 004a `spec.md` authored at `specs/004a-tracking-import/` — 5 user stories covering GKE Excel wizard with schema fingerprinting, carrier detection service, Process Dashboard stock-move hook, import log + line + replay, carrier admin UX. ADR-001 split formalised.
+
+**Wave B deferred (non-blocking):**
+
+- `plan.md` + `data-model.md` regeneration for Spec 003 and Spec 004a. Spec.md is authoritative; plan/data-model can be produced when implementation starts.
+
+**Wave C (after Phase 0 ships):**
+
+13. New specs `004b`, `004c`, `006` (Pricing Audit), `007` (Inventory); rewrite Spec 005 post scope approval; then 008+.
 
 ---
 
@@ -255,13 +312,13 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 1. **Team size**: Confirm the number of developers actually available. The 12-18 month estimate assumes 2 devs.
 2. **Current $0-price orders**: Who decides what price to assign? Is there a source to recover from (Etsy API, payment processor, accounting)?
 3. **Customer dedup historical policy**: Are repeat-customer analytics needed for the 17K historical orders, or is future-only dedup sufficient?
-4. **Design file size reality**: Actual distribution of current design file sizes (need to measure). Confirms or refutes the 1.7 TB concern.
-5. **Amazon timeline**: When is Amazon integration needed? PD already tags Amazon orders red — is there already Amazon data coming in through some other channel?
+4. **Design file size reality**: **ANSWERED 2026-04-13** — Design files to be stored on **Google Drive**, not in Odoo filestore or `ir_attachment`. Odoo stores only the GDrive URL/file ID reference. This supersedes ADR-006's filestore-only path for design files; filestore remains for small thumbnails. Action: revise [ADR-006](adrs/ADR-006-design-file-storage.md) to add GDrive-URL as the primary storage mode; Odoo field stores `gdrive_file_id` + public/preview URL.
+5. **Amazon timeline**: **ANSWERED 2026-04-13** — Amazon integration is **system-architecture planning only** during Phases 0–3. Implementation starts **after Etsy full flow is live in production** (end of Phase 3 / Spec 005 cutover). Confirms Spec 010 stays in Phase 5. Action: ensure `multichannel_hub_core` abstractions (`sales_channel`, delegation mixin, unified carrier) are Amazon-ready by Phase 1 exit, but no Amazon code before Etsy cutover.
 6. **Sales team count**: Per-MP toggle for tracking push (Marketing) — how many MPs? Per-shop suffices?
-7. **Google Drive necessity**: Manual Excel upload vs automated GDrive sync — what's the actual ops cost difference?
+7. **Google Drive necessity**: **ANSWERED 2026-04-13** — GDrive is **required**, not optional. Logistics partners (GKE, and future UniUni/YunExpress/USPS) will upload Excel tracking files to their own GDrive folders. Odoo runs a scheduled cron that polls each partner's folder, detects new files, and auto-imports via the Spec 004a wizard. Action: Spec 004a scope expands to include GDrive polling service (per-partner folder config, OAuth service account, incremental import by file-id + modified-time). Manual Excel upload remains as fallback.
 8. **`stock_barcode` CE availability in Odoo 19**: Confirm before committing Spec 009 scope.
 9. **Multi-warehouse**: Does the team have separate US and VN warehouses requiring `stock.location` per warehouse, or is this logical only?
-10. **Staging environment**: Does one exist? If not, it's a Phase 0 prerequisite for any API work.
+10. **Staging environment**: **NEEDS MORE DETAIL FROM OWNER.** Context: a staging environment is a **separate, production-like Odoo instance** (same module versions, same DB schema, copy or anonymised subset of production data) used to test risky changes **before** they touch production. It is a Phase 0 prerequisite for any API work because: (a) Gearment/Etsy API tokens need somewhere safe to call without polluting live orders; (b) the 17K-order migration wizard (Spec 002) must be dry-run end-to-end on a full DB copy to verify row-count reconciliation before the production run; (c) OAuth refresh and webhook HMAC paths cannot be tested against production without risking silent data corruption (R7/R8). Typical setup: second docker-compose stack on a different host/port (e.g. `staging.odoo.internal:8169`) with nightly DB snapshot restore from prod, `--test-enable` allowed, and all outbound partner calls pointed at sandbox endpoints. **Question for owner**: (i) does any non-production Odoo instance exist today? (ii) if not, is infra/budget available to stand one up in Phase 0? (iii) who owns the nightly DB snapshot job?
 
 ---
 

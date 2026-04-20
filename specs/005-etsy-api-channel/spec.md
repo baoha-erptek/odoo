@@ -2,8 +2,29 @@
 
 **Feature Branch**: `005-etsy-api-channel`
 **Created**: 2026-04-09
-**Status**: Draft
+**Status**: **ACTIVE — Phase 0 (sandbox) + Phase 1 (production cutover)** per [ADR-008 API-first pivot](../006-master-plan/adrs/ADR-008-api-first-pivot.md) — owner sign-off 2026-04-13 (pivot)
 **Input**: User description: "Etsy API v3 Channel Integration -- direct order sync, tracking push, listing management, webhooks, OAuth2 PKCE authentication, and rate limit handling. Replaces/supplements email-based order ingestion."
+
+---
+
+> **Active status (2026-04-13 pivot, supersedes earlier Phase 3 deferral)**
+>
+> Per [ADR-008](../006-master-plan/adrs/ADR-008-api-first-pivot.md), this spec is now the primary ingestion path for all new orders. Email parsing enters maintenance mode for legacy shops only.
+>
+> **Execution split**:
+> - **Phase 0 (now, in parallel with Spec 002 cleanup)**: OAuth2 PKCE scaffolding, `EtsyApiClient`, shared rate limiter, `EtsyOrderSyncer` against owner's **personal developer token** (dev shop only), `etsy.api.log`, VCR-style test fixtures. No production shops touched. US1 + US2 + US5 + US8 scaffolding only.
+> - **Phase 1 (after Etsy scopes approved, overlaps with Spec 003 dashboards)**: replace dev token with production OAuth flow, pilot shop runs `sync_audit_mode=True` for 1–2 weeks, BA reviews audit log, flip to `sync_mode='api_only'`. Repeat per shop. US3 (tracking push) wires into the Tracking Dashboard. Target: 3–5 shops cutover by end of Phase 1, remainder in Phase 2.
+> - **Phase 2**: remaining 14–16 shops flipped to `api_only`; Gmail cron stops polling live shops; parser frozen.
+>
+> **Critical-path external dependency**: Etsy app scope review (3–8 weeks). Owner submits this week — see [guides/vi/etsy-app-review-guide.md](../006-master-plan/guides/vi/etsy-app-review-guide.md).
+>
+> **Structural changes per [ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md) and [ADR-005](../006-master-plan/adrs/ADR-005-carrier-unification.md)**:
+> - `sync_mode` has exactly two values (`email_only`, `api_only`); `dual` is removed. Default for new `etsy.shop` records is `api_only`; existing 19 shops remain `email_only` until per-shop cutover.
+> - A new `sync_audit_mode` Boolean drives the 1–2 week read-only audit period during each shop's cutover (API fetches + logs diffs, does not write to `sale.order`).
+> - `etsy.carrier.mapping` is **deleted**. Carrier → Etsy enum mapping lives on `shipping.carrier.etsy_carrier_name` (ADR-005).
+> - Webhook receiver (US4) downgraded from P1 to P2.
+>
+> Sections below are preserved for traceability. Any section not rewritten in a later revision is still authoritative for its scope, but `dual` references should be read as removed.
 
 ## Clarifications
 
@@ -27,7 +48,7 @@ As an administrator, I need to register the Etsy API v3 application credentials 
 
 1. **Given** valid Etsy API credentials entered in Settings, **When** the administrator clicks "Authorize Etsy", **Then** the system redirects to Etsy's consent page with correct PKCE parameters and, on success, stores the access token, refresh token, and expiry timestamp per shop.
 2. **Given** a stored access token that has expired (older than 1 hour), **When** any API call is attempted, **Then** the system automatically refreshes the token using the refresh token before proceeding.
-3. **Given** a refresh token that has expired (older than 90 days) or been revoked, **When** the system attempts to refresh, **Then** it logs the error, notifies the administrator, and falls back to email-based order ingestion.
+3. **Given** a refresh token that has expired (older than 90 days) or been revoked, **When** the system attempts to refresh, **Then** it logs the error, flags the shop in `etsy.sync.health`, and surfaces an admin notification to re-authorize. It does **not** fall back to email (violates single-writer invariant per [ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md) / [ADR-008](../006-master-plan/adrs/ADR-008-api-first-pivot.md)). Orders placed during the outage are fetched on recovery via incremental sync.
 4. **Given** multiple Etsy shops configured in the system, **When** the administrator authorizes each shop, **Then** each shop maintains its own independent set of OAuth2 tokens.
 5. **Given** the Settings page, **When** the administrator clicks "Test Connection", **Then** the system verifies the current tokens and displays the connected Etsy user name and shop name.
 
@@ -48,7 +69,7 @@ As a shop operator, I want orders to be fetched directly from the Etsy API as st
 3. **Given** a receipt that already exists in the system (matched by Etsy order ID), **When** encountered during sync, **Then** the existing order is NOT duplicated. Only status fields are updated (payment status, shipping status, cancellation); operator-entered data (notes, assignments, design status) is preserved.
 4. **Given** receipt data includes the buyer's email address (available via API but not in email notifications), **When** the order is created, **Then** the customer record stores the email, improving deduplication accuracy over email-parsed orders.
 5. **Given** a product from the receipt, **When** the order line is created, **Then** the system matches existing products by Etsy listing ID (more reliable than name matching), falling back to name match for compatibility with legacy email-parsed products.
-6. **Given** both the email cron and the API sync are active (dual mode), **When** the same order arrives via both channels, **Then** deduplication by Etsy order ID prevents duplicates, with the first arrival winning.
+6. **Given** a shop running `sync_audit_mode=True` during cutover, **When** the API sync runs, **Then** receipt data is fetched and compared against email-parsed records; diffs are written to `etsy.api.log` (source=`audit`) and **no writes** are made to `sale.order`. (Replaces the earlier "dual mode" scenario, removed per [ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md).)
 7. **Given** the API returns an error (authentication failure, rate limit, server error), **When** the sync fails, **Then** the error is logged and the sync retries on the next scheduled cycle.
 
 ---
@@ -71,7 +92,7 @@ As a fulfillment coordinator, I need tracking numbers entered in the system to b
 
 ---
 
-### User Story 4 - Webhook Receiver for Real-Time Etsy Events (Priority: P1)
+### User Story 4 - Webhook Receiver for Real-Time Etsy Events (Priority: P2)
 
 As a system administrator, I want the system to receive real-time notifications from Etsy when orders are placed, paid, shipped, or cancelled, so that order data appears within seconds instead of waiting for the next scheduled sync.
 
@@ -140,27 +161,28 @@ As a customer service representative, I need to see Etsy buyer conversations in 
 
 ---
 
-### User Story 8 - Sync Mode Selection and Transition (Priority: P1)
+### User Story 8 - Sync Mode Selection and One-Way Cutover (Priority: P1)
 
-As an administrator, I need to choose the order ingestion method per shop (email-only, API-only, or dual/transition mode), so that I can migrate from email parsing to API sync gradually without data loss.
+As an administrator, I need to choose the order ingestion method per shop (email-only or API-only) with a read-only audit period during cutover, so that I can migrate from email parsing to API sync one shop at a time with a validation gate and no race conditions.
 
-**Why this priority**: The transition from email to API must be seamless. Running both simultaneously with deduplication ensures no orders are missed during the migration period.
+**Why this priority**: The transition from email to API must be seamless but must NOT run both writers concurrently. Dual-writer mode was rejected per [ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md) due to unmanageable race conditions and dedup-key mismatches. Cutover is per-shop, one-way, with an audit phase.
 
-**Independent Test**: Configure a shop in "dual" mode. Verify that an order arriving via both email and API is stored only once. Switch to "API only" mode and verify email parsing stops for that shop while API sync continues.
+**Independent Test**: Set `sync_audit_mode=True` on a shop that is still `email_only`. Verify the API runs read-only and logs per-receipt field diffs to `etsy.api.log` (source=`audit`). Verify no `sale.order` writes occur. Flip to `sync_mode=api_only` and verify email parsing stops for that shop while API sync becomes the single writer.
 
 **Acceptance Scenarios**:
 
-1. **Given** the shop configuration, **When** the administrator sets the sync mode, **Then** the options are: "Email Only" (current behavior), "API Only" (email processing skipped for this shop), "Dual" (both active, deduplicated by Etsy order ID).
-2. **Given** "Dual" mode is active, **When** the same order arrives via email parsing AND API sync, **Then** the first to arrive creates the order; the second detects the duplicate and skips creation.
-3. **Given** "API Only" mode, **When** the email fetch runs, **Then** emails from that shop are still fetched and marked as processed (to prevent backlog) but no orders are created from them.
-4. **Given** "API Only" mode and the OAuth token becomes invalid, **When** the API sync fails, **Then** the system automatically falls back to processing queued emails and creates an admin notification to re-authorize.
+1. **Given** the shop configuration, **When** the administrator sets the sync mode, **Then** the options are exactly two: "Email Only" (legacy) and "API Only" (new). Default for newly-created shops is "API Only"; existing shops remain "Email Only" until cutover.
+2. **Given** a shop with `sync_audit_mode=True` (regardless of `sync_mode`), **When** the API client runs, **Then** it fetches receipts and writes comparison diffs to `etsy.api.log` (source=`audit`) — no `sale.order` writes.
+3. **Given** `sync_mode='api_only'`, **When** the email fetch runs, **Then** emails from that shop are still fetched and marked processed (prevent backlog) for 30 days post-cutover as a shadow-logging safety net, after which the shop is removed from the Gmail filter entirely.
+4. **Given** `sync_mode='api_only'` and the OAuth token becomes invalid, **When** the API sync fails, **Then** the system logs the error, surfaces an admin notification to re-authorize, and flags the shop in `etsy.sync.health`. It does **not** fall back to email (that would re-introduce a second writer).
+5. **Given** `sync_mode='api_only'`, **When** an admin attempts to flip back to `email_only`, **Then** the UI requires an explicit "admin override" confirmation (the switch is conceptually one-way).
 
 ---
 
 ### Edge Cases
 
 - What happens when the Etsy API returns a receipt with a currency other than EUR? The system respects the receipt's currency and sets the order currency accordingly (consistent with multi-currency handling in Spec 002).
-- What happens when the Etsy API is down for an extended period (>24 hours)? In dual mode, the email parser continues as a fallback. In API-only mode, orders are queued and fetched on recovery via incremental sync.
+- What happens when the Etsy API is down for an extended period (>24 hours)? In `api_only` mode, orders are queued on Etsy's side and fetched on recovery via incremental sync (Etsy preserves order data; `etsy_last_modified` ensures no rows are missed). `etsy.sync.health` raises a warning after 1h of failed syncs and an error after 24h. No email fallback (would violate single-writer invariant per [ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md)).
 - What happens when the webhook endpoint is not reachable from Etsy (e.g., local development, firewall)? The periodic cron sync (US2) acts as the primary source; webhooks are a latency optimization, not a requirement.
 - What happens when the shop's Etsy account changes (e.g., shop transferred to new owner)? The OAuth tokens become invalid; the administrator must re-authorize and the system detects the token failure.
 - What happens when a listing push fails due to missing required product attributes? The system validates required fields before the API call and presents a clear error listing which fields are missing.
@@ -189,12 +211,12 @@ As an administrator, I need to choose the order ingestion method per shop (email
 - **FR-010**: System MUST handle pagination for receipt listing (Etsy uses offset + limit, max 100 per page)
 - **FR-011**: System MUST record the sync source on each order (email, API, or webhook) for diagnostics
 - **FR-012**: System MUST support a configurable sync interval (default: 5 minutes, separate from the email polling cron)
-- **FR-013**: System MUST support a sync mode per shop: email-only, API-only, or dual
+- **FR-013**: System MUST support a sync mode per shop: exactly two values — `email_only` or `api_only`. Default for new `etsy.shop` records is `api_only`. The switch is one-way (admin override required to revert). A separate `sync_audit_mode` Boolean enables a 1–2 week read-only audit phase during which the API client runs, logs comparison diffs, and does NOT write to `sale.order` ([ADR-002](../006-master-plan/adrs/ADR-002-drop-dual-sync-mode.md)).
 
 #### Tracking Push
 
 - **FR-014**: System MUST push tracking numbers to Etsy using the receipt tracking endpoint with tracking code and carrier name
-- **FR-015**: System MUST support a configurable carrier name mapping (system carrier name to Etsy-recognized carrier name)
+- **FR-015**: System MUST read the Etsy carrier name from `shipping.carrier.etsy_carrier_name` (ADR-005). The standalone `etsy.carrier.mapping` model is removed. Orders whose carrier has no matching Etsy enum push with `other` and log a warning to `etsy.api.log`.
 - **FR-016**: System MUST track push status per order (none, pending, pushed, failed) with timestamps and error messages
 - **FR-017**: System MUST process tracking pushes in batch via a scheduled job, respecting rate limits
 
@@ -230,31 +252,32 @@ As an administrator, I need to choose the order ingestion method per shop (email
 
 ### Key Entities
 
-- **Etsy Shop** (extended): Represents an Etsy shop with API credentials, OAuth2 tokens, sync mode preference, and sync timestamps. Related to sale orders and products.
-- **Sale Order** (extended): Enhanced with tracking push status, sync source indicator, and last-modified timestamp from Etsy for incremental sync.
-- **Product** (extended): Enhanced with Etsy listing ID for reliable product matching and listing state tracking.
-- **API Call Log**: Audit trail for every Etsy API request/response, enabling debugging and quota monitoring.
-- **Webhook Event**: Record of each received webhook event with signature verification status and processing outcome.
-- **Carrier Name Mapping**: Configurable mapping between system carrier names and Etsy-recognized carrier names for tracking push.
+- **Etsy Shop** (extended): API credentials, OAuth2 tokens, `sync_mode` (`email_only` | `api_only`, default `api_only`), `sync_audit_mode` (Boolean), and sync timestamps. Related to sale orders and products.
+- **Sale Order** (extended): Tracking push status, sync source indicator, and last-modified timestamp from Etsy for incremental sync.
+- **Product** (extended): Etsy listing ID for reliable product matching; listing state tracking.
+- **API Call Log** (`etsy.api.log`): Audit trail for every Etsy API request/response (including `source='audit'` rows produced during `sync_audit_mode`).
+- **Webhook Event** (`etsy.webhook.event`, P2): Received webhook records with signature verification status and processing outcome.
+- **Sync Health** (`multichannel.sync.health`, formerly `etsy.sync.health` — see Spec 002 R8 / ADR-003): Single row per integration (`etsy_api_sync`, `etsy_tracking_push`) tracking last run, row count, error count.
+- ~~Carrier Name Mapping~~ — **removed** per [ADR-005](../006-master-plan/adrs/ADR-005-carrier-unification.md). Etsy enum mapping moved to `shipping.carrier.etsy_carrier_name`.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
 - **SC-001**: API-synced orders contain all fields present in email-parsed orders, plus additional data (buyer email, listing ID) that email parsing cannot provide
-- **SC-002**: Zero duplicate orders when running in dual mode (both email and API active) over a 30-day test period
+- **SC-002**: During a shop's `sync_audit_mode` phase (1–2 weeks), ≥99.5% field match between email-parsed and API-fetched data on critical fields (`amount_total`, line items, shipping address). Diffs logged to `etsy.api.log` (source=`audit`) and reviewed by BA before flipping to `api_only`.
 - **SC-003**: Tracking numbers pushed to Etsy within 5 minutes of being entered in the system (within a single sync cycle)
 - **SC-004**: Webhook-delivered orders appear in the system within 60 seconds of the Etsy event
 - **SC-005**: The system processes 500+ orders per sync cycle without exceeding rate limits or timing out
 - **SC-006**: Token refresh operates transparently with zero manual intervention during the 90-day refresh token validity period
-- **SC-007**: The system remains operational (via email fallback) even when the Etsy API is unavailable for 24+ hours
+- **SC-007**: When the Etsy API is unavailable for 24+ hours, `etsy.sync.health` raises an error tile (warning at 1h, error at 24h); orders placed during the outage are retained on Etsy's side and fetched on recovery via incremental sync (`etsy_last_modified` checkpoint). No email fallback per [ADR-008](../006-master-plan/adrs/ADR-008-api-first-pivot.md).
 - **SC-008**: All API calls are logged and queryable for troubleshooting, with logs auto-cleaned after the retention period
 - **SC-009**: Operators save at least 2 hours per day by eliminating manual tracking entry on the Etsy Seller Portal
 
 ## Assumptions
 
 - The Etsy developer account and API key have been registered at Etsy's developer portal before implementation begins
-- The Etsy app has been granted the required scopes: transactions (read/write), listings (read/write), shops (read), email (read)
+- The Etsy app has been granted the required scopes: transactions (read/write), listings (read/write), shops (read), email (read). **Scope review submission is a Phase 0 task** (master plan §7). Implementation of this spec starts only after approval (typical 3–8 weeks).
 - The Conversations API scope is NOT available (requires separate Etsy approval); customer messaging (US7) is deferred
 - Spec 003 (sales channel field on sale orders) is implemented before or concurrently, so API-synced orders can be tagged as "etsy" channel
 - Spec 004 (tracking number fields and carrier model) provides the tracking data that this spec pushes to Etsy

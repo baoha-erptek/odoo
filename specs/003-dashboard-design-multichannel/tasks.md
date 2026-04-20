@@ -1,5 +1,20 @@
 # Tasks: Operational Dashboard, Design File Workflow, Multi-Channel Foundation
 
+> **FROZEN — SUPERSEDED by Master Plan 006** (owner sign-off 2026-04-13)
+>
+> This tasks.md is **not authoritative**. It describes a single-dashboard design that was rewritten after end-user feedback identified three distinct dashboards (Order / Tracking / Process), an address-change approval workflow, image + row-decoration requirements, and the need for a `sale.order.fulfillment` delegation mixin before any Phase 3-era field is added to `sale.order`.
+>
+> **Do not execute tasks from this file.** Spec 003 will be regenerated via `/speckit-specify` in Wave B of master-plan execution. Dependencies to apply to the rewrite:
+> - [ADR-003](../006-master-plan/adrs/ADR-003-module-decomposition.md) — four-module split; dashboards/mixin land in `multichannel_hub_core`
+> - [ADR-004](../006-master-plan/adrs/ADR-004-enterprise-alternatives.md) — custom `etsy.address.change.request`, design-file workflow without `documents` Enterprise
+> - [ADR-005](../006-master-plan/adrs/ADR-005-carrier-unification.md) — `sale.order.shipping_carrier` Char → `shipping_carrier_id` M2O on `shipping.carrier`
+> - [ADR-006](../006-master-plan/adrs/ADR-006-design-file-storage.md) — filestore/URL only, 10 MB cap; seed historical from `DESIGN_LINK_FRONT`/`BACK`
+> - [ADR-007](../006-master-plan/adrs/ADR-007-fulfillment-delegation-mixin.md) — fulfillment fields move to `sale.order.fulfillment` delegation sibling
+>
+> **Original (superseded) content preserved below for reference.**
+
+---
+
 **Input**: Design documents from `/specs/003-dashboard-design-multichannel/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md
 **Blocking Dependency**: Review `specs/004-fulfillment-routing/data-model.md` before Phase 2 to ensure design approval -> fulfillment routing handoff is coherent

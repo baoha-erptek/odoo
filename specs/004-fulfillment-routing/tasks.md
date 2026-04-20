@@ -1,5 +1,24 @@
 # Tasks: Fulfillment Routing, Production Assignment, and Partner Integration
 
+> **FROZEN — SUPERSEDED by Master Plan 006** (owner sign-off 2026-04-13)
+>
+> Spec 004 is **split into three independently-deliverable sub-specs** per [ADR-001](../006-master-plan/adrs/ADR-001-spec-004-split.md):
+>
+> - **Spec 004a — Tracking Import + Carrier Detection** (Phase 2, MVP): GKE Excel import with schema fingerprinting, `shipping.carrier` unified model (ADR-005), Process Dashboard.
+> - **Spec 004b — Gearment Partner Adapter** (Phase 4, post-MVP): Gated on a 3-day Phase 0 sandbox spike (auth, rate limits, HMAC, draft/quote/confirm, webhook retry).
+> - **Spec 004c — Returns, Refunds, Order Tickets** (Phase 4): Custom `etsy.order.ticket` minimal helpdesk replacement per [ADR-004](../006-master-plan/adrs/ADR-004-enterprise-alternatives.md); Google Drive sync permanently deferred.
+>
+> **Do not execute tasks from this file.** New `specs/004a-.../tasks.md`, `specs/004b-.../tasks.md`, `specs/004c-.../tasks.md` will be generated via `/speckit-specify` + `/speckit-tasks` in Waves B (004a) and C (004b/004c) of master-plan execution.
+>
+> Cross-cutting decisions that the sub-specs MUST honour:
+> - [ADR-003](../006-master-plan/adrs/ADR-003-module-decomposition.md) — 004a lands in `multichannel_hub_fulfillment`; 004b's Gearment adapter likewise; partner-sync base Protocol in `multichannel_hub_core`.
+> - [ADR-007](../006-master-plan/adrs/ADR-007-fulfillment-delegation-mixin.md) — all fulfillment-lifecycle fields live on the `sale.order.fulfillment` delegation sibling, not on `sale.order` directly.
+> - Shared rate limiter utility and webhook controller base are authored in `multichannel_hub_core` in Phase 1/2, reused by 004b and (later) Spec 005.
+>
+> **Original (superseded) content preserved below for reference.**
+
+---
+
 **Input**: Design documents from `/specs/004-fulfillment-routing/`
 **Prerequisites**: plan.md (loaded), spec.md (loaded), data-model.md (loaded), research.md (loaded), quickstart.md (loaded)
 
