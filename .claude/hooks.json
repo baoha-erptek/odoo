@@ -1,0 +1,33 @@
+{
+  "hooks": [
+    {
+      "type": "PostToolUse",
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "command": "bash .claude/scripts/post-edit-python-check.sh \"$TOOL_INPUT\"",
+          "description": "Check Python files for syntax errors and debug statements after editing"
+        }
+      ]
+    },
+    {
+      "type": "Stop",
+      "hooks": [
+        {
+          "command": "bash .claude/scripts/check-debug-statements.sh",
+          "description": "Scan modified Python files for print() and _logger.info statements"
+        }
+      ]
+    },
+    {
+      "type": "PreToolUse",
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "command": "echo '$TOOL_INPUT' | grep -qE 'git\\s+push' && echo 'Reminder: Run /code-review before pushing' || true",
+          "description": "Remind about code review before git push"
+        }
+      ]
+    }
+  ]
+}
