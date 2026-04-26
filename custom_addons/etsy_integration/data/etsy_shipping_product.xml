@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!--
+        Etsy Shipping service product.
+        Used as the order line product when an Etsy order carries a shipping cost
+        so the cost is included in amount_total and appears on reports.
+        Service type: no stock move generated on picking validation.
+    -->
+    <record id="product_etsy_shipping" model="product.template">
+        <field name="name">Etsy Shipping</field>
+        <field name="type">service</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="list_price">0.0</field>
+        <field name="default_code">ETSY-SHIP</field>
+        <field name="description_sale">Shipping cost collected via Etsy checkout.</field>
+    </record>
+
+</odoo>

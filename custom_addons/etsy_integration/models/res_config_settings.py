@@ -25,6 +25,13 @@ class ResConfigSettings(models.TransientModel):
         string='Fetch Interval (minutes)',
         config_parameter='etsy_integration.cron_interval',
         default=10)
+    etsy_auto_confirm_email = fields.Boolean(
+        string='Auto-confirm cron-imported orders',
+        config_parameter='etsy_integration.auto_confirm_email',
+        default=False,
+        help='When enabled, orders created by the email cron are immediately '
+             'confirmed, their pickings validated, and marked as invoiced '
+             '(see R5). Default off — operators may want to review first.')
 
     def action_start_oauth_flow(self):
         """Initiate the Google OAuth2 authorization flow.

@@ -1,0 +1,43 @@
+{
+  "_comment": "Keyword-to-category mapping for Etsy product auto-categorization. Matches in order; first match wins. See R2 in specs/002-etsy-config-fixes/research.md. Keywords are lowercase; matching is case-insensitive.",
+  "_schema_version": 1,
+  "categories": [
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_ring_dishes",
+      "keywords": ["ring dish", "jewelry dish", "trinket dish", "ring holder"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_temporary_tattoos",
+      "keywords": ["temporary tattoo", "fake tattoo", "tattoo"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_mugs_drinkware",
+      "keywords": ["mug", "tumbler", "drinkware", "coffee cup", " cup"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_jewelry",
+      "keywords": ["necklace", "bracelet", "earring", "pendant", "anklet"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_home_decor",
+      "keywords": ["pillow", "candle", "wall art", "frame", "ornament", "coaster"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_stickers",
+      "keywords": ["sticker", "decal", "label"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_clothing",
+      "keywords": ["t-shirt", "tshirt", "hoodie", "hat", "scarf", "shirt", "clothing"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_pet_products",
+      "keywords": ["pet", "dog tag", "cat collar", "dog collar", "leash"]
+    },
+    {
+      "xmlid": "etsy_integration.product_cat_etsy_personalized_gifts",
+      "keywords": ["personalized", "personalised", "custom", "engraved", "monogram"]
+    }
+  ],
+  "fallback_xmlid": "etsy_integration.product_cat_etsy_uncategorized"
+}

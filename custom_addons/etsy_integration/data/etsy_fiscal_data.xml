@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!--
+        Etsy marketplace fiscal configuration.
+        Etsy collects and remits sales tax to buyers. Orders in Odoo use a 0% tax
+        for reporting alignment; no tax is actually charged. See research R1.
+    -->
+
+    <!-- 0% tax representing "tax collected by Etsy marketplace" -->
+    <record id="tax_etsy_collected" model="account.tax">
+        <field name="name">Etsy Tax Collected (0%)</field>
+        <field name="amount">0.0</field>
+        <field name="amount_type">percent</field>
+        <field name="type_tax_use">sale</field>
+        <field name="description">Etsy (0%)</field>
+        <field name="price_include_override">tax_included</field>
+    </record>
+
+    <!-- Etsy Marketplace fiscal position (no auto-apply; set explicitly on order) -->
+    <record id="fiscal_pos_etsy_marketplace" model="account.fiscal.position">
+        <field name="name">Etsy Marketplace</field>
+        <field name="auto_apply" eval="False"/>
+        <field name="note">Etsy is responsible for collecting and remitting marketplace tax. Orders carry a 0% tax line for reporting only.</field>
+    </record>
+
+    <!-- Immediate payment term: Etsy collects at checkout -->
+    <record id="payment_term_etsy_prepaid" model="account.payment.term">
+        <field name="name">Etsy Prepaid</field>
+        <field name="note">Payment collected by Etsy at checkout</field>
+        <field name="early_discount" eval="False"/>
+    </record>
+    <record id="payment_term_etsy_prepaid_line" model="account.payment.term.line">
+        <field name="payment_id" ref="payment_term_etsy_prepaid"/>
+        <field name="value">percent</field>
+        <field name="value_amount">100.0</field>
+        <field name="nb_days">0</field>
+    </record>
+
+    <!-- Sales team: groups all Etsy-originated orders -->
+    <record id="team_etsy" model="crm.team">
+        <field name="name">Etsy</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Pricelists per currency. Orders keep their original currency; no conversion. -->
+    <record id="pricelist_etsy_eur" model="product.pricelist">
+        <field name="name">Etsy EUR</field>
+        <field name="currency_id" ref="base.EUR"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="pricelist_etsy_usd" model="product.pricelist">
+        <field name="name">Etsy USD</field>
+        <field name="currency_id" ref="base.USD"/>
+        <field name="sequence">21</field>
+    </record>
+
+    <record id="pricelist_etsy_gbp" model="product.pricelist">
+        <field name="name">Etsy GBP</field>
+        <field name="currency_id" ref="base.GBP"/>
+        <field name="sequence">22</field>
+    </record>
+
+</odoo>

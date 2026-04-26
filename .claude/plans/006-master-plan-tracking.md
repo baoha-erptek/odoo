@@ -60,9 +60,9 @@
 | P0-01 | Owner submits Etsy app scope review | Owner | `todo` | B7 | Uses E1 tracker row |
 | P0-02 | Owner obtains Gearment sandbox credentials | Owner | `todo` | B8 | Uses E2 tracker row |
 | P0-03 | Owner creates GDrive service-account JSON key | Owner | `todo` | — | Uses E3 tracker row |
-| P0-04 | Provision staging environment on `129.150.63.207` — docker-compose stack + nightly prod snapshot restore + point outbound calls at Etsy/Gearment sandboxes | Ops (assign) | `todo` | — | Q10 answer; prerequisite for any API work |
-| P0-05 | Spec 002 US1 implementation (financial data) | Dev A | `todo` | — | Existing spec, plan.md already accepted |
-| P0-06 | Spec 002 US2 implementation (confirm workflow) | Dev A | `todo` | P0-05 | — |
+| P0-04 | Provision staging environment on `129.150.63.207` — docker-compose stack + nightly prod snapshot restore + point outbound calls at Etsy/Gearment sandboxes | Ops (assign) | `doing` | — | **Local equivalent landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (root `docker-compose.yml`, separate Postgres + Odoo containers, ports 8169/8172). Remote `129.150.63.207` deployment + nightly snapshot restore still TODO. |
+| P0-05 | Spec 002 US1 implementation (financial data) | Dev A | `done` | — | **Landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (T015–T020). Verified E2E against `tests/data/sample_single_order.txt`. |
+| P0-06 | Spec 002 US2 implementation (confirm workflow) | Dev A | `done` | P0-05 | **Landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (T021–T024). Auto-confirm helper writes `invoice_status='invoiced'` directly per R5; no `account.move` generated. |
 | P0-07 | Spec 002 US6 implementation (migration wizard) — batch-resumable, per-500 savepoints, `last_processed_id` checkpoint | Dev A | `todo` | P0-05 | DA #3 |
 | P0-08 | Manual triage + archive of 423 $0-price orders | Dev A + BA lead | `todo` | P0-07 | DA #2 |
 | P0-09 | Freeze 500-order known-good sample for migration regression | Dev A | `todo` | P0-07 | — |

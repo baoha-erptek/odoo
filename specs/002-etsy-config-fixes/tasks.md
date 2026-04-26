@@ -4,6 +4,12 @@
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
 **Regenerated**: 2026-04-19 to cover 2026-04-10 plan revisions (R4/R5/R8/R9/R10) and master-plan §7 alignment. Previous tasks.md backed up as `tasks.md.pre-regen-2026-04-19`.
 
+**MVP slice landed 2026-04-26** on branch `002-etsy-config-fixes-mvp`: T001–T024 done (Phases 1–4: setup, foundational, US1, US2). Verified end-to-end against fixture `tests/data/sample_single_order.txt`: order goes parser → sale.order with full financial config → auto-confirmed → picking done → `invoice_status='invoiced'`, no `account.move` generated (per R5). Deferred: T025–T067 (US3–US10, migration wizard for 17K backlog) — next slice.
+
+**Spec deviations to reconcile**:
+- T002: dropped `use_quotations` from `team_etsy` — field removed in Odoo 19 (`crm.team`); team works with default settings.
+- T005: only registered the 3 XML data files that exist in this slice (`etsy_shipping_product.xml`, `etsy_fiscal_data.xml`, `etsy_product_categories.xml`) plus `etsy_sync_health_views.xml` (added in T007). The wizard / discount / res_users views remain unregistered until their owning user stories land.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -17,11 +23,11 @@
 
 **Purpose**: Create data files and module scaffolding needed by all user stories
 
-- [ ] T001 Create shipping service product data file in `custom_addons/etsy_integration/data/etsy_shipping_product.xml`
-- [ ] T002 [P] Create fiscal position, tax, payment term, sales team, and pricelists data file in `custom_addons/etsy_integration/data/etsy_fiscal_data.xml`
-- [ ] T003 [P] Create product category hierarchy data file in `custom_addons/etsy_integration/data/etsy_product_categories.xml`
-- [ ] T004 [P] Create product category keyword mapping in `custom_addons/etsy_integration/data/product_category_keywords.json`
-- [ ] T005 Update `custom_addons/etsy_integration/__manifest__.py` to version `19.0.2.0.0` and include all new data files in the `data` list (etsy_shipping_product.xml, etsy_fiscal_data.xml, etsy_product_categories.xml, etsy_sync_health_views.xml, data_migration_wizard_views.xml, etsy_discount_views.xml, res_users_views.xml)
+- [x] T001 Create shipping service product data file in `custom_addons/etsy_integration/data/etsy_shipping_product.xml`
+- [x] T002 [P] Create fiscal position, tax, payment term, sales team, and pricelists data file in `custom_addons/etsy_integration/data/etsy_fiscal_data.xml`
+- [x] T003 [P] Create product category hierarchy data file in `custom_addons/etsy_integration/data/etsy_product_categories.xml`
+- [x] T004 [P] Create product category keyword mapping in `custom_addons/etsy_integration/data/product_category_keywords.json`
+- [x] T005 Update `custom_addons/etsy_integration/__manifest__.py` to version `19.0.2.0.0` and include all new data files in the `data` list (etsy_shipping_product.xml, etsy_fiscal_data.xml, etsy_product_categories.xml, etsy_sync_health_views.xml, data_migration_wizard_views.xml, etsy_discount_views.xml, res_users_views.xml)
 
 ---
 
@@ -31,21 +37,21 @@
 
 ### Observability (R8)
 
-- [ ] T006 [R8] Create `etsy.sync.health` model in `custom_addons/etsy_integration/models/etsy_sync_health.py` with fields: `name` (unique), `state` (idle/running/ok/warning/error), `last_run_at`, `last_successful_run_at`, `last_run_row_count`, `last_run_error_count`, `last_error_message`, `last_processed_id`, `notes`; plus classmethod `report_run(integration_name, *, row_count=None, error_count=None, error_message=None, last_id=None, state=None)` that upserts the row
-- [ ] T007 [R8] Create sync-health views in `custom_addons/etsy_integration/views/etsy_sync_health_views.xml` — list view with `decoration-danger`/`-warning`/`-success` on `state`, form view (readonly except `notes`), and menu item "Sync Health" under the Etsy menu
-- [ ] T008 [R8] Add `etsy.sync.health` ACL rows to `custom_addons/etsy_integration/security/ir.model.access.csv` — read for `base.group_user`, full for `sales_team.group_sale_manager`
-- [ ] T009 Update `custom_addons/etsy_integration/models/__init__.py` to import `etsy_sync_health`
+- [x] T006 [R8] Create `etsy.sync.health` model in `custom_addons/etsy_integration/models/etsy_sync_health.py` with fields: `name` (unique), `state` (idle/running/ok/warning/error), `last_run_at`, `last_successful_run_at`, `last_run_row_count`, `last_run_error_count`, `last_error_message`, `last_processed_id`, `notes`; plus classmethod `report_run(integration_name, *, row_count=None, error_count=None, error_message=None, last_id=None, state=None)` that upserts the row
+- [x] T007 [R8] Create sync-health views in `custom_addons/etsy_integration/views/etsy_sync_health_views.xml` — list view with `decoration-danger`/`-warning`/`-success` on `state`, form view (readonly except `notes`), and menu item "Sync Health" under the Etsy menu
+- [x] T008 [R8] Add `etsy.sync.health` ACL rows to `custom_addons/etsy_integration/security/ir.model.access.csv` — read for `base.group_user`, full for `sales_team.group_sale_manager`
+- [x] T009 Update `custom_addons/etsy_integration/models/__init__.py` to import `etsy_sync_health`
 
 ### Price anomaly field (R9)
 
-- [ ] T010 [R9] Add `etsy_price_anomaly` Boolean computed field (indexed, stored) to `custom_addons/etsy_integration/models/sale_order.py` with `@api.depends('amount_total')` — `True` when `amount_total <= 0` on an Etsy order
+- [x] T010 [R9] Add `etsy_price_anomaly` Boolean computed field (indexed, stored) to `custom_addons/etsy_integration/models/sale_order.py` with `@api.depends('amount_total')` — `True` when `amount_total <= 0` on an Etsy order
 
 ### Services + helpers
 
-- [ ] T011 Create product categorizer service in `custom_addons/etsy_integration/services/product_categorizer.py` — loads `data/product_category_keywords.json` at init, method `categorize(product_name) -> product.category` returns first keyword match or "Uncategorized" fallback, case-insensitive
-- [ ] T012 [P] Add multi-currency `_parse_price(text)` method to `custom_addons/etsy_integration/services/order_creator.py` — detects `$`, `EUR`, `GBP`, `€`, `£` symbols/prefixes, returns `(amount, currency_code)` tuple, defaults to EUR when no symbol; replaces `_parse_eur()`
-- [ ] T013 [P] Add helper methods to `custom_addons/etsy_integration/services/order_creator.py`: `_get_shipping_product()`, `_get_fiscal_position()`, `_get_payment_term()`, `_get_sales_team()`, `_get_pricelist(currency_code)` — each looks up its XML record by xmlid, caches the result on the service
-- [ ] T014 Update `custom_addons/etsy_integration/services/__init__.py` to import `product_categorizer`
+- [x] T011 Create product categorizer service in `custom_addons/etsy_integration/services/product_categorizer.py` — loads `data/product_category_keywords.json` at init, method `categorize(product_name) -> product.category` returns first keyword match or "Uncategorized" fallback, case-insensitive
+- [x] T012 [P] Add multi-currency `_parse_price(text)` method to `custom_addons/etsy_integration/services/order_creator.py` — detects `$`, `EUR`, `GBP`, `€`, `£` symbols/prefixes, returns `(amount, currency_code)` tuple, defaults to EUR when no symbol; replaces `_parse_eur()`
+- [x] T013 [P] Add helper methods to `custom_addons/etsy_integration/services/order_creator.py`: `_get_shipping_product()`, `_get_fiscal_position()`, `_get_payment_term()`, `_get_sales_team()`, `_get_pricelist(currency_code)` — each looks up its XML record by xmlid, caches the result on the service
+- [x] T014 Update `custom_addons/etsy_integration/services/__init__.py` to import `product_categorizer`
 
 **Checkpoint**: Foundation ready — sync.health, anomaly field, categorizer, and helper methods are available; user-story work may begin in parallel.
 
@@ -59,12 +65,12 @@
 
 ### Implementation
 
-- [ ] T015 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to set `fiscal_position_id`, `payment_term_id`, `team_id`, `pricelist_id`, `currency_id` on order vals (uses helpers from T013)
-- [ ] T016 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to add an Etsy Shipping service line when `shipping_cost > 0`
-- [ ] T017 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to call `_parse_price()` (T012) and set the order's `currency_id` to the detected currency
-- [ ] T018 [US1] Update `_parse_eur_price()` → `_parse_price()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` to detect USD/GBP currencies and return `(amount, currency_code)`
-- [ ] T019 [US1] Update `_create_order_from_rows()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` to add shipping line, set fiscal position, payment term, sales team, pricelist, currency
-- [ ] T020 [US1] Write test for multi-currency price parsing in `custom_addons/etsy_integration/tests/test_multi_currency_parsing.py` — EUR/USD/GBP detection, fallback to EUR, corrupted values
+- [x] T015 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to set `fiscal_position_id`, `payment_term_id`, `team_id`, `pricelist_id`, `currency_id` on order vals (uses helpers from T013)
+- [x] T016 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to add an Etsy Shipping service line when `shipping_cost > 0`
+- [x] T017 [US1] Update `process_parse_result()` in `custom_addons/etsy_integration/services/order_creator.py` to call `_parse_price()` (T012) and set the order's `currency_id` to the detected currency — *note: email_parser is EUR-only by design (ADR-008 maintenance mode), so the email path defaults to EUR; multi-currency detection runs on the wizard path (T018/T019).*
+- [x] T018 [US1] Update `_parse_eur_price()` → `_parse_price()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` to detect USD/GBP currencies and return `(amount, currency_code)`
+- [x] T019 [US1] Update `_create_order_from_rows()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` to add shipping line, set fiscal position, payment term, sales team, pricelist, currency
+- [x] T020 [US1] Write test for multi-currency price parsing in `custom_addons/etsy_integration/tests/test_multi_currency_parsing.py` — EUR/USD/GBP detection, fallback to EUR, corrupted values *(12 cases pass)*
 
 **Checkpoint**: New imports produce orders with correct financial configuration.
 
@@ -78,10 +84,10 @@
 
 ### Implementation
 
-- [ ] T021 [US2] Add `auto_confirm` Boolean field (default `True`) to `custom_addons/etsy_integration/wizards/import_orders_wizard.py`
-- [ ] T022 [US2] [R5] Add auto-confirm logic in `action_import()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — after order creation call `action_confirm()`, validate picking to `done`, **then `order.write({'invoice_status': 'invoiced'})` directly** to prevent phantom "to invoice" state
-- [ ] T023 [US2] Add `etsy_auto_confirm_email` Boolean (default `False`) to `custom_addons/etsy_integration/models/res_config_settings.py` for email cron toggle
-- [ ] T024 [US2] Update `_cron_fetch_etsy_emails()` in `custom_addons/etsy_integration/models/sale_order.py` to optionally auto-confirm based on the setting
+- [x] T021 [US2] Add `auto_confirm` Boolean field (default `True`) to `custom_addons/etsy_integration/wizards/import_orders_wizard.py`
+- [x] T022 [US2] [R5] Add auto-confirm logic in `action_import()` in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — after order creation call `action_confirm()`, validate picking to `done`, **then `order.write({'invoice_status': 'invoiced'})` directly** to prevent phantom "to invoice" state. *Implemented as `sale.order._etsy_auto_confirm()` helper so the cron path (T024) shares the same logic.*
+- [x] T023 [US2] Add `etsy_auto_confirm_email` Boolean (default `False`) to `custom_addons/etsy_integration/models/res_config_settings.py` for email cron toggle
+- [x] T024 [US2] Update `_cron_fetch_etsy_emails()` in `custom_addons/etsy_integration/models/sale_order.py` to optionally auto-confirm based on the setting
 
 **Checkpoint**: Import wizard auto-confirms orders and marks them invoiced; cron has a configurable toggle.
 

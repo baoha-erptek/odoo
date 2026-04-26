@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_etsy_sync_health_tree" model="ir.ui.view">
+        <field name="name">etsy.sync.health.list</field>
+        <field name="model">etsy.sync.health</field>
+        <field name="arch" type="xml">
+            <list string="Sync Health"
+                  decoration-success="state == 'ok'"
+                  decoration-warning="state == 'warning'"
+                  decoration-danger="state == 'error'"
+                  decoration-muted="state == 'idle'">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="last_run_at"/>
+                <field name="last_successful_run_at"/>
+                <field name="last_run_row_count"/>
+                <field name="last_run_error_count"/>
+                <field name="last_processed_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_sync_health_form" model="ir.ui.view">
+        <field name="name">etsy.sync.health.form</field>
+        <field name="model">etsy.sync.health</field>
+        <field name="arch" type="xml">
+            <form string="Sync Health">
+                <sheet>
+                    <h1><field name="name" readonly="1"/></h1>
+                    <group>
+                        <group string="State">
+                            <field name="state" readonly="1"/>
+                            <field name="last_run_at" readonly="1"/>
+                            <field name="last_successful_run_at" readonly="1"/>
+                        </group>
+                        <group string="Counts">
+                            <field name="last_run_row_count" readonly="1"/>
+                            <field name="last_run_error_count" readonly="1"/>
+                            <field name="last_processed_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Last Error" name="error">
+                            <field name="last_error_message" readonly="1" nolabel="1"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" nolabel="1"
+                                   placeholder="Operator notes (only editable field)"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_etsy_sync_health" model="ir.actions.act_window">
+        <field name="name">Sync Health</field>
+        <field name="res_model">etsy.sync.health</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_etsy_sync_health"
+        name="Sync Health"
+        parent="menu_etsy_root"
+        action="action_etsy_sync_health"
+        sequence="60"/>
+
+</odoo>

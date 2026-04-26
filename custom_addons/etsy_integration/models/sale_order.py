@@ -24,6 +24,11 @@ class SaleOrder(models.Model):
         'etsy.email.log', string='Source Email', ondelete='set null')
     is_etsy_order = fields.Boolean(
         string='Is Etsy Order', compute='_compute_is_etsy_order', store=True)
+    etsy_price_anomaly = fields.Boolean(
+        string='Etsy Price Anomaly',
+        compute='_compute_etsy_price_anomaly', store=True, index=True,
+        help='True when an Etsy order has a non-positive amount_total — '
+             'used by the migration wizard to quarantine bad data.')
 
     _sql_constraints = [
         ('etsy_order_id_unique', 'UNIQUE(etsy_order_id)',
@@ -34,6 +39,54 @@ class SaleOrder(models.Model):
     def _compute_is_etsy_order(self):
         for order in self:
             order.is_etsy_order = bool(order.etsy_order_id)
+
+    @api.depends('amount_total', 'etsy_order_id')
+    def _compute_etsy_price_anomaly(self):
+        for order in self:
+            order.etsy_price_anomaly = bool(order.etsy_order_id) and order.amount_total <= 0
+
+    def _etsy_auto_confirm(self):
+        """Confirm the order, force-validate its pickings, mark as invoiced.
+
+        Per R5 in specs/002-etsy-config-fixes/research.md, Etsy orders are
+        already paid by the buyer at checkout — Odoo should not create
+        downstream invoices ("to invoice" is a phantom state for these). This
+        helper walks the SO from draft → sale → done and writes
+        ``invoice_status='invoiced'`` directly so the dashboards stop showing
+        the order as awaiting invoicing.
+
+        Idempotent: orders already in `sale`/`done` skip confirmation;
+        already-validated pickings are skipped.
+        Returns True on success, False on any failure (errors are logged, not
+        raised, so a single bad order doesn't poison a batch).
+        """
+        for order in self:
+            try:
+                if order.state == 'draft':
+                    order.action_confirm()
+                pickings = order.picking_ids.filtered(
+                    lambda p: p.state not in ('done', 'cancel'))
+                if pickings:
+                    pickings = pickings.with_context(
+                        skip_immediate=True,
+                        skip_backorder=True,
+                        skip_sms=True,
+                    )
+                    for picking in pickings:
+                        for move in picking.move_ids:
+                            if move.state in ('done', 'cancel'):
+                                continue
+                            move.quantity = move.product_uom_qty
+                            move.picked = True
+                        picking._action_done()
+                if order.invoice_status != 'invoiced':
+                    order.write({'invoice_status': 'invoiced'})
+            except Exception:
+                _logger.exception(
+                    'Auto-confirm failed for order %s (Etsy #%s)',
+                    order.name, order.etsy_order_id)
+                return False
+        return True
 
     @api.model
     def _cron_fetch_etsy_emails(self):
@@ -67,6 +120,8 @@ class SaleOrder(models.Model):
             return
 
         _logger.info('Etsy Integration: Processing %d emails.', len(raw_emails))
+        auto_confirm = ICP.get_param(
+            'etsy_integration.auto_confirm_email', 'False') == 'True'
         creator = OrderCreator(self.env)
         processed_ids = []
 
@@ -110,6 +165,8 @@ class SaleOrder(models.Model):
             try:
                 order = creator.process_parse_result(result, email_log.id)
                 if order:
+                    if auto_confirm:
+                        order._etsy_auto_confirm()
                     email_log.write({
                         'parse_status': 'success',
                         'sale_order_id': order.id,

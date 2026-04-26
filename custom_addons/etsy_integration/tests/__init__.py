@@ -3,3 +3,4 @@ from . import test_order_creation
 from . import test_deduplication
 from . import test_image_downloader
 from . import test_import_wizard
+from . import test_multi_currency_parsing

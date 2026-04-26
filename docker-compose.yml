@@ -1,0 +1,55 @@
+# Local dev / local-staging compose for the etsy_integration MVP slice.
+# Distinct from deployment/docker-compose.prod.yml (which uses host networking
+# + external PostgreSQL via PgBouncer for the 129.150.63.207 box).
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f odoo
+#   docker compose exec odoo odoo -d namco_odoo19 -u etsy_integration --stop-after-init
+#   docker compose down            # keep DB
+#   docker compose down -v         # wipe DB + odoo data
+#
+# Live custom_addons mount overrides the copy baked into the namco image so
+# code edits are picked up after an odoo restart (or -u <module>).
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: esty_mvp_db
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes:
+      - esty_mvp_pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  odoo:
+    image: ghcr.io/baoha-erptek/odoo19-namco:latest
+    container_name: namco_odoo19
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: odoo
+      PASSWORD: odoo
+    volumes:
+      - ./custom_addons:/opt/odoo/custom_addons
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - esty_mvp_odoo_data:/var/lib/odoo
+    ports:
+      - "8169:8169"
+      - "8172:8172"
+    command: ["odoo"]
+
+volumes:
+  esty_mvp_pg:
+  esty_mvp_odoo_data:

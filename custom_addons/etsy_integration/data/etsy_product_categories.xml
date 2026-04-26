@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!--
+        Etsy product category hierarchy.
+        Parent "Etsy Products" groups all Etsy-sourced products.
+        Children are keyword-matched via product_category_keywords.json (see R2).
+    -->
+
+    <record id="product_cat_etsy" model="product.category">
+        <field name="name">Etsy Products</field>
+    </record>
+
+    <record id="product_cat_etsy_ring_dishes" model="product.category">
+        <field name="name">Ring Dishes</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_temporary_tattoos" model="product.category">
+        <field name="name">Temporary Tattoos</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_mugs_drinkware" model="product.category">
+        <field name="name">Mugs &amp; Drinkware</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_jewelry" model="product.category">
+        <field name="name">Jewelry</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_home_decor" model="product.category">
+        <field name="name">Home Decor</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_personalized_gifts" model="product.category">
+        <field name="name">Personalized Gifts</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_stickers" model="product.category">
+        <field name="name">Stickers</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_clothing" model="product.category">
+        <field name="name">Clothing &amp; Accessories</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_pet_products" model="product.category">
+        <field name="name">Pet Products</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+    <record id="product_cat_etsy_uncategorized" model="product.category">
+        <field name="name">Uncategorized</field>
+        <field name="parent_id" ref="product_cat_etsy"/>
+    </record>
+
+</odoo>

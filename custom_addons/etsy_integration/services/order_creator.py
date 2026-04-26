@@ -16,26 +16,120 @@ _COUNTRY_NAME_OVERRIDES = {
     'United Kingdom': 'GB',
 }
 
+# Currency markers detected in raw price text. Order matters: longer / more
+# specific tokens first so "EUR" doesn't shadow "E", etc.
+_CURRENCY_MARKERS = (
+    ('EUR', 'EUR'),
+    ('USD', 'USD'),
+    ('GBP', 'GBP'),
+    ('$', 'USD'),
+    ('€', 'EUR'),
+    ('£', 'GBP'),
+)
+_DEFAULT_CURRENCY = 'EUR'
+
+
+def _parse_price(value):
+    """Parse a multi-currency price value to ``(amount, currency_code)``.
+
+    Detects ``$``/``USD``, ``€``/``EUR``, ``£``/``GBP`` markers; falls back to
+    EUR when no marker is present. Tolerates either ``,`` or ``.`` as decimal
+    separator. Returns ``(0.0, 'EUR')`` for unparseable / empty input.
+    """
+    if value is None:
+        return 0.0, _DEFAULT_CURRENCY
+    if isinstance(value, (int, float)):
+        return float(value), _DEFAULT_CURRENCY
+    text = str(value).strip()
+    if not text:
+        return 0.0, _DEFAULT_CURRENCY
+
+    upper = text.upper()
+    currency = _DEFAULT_CURRENCY
+    for marker, code in _CURRENCY_MARKERS:
+        if marker in upper if marker.isalpha() else marker in text:
+            currency = code
+            break
+
+    cleaned = text
+    for marker, _ in _CURRENCY_MARKERS:
+        cleaned = cleaned.replace(marker, '').replace(marker.lower(), '')
+    cleaned = cleaned.replace(',', '.').strip().lstrip('-')
+    try:
+        return (float(cleaned) if cleaned else 0.0), currency
+    except ValueError:
+        return 0.0, currency
+
 
 def _parse_eur(value):
-    """Parse a EUR price value (string or float) to float."""
-    if value is None:
-        return 0.0
-    if isinstance(value, (int, float)):
-        return float(value)
-    text = str(value).strip().replace('€', '').replace(',', '.').strip()
-    text = text.lstrip('-')
-    try:
-        return float(text) if text else 0.0
-    except ValueError:
-        return 0.0
+    """Backwards-compatible EUR-only wrapper around _parse_price."""
+    amount, _ = _parse_price(value)
+    return amount
 
 
 class OrderCreator:
     """Stateless service that converts parsed email data into Odoo records."""
 
+    # XMLIDs of the master data records loaded by data/etsy_*.xml. Looked up
+    # lazily and memoized per-instance via the helpers below.
+    _XMLID_SHIPPING_PRODUCT = 'etsy_integration.product_etsy_shipping'
+    _XMLID_FISCAL_POSITION = 'etsy_integration.fiscal_pos_etsy_marketplace'
+    _XMLID_PAYMENT_TERM = 'etsy_integration.payment_term_etsy_prepaid'
+    _XMLID_SALES_TEAM = 'etsy_integration.team_etsy'
+    _PRICELIST_XMLIDS = {
+        'EUR': 'etsy_integration.pricelist_etsy_eur',
+        'USD': 'etsy_integration.pricelist_etsy_usd',
+        'GBP': 'etsy_integration.pricelist_etsy_gbp',
+    }
+
     def __init__(self, env):
         self._env = env
+        self._cache = {}
+
+    def _ref(self, key, xmlid):
+        """Resolve and memoize an xmlid lookup; returns False if missing."""
+        if key in self._cache:
+            return self._cache[key]
+        rec = self._env.ref(xmlid, raise_if_not_found=False)
+        self._cache[key] = rec
+        return rec
+
+    def _get_shipping_product(self):
+        """Returns the product.product variant of the Etsy Shipping template."""
+        if 'shipping_product' in self._cache:
+            return self._cache['shipping_product']
+        tmpl = self._ref('shipping_template', self._XMLID_SHIPPING_PRODUCT)
+        product = tmpl.product_variant_id if tmpl else False
+        self._cache['shipping_product'] = product
+        return product
+
+    def _get_fiscal_position(self):
+        return self._ref('fiscal_position', self._XMLID_FISCAL_POSITION)
+
+    def _get_payment_term(self):
+        return self._ref('payment_term', self._XMLID_PAYMENT_TERM)
+
+    def _get_sales_team(self):
+        return self._ref('sales_team', self._XMLID_SALES_TEAM)
+
+    def _get_pricelist(self, currency_code):
+        """Returns the Etsy pricelist for the supplied currency code.
+
+        Falls back to EUR pricelist when the code is unknown.
+        """
+        xmlid = self._PRICELIST_XMLIDS.get(
+            currency_code, self._PRICELIST_XMLIDS[_DEFAULT_CURRENCY])
+        return self._ref(f'pricelist_{currency_code}', xmlid)
+
+    def _get_currency(self, currency_code):
+        """Resolve a res.currency from an ISO code (e.g. 'USD'); cached."""
+        key = f'currency_{currency_code}'
+        if key in self._cache:
+            return self._cache[key]
+        currency = self._env['res.currency'].with_context(active_test=False).search(
+            [('name', '=', currency_code)], limit=1)
+        self._cache[key] = currency
+        return currency
 
     # ------------------------------------------------------------------
     # Public API
@@ -58,6 +152,16 @@ class OrderCreator:
         shop = self.find_or_create_shop(parse_result.shop)
         date_order = self._parse_email_date(parse_result.date)
 
+        # Email parser is EUR-only by design (per ADR-008, maintenance mode).
+        # Detect from any raw-text marker that may have leaked through, fall
+        # back to EUR. Wizard path does richer detection from Excel cells.
+        currency_code = getattr(parse_result, 'currency', None) or _DEFAULT_CURRENCY
+        currency = self._get_currency(currency_code)
+        pricelist = self._get_pricelist(currency_code)
+        fiscal_position = self._get_fiscal_position()
+        payment_term = self._get_payment_term()
+        sales_team = self._get_sales_team()
+
         order_vals = {
             'partner_id': partner.id,
             'date_order': date_order or odoo_fields.Datetime.now(),
@@ -73,6 +177,16 @@ class OrderCreator:
             'etsy_email_log_id': email_log_id,
             'order_line': [],
         }
+        if currency:
+            order_vals['currency_id'] = currency.id
+        if pricelist:
+            order_vals['pricelist_id'] = pricelist.id
+        if fiscal_position:
+            order_vals['fiscal_position_id'] = fiscal_position.id
+        if payment_term:
+            order_vals['payment_term_id'] = payment_term.id
+        if sales_team:
+            order_vals['team_id'] = sales_team.id
 
         for txn in parse_result.transactions:
             if self.is_duplicate_transaction(txn.transaction_id):
@@ -89,6 +203,18 @@ class OrderCreator:
                 'Order %s has no new transaction lines; skipping.',
                 parse_result.order_id)
             return None
+
+        # Etsy collects shipping at checkout; surface it as an order line so
+        # amount_total reflects the gross, not just product subtotal.
+        shipping_cost = parse_result.shipping_cost or 0.0
+        shipping_product = self._get_shipping_product()
+        if shipping_cost > 0 and shipping_product:
+            order_vals['order_line'].append((0, 0, {
+                'product_id': shipping_product.id,
+                'product_uom_qty': 1.0,
+                'price_unit': shipping_cost,
+                'name': shipping_product.display_name,
+            }))
 
         order = self._env['sale.order'].create(order_vals)
         _logger.info(

@@ -56,25 +56,21 @@ def _cell_str(value):
     return str(value).strip()
 
 
-def _parse_eur_price(value):
-    """Parse a EUR price string like '19.70' or '19,70' to float.
+def _parse_price(value):
+    """Parse a multi-currency price cell to ``(amount, currency_code)``.
 
-    Handles the euro sign, whitespace, leading dashes, and comma
-    decimal separators.
+    Delegates to ``order_creator._parse_price`` to keep the parsing rules
+    consistent across the email and Excel paths. Returns ``(0.0, 'EUR')`` on
+    empty / unparseable input.
     """
-    text = _cell_str(value)
-    if not text:
-        return 0.0
-    # Remove currency symbol and whitespace
-    text = text.replace('\u20ac', '').replace('EUR', '').strip()
-    # Remove any leading dash (treated as absolute value)
-    text = text.lstrip('-').strip()
-    # Handle comma as decimal separator
-    text = text.replace(',', '.')
-    try:
-        return float(text)
-    except (ValueError, TypeError):
-        return 0.0
+    from ..services.order_creator import _parse_price as _service_parse
+    return _service_parse(value)
+
+
+def _parse_eur_price(value):
+    """Backwards-compatible amount-only wrapper for old call sites."""
+    amount, _ = _parse_price(value)
+    return amount
 
 
 def _parse_quantity(value):
@@ -94,6 +90,10 @@ class ImportOrdersWizard(models.TransientModel):
 
     excel_file = fields.Binary(string='Excel File', required=True)
     excel_filename = fields.Char(string='Filename')
+    auto_confirm = fields.Boolean(
+        string='Auto-confirm imported orders', default=True,
+        help='When enabled, each imported order is confirmed, its picking '
+             'validated, and marked as invoiced (per R5).')
     status_message = fields.Text(string='Status', readonly=True)
 
     def action_import(self):
@@ -164,6 +164,8 @@ class ImportOrdersWizard(models.TransientModel):
                 result = self._create_order_from_rows(
                     creator, order_id, order_rows)
                 if result:
+                    if self.auto_confirm:
+                        result._etsy_auto_confirm()
                     imported += 1
                 else:
                     skipped += 1
@@ -250,6 +252,21 @@ class ImportOrdersWizard(models.TransientModel):
         date_str = _cell_str(first[_COL_DATE])
         date_order = self._parse_date(date_str)
 
+        # Detect currency from the first PRICE cell that carries a marker.
+        # Most rows in a single order share the same currency; first non-empty
+        # detection wins. Falls back to EUR.
+        order_currency = None
+        for row in rows:
+            _, code = _parse_price(row[_COL_PRICE])
+            if code and code != 'EUR':
+                order_currency = code
+                break
+        if not order_currency:
+            order_currency = 'EUR'
+
+        shipping_cost, _ = _parse_price(first[_COL_SHIPPING_COST])
+        subtotal, _ = _parse_price(first[_COL_SUBTOTAL])
+
         order_vals = {
             'partner_id': partner.id,
             'date_order': date_order or fields.Datetime.now(),
@@ -259,11 +276,29 @@ class ImportOrdersWizard(models.TransientModel):
             'etsy_gift_message': _cell_str(first[_COL_GIFT_MESSAGE]),
             'etsy_shipping_service': _cell_str(first[_COL_SHIPPING_SERVICE]),
             'etsy_processing_time': _cell_str(first[_COL_PROCESSING_TIME]),
-            'etsy_shipping_cost': _parse_eur_price(first[_COL_SHIPPING_COST]),
+            'etsy_shipping_cost': shipping_cost,
             'etsy_discount_code': _cell_str(first[_COL_DISCOUNT_CODE]),
-            'etsy_subtotal': _parse_eur_price(first[_COL_SUBTOTAL]),
+            'etsy_subtotal': subtotal,
             'order_line': [],
         }
+
+        # Financial config (US1): currency, pricelist, fiscal position,
+        # payment term, sales team.
+        currency = creator._get_currency(order_currency)
+        pricelist = creator._get_pricelist(order_currency)
+        fiscal_position = creator._get_fiscal_position()
+        payment_term = creator._get_payment_term()
+        sales_team = creator._get_sales_team()
+        if currency:
+            order_vals['currency_id'] = currency.id
+        if pricelist:
+            order_vals['pricelist_id'] = pricelist.id
+        if fiscal_position:
+            order_vals['fiscal_position_id'] = fiscal_position.id
+        if payment_term:
+            order_vals['payment_term_id'] = payment_term.id
+        if sales_team:
+            order_vals['team_id'] = sales_team.id
 
         for row in rows:
             transaction_id = _cell_str(row[_COL_TRANSACTION_ID])
@@ -276,11 +311,12 @@ class ImportOrdersWizard(models.TransientModel):
             product_name = _cell_str(row[_COL_PRODUCT_NAME])
             image_url = _cell_str(row[_COL_IMG_URL])
             product = creator.find_or_create_product(product_name, image_url)
+            price, _ = _parse_price(row[_COL_PRICE])
 
             line_vals = {
                 'product_id': product.id,
                 'product_uom_qty': _parse_quantity(row[_COL_QUANTITY]),
-                'price_unit': _parse_eur_price(row[_COL_PRICE]),
+                'price_unit': price,
                 'etsy_transaction_id': transaction_id,
                 'etsy_personalisation': _cell_str(row[_COL_PERSONALISATION]),
                 'etsy_sku': _cell_str(row[_COL_SKU]),
@@ -299,6 +335,16 @@ class ImportOrdersWizard(models.TransientModel):
 
         if not order_vals['order_line']:
             return None
+
+        # Add Etsy Shipping line when shipping_cost > 0.
+        shipping_product = creator._get_shipping_product()
+        if shipping_cost > 0 and shipping_product:
+            order_vals['order_line'].append((0, 0, {
+                'product_id': shipping_product.id,
+                'product_uom_qty': 1.0,
+                'price_unit': shipping_cost,
+                'name': shipping_product.display_name,
+            }))
 
         order = self.env['sale.order'].create(order_vals)
         _logger.info(

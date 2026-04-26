@@ -4,3 +4,5 @@ access_etsy_shop_manager,etsy.shop.manager,model_etsy_shop,sales_team.group_sale
 access_etsy_email_log_user,etsy.email.log.user,model_etsy_email_log,base.group_user,1,0,0,0
 access_etsy_email_log_manager,etsy.email.log.manager,model_etsy_email_log,sales_team.group_sale_manager,1,1,1,1
 access_import_orders_wizard,import.orders.wizard,model_etsy_import_orders_wizard,sales_team.group_sale_manager,1,1,1,1
+access_etsy_sync_health_user,etsy.sync.health.user,model_etsy_sync_health,base.group_user,1,0,0,0
+access_etsy_sync_health_manager,etsy.sync.health.manager,model_etsy_sync_health,sales_team.group_sale_manager,1,1,1,1

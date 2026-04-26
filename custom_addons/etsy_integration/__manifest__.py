@@ -1,6 +1,6 @@
 {
     'name': 'Etsy Integration',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Sales',
     'summary': 'Import Etsy orders from Gmail notifications into Odoo sale orders',
     'description': """
@@ -31,9 +31,13 @@ Features:
         'security/ir.model.access.csv',
         'security/etsy_security.xml',
         'data/ir_cron_data.xml',
+        'data/etsy_shipping_product.xml',
+        'data/etsy_fiscal_data.xml',
+        'data/etsy_product_categories.xml',
         'views/etsy_design_queue_views.xml',
         'views/etsy_dashboard_views.xml',
         'views/menu.xml',
+        'views/etsy_sync_health_views.xml',
         'views/etsy_shop_views.xml',
         'views/etsy_email_log_views.xml',
         'views/sale_order_views.xml',
