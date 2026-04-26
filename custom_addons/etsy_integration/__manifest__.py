@@ -44,6 +44,7 @@ Features:
         'views/sale_order_views.xml',
         'views/res_config_settings_views.xml',
         'views/import_orders_wizard_views.xml',
+        'views/data_migration_wizard_views.xml',
         'views/res_partner_views.xml',
         'views/product_views.xml',
         'views/oauth_templates.xml',

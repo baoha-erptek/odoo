@@ -6,3 +6,4 @@ access_etsy_email_log_manager,etsy.email.log.manager,model_etsy_email_log,sales_
 access_import_orders_wizard,import.orders.wizard,model_etsy_import_orders_wizard,sales_team.group_sale_manager,1,1,1,1
 access_etsy_sync_health_user,etsy.sync.health.user,model_etsy_sync_health,base.group_user,1,0,0,0
 access_etsy_sync_health_manager,etsy.sync.health.manager,model_etsy_sync_health,sales_team.group_sale_manager,1,1,1,1
+access_data_migration_wizard,data.migration.wizard,model_etsy_data_migration_wizard,sales_team.group_sale_manager,1,1,1,0

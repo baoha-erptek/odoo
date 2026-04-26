@@ -44,6 +44,13 @@
         <field name="target">new</field>
     </record>
 
+    <record id="action_etsy_data_migration_wizard" model="ir.actions.act_window">
+        <field name="name">Data Migration</field>
+        <field name="res_model">etsy.data.migration.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <!-- ============================================================ -->
     <!-- Top-level menu: Etsy                                          -->
     <!-- ============================================================ -->
@@ -101,5 +108,14 @@
         parent="menu_etsy_root"
         action="action_etsy_import_orders_wizard"
         sequence="50"/>
+
+    <!-- Etsy > Data Migration (sale managers only) -->
+    <menuitem
+        id="menu_etsy_data_migration"
+        name="Data Migration"
+        parent="menu_etsy_root"
+        action="action_etsy_data_migration_wizard"
+        groups="sales_team.group_sale_manager"
+        sequence="60"/>
 
 </odoo>

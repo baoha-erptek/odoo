@@ -93,3 +93,40 @@ All 6 W1 tests now GREEN. Ruff clean. No `_logger.info(` for debugging. Module i
 **Diff**: 4 files modified, 1 new file. ~282 net lines added. Single commit on `main`.
 
 ---
+
+## 2026-04-26 — W3.2a GREEN complete (US6 backbone)
+
+**Slice**: T035 + T036 + T037 + T038 + T046 (orchestration shell only) + T047 + T048 + T049 + T050. Helper bodies (T039–T045) deferred to W3.2b — the planner's original W3.2 was 1,410 LOC in one commit; split into 2a (backbone, 700 LOC) and 2b (fix-helper bodies, 700 LOC) for review/revert hygiene.
+
+**Result**: 0 failed, 0 errors of 99 tests (87 prior + 12 new W3.2a tests).
+
+**Files added**: `wizards/data_migration_wizard.py` (~280 LOC), `views/data_migration_wizard_views.xml` (~75 LOC), `tests/test_data_migration_wizard.py` (~460 LOC). Modified: `wizards/__init__.py`, `views/menu.xml`, `security/ir.model.access.csv`, `__manifest__.py`, `tests/__init__.py`. Total ~860 LOC net.
+
+**Surprises captured**:
+
+1. **Odoo 19 renamed `groups_id` → `group_ids` on `res.users`** — the tdd-guide's ACL test fixtures used the legacy name and silently errored with "Invalid field 'groups_id'". This is a CE-19 schema convention shift not reflected in the older planner notes. Captured to memory as a project-level note. All future test fixtures creating users must use `group_ids`.
+
+2. **`mock.patch.object` does NOT work on Odoo recordset instances** — read-only attributes raise `AttributeError`. Patch the model class via `mock.patch.object(type(wizard), method_name, ...)` or the registry, OR use Odoo's `_patch_method` if available, OR avoid mocking and rely on stub helpers. The W3.2a tests took the third route since the backbone helpers are no-ops.
+
+3. **`product.product.type='product'` was deprecated in Odoo 19** — replaced by `is_storable` Boolean. Test fixtures that pre-date the migration still reference `type='product'` and silently fail with "Invalid field 'type'". The W3.2a test fixture sets `is_storable=True` instead.
+
+4. **`/tmp` files default to world-readable on Linux** — security review flagged the anomaly CSV (`os.path.join(tempfile.gettempdir(), ...)` + `open(..., 'w')`) as P0 because the file inherits the umask and ends up at `0o644`. Switched to `tempfile.mkstemp()` which creates the file at `0o600` and guarantees a unique name (also fixes the microsecond-collision risk for concurrent runs). All future `/tmp` writes in this module should use `mkstemp` or `NamedTemporaryFile` rather than plain `open()`.
+
+5. **`last_processed_id` advances on per-order failures by design** — code reviewer flagged this as CRITICAL silent data loss. Re-read the spec: R4 specifies forward-advance with `etsy.sync.health.last_run_error_count` recording the failures; retry is the operator's responsibility (set `resume_from_checkpoint=False` for a full re-scan, or fix the root cause and re-run). Documented this contract in the `action_migrate()` docstring rather than re-architecting. A dedicated retry-failed-orders helper is W3.2b territory if needed.
+
+**Deliberate non-changes**:
+- Stub helpers (`_fix_*`, `_generate_dedup_report`, `_confirm_and_complete`, `action_apply_merges`) are explicit no-ops with TODO docstrings pointing to W3.2b. They preserve the orchestration contract so callers can bind buttons today and pick up real behavior on next deploy without API churn.
+- ACL set to `1,1,1,0` (no unlink) — TransientModels are auto-vacuumed; manual unlink isn't needed and could mask issues. Inconsistent with `import_orders_wizard` (which has `1,1,1,1`) — consider aligning in a future cleanup but not blocking.
+- Test 9 (no-op-when-all-checkboxes-off) does call `action_migrate()` end-to-end; the reviewer's "weak test" note was based on an early draft. Verified post-fix.
+
+**Deferred to W3.2b**:
+- T039 `_fix_financial_config(orders)` — call order_creator helpers from T013
+- T040 `_fix_shipping_lines(orders)` — idempotent shipping line backfill
+- T041 `_fix_prices_from_excel(orders)` — re-parse USD prices, reuse W3.1's `_normalize_header` + `_LEGACY_HEADER_MAP`
+- T042 `_fix_product_config(products)` — `is_storable=True` + categorizer
+- T043 `_confirm_and_complete(orders)` — call existing `_etsy_auto_confirm()` helper
+- T044 `_generate_dedup_report(partners)` — CSV-only cluster export
+- T045 `action_apply_merges()` — manual merge implementation (no OCA `base_partner_merge` available; ~50 LOC inline)
+- T051–T054 — expanded tests for fix bodies, idempotency, resumption with real failures, partner merges
+
+---

@@ -8,3 +8,4 @@ from . import test_multi_currency_parsing
 from . import test_product_categorizer
 from . import test_us3_product_creation
 from . import test_us4_partner_dedup_geo
+from . import test_data_migration_wizard
