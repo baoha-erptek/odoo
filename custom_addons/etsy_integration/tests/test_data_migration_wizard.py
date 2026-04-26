@@ -138,17 +138,24 @@ class TestDataMigrationWizardBackbone(TransactionCase):
         orders = self._seed_orders(5, anomaly_count=2)
         wizard = self.env['etsy.data.migration.wizard'].create({})
 
+        # Snapshot existing CSVs so we can isolate the one this test creates.
+        # Sibling tests (e.g. test_data_migration_fix_bodies) also call
+        # action_migrate() which writes anomaly CSVs to /tmp, and they live
+        # past the test boundary because tempfile.mkstemp picks unique names.
+        before = set(glob.glob('/tmp/etsy_anomalies_*.csv'))
+
         # Call the helper
         count = wizard._quarantine_anomalies()
 
         self.assertEqual(count, 2, "Should quarantine exactly 2 anomalies")
 
-        # Find the CSV file
-        csv_files = glob.glob('/tmp/etsy_anomalies_*.csv')
-        self.assertTrue(csv_files, "No anomaly CSV file created")
-
-        # Read and verify CSV
-        csv_path = csv_files[-1]  # Latest file
+        # Find the CSV file produced by THIS call.
+        after = set(glob.glob('/tmp/etsy_anomalies_*.csv'))
+        new_files = sorted(after - before)
+        self.assertTrue(new_files, "No anomaly CSV file created by this run")
+        self.assertEqual(len(new_files), 1,
+                         "Expected exactly one new CSV from this call")
+        csv_path = new_files[0]
         try:
             with open(csv_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)

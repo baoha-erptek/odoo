@@ -9,3 +9,7 @@ from . import test_product_categorizer
 from . import test_us3_product_creation
 from . import test_us4_partner_dedup_geo
 from . import test_data_migration_wizard
+from . import test_data_migration_fix_bodies
+from . import test_data_migration_resume
+from . import test_data_migration_idempotent
+from . import test_data_migration_merges
