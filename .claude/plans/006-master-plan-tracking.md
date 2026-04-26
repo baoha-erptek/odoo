@@ -70,13 +70,14 @@
 | P0-11 | Implement `multichannel.sync.health` model + dashboard tile | Dev B | `todo` | — | DA #6. Phase 0 deliverable per ADR-008 §7 (add `parser_template_drift` metric) |
 | P0-12 | Ban `_logger.info(` in models/services via pre-commit hook; fix 6 existing violations | Dev B | `todo` | — | Tech #7 |
 | P0-13 | Add `tracking_number` index + composite `(etsy_shop_id, etsy_last_modified DESC)` | Dev B | `todo` | — | Tech #9 |
-| P0-14 | Spec 005 sandbox — OAuth2 PKCE flow against owner's dev token | Dev B | `blocked` | P0-04, Owner sign-off on findings.md Q1-Q5 | ADR-008 §2. Architect advisory landed on `005-etsy-sandbox` 2026-04-26 |
-| P0-15 | Spec 005 sandbox — `EtsyApiClient` with rate limiter + retry/backoff | Dev B | `blocked` | P0-14, Q3 decision | Shared rate limiter lives in `multichannel_hub_core/utils/` post-Phase 1 per architect advisory |
-| P0-16 | Spec 005 sandbox — `EtsyOrderSyncer` against dev shop with VCR fixtures | Dev B | `blocked` | P0-15, Q1 decision | No production shops touched. VCR policy per architect advisory Q1 |
-| P0-17 | Spec 005 sandbox — `etsy.api.log` model + audit tests | Dev B | `blocked` | P0-14, Q4 decision | `sync_audit_mode` semantics per architect advisory Q4 |
+| P0-14 | Spec 005 sandbox — OAuth2 PKCE flow against owner's dev token | Dev B | `todo` | P0-04 | ADR-008 §2. Owner accepted architect Q1–Q5 recommendations 2026-04-26 (revisit at W7 E2E). Spec 005 tasks.md generated (110 tasks). |
+| P0-15 | Spec 005 sandbox — `EtsyApiClient` with rate limiter + retry/backoff | Dev B | `todo` | P0-14 | Per-client token bucket for sandbox, shared bucket as Phase 1 refactor (architect Q3) |
+| P0-16 | Spec 005 sandbox — `EtsyOrderSyncer` against dev shop with VCR fixtures | Dev B | `todo` | P0-15 | One-per-test VCR cassettes in `tests/fixtures/vcr/`, quarterly refresh (architect Q1) |
+| P0-17 | Spec 005 sandbox — `etsy.api.log` model + audit tests | Dev B | `todo` | P0-14 | `etsy.shop.sync_audit_mode` Boolean, read-only path in syncer (architect Q4) |
 | P0-18 | Gearment sandbox POC — 3-day spike (auth, rate limits, HMAC, draft/quote/confirm idempotency) | Dev B | `blocked` | E2 | Cannot start without creds |
 | P0-19 | GKE Excel schema fingerprinting — hash column layout, hard-fail on unknown | Dev A | `todo` | — | DA #4.3. Standalone utility that Spec 004a will consume |
 | P0-20 | Module decomposition kickoff — split `etsy_integration` into 4 modules (core / fulfillment / etsy_channel / etsy_channel_migration) | Architect + Dev B | `todo` | P0-11 | ADR-003. Must complete before Phase 1 code |
+| P0-21 | Spec 002 US3 (product config) + US4 (3-tier customer dedup + state/country resolution) | Dev A | `done` | P0-05 | **Landed 2026-04-26** on `main` (Wave 1 GREEN) — commits `5a2b9591d60` (US3) + `6d357cca651` (US4) + `aefbeb436ca` (closure). T025–T030 marked `[X]` in tasks.md. 6 W1 tests pass. Collateral install fix in `etsy_fiscal_data.xml` (tax_group_id + country_id). 4 inherited 002-MVP failures all share `cr.commit()` root cause; auto-cleared by T032 in W3. |
 
 **Phase 0 exit criteria** (from MASTER_PLAN §4 as revised):
 - BA lead signs reconciliation report (Odoo totals vs Excel per shop)
@@ -163,13 +164,13 @@
 
 | ID | Risk | Current status | Last reviewed |
 |---|---|---|---|
-| R1 | Etsy scopes denied | monitoring E1 | 2026-04-13 |
-| R2 | 17K migration OOM / partial rollback | mitigated by design (batch-resumable); verify in P0-07 | 2026-04-13 |
-| R3 | Gearment API undocumented / rate-limits unknown | blocked on E2 | 2026-04-13 |
-| R4 | GKE Excel schema changes silently | mitigated by P0-19 schema fingerprint | 2026-04-13 |
-| R8 | Etsy OAuth refresh fails day 91 | covered by P0-11 health dashboard | 2026-04-13 |
-| R13 | Spec 003 field bloat on sale.order | mitigated by P1-05 delegation mixin (ADR-007) | 2026-04-13 |
-| R15 | Observability absent | P0-11 Phase 0 deliverable | 2026-04-13 |
+| R1 | Etsy scopes denied | monitoring E1 — still not submitted; critical-path slip widening | 2026-04-26 |
+| R2 | 17K migration OOM / partial rollback | mitigated by design (batch-resumable); verify in W3 (US5/US6 — P0-07). 4 import-wizard tests currently blocked on `cr.commit()` (T032 fix) | 2026-04-26 |
+| R3 | Gearment API undocumented / rate-limits unknown | blocked on E2 — still no creds | 2026-04-26 |
+| R4 | GKE Excel schema changes silently | mitigated by P0-19 schema fingerprint (not started) | 2026-04-26 |
+| R8 | Etsy OAuth refresh fails day 91 | covered by P0-11 health dashboard (not started); architect Q2 deferred token encryption to Phase 1 | 2026-04-26 |
+| R13 | Spec 003 field bloat on sale.order | mitigated by P1-05 delegation mixin (ADR-007); W1 GREEN added 0 new fields to sale.order — still on track | 2026-04-26 |
+| R15 | Observability absent | P0-11 still `todo`; the 002 MVP slice did add `etsy.sync.health` model (T006-T009), so 50% of the deliverable is in main | 2026-04-26 |
 
 ---
 

@@ -125,6 +125,15 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 **Exit criteria**: BA lead signs off on reconciliation report (Odoo totals vs Excel per shop). Health dashboard shows green. 17K orders confirmed with correct fiscal config. 423 $0 orders resolved. Etsy scope review **submitted** (acceptance ≠ received). Spec 005 client passes integration tests against dev-token shop with zero writes to any non-dev shop.
 
+**Progress as of 2026-04-26**:
+- ✅ Spec 002 US1 (financial data, T015–T020) + US2 (auto-confirm workflow, T021–T024) landed in 002 MVP commit `874e06ada5f`.
+- ✅ `etsy.sync.health` observability model (T006–T009) landed in 002 MVP — feeds P0-11 dashboard work.
+- ✅ Spec 002 US3 (product config — storable + auto-categorize, T025–T027) + US4 (3-tier customer dedup, ISO state-code lookup, ~50 country overrides, T028–T030) landed on `main` 2026-04-26 (Wave 1 GREEN, 3 commits). Module installs cleanly; 6 W1 tests pass.
+- ✅ Spec 005 sandbox tasks.md generated (110 tasks across 10 phases). Architect advisory landed; Owner accepted defaults pending W7 E2E review. P0-14..17 unblocked.
+- ✅ Workflow pivot to single-workspace-on-main (`.claude/plans/006-implementation-playbook.md` rev 1) — eliminates worktree-mount friction; worktrees reserved for rework/bugfix.
+- ⏳ **Next**: W3 — Spec 002 US5 (import wizard robustness, header-based mapping, 500-row savepoints) + US6 (17K migration wizard, batch-resumable). T032 (savepoint refactor) auto-clears 4 inherited test failures from MVP slice.
+- ⚠️ Critical path: **E1 Etsy scope review still not submitted** — every additional week widens the Phase 1 slip.
+
 ### Phase 1 — Three Dashboards + Approval Workflows + Spec 005 production cutover (5-8 weeks)
 
 **Goal**: Replace the Google Sheet entirely for BA and Marketing. Ship the safety-critical workflows. **And** begin per-shop cutover to `api_only` as soon as Etsy scopes are approved.

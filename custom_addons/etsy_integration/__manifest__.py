@@ -1,6 +1,6 @@
 {
     'name': 'Etsy Integration',
-    'version': '19.0.2.0.0',
+    'version': '19.0.2.1.0',
     'category': 'Sales',
     'summary': 'Import Etsy orders from Gmail notifications into Odoo sale orders',
     'description': """
@@ -14,11 +14,12 @@ Features:
 - Automated email fetching via Gmail API (OAuth2)
 - Regex-based email parsing for 34 order fields
 - Multi-shop support with dynamic shop creation
-- Customer deduplication (email > name+zip)
-- Product auto-creation with Etsy image download
+- 3-tier customer deduplication (email > normalized name+address+city+zip > name+zip)
+- Product auto-creation as storable with keyword-based category assignment
 - Historical order import from Excel
 - Parse failure monitoring and raw email audit trail
 - Design queue for personalized orders
+- ISO state-code-first resolution; ~50 country-name overrides for buyer-country variations
     """,
     'author': 'Etsy Migration Team',
     'depends': [
