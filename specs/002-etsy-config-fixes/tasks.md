@@ -117,9 +117,9 @@
 
 ### Implementation
 
-- [ ] T028 [US4] Update `find_or_create_partner()` in `custom_addons/etsy_integration/services/order_creator.py` — tier 1 email, tier 2 normalized name+address+city+zip (strip accents, lowercase, trim), tier 3 name+zip
-- [ ] T029 [US4] Update `_resolve_state()` in `custom_addons/etsy_integration/services/order_creator.py` — search by state `code` first (e.g., "CA"), then fall back to `name` ilike
-- [ ] T030 [US4] Expand country-name overrides in `custom_addons/etsy_integration/services/order_creator.py` for all 48 countries in the dataset (Czechia → Czech Republic, Republic of Korea → South Korea, etc.)
+- [X] T028 [US4] Update `find_or_create_partner()` in `custom_addons/etsy_integration/services/order_creator.py` — tier 1 email, tier 2 normalized name+address+city+zip (strip accents, lowercase, trim), tier 3 name+zip
+- [X] T029 [US4] Update `_resolve_state()` in `custom_addons/etsy_integration/services/order_creator.py` — search by state `code` first (e.g., "CA"), then fall back to `name` ilike
+- [X] T030 [US4] Expand country-name overrides in `custom_addons/etsy_integration/services/order_creator.py` for all 48 countries in the dataset (Czechia → Czech Republic, Republic of Korea → South Korea, etc.)
 
 **Checkpoint**: Customer dedup handles no-email scenarios for new imports; state/country resolution improved.
 

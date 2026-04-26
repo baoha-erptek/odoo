@@ -4,17 +4,102 @@ Takes a ParseResult (from email_parser) and creates the corresponding
 res.partner, product.product, etsy.shop, and sale.order + lines.
 """
 import logging
+import unicodedata
 from email.utils import parsedate_to_datetime
 
 from odoo import fields as odoo_fields
 
 _logger = logging.getLogger(__name__)
 
-# Country codes we look up by ISO alpha-2 first; fallback to name.
+# Country names we map to ISO alpha-2 before searching res.country. Covers
+# Etsy buyer-country naming variations the standard res.country lookup misses
+# (T030). Keep entries lower-cased lookup is case-insensitive at the call
+# site; here we keep canonical title-case for readability.
 _COUNTRY_NAME_OVERRIDES = {
     'United States': 'US',
+    'United States of America': 'US',
+    'USA': 'US',
+    'U.S.A.': 'US',
     'United Kingdom': 'GB',
+    'UK': 'GB',
+    'Great Britain': 'GB',
+    # Common Etsy buyer-country naming variations (T030).
+    'Czechia': 'CZ',
+    'Czech Republic': 'CZ',
+    'Republic of Korea': 'KR',
+    'South Korea': 'KR',
+    'Korea, South': 'KR',
+    "Korea, Democratic People's Republic of": 'KP',
+    'North Korea': 'KP',
+    'Russia': 'RU',
+    'Russian Federation': 'RU',
+    'Vietnam': 'VN',
+    'Viet Nam': 'VN',
+    'Iran': 'IR',
+    'Iran, Islamic Republic of': 'IR',
+    'Bolivia': 'BO',
+    'Bolivia, Plurinational State of': 'BO',
+    'Venezuela': 'VE',
+    'Venezuela, Bolivarian Republic of': 'VE',
+    'Tanzania': 'TZ',
+    'Tanzania, United Republic of': 'TZ',
+    'Moldova': 'MD',
+    'Moldova, Republic of': 'MD',
+    'Macedonia': 'MK',
+    'North Macedonia': 'MK',
+    'Macao': 'MO',
+    'Macau': 'MO',
+    'Hong Kong': 'HK',
+    'Taiwan': 'TW',
+    'Taiwan, Province of China': 'TW',
+    'Palestine': 'PS',
+    'Palestine, State of': 'PS',
+    'Syria': 'SY',
+    'Syrian Arab Republic': 'SY',
+    'Laos': 'LA',
+    "Lao People's Democratic Republic": 'LA',
+    'Brunei': 'BN',
+    'Brunei Darussalam': 'BN',
+    'Cape Verde': 'CV',
+    'Cabo Verde': 'CV',
+    'Ivory Coast': 'CI',
+    "Côte d'Ivoire": 'CI',
+    "Cote d'Ivoire": 'CI',
+    'East Timor': 'TL',
+    'Timor-Leste': 'TL',
+    'Burma': 'MM',
+    'Myanmar': 'MM',
+    'Swaziland': 'SZ',
+    'Eswatini': 'SZ',
+    'Holy See': 'VA',
+    'Vatican City': 'VA',
 }
+
+
+# German transliterations applied before NFD decomposition. Without these,
+# "Müller" → "Muller" rather than "Mueller", which breaks dedup against
+# customers who entered the ASCII form on a different order.
+_GERMAN_TRANSLIT = {
+    'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+    'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue',
+}
+
+
+def _normalize_text(value):
+    """Lowercase, strip accents, collapse whitespace, apply German translit.
+
+    Used by partner dedup tier 2 to compare addresses ignoring case and
+    accent variations (e.g. "Müller" vs "Mueller", "Lyon" vs "LYON",
+    "Françoise" vs "Francoise").
+    """
+    if not value:
+        return ''
+    transliterated = value
+    for src, dst in _GERMAN_TRANSLIT.items():
+        transliterated = transliterated.replace(src, dst)
+    decomposed = unicodedata.normalize('NFD', transliterated)
+    stripped = ''.join(ch for ch in decomposed if unicodedata.category(ch) != 'Mn')
+    return ' '.join(stripped.lower().split())
 
 # Currency markers detected in raw price text. Order matters: longer / more
 # specific tokens first so "EUR" doesn't shadow "E", etc.
@@ -230,33 +315,45 @@ class OrderCreator:
     def find_or_create_partner(self, shipping, buyer_name):
         """Find or create a res.partner from shipping address data.
 
-        Matching priority:
-        1. By email (if non-empty)
-        2. By name + zip
-        3. Create new
+        Three-tier matching strategy (T028):
+          Tier 1 — Email (exact). When email is provided, it is authoritative:
+            an unknown email creates a *new* partner rather than falling
+            through to address-based tiers (prevents false matches when two
+            people share a household address but have separate accounts).
+          Tier 2 — Normalized name + address1 + city + zip (no email).
+            Accent and case insensitive; matches "José García / 123 Café"
+            against "jose garcia / 123 cafe".
+          Tier 3 — Name + zip fallback (no email, partial address).
+            Catches the case where the address line is missing or differs
+            but the buyer is the same person ordering to the same zip.
+          Tier 4 — Create new.
         """
         Partner = self._env['res.partner']
-        email = getattr(shipping, 'email', '') or ''
-        name = getattr(shipping, 'name', '') or ''
-        zipcode = getattr(shipping, 'zipcode', '') or ''
+        email = (getattr(shipping, 'email', '') or '').strip()
+        name = (getattr(shipping, 'name', '') or '').strip()
+        address1 = (getattr(shipping, 'address1', '') or '').strip()
+        city = (getattr(shipping, 'city', '') or '').strip()
+        zipcode = (getattr(shipping, 'zipcode', '') or '').strip()
         phone = getattr(shipping, 'phone', '') or ''
 
-        # 1. Match by email
         if email:
             partner = Partner.search([('email', '=', email)], limit=1)
             if partner:
                 return partner
-
-        # 2. Match by name + zip
-        if name and zipcode:
-            partner = Partner.search([
-                ('name', '=', name),
-                ('zip', '=', zipcode),
-            ], limit=1)
+            # Email present but unknown → skip address tiers, create new.
+        else:
+            partner = self._search_partner_normalized(
+                name=name, address1=address1, city=city, zipcode=zipcode)
             if partner:
                 return partner
+            if name and zipcode:
+                partner = Partner.search([
+                    ('name', '=', name),
+                    ('zip', '=', zipcode),
+                ], limit=1)
+                if partner:
+                    return partner
 
-        # 3. Create new partner
         country = self._resolve_country(
             getattr(shipping, 'country_code', '') or '',
             getattr(shipping, 'country_name', '') or '',
@@ -268,9 +365,9 @@ class OrderCreator:
             'name': name or buyer_name or 'Etsy Customer',
             'is_etsy_customer': True,
             'etsy_buyer_name': buyer_name or '',
-            'street': getattr(shipping, 'address1', '') or '',
+            'street': address1,
             'street2': getattr(shipping, 'address2', '') or '',
-            'city': getattr(shipping, 'city', '') or '',
+            'city': city,
             'zip': zipcode,
             'phone': phone,
             'email': email,
@@ -281,6 +378,30 @@ class OrderCreator:
         partner = Partner.create(vals)
         _logger.info('Created partner %s (id=%d)', partner.name, partner.id)
         return partner
+
+    def _search_partner_normalized(self, name, address1, city, zipcode):
+        """Tier 2 partner dedup: normalized name+address+city+zip match.
+
+        Returns the matching partner recordset (possibly empty). Filters
+        candidates by exact zip first to keep the in-Python normalization
+        loop bounded.
+        """
+        if not (name and address1 and city and zipcode):
+            return self._env['res.partner'].browse()
+        target = (
+            _normalize_text(name),
+            _normalize_text(address1),
+            _normalize_text(city),
+        )
+        candidates = self._env['res.partner'].search([('zip', '=', zipcode)])
+        for cand in candidates:
+            if (
+                _normalize_text(cand.name or '') == target[0]
+                and _normalize_text(cand.street or '') == target[1]
+                and _normalize_text(cand.city or '') == target[2]
+            ):
+                return cand
+        return self._env['res.partner'].browse()
 
     # ------------------------------------------------------------------
     # Product
@@ -382,20 +503,24 @@ class OrderCreator:
         }
 
     def _resolve_country(self, code, name):
-        """Resolve a res.country from a code or name."""
+        """Resolve a res.country from a code or name (T030).
+
+        Lookup order: ISO alpha-2 code → name override → exact name → fuzzy
+        name. Returns ``None`` when nothing matches.
+        """
         Country = self._env['res.country']
 
-        # Try override mapping first
-        if name and name in _COUNTRY_NAME_OVERRIDES:
-            code = _COUNTRY_NAME_OVERRIDES[name]
-
-        # By ISO code
         if code and len(code) == 2:
             country = Country.search([('code', '=', code.upper())], limit=1)
             if country:
                 return country
 
-        # By name fallback
+        if name and name in _COUNTRY_NAME_OVERRIDES:
+            mapped_code = _COUNTRY_NAME_OVERRIDES[name]
+            country = Country.search([('code', '=', mapped_code)], limit=1)
+            if country:
+                return country
+
         if name:
             country = Country.search([('name', 'ilike', name)], limit=1)
             if country:
@@ -404,13 +529,31 @@ class OrderCreator:
         return None
 
     def _resolve_state(self, state_name, country):
-        """Resolve a res.country.state from name and country."""
+        """Resolve a res.country.state from a code or name (T029).
+
+        Tries ISO state code first (e.g. 'CA' → California, not Carolina);
+        falls back to fuzzy name match. Returns ``None`` when nothing
+        matches.
+        """
         if not state_name or not country:
             return None
-        return self._env['res.country.state'].search([
-            ('name', 'ilike', state_name),
+        State = self._env['res.country.state']
+        cleaned = state_name.strip()
+        if not cleaned:
+            return None
+        # Try by code first when input looks like a code (≤5 chars).
+        # Prevents 'CA' name-substring match shadowing California with Carolina.
+        if len(cleaned) <= 5:
+            state = State.search([
+                ('code', '=', cleaned.upper()),
+                ('country_id', '=', country.id),
+            ], limit=1)
+            if state:
+                return state
+        return State.search([
+            ('name', 'ilike', cleaned),
             ('country_id', '=', country.id),
-        ], limit=1)
+        ], limit=1) or None
 
     @staticmethod
     def _parse_email_date(date_str):
