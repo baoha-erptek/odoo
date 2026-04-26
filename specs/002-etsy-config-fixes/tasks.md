@@ -133,10 +133,10 @@
 
 ### Implementation
 
-- [ ] T031 [US5] [R6] Replace all `_COL_*` constants with header-based mapping in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — read first row, build `{normalized_header: index}` dict, fail fast if required headers (TRANSACTION_ID, ORDER_ID, PRODUCT_NAME, PRICE, QUANTITY) are missing
-- [ ] T032 [US5] [R4] Replace `self.env.cr.commit()` with `self.env.cr.savepoint()` per **500-order batch** (not 100) in `custom_addons/etsy_integration/wizards/import_orders_wizard.py`; log failing batch IDs to `etsy.sync.health` via `report_run()`
-- [ ] T033 [US5] Add `warning_count` and `validation_notes` fields to `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — tracks zero-price warnings, unparseable values, missing headers
-- [ ] T034 [US5] Write test for header-based mapping in `custom_addons/etsy_integration/tests/test_import_wizard_headers.py` — column reordering, missing required header, missing optional header
+- [X] T031 [US5] [R6] Replace all `_COL_*` constants with header-based mapping in `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — read first row, build `{normalized_header: index}` dict, fail fast if required headers (TRANSACTION_ID, ORDER_ID, PRODUCT_NAME, PRICE, QUANTITY) are missing
+- [X] T032 [US5] [R4] Replace `self.env.cr.commit()` with `self.env.cr.savepoint()` per **500-order batch** (not 100) in `custom_addons/etsy_integration/wizards/import_orders_wizard.py`; log failing batch IDs to `etsy.sync.health` via `report_run()`
+- [X] T033 [US5] Add `warning_count` and `validation_notes` fields to `custom_addons/etsy_integration/wizards/import_orders_wizard.py` — tracks zero-price warnings, unparseable values, missing headers
+- [X] T034 [US5] Write test for header-based mapping in `custom_addons/etsy_integration/tests/test_import_wizard_headers.py` — column reordering, missing required header, missing optional header
 
 **Checkpoint**: Wizard robust against column reordering and partial failures.
 

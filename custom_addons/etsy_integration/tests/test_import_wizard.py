@@ -311,9 +311,11 @@ class TestImportWizard(TransactionCase):
         orders = self.env['sale.order'].search(
             [('etsy_order_id', '=', 'MULTI_001')])
         self.assertEqual(len(orders), 1, 'Should create exactly one order')
+        # Two product lines + one Etsy Shipping line (shipping_cost=3.96 from
+        # _make_row); the shipping line is added once per order, not per row.
         self.assertEqual(
-            len(orders.order_line), 2,
-            'Order should have two lines')
+            len(orders.order_line), 3,
+            'Order should have two product lines plus one shipping line')
 
     def test_import_empty_file(self):
         """An empty xlsx produces a status message, no orders."""

@@ -3,6 +3,7 @@ from . import test_order_creation
 from . import test_deduplication
 from . import test_image_downloader
 from . import test_import_wizard
+from . import test_import_wizard_headers
 from . import test_multi_currency_parsing
 from . import test_product_categorizer
 from . import test_us3_product_creation
