@@ -190,3 +190,4 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 ## Change log
 
 - **2026-04-13**: File created. Wave A + Wave B logged as complete. Phase 0 execution tasks defined. E1 + E2 + E3 external dependencies added.
+- **2026-04-26**: Promoted `main` as canonical trunk (linear: doc snapshot `f0a5be98686` → 002 MVP `874e06ada5f` → playbook cherry-pick `579dabd71e6`). All future spec-slice worktrees branch off `main`. Stale branch `005-etsy-api-channel` retained for history; do not commit to it. Wave 1 (`002-us3-us4`) and Wave 2 (`005-etsy-sandbox`) launched off `main` under the implementation playbook (`.claude/plans/006-implementation-playbook.md`).
