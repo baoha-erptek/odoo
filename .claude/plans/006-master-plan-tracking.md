@@ -70,10 +70,10 @@
 | P0-11 | Implement `multichannel.sync.health` model + dashboard tile | Dev B | `todo` | — | DA #6. Phase 0 deliverable per ADR-008 §7 (add `parser_template_drift` metric) |
 | P0-12 | Ban `_logger.info(` in models/services via pre-commit hook; fix 6 existing violations | Dev B | `todo` | — | Tech #7 |
 | P0-13 | Add `tracking_number` index + composite `(etsy_shop_id, etsy_last_modified DESC)` | Dev B | `todo` | — | Tech #9 |
-| P0-14 | Spec 005 sandbox — OAuth2 PKCE flow against owner's dev token | Dev B | `todo` | P0-04 | ADR-008 §2 |
-| P0-15 | Spec 005 sandbox — `EtsyApiClient` with rate limiter + retry/backoff | Dev B | `todo` | P0-14 | Shared rate limiter lives in `multichannel_hub_core/utils/` |
-| P0-16 | Spec 005 sandbox — `EtsyOrderSyncer` against dev shop with VCR fixtures | Dev B | `todo` | P0-15 | No production shops touched |
-| P0-17 | Spec 005 sandbox — `etsy.api.log` model + audit tests | Dev B | `todo` | P0-14 | — |
+| P0-14 | Spec 005 sandbox — OAuth2 PKCE flow against owner's dev token | Dev B | `blocked` | P0-04, Owner sign-off on findings.md Q1-Q5 | ADR-008 §2. Architect advisory landed on `005-etsy-sandbox` 2026-04-26 |
+| P0-15 | Spec 005 sandbox — `EtsyApiClient` with rate limiter + retry/backoff | Dev B | `blocked` | P0-14, Q3 decision | Shared rate limiter lives in `multichannel_hub_core/utils/` post-Phase 1 per architect advisory |
+| P0-16 | Spec 005 sandbox — `EtsyOrderSyncer` against dev shop with VCR fixtures | Dev B | `blocked` | P0-15, Q1 decision | No production shops touched. VCR policy per architect advisory Q1 |
+| P0-17 | Spec 005 sandbox — `etsy.api.log` model + audit tests | Dev B | `blocked` | P0-14, Q4 decision | `sync_audit_mode` semantics per architect advisory Q4 |
 | P0-18 | Gearment sandbox POC — 3-day spike (auth, rate limits, HMAC, draft/quote/confirm idempotency) | Dev B | `blocked` | E2 | Cannot start without creds |
 | P0-19 | GKE Excel schema fingerprinting — hash column layout, hard-fail on unknown | Dev A | `todo` | — | DA #4.3. Standalone utility that Spec 004a will consume |
 | P0-20 | Module decomposition kickoff — split `etsy_integration` into 4 modules (core / fulfillment / etsy_channel / etsy_channel_migration) | Architect + Dev B | `todo` | P0-11 | ADR-003. Must complete before Phase 1 code |
@@ -191,3 +191,4 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 
 - **2026-04-13**: File created. Wave A + Wave B logged as complete. Phase 0 execution tasks defined. E1 + E2 + E3 external dependencies added.
 - **2026-04-26**: Promoted `main` as canonical trunk (linear: doc snapshot `f0a5be98686` → 002 MVP `874e06ada5f` → playbook cherry-pick `579dabd71e6`). All future spec-slice worktrees branch off `main`. Stale branch `005-etsy-api-channel` retained for history; do not commit to it. Wave 1 (`002-us3-us4`) and Wave 2 (`005-etsy-sandbox`) launched off `main` under the implementation playbook (`.claude/plans/006-implementation-playbook.md`).
+- **2026-04-26**: W1 RED phase complete on `002-us3-us4` (commit `be2a08489e0`) — 30 test methods across 3 new files for T025–T030. **BLOCKED on docker-compose worktree-mount issue** (see `specs/002-etsy-config-fixes/findings.md`). W2 architect advisory landed on `005-etsy-sandbox` (commit `7bab697072f`) — 5 open questions await Owner decision in `specs/005-etsy-api-channel/findings.md`. P0-14..17 moved to `blocked` until decisions land.
