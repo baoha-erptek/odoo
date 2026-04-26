@@ -111,12 +111,16 @@ class TestOrderCreation(TransactionCase):
         self.assertIsNotNone(order)
         self.assertEqual(order.etsy_order_id, 'TEST001')
         self.assertEqual(order.state, 'draft')
-        self.assertEqual(len(order.order_line), 1)
-        line = order.order_line[0]
-        self.assertEqual(line.etsy_transaction_id, 'TXN001')
-        self.assertAlmostEqual(line.price_unit, 19.70)
-        self.assertEqual(line.etsy_color, 'Gold')
-        self.assertEqual(line.etsy_personalisation, 'Custom text')
+        # 2 lines: 1 product transaction + 1 shipping line (T016 of 002 MVP).
+        self.assertEqual(len(order.order_line), 2)
+        product_line = order.order_line.filtered(lambda l: l.etsy_transaction_id == 'TXN001')
+        self.assertTrue(product_line, "Product line should exist")
+        self.assertAlmostEqual(product_line.price_unit, 19.70)
+        self.assertEqual(product_line.etsy_color, 'Gold')
+        self.assertEqual(product_line.etsy_personalisation, 'Custom text')
+        shipping_line = order.order_line - product_line
+        self.assertEqual(len(shipping_line), 1, "Shipping line should exist")
+        self.assertAlmostEqual(shipping_line.price_unit, 3.96)
 
     def test_order_linked_to_shop(self):
         from ..services.order_creator import OrderCreator

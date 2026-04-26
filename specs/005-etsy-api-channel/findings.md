@@ -145,13 +145,17 @@ Both are <1 page. Author them in `specs/006-master-plan/adrs/` once Owner decisi
 
 ### Owner decision form
 
-Tick or annotate per question, then proceed with implementation:
+**2026-04-26 Owner decision**: "proceed as recommendation, we'll comeback for open questions when do end-to-end test."
 
-- [ ] Q1 — One-per-test cassettes, quarterly refresh via `ETSY_DEV_TOKEN_REFRESH=1`. Refresh cadence ok? Y / N / change to: ___
-- [ ] Q2 — `ir.config_parameter` + `group_system` for sandbox; encryption deferred to P1-XX. Acceptable? Y / N
-- [ ] Q3 — Per-client token bucket for sandbox; shared bucket as Phase 1 refactor task. Acceptable? Y / N
-- [ ] Q4 — Boolean `etsy.shop.sync_audit_mode`; read-only path in syncer. Acceptable? Y / N
-- [ ] Q5 — Land in `etsy_integration`, re-home to `etsy_channel` during ADR-003 Phase 1. Acceptable? Y / N
-- [ ] Author ADR-009 (VCR policy) and ADR-010 (audit mode) before sandbox coding starts? Y / N
+All five recommendations accepted as defaults for sandbox implementation (W5). Revisit during the W7 E2E sprint if it surfaces issues.
+
+- [x] Q1 — One-per-test cassettes, quarterly refresh via `ETSY_DEV_TOKEN_REFRESH=1`. **Accepted as architect recommendation. Revisit at W7.**
+- [x] Q2 — `ir.config_parameter` + `group_system` for sandbox; encryption deferred to Phase 1. **Accepted as architect recommendation. Revisit at W7.**
+- [x] Q3 — Per-client token bucket for sandbox; shared bucket as Phase 1 refactor task. **Accepted as architect recommendation. Revisit at W7.**
+- [x] Q4 — Boolean `etsy.shop.sync_audit_mode`; read-only path in syncer. **Accepted as architect recommendation. Revisit at W7.**
+- [x] Q5 — Land in `etsy_integration`, re-home to `etsy_channel` during ADR-003 Phase 1. **Accepted as architect recommendation. Revisit at W7.**
+- [ ] ADR-009 (VCR policy) and ADR-010 (audit mode) — **deferred until W7 E2E results inform whether the policies need codifying as ADRs or remain implementation-level decisions.**
+
+W2 → W5 unblocked. P0-14..17 move from `blocked` to `todo` in the tracker.
 
 ---

@@ -43,4 +43,31 @@ which resolves to `/home/odoo/odoo_dev/other_projects/odoo19_esty/custom_addons`
 
 **Not blocking the planner / architect / RED-author phases** — only blocks Phase 5 verification.
 
+**Resolution (2026-04-26)**: Workflow pivoted to single-workspace-on-main (per playbook revision 1). The docker-compose mount now points at the main workspace where forward work happens, so the blocker is moot. W1 GREEN executed cleanly from main workspace.
+
+---
+
+## 2026-04-26 — Wave 1 GREEN complete + 4 pre-existing failures from 002 MVP
+
+**Slice exit**: T025–T030 implementation landed across two commits on main:
+- `5a2b9591d60` [etsy_integration] feat(US3): product configuration with categorizer (T025/T026/T027 + tax_group_id/country_id install fix)
+- `6d357cca651` [etsy_integration] feat(US4): partner dedup tiers + state/country resolution (T028/T029/T030 with German transliteration)
+
+All 6 W1 tests now GREEN. Ruff clean. No `_logger.info(` for debugging. Module installs cleanly.
+
+**Install-blocker fix (collateral)**: `etsy_fiscal_data.xml`'s `account.tax` record was missing both `tax_group_id` and `country_id` (NOT NULL constraints in Odoo 19). Added a new `tax_group_etsy` record and pinned country to `base.us` (cosmetic — the 0% tax never bills). Fresh install now succeeds.
+
+**Test fix (collateral)**: `test_create_full_order` was outdated since 002 MVP's T016 added a shipping order line; assertion updated from `len == 1` to `len == 2` with shipping-line verification.
+
+**Inherited blockers from 002 MVP slice (`874e06ada5f`)** — 4 pre-existing failures, all sharing the same root cause:
+
+| Test | Root cause | Resolution |
+|---|---|---|
+| `TestImportWizard.test_import_creates_order` | `wizards/import_orders_wizard.py:185` calls `self.env.cr.commit()` inside test (forbidden by Odoo 19: "Cannot commit or rollback a cursor from inside a test") | T032 (US5): replace `cr.commit()` with `cr.savepoint()` per 500-order batch. Same fix unblocks the next 2 rows. |
+| `TestImportWizard.test_import_multiple_lines_same_order` | same `cr.commit()` issue | T032 (US5) |
+| `TestImportWizard.test_import_skips_duplicate` | same `cr.commit()` issue | T032 (US5) |
+| `TestDeduplication.test_email_log_unique_constraint` | `assertRaises(Exception)` not triggered — likely the same `cr.commit()` rollback breaking savepoint setup. Investigate during T032. | T032 (US5) probable; investigate to confirm. |
+
+**Recommendation**: Take W3 next (Spec 002 US5 dedup + US6 migration). T032 falls inside W3 and naturally clears 3–4 of the 4 pre-existing failures. Residual investigation cost for `test_email_log_unique_constraint` is small and bundles in.
+
 ---
