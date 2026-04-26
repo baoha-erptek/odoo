@@ -7,7 +7,17 @@
         for reporting alignment; no tax is actually charged. See research R1.
     -->
 
+    <!-- Tax group is required by account.tax in Odoo 19 (NOT NULL constraint). -->
+    <!-- We define our own rather than depending on a country localization module. -->
+    <record id="tax_group_etsy" model="account.tax.group">
+        <field name="name">Etsy Marketplace</field>
+        <field name="sequence">20</field>
+    </record>
+
     <!-- 0% tax representing "tax collected by Etsy marketplace" -->
+    <!-- Odoo 19 requires country_id on account.tax; we pin to US as a stable default -->
+    <!-- since Etsy is US-headquartered. Company country override is not relevant -->
+    <!-- because the tax never actually bills (0%); it exists for reporting alignment. -->
     <record id="tax_etsy_collected" model="account.tax">
         <field name="name">Etsy Tax Collected (0%)</field>
         <field name="amount">0.0</field>
@@ -15,6 +25,8 @@
         <field name="type_tax_use">sale</field>
         <field name="description">Etsy (0%)</field>
         <field name="price_include_override">tax_included</field>
+        <field name="tax_group_id" ref="tax_group_etsy"/>
+        <field name="country_id" ref="base.us"/>
     </record>
 
     <!-- Etsy Marketplace fiscal position (no auto-apply; set explicitly on order) -->

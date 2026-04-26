@@ -101,9 +101,9 @@
 
 ### Implementation
 
-- [ ] T025 [US3] Update `find_or_create_product()` in `custom_addons/etsy_integration/services/order_creator.py` to set `is_storable=True` on new products
-- [ ] T026 [US3] Update `find_or_create_product()` in `custom_addons/etsy_integration/services/order_creator.py` to call `product_categorizer.categorize()` (T011) and set `categ_id`
-- [ ] T027 [US3] Write test for product categorizer in `custom_addons/etsy_integration/tests/test_product_categorizer.py` — keyword matching, fallback to uncategorized, case-insensitivity
+- [X] T025 [US3] Update `find_or_create_product()` in `custom_addons/etsy_integration/services/order_creator.py` to set `is_storable=True` on new products
+- [X] T026 [US3] Update `find_or_create_product()` in `custom_addons/etsy_integration/services/order_creator.py` to call `product_categorizer.categorize()` (T011) and set `categ_id`
+- [X] T027 [US3] Write test for product categorizer in `custom_addons/etsy_integration/tests/test_product_categorizer.py` — keyword matching, fallback to uncategorized, case-insensitivity
 
 **Checkpoint**: New products are storable and categorized.
 

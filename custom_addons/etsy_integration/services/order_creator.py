@@ -85,6 +85,7 @@ class OrderCreator:
     def __init__(self, env):
         self._env = env
         self._cache = {}
+        self._categorizer = None  # lazy: avoid loading JSON for callers that never categorize
 
     def _ref(self, key, xmlid):
         """Resolve and memoize an xmlid lookup; returns False if missing."""
@@ -286,7 +287,12 @@ class OrderCreator:
     # ------------------------------------------------------------------
 
     def find_or_create_product(self, product_name, image_url=''):
-        """Find or create a product.product by exact name match."""
+        """Find or create a product.product by exact name match.
+
+        New products are storable (T025) and auto-categorized via keyword
+        matching against ``product_category_keywords.json`` (T026). Existing
+        products are returned unchanged — never re-categorized.
+        """
         Product = self._env['product.product']
         name = (product_name or '').strip()
         if not name:
@@ -300,11 +306,22 @@ class OrderCreator:
             'name': name,
             'is_etsy_product': True,
             'type': 'consu',
+            'is_storable': True,
             'etsy_image_url': image_url or False,
         }
+        category = self._get_categorizer().categorize(name)
+        if category:
+            vals['categ_id'] = category.id
         product = Product.create(vals)
         _logger.info('Created product %s (id=%d)', product.name, product.id)
         return product
+
+    def _get_categorizer(self):
+        """Lazy-construct the ProductCategorizer (loads JSON on first use)."""
+        if self._categorizer is None:
+            from .product_categorizer import ProductCategorizer
+            self._categorizer = ProductCategorizer(self._env)
+        return self._categorizer
 
     # ------------------------------------------------------------------
     # Shop
