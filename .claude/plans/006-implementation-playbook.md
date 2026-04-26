@@ -11,11 +11,22 @@ This file is the operating manual every session should follow when picking up ma
 ## Operating principles
 
 1. **Slice-sized, not spec-sized.** A slice = one User Story or one P-task from the tracker. Never "implement the whole spec."
-2. **Worktree per slice.** Memory rule: branch off `main`, never reuse a checked-out branch. Slug aligns with spec id (`002-us3-us4`, `005-oauth-sandbox`).
+2. **Single-workspace-on-main.** All forward coding happens in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` on branch `main`. Commit per checkpoint directly to `main`. Worktrees are reserved for **rework / bugfix** of already-shipped work (see "Worktree usage" below). This replaces the prior "worktree per slice" rule (2026-04-26 revision).
 3. **Two-Phase Testing always.** Phase 1 (DB-level verification) + Phase 2 (ORM unit tests). See `rules/odoo/`.
-4. **Commits per checkpoint, not per task.** A "checkpoint" is a self-contained, installable, test-passing state — typically one User Story or one foundational layer. Body cites the task IDs it covers.
+4. **Commits per checkpoint, not per task.** A "checkpoint" is a self-contained, installable, test-passing state — typically one User Story or one foundational layer. Body cites the task IDs it covers. Land directly on `main`.
 5. **Document drift is a defect.** If `tasks.md`, the tracker, an ADR, USER_GUIDE, or memory contradicts what was just implemented, fix the doc in the same commit (or the next one if it would balloon the diff).
 6. **Capture surprises immediately.** Every slice exits with `/learn` and (if anything was non-obvious) an entry in `specs/<spec>/findings.md`.
+7. **Code first, E2E later.** Finish the coding tasks for ALL active specs (002 + 005 + 003 + 004a) before moving to end-to-end testing. E2E is its own phase, not interleaved per slice. Per-slice tests stay at Phase 1 (DB) + Phase 2 (ORM unit) — those are mandatory.
+
+### Worktree usage (revised 2026-04-26)
+
+Worktrees are now created **only** for:
+- **Rework** of a feature already merged to `main` that needs invasive changes without disturbing forward work (e.g., refactoring a model after consumers exist).
+- **Bugfix** branches that need to ship hotfixes while forward work continues.
+
+Naming for rework/bugfix worktrees: `odoo19_esty-<reason>-<slug>` on branch `<reason>/<slug>` (e.g., `bugfix/etsy-token-refresh`). Branch off `main`. Merge back via fast-forward or rebase.
+
+Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2 worktree pattern is retired; their work has been merged to `main` and the worktrees pruned.
 
 ---
 
@@ -23,12 +34,8 @@ This file is the operating manual every session should follow when picking up ma
 
 ### Phase 0 — Dispatch
 - Read tracker. Pick the highest-priority slice whose `Depends on` is satisfied.
-- Verify base: `git branch --show-current` on a clean worktree off `main`.
-- Create worktree if missing:
-  ```bash
-  cd /home/odoo/odoo_dev/other_projects/
-  git -C odoo19_esty worktree add ../odoo19_esty-<spec>-<slug> -b <spec>-<slug> main
-  ```
+- Verify branch: `git branch --show-current` returns `main`. Working tree clean (`git status` shows no uncommitted changes from a previous slice).
+- Stay in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` (the main workspace). Do **not** create a worktree for forward work.
 - TaskCreate items: one per slice task + one per exit-criterion check.
 
 ### Phase 1 — Plan
@@ -86,9 +93,11 @@ Update in the same checkpoint commit (or the next one if it would balloon):
 - Memory entries follow the auto-memory rules (`feedback`/`project`/`reference`/`user`).
 
 ### Phase 9 — Land
-- `/review` skill against base branch — gate before push.
-- `/ship` to push + open PR with VERSION/CHANGELOG bump (when the spec slice is user-visible).
-- If trunk merges every slice, run `/retro` weekly.
+- Forward work commits directly to `main` per checkpoint (single-workspace pattern). No PR, no merge step needed for forward slices.
+- `/review` skill before each commit if the diff is large (>300 lines) or touches security-sensitive surfaces.
+- For **rework / bugfix** worktrees only: use `/ship` to push + open PR with VERSION/CHANGELOG bump.
+- E2E phase (after all spec coding is done): a dedicated E2E sprint runs `e2e-runner` agent across critical user flows, fixes regressions, then `/ship` once per E2E pass.
+- If trunk grows fast, run `/retro` weekly to surface drift.
 
 ---
 
@@ -127,22 +136,18 @@ This is the closest we can get to the Anthropic Advisor tool (`advisor_20260301`
 
 ---
 
-## Parallel execution
+## Parallel execution (revised 2026-04-26)
 
-When two slices touch disjoint modules / files:
+In the single-workspace pattern, true parallelism within forward work is no longer possible — only one branch (`main`) is active at a time. Achieve parallelism instead via:
 
-1. Worktrees in **separate directories** (already enforced by memory rule).
-2. Spawn both planners in **one message, two Agent calls** — they execute concurrently.
-3. Each slice runs the full 9-phase loop independently.
-4. Synchronize at landing: `/ship` PRs in sequence, not parallel, to avoid CI conflicts on `main`.
+1. **Parallel research / planning agents**: spawn multiple `planner`, `architect`, `code-reviewer` agents in a single message when they read disjoint files. They produce advice; the orchestrator integrates results sequentially.
+2. **Sequential checkpoints, fast cadence**: complete one checkpoint, commit, immediately start the next. The 9-phase loop is short enough that sequential work approximates parallel throughput.
+3. **Rework / bugfix parallelism**: a hotfix worktree may run in parallel with forward main work, since they ship via different paths (rework worktree → `/ship` PR; forward → direct main commit).
 
-Disjoint examples (safe to parallelize):
-- Spec 002 US3 (product config) + Spec 005 sandbox (OAuth client) — different modules, different files.
-- Spec 003 dashboard XML + Spec 004a tracking import — different views, different services.
-
-Conflicting examples (must serialize):
-- Two slices both editing `services/order_creator.py`.
-- ADR-changing slices with overlapping module decomposition (ADR-003) impact.
+Conflicting work that must always serialize on `main`:
+- Two checkpoints touching `services/order_creator.py`.
+- ADR-changing checkpoints with overlapping module-decomposition (ADR-003) impact.
+- Anything modifying `__manifest__.py` data list at the same time.
 
 ---
 
@@ -159,15 +164,20 @@ Conflicting examples (must serialize):
 
 ---
 
-## Wave plan (rolling 4 weeks from 2026-04-26)
+## Wave plan (revised 2026-04-26 — single-workspace, sequential)
 
-| Wave | Slices | Worktree | Tier | Why |
-|---|---|---|---|---|
-| **W1** (current) | Spec 002 US3 product config (T025–T027) + US4 customer/partner (T028–T031) | `odoo19_esty-002-us3-us4` on `002-us3-us4` | Executor | Small, independent, unblocks US6 migration |
-| **W2** (parallel with W1) | Spec 005 sandbox bootstrap: `/speckit-tasks` → tasks.md, then OAuth/PKCE + `EtsyApiClient` + `etsy.api.log` (P0-14..17) | `odoo19_esty-005-sandbox` on `005-etsy-sandbox` (off `main`) | Executor + Advisor for OAuth design | No prod risk (dev token); parallelizable |
-| **W3** (after W1) | Spec 002 US5 dedup wizard (CSV-only, no auto-merge per DA #9) + US6 migration wizard (batch-resumable, DA #3) | `odoo19_esty-002-migration` | Advisor for batching strategy | Critical path — 17K orders backlog |
-| **W4** | Spec 002 US7–US10 + polish | `odoo19_esty-002-polish` | Executor | Cleanup before Phase 1 cutover |
-| **W5+** | Phase 1 work (Spec 003 dashboards, Spec 005 production cutover when E1 approved) | per-slice | Executor + Advisor | Blocked on E1 + W4 exit |
+All forward work happens on `main` in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`. Sequential checkpoints, fast cadence. **Goal: finish ALL spec coding before opening the E2E phase.**
+
+| Wave | Slices | Tier | Status |
+|---|---|---|---|
+| **W1 (RED done)** | Spec 002 US3 (T025–T027) + US4 (T028–T031) — RED tests committed `aecbe579fea` | Executor | GREEN next, blocked on docker-mount strategy (see findings) |
+| **W2 (planning done)** | Spec 005 sandbox P0-14..17 — tasks.md (110 tasks) + architect findings landed on main | Advisor | Blocked on Owner Q1–Q5 decisions |
+| **W3** | Spec 002 US5 dedup wizard (CSV-only) + US6 migration wizard (batch-resumable, 17K backlog) | Advisor for batching | After W1 GREEN |
+| **W4** | Spec 002 US7–US10 + polish (T032–T067) | Executor | After W3 |
+| **W5** | Spec 005 sandbox GREEN — Foundational + US1 + US2 + US5 + US8 (T001–T062 from spec 005 tasks.md) | Executor + Advisor for OAuth | After W2 decisions |
+| **W6** | Spec 003 dashboards coding + Spec 004a tracking import coding | Executor | After W4 + W5 |
+| **W7 (E2E gate)** | All-spec E2E sprint: critical user flows, regression sweep | `e2e-runner` agent | After W6 — coding-complete gate |
+| **W8+** | Phase 1 production cutover (blocked on E1 Etsy scope approval) | Executor + Advisor | External dependency |
 
 ---
 
@@ -186,3 +196,4 @@ If a slice cannot follow this loop (e.g., spec is missing tasks.md, scope is amb
 ## Change log
 
 - **2026-04-26**: File created. Wave 1 + Wave 2 launched in parallel under this playbook.
+- **2026-04-26 (revision 1)**: Workflow pivot — from "worktree per slice" to **single-workspace-on-main**. All forward coding now lands directly on `main` in the primary workspace. Worktrees reserved for rework / bugfix only. Wave 1 (RED tests) and Wave 2 (planning + findings + tasks.md) consolidated to `main` via rebase; wave worktrees and branches pruned. Wave plan rewritten as sequential. Added Phase 7 principle: "Code first, E2E later" — finish ALL spec coding before E2E sprint (W7 gate).
