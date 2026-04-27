@@ -10,10 +10,13 @@ class SaleOrderFulfillment(models.Model):
 
     tracking_number = fields.Char(string='Tracking Number', index=True, tracking=True)
     shipping_date = fields.Date(string='Shipping Date', tracking=True)
-    # shipping_carrier_id (Many2one to shipping.carrier) is deferred to P1-06,
-    # which lands the shipping.carrier model + this FK together. Odoo 19's
-    # registry build rejects unknown comodel_name strings, so we cannot add
-    # the field as a forward reference in this slice.
+    shipping_carrier_id = fields.Many2one(
+        'shipping.carrier',
+        string='Shipping Carrier',
+        ondelete='set null',
+        index=True,
+        tracking=True,
+    )
     label_status = fields.Selection(
         [
             ('none', 'None'),

@@ -62,3 +62,42 @@ agree on inheritance direction. Spec 003 contributors should default to
 checking ADR direction against an Odoo CE reference implementation
 (`product.product`, `hr.employee`) before writing planner agents that inherit
 the same confusion.
+
+---
+
+## 2026-04-27 — P1-06 shipping.carrier slice notes
+
+**Slice scope shaved vs ADR-005**:
+
+- ADR-005's Etsy carrier enum was open-ended ("...from Etsy API docs"); we
+  shipped a conservative subset (`usps`/`ups`/`fedex`/`dhl`/`4px`/`other`)
+  with a TODO comment in the Selection. Expand once Etsy app scope review
+  is approved (E1 dependency) and we can hit the live API. Carriers not in
+  the enum (UniUni, YunExpress, GKE Local) seed with `etsy_carrier_name='other'`
+  per ADR-005's documented push-time fallback.
+- `etsy.carrier.mapping` deletion deferred — it lives in Spec 005 territory
+  and will be cleaned up when Spec 005 production cutover slices land.
+
+**Open items flagged to downstream slices**:
+
+- **P1-01 Order Dashboard / P2-01 Tracking Dashboard**: `tracking_url_template`
+  uses `{tracking_number}` placeholder. When dashboards render the URL, the
+  tracking_number must be sanitized (alphanumeric-only validation before
+  substitution) — XSS via `<script>` in the tracking field is the obvious
+  vector. The model layer in P1-06 does not render anything; this is a UI
+  concern for the consumer slice.
+- **`@api.constrains('code')` uniqueness** uses `self.search()` per record,
+  i.e. O(n) on bulk create. Master data is low-cardinality (7 seed + maybe
+  20 manual) so this is fine — but if a future slice does bulk-import of
+  carriers (e.g., from a partner CSV), revisit with a set-based check.
+
+**Odoo 19 specifics confirmed in this slice**:
+
+- `noupdate="0"` on seed XML is the right default for master data we want
+  to extend in future releases (BAs can edit individual rows; new releases
+  push new rows). `noupdate="1"` would have made future expansion painful.
+- `required=True` does NOT enforce non-empty strings; it only blocks NULL.
+  Use `@api.constrains` to also reject empty/whitespace-only strings (we
+  did this for `name` and `code`).
+- Seed XML IDs should be code-based (`shipping_carrier_<code>`) so
+  `env.ref()` lookups in tests are stable across re-seeds.

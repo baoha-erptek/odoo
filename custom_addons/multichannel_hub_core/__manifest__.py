@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -29,6 +29,7 @@ empty installable skeleton; subsequent slices will populate it:
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/shipping_carrier_data.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
