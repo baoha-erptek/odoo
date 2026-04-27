@@ -27,6 +27,7 @@ Features:
         'stock',
         'contacts',
         'mail',
+        'multichannel_hub_core',
     ],
     'data': [
         'security/ir.model.access.csv',

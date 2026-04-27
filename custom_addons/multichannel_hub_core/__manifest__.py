@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -30,6 +30,7 @@ empty installable skeleton; subsequent slices will populate it:
     'data': [
         'security/ir.model.access.csv',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
     'license': 'LGPL-3',
