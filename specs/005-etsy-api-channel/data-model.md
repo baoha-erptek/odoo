@@ -1,283 +1,320 @@
-# Data Model: Etsy API v3 Channel Integration
+# Data Model: Etsy API v3 Channel Integration (with Email as Permanent Failover)
 
-**Feature**: 005-etsy-api-channel | **Date**: 2026-04-10
+**Phase**: 1 (input → research.md, plan.md; output → tasks.md via /speckit-tasks)
+**Date**: 2026-04-27 (Stage 4.2 refresh; supersedes 2026-04-10 single-channel-monolith design)
+**Modules**: `etsy_channel_api` (NEW) and `etsy_channel_email` (RENAMED from email-parser portion of `etsy_integration`) per ADR-008a §5 + ADR-001 §11
+
+> **Removed from the 2026-04-10 design** per Stage-2 ADRs:
+> - `etsy.carrier.mapping` model — superseded by `shipping.carrier.etsy_carrier_name` (ADR-005)
+> - `sync_mode` enum on `etsy.shop` — superseded by `active_source` (ADR-008a §2)
+> - `sync_audit_mode` Boolean on `etsy.shop` — removed (ADR-008a §2; canonical payload makes audit-mode redundant)
+> - "Phase 3 deletion" lifecycle on `etsy_channel_legacy` — module is now `etsy_channel_email` (peer, NOT legacy) per ADR-008a §5
+
+---
 
 ## Entity Overview
 
-| Entity | Type | Table | Description |
-|--------|------|-------|-------------|
-| etsy.shop | Extend existing | etsy_shop | Add API credentials, tokens, sync config |
-| sale.order | Extend existing | sale_order | Add sync source, tracking push, last modified |
-| sale.order.line | Extend existing | sale_order_line | Minor: no new fields needed |
-| product.template | Extend existing | product_template | Add listing ID, state, sync metadata |
-| res.config.settings | Extend existing | (transient) | Add Etsy API configuration fields |
-| etsy.api.log | New model | etsy_api_log | API call audit trail |
-| etsy.webhook.event | New model | etsy_webhook_event | Webhook event processing log |
-| etsy.carrier.mapping | New model | etsy_carrier_mapping | Carrier name translation |
+| Entity | Disposition | Module | Description |
+|---|---|---|---|
+| `etsy.shop` | Extended | `etsy_channel_api` | Add API tokens, `active_source`, `auto_recovery`, source-change tracking fields |
+| `etsy.shop.source.change.log` | NEW | `etsy_channel_api` | Append-only audit of every source switch (auto-failover, manual, recovery-probe, scope-revoked) |
+| `etsy.api.log` | NEW | `etsy_channel_api` | Per-call audit (request, response, status, duration) |
+| `etsy.buyer.message` | NEW | `etsy_channel_api` | REQ-MSG-01 — buyer_message ingestion per receipt |
+| `etsy.webhook.event` | NEW (P2) | `etsy_channel_api` | Webhook event log with HMAC verification status |
+| `sale.order` | Extended (read) | `etsy_channel_api` | Adds `sync_source` (existing FR-011) — uses fields already added by Spec 003 (`channel_order_ref`) and Spec 002 (`etsy_order_id`) |
+| `product.template` | Extended | `etsy_channel_api` | Adds `etsy_listing_id`, `etsy_listing_state` (P2 listing management) |
+| `shipping.carrier` | Extended (read) | `etsy_channel_api` | Reads `etsy_carrier_name` already added by Spec 003 / ADR-005 |
+| `etsy.email.log` | EXISTING | `etsy_channel_email` | Migrated unchanged from `etsy_integration` |
+| Email-parser models | EXISTING | `etsy_channel_email` | `email_parser`, `gmail_client`, OAuth flow — migrated unchanged |
+| `etsy.order.payload` | NEW (in-memory) | shared | Frozen Python dataclass — NOT a DB model. The contract between adapters and `EtsyOrderIngestor`. See research.md R8. |
 
 ---
 
-## Extended Models
+## 1. `etsy.shop` (extended — `etsy_channel_api`)
 
-### etsy.shop (extend)
-
-New fields added to the existing `etsy.shop` model.
-
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| etsy_numeric_shop_id | Char | index=True | Etsy's numeric shop identifier (resolved from API after auth) |
-| etsy_api_key | Char | groups='base.group_system' | Application keystring (x-api-key header) |
-| etsy_shared_secret | Char | groups='base.group_system' | Application shared secret (webhook HMAC) |
-| etsy_access_token | Char | groups='base.group_system' | Current OAuth2 access token |
-| etsy_refresh_token | Char | groups='base.group_system' | OAuth2 refresh token (90-day validity) |
-| etsy_token_expiry | Datetime | | Access token expiration timestamp |
-| etsy_refresh_token_expiry | Datetime | | Refresh token expiration (set 90 days from last refresh) |
-| sync_mode | Selection | default='email_only' | Options: email_only, api_only, dual |
-| last_receipt_sync | Datetime | | Timestamp of last successful receipt sync |
-| last_listing_sync | Datetime | | Timestamp of last listing pull sync |
-| api_connection_date | Datetime | | When API was first connected (forward-only sync start) |
-| webhook_secret | Char | groups='base.group_system' | Webhook signing secret from Etsy portal |
-| api_sync_interval | Integer | default=5 | Minutes between API sync cron runs |
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `etsy_numeric_shop_id` | Char | No | — | Indexed; resolved from API user profile after OAuth |
+| `etsy_api_key` | Char | No | — | `groups='base.group_system'`; application keystring |
+| `etsy_shared_secret` | Char | No | — | `groups='base.group_system'`; webhook HMAC |
+| `etsy_access_token` | Char | No | — | `groups='base.group_system'`; refreshed automatically |
+| `etsy_access_token_expires_at` | Datetime | No | — | TTL: 1 hour |
+| `etsy_refresh_token` | Char | No | — | `groups='base.group_system'`; 90-day TTL, single-use |
+| `etsy_refresh_token_expires_at` | Datetime | No | — | Alert at -7 days |
+| `etsy_token_scopes` | Char | No | — | Granted scopes (csv) |
+| `etsy_last_receipt_sync_at` | Datetime | No | — | Incremental-sync checkpoint (`min_last_modified` cursor) |
+| **`active_source`** | Selection: `api`/`email` | Yes | `email` (existing shops) / `api` (new shops post scope-grant) | **REQ-SRC-02 / ADR-008a §2**. `tracking=True` |
+| **`active_source_changed_at`** | Datetime | No | (set on every change) | `tracking=True` |
+| **`auto_recovery`** | Boolean | Yes | `True` | When `False`, recovery-probe never auto-switches back. ADR-008a §3. `tracking=True` |
+| **`health_check_consecutive_failures`** | Integer | No | `0` | Reset to 0 on success. Counter for 3-fail threshold. NOT tracked (frequent updates). |
+| **`recovery_probe_consecutive_successes`** | Integer | No | `0` | Reset to 0 on failure. Counter for 6-success threshold. NOT tracked. |
+| `etsy_buyer_message_last_sync_at` | Datetime | No | — | REQ-MSG-01 cursor — usually equals `etsy_last_receipt_sync_at` (ingestion is bundled) |
 
 **Constraints**:
-- etsy_numeric_shop_id: UNIQUE (if set)
+- C-ESY-001: When `active_source='api'`, the OAuth tokens must be present at create-time (validation on transition). When `active_source='email'`, OAuth tokens may be absent.
+- C-ESY-002: Manually toggling `active_source` from UI requires `base.group_system` AND records a row in `etsy.shop.source.change.log` with `reason='manual'`.
 
-**Methods**:
-- `action_start_etsy_oauth()`: Initiate PKCE OAuth2 flow
-- `action_test_etsy_connection()`: Verify tokens, display shop info
-- `action_register_webhooks()`: Guide admin to Etsy portal for webhook setup
-- `_refresh_etsy_token()`: Refresh expired access token using refresh token
-- `_get_etsy_client()`: Factory method returning configured EtsyApiClient instance
+**Removed fields** (per ADR-008a v2):
+- `sync_mode` (Selection email_only/api_only) — replaced by `active_source`
+- `sync_audit_mode` (Boolean) — removed entirely
 
----
-
-### sale.order (extend)
-
-New fields added to the existing sale.order extension.
-
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| etsy_sync_source | Selection | index=True | Options: email, api, webhook. How the order was ingested. |
-| etsy_last_modified | Datetime | | Receipt update_timestamp from Etsy (for incremental sync) |
-| etsy_tracking_push_status | Selection | default='none', index=True | Options: none, pending, pushed, failed |
-| etsy_tracking_push_date | Datetime | | When tracking was last pushed to Etsy |
-| etsy_tracking_push_error | Text | | Error message from last failed push attempt |
-| etsy_receipt_status | Char | | Raw receipt status from Etsy API (paid, completed, etc.) |
-
-**Methods**:
-- `_cron_fetch_etsy_api_orders()`: Scheduled action -- sync orders via API for all API-enabled shops
-- `_cron_push_tracking_to_etsy()`: Scheduled action -- push pending tracking numbers to Etsy
-- `action_push_tracking_to_etsy()`: Manual button -- push tracking for a single order
-- `action_retry_tracking_push()`: Manual button -- retry failed tracking push
-
-**State Tracking for Tracking Push**:
-```
-none -> pending (tracking number added)
-pending -> pushed (API call success)
-pending -> failed (API call error)
-failed -> pending (retry triggered)
-pushed -> (terminal, no further transitions)
+**Migration script** (in `etsy_channel_api/migrations/19.0.1.0.0_post.py`):
+```python
+def migrate(cr, version):
+    cr.execute("""
+        UPDATE etsy_shop SET active_source = CASE
+            WHEN sync_mode = 'api_only' THEN 'api'
+            WHEN sync_mode = 'email_only' THEN 'email'
+            ELSE 'email'
+        END
+        WHERE active_source IS NULL
+    """)
 ```
 
 ---
 
-### product.template (extend)
+## 2. `etsy.shop.source.change.log` (NEW — `etsy_channel_api`, ADR-008a §3)
 
-New fields added to the existing product.template extension.
-
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| etsy_listing_id | Char | index=True, copy=False | Etsy listing identifier for reliable matching |
-| etsy_listing_state | Selection | | Options: draft, active, inactive, sold_out, expired |
-| etsy_listing_last_sync | Datetime | | When listing data was last synced from Etsy |
-| etsy_taxonomy_id | Integer | | Etsy taxonomy category (required for listing push) |
-| etsy_who_made | Selection | | Options: i_did, someone_else, collective |
-| etsy_when_made | Selection | | Options: made_to_order, 2020_2025, before_2020, etc. |
-| is_etsy_listing | Boolean | compute, store=True | Computed: bool(etsy_listing_id) |
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `shop_id` | Many2one(`etsy.shop`, `ondelete='cascade'`) | Yes | — | Indexed |
+| `from_source` | Selection: `api`/`email`/`null` | No | — | `null` for the very first row per shop |
+| `to_source` | Selection: `api`/`email` | Yes | — | |
+| `changed_at` | Datetime | Yes | `now()` | Indexed |
+| `reason` | Selection: `auto-failover`/`manual`/`recovery-probe`/`scope-revoked`/`bootstrap` | Yes | — | |
+| `actor_user_id` | Many2one(`res.users`) | No | — | NULL for cron-driven changes |
+| `health_check_failures_at_change` | Integer | No | — | Snapshot of `health_check_consecutive_failures` at the moment of change |
+| `notes` | Text | No | — | Free-form |
 
 **Constraints**:
-- etsy_listing_id: UNIQUE per shop (composite with etsy_shop_id if needed)
+- C-SCL-001: Rows are append-only (no `unlink` permitted except `base.group_system`).
+- C-SCL-002: For `reason='auto-failover'` and `'recovery-probe'`, `actor_user_id` MUST be NULL.
 
-**Methods**:
-- `action_push_to_etsy()`: Manual button -- push product data to Etsy as listing
-- `action_pull_from_etsy()`: Manual button -- refresh product data from Etsy listing
-- `action_upload_image_to_etsy()`: Manual button -- upload product image to Etsy
+**ACL**: read `group_audit_reader` + Manager; create via system or manual UI; no update.
 
----
-
-### res.config.settings (extend)
-
-New fields for Etsy API configuration (transient model, mapped to ir.config_parameter).
-
-| Field | Type | Config Parameter Key | Description |
-|-------|------|---------------------|-------------|
-| etsy_api_key | Char | etsy_integration.etsy_api_key | Application keystring |
-| etsy_api_shared_secret | Char | etsy_integration.etsy_api_shared_secret | Shared secret |
-| etsy_api_sync_interval | Integer | etsy_integration.etsy_api_sync_interval | Minutes between syncs (default: 5) |
-| etsy_api_log_level | Selection | etsy_integration.etsy_api_log_level | Options: errors_only, all, verbose |
-| etsy_api_log_retention_days | Integer | etsy_integration.etsy_api_log_retention_days | Days to retain logs (default: 30) |
-
-**Methods**:
-- `action_start_etsy_api_oauth()`: Build PKCE authorization URL and redirect
-- `action_test_etsy_api_connection()`: Verify API credentials
+**Indexes**: `(shop_id, changed_at DESC)`, `(reason, changed_at DESC)` for analytics queries (`auto_failover_count_7d` health tile).
 
 ---
 
-## New Models
+## 3. `etsy.api.log` (NEW — `etsy_channel_api`)
 
-### etsy.api.log
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `shop_id` | Many2one(`etsy.shop`, `ondelete='cascade'`) | Yes | — | |
+| `endpoint` | Char | Yes | — | e.g. `GET /v3/application/shops/:shop_id/receipts` |
+| `http_status` | Integer | No | — | NULL on connection failures |
+| `request_started_at` | Datetime | Yes | `now()` | |
+| `duration_ms` | Integer | No | — | |
+| `request_payload_summary` | Text | No | — | Body summary; `Authorization` header scrubbed |
+| `response_summary` | Text | No | — | Body summary (truncated to 4 KB) |
+| `error_message` | Text | No | — | Exception/error details |
+| `quota_used_today` | Integer | No | — | From `X-RateLimit-Limit-Daily` header |
+| `quota_remaining_today` | Integer | No | — | |
+| `source` | Selection: `sync`/`tracking_push`/`webhook_register`/`listing_push`/`listing_pull`/`buyer_message_sync`/`health_check` | Yes | — | For filter/group |
 
-Audit trail for every Etsy API call. Auto-vacuumed after retention period.
+**Retention**: cron-driven cleanup of rows >30 days (`ir.config_parameter`-tunable). Implements FR-035.
 
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| name | Char | compute | Display: "{method} {endpoint} -> {status_code}" |
-| etsy_shop_id | Many2one | required=True, ondelete='cascade' | Related shop |
-| endpoint | Char | required=True, index=True | API endpoint path |
-| http_method | Selection | required=True | Options: GET, POST, PATCH, PUT, DELETE |
-| status_code | Integer | index=True | HTTP response status code |
-| request_summary | Text | | Truncated request body (first 1000 chars) |
-| response_summary | Text | | Truncated response body (first 1000 chars) |
-| error_message | Text | | Error details if status >= 400 |
-| duration_ms | Integer | | Request duration in milliseconds |
-| quota_remaining_second | Integer | | x-remaining-this-second header value |
-| quota_remaining_day | Integer | | x-remaining-today header value |
-| create_date | Datetime | | Auto-set by Odoo |
+**ACL**: read `base.group_system` + a new `etsy_api_log_reader` group.
 
-**Constraints**: None beyond standard Odoo.
-
-**Cleanup**: `_cron_cleanup_api_logs()` deletes records older than `etsy_api_log_retention_days`.
-
-**Security**: Read-only for sales users, full access for managers.
+**Indexes**: `(shop_id, request_started_at DESC)`, `(source, request_started_at DESC)`, `http_status` (for alerting on 5xx spikes).
 
 ---
 
-### etsy.webhook.event
+## 4. `etsy.buyer.message` (NEW — `etsy_channel_api`, REQ-MSG-01)
 
-Record of each received webhook event with processing status.
-
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| name | Char | compute | Display: "{event_type} - {etsy_receipt_id}" |
-| event_type | Char | required=True, index=True | e.g., order.paid, order.shipped |
-| etsy_shop_id | Many2one | ondelete='cascade' | Related shop (from payload shop_id) |
-| etsy_receipt_id | Char | index=True | Receipt ID from resource_url |
-| resource_url | Char | | Full resource URL from payload |
-| raw_payload | Text | | Raw JSON payload |
-| signature_valid | Boolean | default=False | HMAC signature verification result |
-| processing_status | Selection | default='pending', index=True | Options: pending, processed, failed, rejected |
-| error_message | Text | | Processing error details |
-| sale_order_id | Many2one | ondelete='set null' | Created/updated sale order |
-| create_date | Datetime | | Auto-set by Odoo |
-
-**Constraints**: None.
-
-**Idempotency**: Before processing, check if an event with same `event_type` + `etsy_receipt_id` was already processed successfully. If so, skip.
-
-**Security**: Read-only for all users.
-
----
-
-### etsy.carrier.mapping
-
-Configurable mapping between system carrier names and Etsy-recognized carrier names.
-
-| Field | Type | Attributes | Description |
-|-------|------|------------|-------------|
-| name | Char | required=True | Display name |
-| system_carrier_name | Char | required=True, index=True | Carrier name as used in the system |
-| etsy_carrier_name | Char | required=True | Carrier name as recognized by Etsy |
-| active | Boolean | default=True | Active toggle |
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `shop_id` | Many2one(`etsy.shop`, `ondelete='cascade'`) | Yes | — | |
+| `etsy_receipt_id` | Char | Yes | — | Indexed |
+| `sale_order_id` | Many2one(`sale.order`, `ondelete='set null'`) | No | — | Linked once the receipt becomes a sale order; NULL while receipt is pending ingestion |
+| `buyer_name` | Char | Yes | — | |
+| `buyer_email` | Char | No | — | API-only |
+| `message` | Text | Yes | — | Raw `buyer_message` field from Etsy receipt |
+| `fetched_at` | Datetime | Yes | `now()` | |
+| `is_read` | Boolean | No | `False` | Set when MP/BA opens the message in the Customer Message Hub |
+| `read_by_user_id` | Many2one(`res.users`) | No | — | |
+| `read_at` | Datetime | No | — | |
 
 **Constraints**:
-- SQL: UNIQUE(system_carrier_name) -- one mapping per system carrier
+- C-BM-001: `(shop_id, etsy_receipt_id)` UNIQUE — prevents duplicate ingestion.
+- C-BM-002: `message` non-empty (we don't store empty buyer_messages).
 
-**Seed Data** (etsy_carrier_mapping_data.xml):
-- USPS -> usps
-- FedEx -> fedex
-- UPS -> ups
-- DHL -> dhl
-- DHL Express -> dhl
-- UniUni -> other
-- YunExpress -> other
-- Amazon Logistics -> amazon-shipping-us
+**ACL**: read MP + BA + Owner per SRS v2.2 §10 REQ-MSG-01. Write `base.group_system` only (system creates; users only mark-as-read).
 
-**Security**: Full CRUD for managers, read-only for users.
+**Indexes**: `(shop_id, fetched_at DESC)` for hub view; `etsy_receipt_id` (search); `is_read` (filter).
 
 ---
 
-## Service Layer (Non-ORM)
+## 5. `etsy.webhook.event` (NEW — `etsy_channel_api`, P2)
 
-### EtsyApiClient
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `shop_id` | Many2one(`etsy.shop`, `ondelete='cascade'`) | Yes | — | |
+| `event_type` | Selection: `order_paid`/`order_shipped`/`order_cancelled`/`order_delivered` | Yes | — | |
+| `etsy_event_id` | Char | Yes | — | Etsy's event identifier — UNIQUE for idempotency |
+| `payload_raw` | Text | Yes | — | Raw JSON body |
+| `signature_status` | Selection: `valid`/`invalid`/`missing` | Yes | — | |
+| `received_at` | Datetime | Yes | `now()` | |
+| `processed_at` | Datetime | No | — | Set on success |
+| `process_error` | Text | No | — | If processing failed |
+| `sale_order_id` | Many2one(`sale.order`) | No | — | Set after the order is created/updated |
 
-Pure Python HTTP client. No Odoo ORM dependency.
+**Constraints**: `etsy_event_id` unique (idempotency).
 
-**Constructor**: `(api_key, shared_secret, access_token, refresh_token, token_expiry)`
-
-**Internal State**:
-- `_access_token`: Current access token
-- `_token_expiry`: Expiry datetime
-- `_qps_bucket`: Token bucket for rate limiting (capacity=8, refill=8/sec)
-- `_last_quota_day`: Last observed x-remaining-today value
-
-**Contracts**: See research.md R8 for full interface.
-
-### EtsyOrderSyncer
-
-Bridge between EtsyApiClient JSON responses and OrderCreator.
-
-**Constructor**: `(env)` -- requires Odoo environment for ORM access.
-
-**Key Method**: `sync_shop_orders(shop)` -- fetches receipts for a shop, transforms to OrderCreator-compatible format, creates/updates orders.
-
-### EtsyTrackingPusher
-
-Batch tracking push service.
-
-**Constructor**: `(env)` -- requires Odoo environment.
-
-**Key Method**: `push_pending_tracking(shop)` -- finds orders with `etsy_tracking_push_status='pending'`, pushes tracking to Etsy, updates status.
-
-### EtsyListingSyncer
-
-Listing pull/push service.
-
-**Constructor**: `(env)` -- requires Odoo environment.
-
-**Key Methods**:
-- `pull_listings(shop)` -- fetch active listings, create/update products
-- `push_listing(shop, product)` -- push single product to Etsy
-- `upload_image(shop, product)` -- upload product image to Etsy
+**Indexes**: `(shop_id, received_at DESC)`, `(signature_status, received_at DESC)`, `etsy_event_id`.
 
 ---
 
-## Scheduled Actions (Cron Jobs)
+## 6. `sale.order` (extended — already has fields from Spec 002 + 003; this spec adds)
 
-| Name | Model | Method | Interval | Description |
-|------|-------|--------|----------|-------------|
-| Etsy: API Order Sync | sale.order | _cron_fetch_etsy_api_orders | 5 min | Sync receipts for all api_only/dual shops |
-| Etsy: Push Tracking | sale.order | _cron_push_tracking_to_etsy | 5 min | Push pending tracking for all API-enabled shops |
-| Etsy: Listing Sync | product.template | _cron_sync_etsy_listings | 60 min | Pull listing updates for all API-enabled shops |
-| Etsy: Cleanup API Logs | etsy.api.log | _cron_cleanup_api_logs | 1 day | Delete logs older than retention period |
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `sync_source` | Selection: `email`/`api`/`webhook` | No | — | FR-011 — diagnostic; written by `EtsyOrderIngestor` from canonical payload's `source` field |
+| `etsy_last_modified` | Datetime | No | — | From the receipt's `last_modified_tsz` — used for incremental sync cursor |
+| `etsy_tracking_push_status` | Selection: `none`/`pending`/`pushed`/`failed` | No | `none` | FR-016 — set by `EtsyTrackingPusher` |
+| `etsy_tracking_push_at` | Datetime | No | — | |
+| `etsy_tracking_push_error` | Text | No | — | |
+
+> Existing fields used: `etsy_order_id` (Spec 001), `etsy_shop_id` (Spec 001), `sales_channel` (Spec 003), `channel_order_ref` (Spec 003).
+
+**Indexes** (composite, for sync workload): `(etsy_shop_id, etsy_last_modified DESC)` per Tech-architect recommendation in MASTER_PLAN.md §4.
 
 ---
 
-## Entity Relationship Diagram (text)
+## 7. `product.template` (extended — `etsy_channel_api`, P2 listing management)
 
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `etsy_listing_id` | Char | No | — | Indexed; UNIQUE-but-nullable for products that have an Etsy listing |
+| `etsy_listing_state` | Selection: `draft`/`active`/`inactive`/`sold_out`/`expired` | No | — | FR-033 |
+| `etsy_listing_url` | Char (computed) | computed | — | Built from `etsy_listing_id` |
+| `etsy_last_listing_sync_at` | Datetime | No | — | Cursor for incremental listing pull |
+
+**Constraints**: `etsy_listing_id` unique-when-non-null.
+
+---
+
+## 8. `shipping.carrier` (extended — read-only from this spec)
+
+This model is owned by `multichannel_hub_core` (delivered by Spec 003 per ADR-005). `etsy_channel_api` only **reads** the `etsy_carrier_name` field for tracking-push (FR-014) — it does not extend this model.
+
+The seed in Spec 003 (`shipping_carrier_seed.xml`) covers USPS / UniUni / YunExpress / 4PX / DHL eCommerce / FedEx SmartPost / GKE Local with their `etsy_carrier_name` mappings.
+
+---
+
+## 9. `etsy.order.payload` — Canonical contract dataclass (NOT a DB model)
+
+Lives in `multichannel_hub_core/services/etsy_order_payload.py` (shared), imported by both adapters and the ingestor. See research.md §R8 for the schema.
+
+```python
+# multichannel_hub_core/services/etsy_order_payload.py
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Literal
+
+@dataclass(frozen=True)
+class EtsyAddressPayload:
+    name: str
+    street_1: str
+    street_2: str | None
+    city: str
+    state: str | None
+    zip: str
+    country_code: str
+
+@dataclass(frozen=True)
+class EtsyLineItemPayload:
+    listing_id: str | None
+    transaction_id: str
+    title: str
+    sku: str | None
+    quantity: int
+    unit_price: float
+    variations: dict[str, str] = field(default_factory=dict)
+    personalisation: str | None = None
+
+@dataclass(frozen=True)
+class EtsyOrderPayload:
+    etsy_shop_id: int
+    etsy_receipt_id: str
+    etsy_order_id: str
+    buyer_name: str
+    buyer_country: str
+    order_date: datetime
+    currency: str
+    amount_total: float
+    shipping_total: float
+    line_items: list[EtsyLineItemPayload]
+    shipping_address: EtsyAddressPayload
+    buyer_message: str | None
+    buyer_email: str | None
+    listing_id: str | None
+    payment_status: str | None
+    is_gift: bool | None
+    gift_message: str | None
+    source: Literal['api', 'email']
+    fetched_at: datetime
+    raw_source_id: str
 ```
-etsy.shop (extended)
-  |-- 1:N --> sale.order (via etsy_shop_id)
-  |-- 1:N --> etsy.api.log (via etsy_shop_id)
-  |-- 1:N --> etsy.webhook.event (via etsy_shop_id)
 
-sale.order (extended)
-  |-- 1:N --> sale.order.line (standard)
-  |-- N:1 --> etsy.shop
-  |-- 0:1 <-- etsy.webhook.event (via sale_order_id)
+**Adapter contract** (`multichannel_hub_core/services/etsy_channel_adapter.py`):
+```python
+class EtsyChannelAdapter(Protocol):
+    def fetch_new_orders(self, shop_id: int, since: datetime) -> Iterator[EtsyOrderPayload]: ...
+    def health_check(self, shop_id: int) -> HealthStatus: ...
 
-product.template (extended)
-  |-- etsy_listing_id links to Etsy Listing (external)
-
-etsy.carrier.mapping (standalone)
-  |-- Used by EtsyTrackingPusher to translate carrier names
+class HealthStatus(Enum):
+    OK = "ok"
+    DEGRADED = "degraded"
+    DOWN = "down"
 ```
+
+`EtsyApiAdapter` and `EtsyEmailAdapter` both implement this protocol. The ingestor (`multichannel_hub_core/services/etsy_order_ingestor.py`) reads from `shop.active_source`-selected adapter and writes the canonical payload to `sale.order` via existing `OrderCreator` service.
+
+---
+
+## Migration Strategy
+
+### Module split (one-shot, Phase 0 → Phase 1 transition)
+1. Create `etsy_channel_api` (new module). Install fresh.
+2. Pre-migrate `etsy_integration` → `etsy_channel_email`:
+   - Update `ir_module_module.name`
+   - Move email-only XML IDs in `ir_model_data` (selectively, per research.md §R10)
+   - Update `__manifest__.py` `name` and `depends`
+3. Verify both modules install cleanly + tests pass on staging before production.
+
+### Field migration on `etsy.shop`
+- Add `active_source`, `auto_recovery`, counters as new columns. Default `active_source` from existing `sync_mode` per the migration script in §1.
+- Drop `sync_mode` and `sync_audit_mode` in a follow-up migration revision (after one full verification cycle).
+
+### Bootstrap source-change log
+- Insert a `bootstrap` row in `etsy.shop.source.change.log` for every existing shop with `from_source=null`, `to_source=<derived from sync_mode>`, `reason='bootstrap'`.
+
+### Buyer-message backfill
+- NOT done (forward-only per FR-007 clarification). Existing historical orders without `buyer_message` show no message; the field arrives prospectively starting from API connection date.
+
+---
+
+## Cross-Cutting Concerns
+
+### Audit (per project rule)
+- `etsy.shop`, `etsy.shop.source.change.log`, `etsy.buyer.message`, `etsy.webhook.event` all inherit `mail.thread`. Tracked fields per the table above.
+- `etsy.api.log` does NOT inherit `mail.thread` (high-volume; chatter would balloon).
+
+### i18n
+- `i18n/vi_VN.po` ships with 100% string coverage at module install. CI gate per Spec 003's `test_i18n_coverage`.
+
+### Testing
+- VCR cassettes stored under `tests/fixtures/vcr_cassettes/` — recorded against owner's dev shop with `transactions_r/w`, `listings_r/w`, `shops_r`, `email_r` scopes granted.
+- Two-Phase Testing per project rule:
+  - Phase-1 (DB): verify row counts in `etsy_shop_source_change_log` after each test transition; verify `(shop_id, etsy_receipt_id)` UNIQUE on `etsy.buyer.message`.
+  - Phase-2 (ORM unit): verify `EtsyApiClient.refresh_token`, `EtsyHealthChecker.evaluate_threshold`, `EtsyRecoveryProber.evaluate_threshold`, HMAC verification, canonical-payload parity between adapters.
+
+---
+
+## Cross-references
+
+- spec.md FR-001..FR-035 (carried forward minus the deleted concerns above)
+- SRS_EN v2.2 §3 (REQ-SRC-01..04), §10 (REQ-MSG-01), §11 (module map)
+- ADR-008a v2 §1–§5; ADR-005 (carrier); ADR-001 §11 (module destination)
+- research.md §R7–R10 (source-switching, canonical payload, buyer-message ingestion, module-rename migration)

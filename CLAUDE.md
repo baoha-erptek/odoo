@@ -132,7 +132,6 @@ odoo19_esty/
 
 ### Module Layout
 ```
-custom_addons/etsy_integration/
 ├── __manifest__.py          # Version 19.0.1.0.0, depends: sale_management, stock, contacts, mail
 ├── models/                  # etsy_shop, etsy_email_log, sale_order, product, partner, config
 ├── services/                # email_parser (ORM-free), gmail_client, order_creator, image_downloader
@@ -268,6 +267,8 @@ You are successful when:
 - Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl (002-etsy-config-fixes)
 - PostgreSQL 16+ via Odoo ORM (002-etsy-config-fixes)
 - Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), requests (bundled) (005-etsy-api-channel)
+- Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (`sale_management`, `stock`, `contacts`, `mail`); no Enterprise modules per ADR-004 (003-dashboard-design-multichannel)
+- PostgreSQL 16+ via Odoo ORM. Design files: GDrive-URL primary (ADR-006 + ADR-012); filestore (`ir.attachment` with `attachment=True` Binary fields) for previews ≤ 2 MB; 10 MB hard cap on filestore Binary writes (`multichannel_hub.large_file_threshold_bytes` `ir.config_parameter`) (003-dashboard-design-multichannel)
 
 ## Recent Changes
 - 002-etsy-config-fixes: Added Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl

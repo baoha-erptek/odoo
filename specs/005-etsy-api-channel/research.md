@@ -1,248 +1,143 @@
-# Research: Etsy API v3 Channel Integration
+# Research: Etsy API v3 Channel Integration (with Email as Permanent Failover)
 
-**Feature**: 005-etsy-api-channel | **Date**: 2026-04-10
+**Feature**: 005-etsy-api-channel | **Date**: 2026-04-27 (Stage 4.2 refresh, supersedes 2026-04-10)
+
+> Refresh notes: §R1, R2, R3, R5 carried forward from 2026-04-10 (still accurate). §R4 (sync mode) **deleted** — superseded by ADR-008a v2 (`active_source`). New §R7–R10 added for source-switching, buyer-message ingestion, module-rename migration, and source-change logging. Deleted-and-not-replaced: anything referring to `etsy.carrier.mapping` (per ADR-005), `sync_mode='dual'` (per ADR-002), `sync_audit_mode` (per ADR-008a v2).
 
 ## R1: Etsy OAuth2 with PKCE
 
 **Decision**: Implement OAuth2 Authorization Code Grant with PKCE (SHA-256) per Etsy's mandatory requirement.
 
-**Rationale**: Etsy v3 API requires PKCE for all OAuth2 flows. No alternative authentication method is available for accessing private shop data.
-
-**Key Details**:
+**Key details** (unchanged from 2026-04-10):
 - Authorization URL: `https://www.etsy.com/oauth/connect`
 - Token URL: `https://api.etsy.com/v3/public/oauth/token`
-- Grant type: `authorization_code` (initial) + `refresh_token` (renewal)
-- PKCE: Generate 43-128 char `code_verifier`, compute `code_challenge = base64url(sha256(code_verifier))`, send `code_challenge_method=S256`
-- Access token: expires 3600 seconds (1 hour)
-- Refresh token: valid 90 days, single-use (new refresh token issued on each use)
+- PKCE: 43-128 char `code_verifier`, `code_challenge = base64url(sha256(code_verifier))`, send `code_challenge_method=S256`
+- Access token TTL: 3600 s. Refresh token: 90 days, single-use.
 - Required scopes: `transactions_r transactions_w listings_r listings_w shops_r email_r`
-- All API requests require `x-api-key` header with the application's keystring
+- Header: `x-api-key: <app_keystring>` on all calls
+- Callback route: `/etsy/api/oauth/callback`. `code_verifier` stored in `ir.config_parameter` keyed by state-nonce.
 
-**Alternatives Considered**:
-- API key only: Insufficient for private shop data (read-only public access)
-- OAuth2 without PKCE: Not supported by Etsy v3
-
-**Implementation Pattern**: Reuse existing `controllers/oauth.py` state-nonce CSRF pattern. Store `code_verifier` in `ir.config_parameter` (same as current `oauth_state` pattern). New callback route: `/etsy/api/oauth/callback`.
-
----
+**Alternatives considered & rejected**: API key only (read-only public data); OAuth2 without PKCE (not supported by Etsy v3).
 
 ## R2: Receipt/Order Sync Strategy
 
-**Decision**: Incremental sync via `GET /v3/application/shops/{shop_id}/receipts` with `min_last_modified` parameter. Forward-only from connection date.
+**Decision**: Incremental sync via `GET /v3/application/shops/:shop_id/receipts?min_last_modified=<unix_ts>&limit=100` paginated. Forward-only from API connection date — no historical back-sync (clarified 2026-04-10).
 
-**Rationale**: Incremental sync minimizes API calls (respects rate limits) while ensuring no orders are missed. Forward-only avoids conflicting with 17,659+ historical email-imported orders.
+**Cron interval**: 5 min per shop (separate from email cron). Status-only update on re-sync (preserve operator data — clarified 2026-04-10).
 
-**Key Details**:
-- Endpoint: `GET /v3/application/shops/{shop_id}/receipts`
-- Auth scope: `transactions_r`
-- Pagination: `offset` + `limit` (max 100 per page)
-- Filter: `was_paid=true`, `min_last_modified={unix_timestamp}`
-- Receipt fields map directly to existing sale.order fields (see data-model.md)
-- Each receipt contains `transactions[]` array (one per order line item)
-- Buyer email available via API (not available in email notifications)
-- Product matching: by `listing_id` (new field) with fallback to name match
-
-**Receipt-to-Order Field Mapping**:
-
-| Etsy Receipt Field | Odoo Field | Notes |
-|---|---|---|
-| receipt_id | sale.order.etsy_order_id | Primary dedup key |
-| buyer_email | res.partner.email | New data source |
-| name (shipping) | res.partner.name | Shipping recipient |
-| formatted_address | res.partner address fields | Parsed from sub-fields |
-| transactions[].transaction_id | sale.order.line.etsy_transaction_id | Line dedup |
-| transactions[].title | product.product.name | Product name |
-| transactions[].listing_id | product.product.etsy_listing_id | New: reliable match |
-| transactions[].price.amount/divisor | sale.order.line.price_unit | Computed: amount/divisor |
-| transactions[].quantity | sale.order.line.product_uom_qty | |
-| transactions[].variations[] | sale.order.line.etsy_color/size/option | Variant text |
-| grandtotal.amount/divisor | sale.order.etsy_subtotal | |
-| total_shipping_cost.amount/divisor | sale.order.etsy_shipping_cost | |
-| discount_amt.amount/divisor | (discount handling) | |
-| message_from_buyer | sale.order.etsy_note_from_buyer | |
-| is_gift + gift_message | sale.order.etsy_gift_message | |
-| create_timestamp | sale.order.date_order | Unix -> Datetime |
-| update_timestamp | sale.order.etsy_last_modified | For incremental sync |
-| status | (order status mapping) | paid/completed/etc. |
-| currency_code | sale.order.currency_id | ISO 4217 lookup |
-
-**Alternatives Considered**:
-- Full sync (fetch all receipts every cycle): Excessive API calls, hits rate limits
-- Back-sync historical orders: Risk of conflicts with operator-annotated data, rate limit issues
-
----
+**Dedup**: by `etsy_order_id` UNIQUE on `sale.order`. Idempotency keyed by `(shop_id, etsy_receipt_id)`.
 
 ## R3: Tracking Push to Etsy
 
-**Decision**: Batch push via dedicated cron using `POST /v3/application/shops/{shop_id}/receipts/{receipt_id}/tracking`.
+**Decision**: `POST /v3/application/shops/:shop_id/receipts/:receipt_id/tracking` with `tracking_code` + `carrier_name`. `carrier_name` is the **Etsy enum value** read from `shipping.carrier.etsy_carrier_name` (per ADR-005). Carriers without a matching enum push with `other` and log a warning to `etsy.api.log`.
 
-**Rationale**: Decoupled cron allows batch processing with rate limit respect. Push status tracking enables retry on failure.
+**Trigger**: cron-driven (default 5 min) plus on-demand button on the order. Reads from `sale.order.fulfillment.tracking_number` + `shipping_carrier_id` (per ADR-007 delegation sibling).
 
-**Key Details**:
-- Endpoint: `POST /v3/application/shops/{shop_id}/receipts/{receipt_id}/tracking`
-- Auth scope: `transactions_r transactions_w`
-- Required fields: `tracking_code` (string), `carrier_name` (string)
-- Etsy supports 400+ carrier names (must match exactly)
-- Push triggers Etsy to send buyer notification email and finalize transaction totals
-- Carrier name mapping needed: system carrier names may differ from Etsy carrier names
+## R4: ~~Sync mode selection~~ — SUPERSEDED by ADR-008a v2
 
-**Carrier Mapping Examples**:
+The 2026-04-10 design (`sync_mode` enum + `sync_audit_mode` Boolean) is replaced by `etsy.shop.active_source` per ADR-008a §2. See §R7 below.
 
-| System Name | Etsy carrier_name |
-|-------------|-------------------|
-| USPS | usps |
-| FedEx | fedex |
-| UPS | ups |
-| DHL | dhl |
-| UniUni | other |
-| YunExpress | other |
+## R5: Rate Limiting and API Resilience
 
-**Alternatives Considered**:
-- Real-time push on tracking field write: Risky (write could fail, no rate limit control)
-- Manual push only: Misses batch efficiency after logistics Excel imports
+**Decision** (unchanged from 2026-04-10): token-bucket rate limiter at ~10 req/s. Exponential backoff (3 retries) on transient errors. No retry on 4xx (except 429). Honour `X-RateLimit-Limit-Daily` headers; raise warning at 80% quota, error at 95%.
 
----
+**Implementation**: `services/etsy_api_client.py` wraps `requests` with the limiter + retry + retry-after handler. Shared with the email-channel module via the `multichannel_hub_core/utils/rate_limiter.py` core utility.
 
-## R4: Webhook Implementation
+## R6: Webhook Receiver (P2)
 
-**Decision**: HTTP controller at `/etsy/webhook/callback` with HMAC-SHA256 signature verification. Webhooks supplement (not replace) cron-based sync.
+**Decision** (unchanged from 2026-04-10, scope downgraded to P2 per ADR-002): HMAC-SHA256 verification using `app_shared_secret`. Event types: `order_paid`, `order_shipped`, `order_cancelled`, `order_delivered`. Idempotent processing. Replay/reorder safe.
 
-**Rationale**: Webhooks provide near-real-time order notifications (<60s) while cron sync acts as a safety net for missed deliveries. Etsy's retry mechanism (exponential backoff up to 10h) provides resilience.
+**Implementation**: extends `multichannel_hub_core/controllers/webhook_base.py`. Periodic API sync (R2) is the safety net; webhooks are a latency optimization, not a correctness dependency.
 
-**Key Details**:
-- Events: `order.paid`, `order.shipped`, `order.canceled`, `order.delivered`
-- Payload: `{"event_type": "...", "resource_url": "...", "shop_id": "..."}`
-- Payload does NOT contain full order data -- follow-up API call needed
-- Signature verification:
-  1. Concatenate: `{webhook-id}.{webhook-timestamp}.{raw_body}`
-  2. Base64-decode the webhook secret (remove `whsec_` prefix)
-  3. HMAC-SHA256 of concatenated string with decoded secret
-  4. Base64-encode result, compare with `webhook-signature` header
-- Registration: via Etsy Developer Portal webhook management (not API endpoint)
-- Retry schedule: immediate, 5s, 5m, 30m, 2h, 5h, 10h, 10h
+## R7 (NEW) — Source-switching contract
 
-**Controller Pattern**:
-- Route: `@http.route('/etsy/webhook/callback', type='json', auth='none', csrf=False, methods=['POST'])`
-- `auth='none'` because webhooks cannot authenticate as Odoo users
-- `type='json'` for automatic JSON body parsing
-- Signature verified before any processing
+**Decision**: `etsy.shop.active_source` Selection (`api`/`email`) with health-check-driven auto-failover (3 consecutive failures → switch, severity HIGH alert) and recovery-probe auto-recovery (6 consecutive successes → switch back, unless `auto_recovery=False`). All transitions logged to `etsy.shop.source.change.log` with `reason ∈ ('auto-failover', 'manual', 'recovery-probe', 'scope-revoked')`.
 
-**Alternatives Considered**:
-- Polling only (no webhooks): Works but 5-10 minute latency
-- Webhooks only (no cron sync): Too risky -- missed webhooks would mean lost orders
+**Rationale**: Per ADR-008a v2 §1-§3. The 3-fail threshold avoids false-positive flapping on transient 5xx; the 6-success recovery threshold avoids fast-bounce flapping when the underlying issue is partially fixed. Both numbers are `ir.config_parameter`-tunable.
 
----
+**Health-check probe** (per source):
+- API: `GET /v3/application/openapi-ping` (returns `{"application": "v3", ...}` 200 OK).
+- Email: Gmail label query — healthy if ≥1 message received in last N hours (default 24h, per-shop-tunable) OR last poll executed without exception.
 
-## R5: Rate Limiting Strategy
+**Recovery probe** (only when in failover): hourly cron probes the original primary source. If 6 consecutive probes succeed → switch back. The failure-counting state lives on `etsy.shop` as `health_check_consecutive_failures` (Integer, reset on success).
 
-**Decision**: In-memory token bucket rate limiter in EtsyApiClient. Read response headers to track remaining quota.
+**Alternatives considered & rejected**:
+- Single threshold (e.g. just 3-fail): rejected — recovery would be fast-bounce; one transient success could flip back into a still-broken source.
+- Combine health-check + recovery into one cron at 5min: rejected — recovery needs lower frequency to be patient (an outage that lasts 30 min should not flap; a 6-success @ 1h ≈ 6h of clean operation before flipping back, which is conservative).
 
-**Rationale**: Token bucket is simple, effective, and requires no external dependencies. Response header monitoring provides early warning for daily quota depletion.
+## R8 (NEW) — Canonical `etsy.order.payload` schema
 
-**Key Details**:
-- Etsy rate limits: QPS (queries per second) + QPD (queries per day)
-- QPS checked first, then QPD. Exceeding either returns HTTP 429.
-- Response headers:
-  - `x-limit-per-second`: Total QPS allocation
-  - `x-remaining-this-second`: Remaining in current second
-  - `x-limit-per-day`: Total QPD allocation
-  - `x-remaining-today`: Remaining in 24h window
-- QPD uses sliding window algorithm (rolling 24h, not midnight reset)
-- HTTP 429 response includes `retry-after` header (seconds to wait)
-- Default safe limit: 8 req/sec (80% of typical 10 QPS allocation, leaving headroom)
+**Decision**: an in-memory Python dataclass (NOT an Odoo model — ephemeral, only flows from adapter to ingestor) with the following fields. Both adapters MUST produce records of this shape:
 
-**Retry Strategy**:
-- Transient errors (500, 502, 503, timeout): Retry up to 3 times with exponential backoff (2s, 8s, 32s)
-- Rate limit (429): Wait `retry-after` seconds, then retry once
-- Permanent errors (400, 401, 403, 404): No retry, log and raise
+```python
+@dataclass(frozen=True)
+class EtsyOrderPayload:
+    # Source-agnostic fields (REQUIRED from both adapters)
+    etsy_shop_id: int                    # Internal etsy_shop.id
+    etsy_receipt_id: str                 # Etsy's receipt identifier
+    etsy_order_id: str                   # Etsy's order id (often = receipt_id)
+    buyer_name: str
+    buyer_country: str
+    order_date: datetime
+    currency: str                        # ISO 4217
+    amount_total: float
+    shipping_total: float
+    line_items: list[EtsyLineItemPayload]
+    shipping_address: EtsyAddressPayload
+    buyer_message: str | None            # REQ-MSG-01
 
-**Alternatives Considered**:
-- External rate limiter (Redis): Overkill for single-process Odoo worker
-- Fixed delay between requests: Wastes time when under limit
-- No rate limiting: Risk of account suspension
+    # Source-specific (NULLABLE — emit when present, NULL otherwise)
+    buyer_email: str | None              # API-only; email parser cannot extract
+    listing_id: str | None               # API-only
+    payment_status: str | None           # API: explicit; email: inferred
+    is_gift: bool | None
+    gift_message: str | None
 
----
-
-## R6: Listing Sync Strategy
-
-**Decision**: Pull-dominant with explicit push. Etsy is source of truth for marketplace data. Local edits require manual "Push to Etsy" action.
-
-**Rationale**: Etsy is the live marketplace; operators making Etsy-side edits react to market conditions. Auto-pushing local changes could cause pricing errors visible to buyers.
-
-**Key Details**:
-- Pull sync: `GET /v3/application/shops/{shop_id}/listings/active` for all active listings
-- Push (on demand): `PATCH /v3/application/shops/{shop_id}/listings/{listing_id}`
-- Create draft: `POST /v3/application/shops/{shop_id}/listings` (requires taxonomy_id, who_made, when_made, is_supply)
-- Image upload: `POST /v3/application/shops/{shop_id}/listings/{listing_id}/images` (binary multipart)
-- Listing states: draft, active, inactive, sold_out, expired
-- Auth scopes: `listings_r`, `listings_w`
-
-**Listing Field Mapping**:
-
-| Etsy Listing Field | Odoo Field | Notes |
-|---|---|---|
-| listing_id | product.template.etsy_listing_id | Primary match key |
-| title | product.template.name | |
-| description | product.template.description_sale | |
-| price.amount/divisor | product.template.list_price | |
-| quantity | product.product.qty_available | Approximation |
-| state | product.template.etsy_listing_state | Selection field |
-| taxonomy_id | product.template.etsy_taxonomy_id | Required for push |
-| who_made | product.template.etsy_who_made | Required for push |
-| when_made | product.template.etsy_when_made | Required for push |
-| images[0].url_570xN | product.template.image_1920 | Primary image |
-
-**Alternatives Considered**:
-- Bidirectional auto-sync: Risk of data ping-pong and marketplace corruption
-- Push-only: Operators often edit on Etsy directly; pull ensures Odoo stays current
-
----
-
-## R7: Sync Mode Transition
-
-**Decision**: Per-shop `sync_mode` selection field with three states: `email_only`, `api_only`, `dual`. Default for existing shops: `email_only` (no disruption). New shops: `dual`.
-
-**Rationale**: Gradual transition prevents data loss. Dual mode proves API reliability before cutting over. Automatic fallback from API to email on token failure provides safety net.
-
-**Key Details**:
-- `email_only`: Current behavior, email cron processes this shop's emails
-- `api_only`: API cron syncs orders, email cron marks emails as processed but does not create orders
-- `dual`: Both crons active, dedup by etsy_order_id prevents duplicates
-- Fallback: If API auth fails in `api_only` mode, auto-switch to `dual` and notify admin
-- Migration path: email_only -> dual (validate) -> api_only (once confident)
-
-**Alternatives Considered**:
-- Global switch (all shops same mode): Too risky for multi-shop operations
-- Automatic mode detection: Complexity without clear benefit
-
----
-
-## R8: EtsyApiClient Architecture
-
-**Decision**: Standalone Python class following the GmailClient pattern. No ORM dependency. Handles auth, rate limiting, retries, and logging internally.
-
-**Rationale**: Keeps the service testable without Odoo infrastructure. Consistent with existing architecture (8.5/10 separation of concerns rating from investigation report).
-
-**Key Interface**:
-```
-EtsyApiClient(api_key, shared_secret, access_token, refresh_token, token_expiry)
-  .authenticate() -> bool
-  .refresh_access_token() -> bool
-  .test_connection() -> tuple[bool, str]
-  .get_shop_receipts(shop_id, min_last_modified, limit, offset) -> dict
-  .get_receipt(shop_id, receipt_id) -> dict
-  .create_receipt_shipment(shop_id, receipt_id, tracking_code, carrier_name) -> dict
-  .get_shop_listings(shop_id, state, limit, offset) -> dict
-  .create_draft_listing(shop_id, listing_data) -> dict
-  .update_listing(shop_id, listing_id, listing_data) -> dict
-  .upload_listing_image(shop_id, listing_id, image_data) -> dict
-  ._request(method, endpoint, **kwargs) -> dict  # Central request handler
+    # Provenance
+    source: Literal['api', 'email']
+    fetched_at: datetime
+    raw_source_id: str                   # API: receipt_id; Email: gmail_message_id
 ```
 
-**Internal Concerns**:
-- `_request()` handles: Bearer token header, x-api-key header, rate limiting (token bucket), retry with backoff, response header parsing (quota tracking), error classification (transient vs permanent), request/response logging
-- Token refresh is transparent: if 401 received, attempt refresh once, then retry original request
+**Rationale**: a frozen dataclass enforces immutability (one source emits, ingestor consumes — never mutated). Source-specific nullable fields let downstream code render "—" gracefully when unavailable. The `source` + `raw_source_id` pair lets `EtsyOrderIngestor` write provenance to `sale.order.sync_source` (existing FR-011 field) without inventing a new audit trail.
 
-**Alternatives Considered**:
-- Etsy Python SDK: None officially supported; third-party SDKs are unmaintained
-- requests.Session with auth hooks: Less control over retry/rate limit behavior
+**Validation**: `EtsyOrderPayload.__post_init__` raises if a required field is missing. Adapters that cannot emit a required field must fail loudly; the ingestor never silently fills defaults.
+
+## R9 (NEW) — `etsy.buyer.message` ingestion (REQ-MSG-01)
+
+**Decision**: a per-receipt row in new model `etsy.buyer.message` when `buyer_message` is non-empty. Ingestion is part of the same API call as receipt sync (R2) — no extra HTTP round-trip. Stored fields: `(shop_id, receipt_id, buyer_name, message, fetched_at, sale_order_id)`. Deduplicated by `(shop_id, receipt_id)` UNIQUE.
+
+**Rationale**: per SRS v2.2 §10 REQ-MSG-01 and the H8/Pain-#17 resolution. Customers' Etsy Conversations content is NOT ingested (scope rejected by Etsy). Instead, `buyer_message` field on the receipt (already in scope under `transactions_r`) is the practical data source. UI: tab on order form + top-level "Customer Message Hub" view (delivered by Spec 003).
+
+**Alternatives considered & rejected**:
+- Wait for Conversations scope: still rejected by Etsy; indefinite wait.
+- Free-form text scrape from `buyer_message`: same as decision above, just framed differently.
+
+## R10 (NEW) — Module-rename migration `etsy_integration → etsy_channel_email`
+
+**Decision**: pre-migration script renames the existing module record in `ir_module_module`:
+
+```python
+# custom_addons/etsy_channel_email/migrations/19.0.1.0.1/pre-migrate.py
+def migrate(cr, version):
+    cr.execute("UPDATE ir_module_module SET name = 'etsy_channel_email' WHERE name = 'etsy_integration'")
+    # XML-ID model rename (xml_id format: <module>.<noupdate_xmlid>)
+    cr.execute("UPDATE ir_model_data SET module = 'etsy_channel_email' WHERE module = 'etsy_integration' AND <subset_clause>")
+```
+
+**Subset clause**: only XML IDs that genuinely belong to the email-parsing concern. Bits owned by the new core (delegation mixin, carrier model, design.file) MUST stay associated with `multichannel_hub_core`. Bits owned by API (oauth flow, api log) move to `etsy_channel_api`. The script carves up `ir_model_data` by inspecting the `model` field.
+
+**Validation order**: test on staging with a recent prod snapshot before production. Verify that uninstalling `etsy_channel_email` after rename leaves all sale.order data intact (no cascade delete via XML ID severance).
+
+**Alternatives considered & rejected**:
+- Keep the old module name. Rejected — semantic mismatch; Owner-signed in ADR-008a §5.
+- Wait for the Phase-2 `etsy_channel_migration` separation (per ADR-003 original Phase 3) before renaming. Rejected — the rename affects Phase 1 work; can't be deferred to Phase 2.
+
+## Cross-references
+
+- SRS_EN v2.2 §3 (REQ-SRC-01..04) and §10 (REQ-MSG-01)
+- ADR-008a v2 §1–§5 (single pipeline, source-switching, health-check, parser-as-failover, module rename)
+- ADR-005 (carrier unification — `shipping.carrier.etsy_carrier_name`)
+- ADR-002 (sync_mode 2-value enum, partially superseded — see banner in ADR-002 file)
+- spec.md FR-001..FR-035 — all carried forward except the 2026-04-13 sync_mode/sync_audit_mode language (see §R7)
+- master plan §6 + decision log D-13 (Owner sign-off on source-switching)

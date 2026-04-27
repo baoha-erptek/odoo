@@ -1,37 +1,57 @@
-# Implementation Plan: Operational Dashboard, Design File Workflow, Multi-Channel Foundation
+# Implementation Plan: Three Operational Dashboards, Design & Address-Change Workflows, Multi-Channel Foundation
 
-**Branch**: `003-dashboard-design-multichannel` | **Date**: 2026-04-06 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/specs/003-dashboard-design-multichannel/spec.md`
+**Branch**: `003-dashboard-design-multichannel` | **Date**: 2026-04-27 | **Spec**: [spec.md](spec.md) (Wave B, 2026-04-13)
+**Authority**: [SRS_Multichannel_Hub_EN.md v2.2](../006-master-plan/SRS_Multichannel_Hub_EN.md) §5/§6/§7/§8/§10/§10.5/§11
+**ADRs**: [001](../006-master-plan/adrs/ADR-001-spec-004-split.md) (split) · [003](../006-master-plan/adrs/ADR-003-module-decomposition.md) (4-module split) · [005](../006-master-plan/adrs/ADR-005-carrier-unification.md) (carrier) · [006](../006-master-plan/adrs/ADR-006-design-file-storage.md) (storage) · [007](../006-master-plan/adrs/ADR-007-fulfillment-delegation-mixin.md) (mixin) · **[009](../006-master-plan/adrs/ADR-009-file-lifecycle.md) (file lifecycle)** · **[010](../006-master-plan/adrs/ADR-010-configurable-order-pipeline.md) (configurable pipeline)** · **[012](../006-master-plan/adrs/ADR-012-gdrive-failover.md) (GDrive failover)**
 
 ## Summary
 
-Replace the Google Sheets-based order management workflow with an Odoo operational dashboard (21-column list view with inline editing), add design file upload and production team approval workflow (3-state: Pending/Approved/Needs Adjustment), and add a sales_channel field to future-proof for multi-channel (Amazon, WooCommerce) integration.
+Replace the Google-Sheet workflow (BA / Marketing / Production / Pricing-Audit tabs) with a coherent set of role-specific Odoo dashboards backed by a single `sale.order` data model and a delegation sibling (`sale.order.fulfillment`, ADR-007). Ship the safety-critical address-change approval workflow (`etsy.address.change.request`). Replace the original spec.md's hardcoded `production_stage` enum with the **configurable order pipeline** stack from ADR-010 (`order.pipeline`, `order.pipeline.state`, `pipeline.team`, `order.pipeline.transition.log`). Replace the original spec.md's simple `order.design.file` model with the **immutable-history file lifecycle** stack from ADR-009 (`design.file`, `design.file.route`, `design.print.batch`). Lay a multi-channel foundation (`sales_channel`, `channel_order_ref`) so Amazon (Spec 010) and Website (Spec 011) channels plug in without schema churn.
+
+## Stage-2 ADR deltas vs spec.md (Wave B)
+
+The Wave B spec (2026-04-13) was authored before the Stage-2 ADRs landed (2026-04-26). This plan integrates those deltas; spec.md remains the authoritative requirements document for FR-001..FR-033 but is augmented as follows:
+
+| Spec.md FR | Wave B intent | Stage-2 ADR refinement |
+|---|---|---|
+| **FR-018** `order.design.file` model | Single record per file with `state` enum + small/url storage | **Replaced by ADR-009 §1**: `design.file` (immutable, version chain via `parent_file_id`, GDrive primary URL + checksum) + `design.file.route` (per-recipient delivery state, queued-job dispatch) + `design.print.batch` (PD bulk-download A4 layout wizard with 24h cache) |
+| **FR-021** roll-up `design_status` on `sale.order.line` | Lowest-of-children rollup | Same intent; computation now reads `design.file` records linked by route, with route-state aware (a file approved but not yet routed shows "approved-pending-route") |
+| **FR-022** kanban view | 3 columns (Chờ duyệt / Duyệt / Cần chỉnh lại) | Kanban now reads `design.file.state` plus a "stuck route" badge per ADR-009 §4 (route pending/failed >2h) |
+| **FR-023** historical seed | `storage_mode='url'` from DESIGN_LINK_FRONT/BACK | Same; `design.file.parent_file_id=NULL` for seed rows |
+| **Spec.md US3 + FR-007** Process Dashboard production_stage enum (Vietnamese labels: Mới / Chờ file / Đang sản xuất / Đã sản xuất / Đã đóng gói / Đã gửi / Huỷ) | Hardcoded enum on `sale.order.fulfillment` | **Replaced by ADR-010 §1**: `sale.order.x_pipeline_id` (Many2one `order.pipeline`) + `sale.order.x_pipeline_state_id` (Many2one `order.pipeline.state`). Default seed pipeline `"Vietnam Internal Production"` ships the 17 SRS §6 stages (CHỜ FILE → … → VN-Fulfilled) + the 7 PD-feedback states the original spec requested. Admin can edit at runtime; in-flight orders pin to pipeline version per ADR-010 §5. |
+| **Spec.md US3** stock-move on "Đã sản xuất" | Delegated to Spec 004a hook | Hook signature unchanged; trigger field is now `x_pipeline_state_id.is_terminal_for_inventory` (per ADR-010 §6) instead of a hardcoded enum compare |
+| **FR-006** carrier inline-edit | M2O to `shipping.carrier` | Unchanged; ADR-005 carrier model is in scope of this plan |
+| **FR-031..FR-033** audit + i18n | mail.thread + tracking=True + vi_VN.po | Unchanged; pipeline + file lifecycle inherit chatter |
+
+> **GDrive policy**: per [ADR-012](../006-master-plan/adrs/ADR-012-gdrive-failover.md), design files may store their primary URL on Google Drive (service account, queue + backoff on auth failure, **no auto-fallback to Discord** — Discord remains the manual escape hatch). The `design.file.file_url` field accepts either an Etsy CDN URL (historical) or a GDrive shareable link (forward).
 
 ## Technical Context
 
 **Language/Version**: Python 3.12+ (Odoo 19 CE)
-**Primary Dependencies**: Odoo 19 CE (sale_management, stock, contacts, mail)
-**Storage**: PostgreSQL 16+ via Odoo ORM
-**Testing**: Odoo TransactionCase, HttpCase
-**Target Platform**: Linux Docker container (Odoo 19 CE)
-**Project Type**: Odoo module extension (custom_addons/etsy_integration)
-**Performance Goals**: Dashboard loads in <3s with 17,000+ orders, server-side pagination (80 records/page)
-**Constraints**: Odoo 19 CE only (no Enterprise features), must not break existing Spec 001/002 functionality
-**Scale/Scope**: 17,659+ existing orders, 19 shops, 2,294 products, 5-15 production team users
+**Primary Dependencies**: Odoo 19 CE (`sale_management`, `stock`, `contacts`, `mail`); no Enterprise modules per ADR-004
+**Storage**: PostgreSQL 16+ via Odoo ORM. Design files: GDrive-URL primary (ADR-006 + ADR-012); filestore (`ir.attachment` with `attachment=True` Binary fields) for previews ≤ 2 MB; 10 MB hard cap on filestore Binary writes (`multichannel_hub.large_file_threshold_bytes` `ir.config_parameter`)
+**Testing**: TransactionCase + HttpCase + QUnit (OWL views). Phase-1 (DB) verification + Phase-2 (ORM unit) per the project's two-phase rule
+**Target Platform**: Linux Docker container (Odoo 19 CE on PostgreSQL 16) + staging at `129.150.63.207` per master-plan §6
+**Project Type**: Odoo module — initially in `custom_addons/etsy_integration`, migrated to **`multichannel_hub_core`** during Phase 1 of ADR-003 sequencing (this spec triggers the move)
+**Performance Goals**: First-page Order Dashboard render ≤ 3 s on the full 17K+ row dataset; 80 rows per page server-side pagination; bus-pushed live updates within 5 s on Tracking Dashboard
+**Constraints**: Odoo 19 CE only (no Enterprise); Vietnamese as default UI language with `vi_VN.po` 100% coverage; UTF-8 round-trip preserved across Excel/CSV; ACL gate on inline-edit (MP cannot edit destination address fields without filing an `etsy.address.change.request`)
+**Scale/Scope**: 17,659+ existing orders (post Spec 002 normalization); 19 Etsy shops; 2,294 products; 5–15 production-team users; 17-stage default seed pipeline expandable to N pipelines per ADR-010
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
+> **Note**: `.specify/memory/constitution.md` v1.0.0 (ratified 2026-04-02) was authored for the Phase-1 email-parser scope. Several principles are now contextualised by the master plan (ADR-008a v2 makes the email parser a permanent failover, not a deprecation target). The principle-by-principle gate evaluation below maps spec 003 work onto the current state of the master plan.
+
 | Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Odoo-Native First | PASS | Using standard sale.order extensions, Odoo list/kanban views, ir.attachment for files |
-| II. Email Parser Isolation | PASS | No changes to email parser; dashboard and design files are Odoo-only concerns |
-| III. Data Integrity First | PASS | Design file approval is atomic; channel backfill migration is idempotent |
-| IV. Test-Driven Development | PASS | Tests required for design file model, approval workflow, channel backfill |
-| V. Incremental Migration | PASS | This is Phase 3 (dashboard + design), each user story is independently deliverable |
-| VI. Security by Default | PASS | New group_production_team security group; ACL on order.design.file |
-| VII. Simplicity Over Completeness | PASS | Channel field is minimal (Selection, not a full connector model). Design files use ir.attachment. |
+|---|---|---|
+| I. Odoo-Native First | PASS | Three dashboards = saved `ir.actions.act_window`. Configurable pipeline = data-driven (pure Odoo Models + Selection-via-stage-records, not custom workflow engine). Carrier = standard model with seed XML. No custom JS beyond what OWL list/kanban natively supports. |
+| II. Email Parser Isolation | PASS | This spec does not touch the email parser. Per ADR-008a §1 the parser stays in `etsy_channel_email` (peer of `etsy_channel_api`); `multichannel_hub_core` (where this spec lands) has zero source dependency on either channel module. |
+| III. Data Integrity First | PASS | Address-change approval is atomic (single `_write` transaction wrapping `etsy.address.change.request.action_approve`). Pipeline transitions write `order.pipeline.transition.log` in the same transaction as the `x_pipeline_state_id` change (ADR-010 §1). Design-file routing writes `design.file.route.state` via queued jobs with idempotency-key dedup (ADR-009 §4). |
+| IV. Test-Driven Development | PASS | TDD enforced per project rule. Two-Phase Testing: Phase 1 (DB) verifies row counts + state transitions; Phase 2 (ORM unit) verifies the address-change `@api.constrains`, the design-file 10 MB ceiling, the pipeline auto-version-on-edit logic, and the `vi_VN.po` 100% coverage CI check. Target: 80%+ coverage on new models. |
+| V. Incremental Migration | PASS | This spec is independently shippable. US1 (Order Dashboard) ships first as the MVP and unblocks BA adoption; US2/US3 (Tracking + Process) follow within Phase 1; US4–US7 layer in. ADR-009/010 stacks land in dependency order: pipeline + file-lifecycle models → routes/jobs → views. |
+| VI. Security by Default | PASS | New ACL group `group_production_team` for design-file approval. Address-change form is read-only for non-BA users at both UI (`readonly` attrs) and ORM (`@api.constrains`). Pipeline structure edits gated by admin group (`base.group_system`). Audit log on every model. No secrets — GDrive uses service account per ADR-012, never a per-user OAuth token. |
+| VII. Simplicity Over Completeness | **JUSTIFIED VIOLATION** — see Complexity Tracking. The configurable pipeline (ADR-010) is more complex than a hardcoded enum, justified by the open question "VN-Packed 1 means what?" being unanswerable at code-time. The file-lifecycle stack (ADR-009) is more complex than a single `order.design.file`, justified by the file-routing pain points #11/#12/#18 from the E2 doc. Both choices were Owner-signed in `decision-log.md` D-11/D-15. |
 
 ## Project Structure
 
@@ -40,42 +60,125 @@ Replace the Google Sheets-based order management workflow with an Odoo operation
 ```text
 specs/003-dashboard-design-multichannel/
 ├── plan.md              # This file
-├── research.md          # Phase 0: Research decisions
-├── data-model.md        # Phase 1: Data model design
-├── quickstart.md        # Phase 1: Quick verification guide
-├── contracts/           # Phase 1: No external interfaces (Odoo-internal only)
-├── checklists/          # Quality checklist
-│   └── requirements.md
-└── tasks.md             # Phase 2: Task list (/speckit-tasks)
+├── research.md          # Phase 0 — resolved questions
+├── data-model.md        # Phase 1 — full model definitions per ADRs 005/007/009/010
+├── quickstart.md        # Phase 1 — verification walkthrough
+├── checklists/
+│   └── requirements.md  # spec.md FR coverage check (existing)
+├── _archive/            # 2026-04-06 single-dashboard spec archived here
+└── tasks.md             # Phase 2 — generated by /speckit-tasks (Stage 4.3)
 ```
 
-### Source Code (repository root)
+### Source Code
 
 ```text
-custom_addons/etsy_integration/
+custom_addons/multichannel_hub_core/        # NEW module per ADR-003 Phase 1 sequencing
+├── __manifest__.py                         # version 19.0.1.0.0; depends: sale_management, stock, contacts, mail
 ├── models/
-│   ├── sale_order.py              # MODIFY: Add operational dashboard fields, sales_channel, priority
-│   ├── sale_order_line.py         # MODIFY: Add design_status computed field, product_type_id
-│   └── order_design_file.py       # NEW: Design file model with approval workflow
+│   ├── __init__.py
+│   ├── sale_order.py                       # extends with sales_channel, channel_order_ref, x_pipeline_id, x_pipeline_state_id, has_pending_address_change
+│   ├── sale_order_fulfillment.py           # ADR-007 delegation sibling (production fields + carrier M2O)
+│   ├── sale_order_line.py                  # extends with rolled-up design_status
+│   ├── shipping_carrier.py                 # ADR-005 unified carrier
+│   ├── etsy_address_change_request.py      # safety-critical approval model
+│   ├── design_file.py                      # ADR-009 §1
+│   ├── design_file_route.py                # ADR-009 §1 + §4
+│   ├── design_print_batch.py               # ADR-009 §1 (wizard)
+│   ├── order_pipeline.py                   # ADR-010 §1
+│   ├── order_pipeline_state.py             # ADR-010 §1
+│   ├── pipeline_team.py                    # ADR-010 §6
+│   ├── order_pipeline_transition_log.py    # ADR-010 §1 (single audit table)
+│   └── product_template.py                 # extends with x_default_pipeline_id (ADR-010 §2)
+├── services/
+│   ├── __init__.py
+│   ├── design_file_router.py               # queued-job-based route delivery (ADR-009 §4)
+│   └── pipeline_resolver.py                # product → category → system-param fallback (ADR-010 §2)
 ├── views/
-│   ├── operational_dashboard_views.xml  # NEW: 21-column list view + search filters
-│   ├── order_design_file_views.xml      # NEW: Design file form/list in sale order
-│   ├── etsy_design_queue_views.xml      # MODIFY: Add kanban view, approval status filters
-│   ├── sale_order_views.xml             # MODIFY: Add design files tab to form
-│   └── menu.xml                         # MODIFY: Add dashboard menu entry
-├── security/
-│   ├── etsy_security.xml          # MODIFY: Add group_production_team
-│   └── ir.model.access.csv       # MODIFY: Add ACL for order.design.file
+│   ├── menu.xml
+│   ├── order_dashboard_views.xml           # FR-001..FR-010
+│   ├── tracking_dashboard_views.xml        # FR-006, FR-008, FR-017
+│   ├── process_dashboard_views.xml         # US3 + ADR-010 pipeline column
+│   ├── design_file_views.xml               # kanban + form (FR-022)
+│   ├── design_print_batch_wizard.xml       # PD bulk-download wizard
+│   ├── etsy_address_change_request_views.xml
+│   ├── order_pipeline_views.xml            # admin pipeline editor
+│   └── shipping_carrier_views.xml
 ├── data/
-│   └── channel_backfill.xml       # NEW: Post-init hook or migration to backfill sales_channel
+│   ├── order_pipeline_seed.xml             # ADR-010 §9 — 3 default pipelines
+│   ├── shipping_carrier_seed.xml           # FR-029 — USPS/UniUni/YunExpress/4PX/DHL/FedEx/GKE
+│   └── ir_config_parameter.xml             # large_file_threshold_bytes default 10485760
+├── security/
+│   ├── ir.model.access.csv
+│   ├── multichannel_hub_security.xml       # group_production_team, group_pipeline_admin
+│   └── record_rules.xml
+├── i18n/
+│   └── vi_VN.po                            # FR-032 — 100% coverage CI gate
 └── tests/
-    ├── test_design_file.py        # NEW: Design file CRUD, approval workflow
-    ├── test_dashboard_fields.py   # NEW: Operational fields, channel backfill
-    └── test_security.py           # NEW: Production team group access
+    ├── __init__.py
+    ├── test_address_change_workflow.py     # FR-011..FR-017
+    ├── test_design_file_lifecycle.py       # ADR-009 immutable-history + route + batch
+    ├── test_order_pipeline.py              # ADR-010 — assignment, versioning, transition log
+    ├── test_dashboards.py                  # render perf + decoration logic
+    ├── test_carrier.py                     # FR-027..FR-029
+    ├── test_channel_backfill.py            # FR-024..FR-026
+    └── test_i18n_coverage.py               # FR-032 CI check
+
+custom_addons/etsy_integration/             # EXISTING module — declares dependency on multichannel_hub_core after migration
+└── (existing Spec 001 + 002 code; design.file historical seed migration script lands here)
 ```
 
-**Structure Decision**: Extend existing `etsy_integration` module. One new model (`order.design.file`), extended fields on `sale.order` and `sale.order.line`, new views for dashboard and design workflow.
+**Structure Decision**: Land all this spec's models, views, services, data, and tests in a NEW Odoo module `multichannel_hub_core`, which becomes the dependency root for the existing `etsy_integration` (Spec 001 + 002 + 003 forward) and the future `etsy_channel_api` / `etsy_channel_email` / `gearment_partner` modules per ADR-001 §11. Phase 1 of ADR-003's sequencing (`Phase 1 (start of Spec 003 rewrite)`) explicitly times this module move to coincide with this spec.
+
+## Implementation Phases
+
+> Per spec-kit workflow: Phase 0 = research, Phase 1 = design, Phase 2 = task generation (separately via `/speckit-tasks`).
+
+### Phase 0 — Research (output: research.md)
+
+Resolve open questions:
+- R1: Does the team have separate VN and US warehouses requiring `stock.location` per warehouse, or is this logical-only? (Master-plan open question Q9)
+- R2: Default seed pipeline naming — exact 17 stage names + colours + transitions, locked from SRS §6
+- R3: Auto-failover semantics for design-file delivery (ADR-009 §4 vs ADR-012 GDrive failure)
+- R4: Inline-edit ACL — should MP see destination fields as read-only with a hint, or completely hidden?
+- R5: Performance budget — 80 rows × N tracked fields × tracking=True overhead. Acceptable for `_compute_has_pending_address_change` to be `store=True` + `compute_sudo=True`?
+
+### Phase 1 — Design (output: data-model.md, quickstart.md, optional contracts/)
+
+- Full ER diagram + per-model field tables for the 9 new models above + the 3 extended models
+- Migration strategy: how the historical 17,659 orders get `x_pipeline_id` (NULL per REQ-MIG-07) + `sales_channel='etsy'` (FR-025 backfill)
+- Quickstart: 7 verification scenarios (one per User Story) that an installer can run from a fresh module install
+
+### Phase 2 — Tasks (output: tasks.md, generated by `/speckit-tasks`)
+
+Stage 4.3 of the master-plan execution. Tasks ordered: shared fixtures → core models → ACL → views → services → data seed → tests → docs. Each User Story (US1–US7) becomes an independently testable task cluster.
 
 ## Complexity Tracking
 
-No constitution violations. All features use standard Odoo patterns (model extensions, list/kanban views, security groups, ir.attachment-based file storage).
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|---|---|---|
+| Configurable order pipeline (4 new models) instead of hardcoded enum | Owner red-pen identified that "VN-Packed 1", "[Fix]VN-Dish" semantics are unsettled at code-time; PD lead needs runtime-config power | Hardcoded enum forces a code change every time PD adds a new sub-state, blocks the cutover. Enum-only would also force "Multi-Technique Hybrid" (ADR-010 §9) to be a separate code-level branch, doubling the dashboard code paths. |
+| File-lifecycle stack (3 new models: file + route + batch) instead of single `order.design.file` | Pain points #11 (files lost in handover), #12 (PD wastes time searching Discord), #18 (re-upload at every step) require explicit routing semantics + bulk A4 layout | A single `order.design.file` model cannot represent per-recipient delivery state; pain #11/#12/#18 stay open. Splitting at runtime via separate `mail.activity` records would push the routing logic to chatter, defeating audit + permission models. |
+| 4-module split (per ADR-001) starting with this spec | Future Amazon/Website channels need to plug into shared core; 10k+ LOC monolith is unmaintainable | Keep monolith → mid-spec-005 refactor would block the API cutover; LATE refactor is strictly worse than EARLY per ADR-003 §Alternatives. |
+
+## Dependencies
+
+| This plan needs | From | When |
+|---|---|---|
+| Spec 002 normalization complete | Spec 002 (in flight, W3) | Before Phase 1 design data-model migration scripts can be tested |
+| `shipping.carrier` seed entries | ADR-005 / this spec | Phase 1 design (this spec owns the seed) |
+| `pipeline.team` seed | ADR-010 / this spec | Phase 1 design (this spec owns the seed) |
+| Constitution principle re-validation | Master plan §6 + decision log | Done; updates noted above |
+
+| Other deliverables need from this | What |
+|---|---|
+| Spec 004a (tracking import) | `shipping.carrier` model + Tracking Dashboard view + `sale.order.fulfillment` mixin |
+| Spec 004b (Gearment) | Mixin + carrier (`gearment_carrier_name`) + Process Dashboard pipeline |
+| Spec 004c (returns) | Chatter scaffolding + dashboards |
+| Spec 005 (Etsy API) | `shipping.carrier.etsy_carrier_name` for tracking push; `sales_channel`; `x_pipeline_state_id` (visible on dashboards but not directly written) |
+| Spec 010 / 011 (Amazon / Website) | Channel field + delegation mixin reuse |
+
+## Revision History
+
+- **2026-04-06**: v1 plan (single dashboard, archived in `_archive/`)
+- **2026-04-13**: Wave B spec.md rewrite landed; plan.md NOT regenerated at the time
+- **2026-04-27**: Stage 4.1 plan refresh — integrates ADRs 008a/009/010/012 deltas; configurable pipeline replaces hardcoded enum; design-file lifecycle stack replaces single `order.design.file`; module destination is `multichannel_hub_core` per ADR-003 sequencing
