@@ -1,0 +1,1 @@
+/home/odoo/.claude/skills/gstack/freeze/SKILL.md

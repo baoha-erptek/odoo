@@ -1,0 +1,1 @@
+/home/odoo/.claude/skills/gstack/ship/SKILL.md

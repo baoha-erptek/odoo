@@ -6,7 +6,7 @@ compatibility: Requires spec-kit project structure with .specify/ directory
 metadata:
   author: github-spec-kit
   source: templates/commands/plan.md
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 ## User Input
