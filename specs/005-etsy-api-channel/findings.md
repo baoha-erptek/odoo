@@ -4,6 +4,45 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-04-27 — P0-15 EtsyApiClient sandbox landed
+
+**Slice scope (final, post-execution)**:
+- `services/etsy_api_client.py`: `EtsyApiClient(shop)` constructor, `_session()` two-header auth (`Authorization: Bearer`, `x-api-key`), `_request()` with rate limiting + 429 retry + 401 single-shot refresh, `ping()` against `/users/me`. Module-level constants: `ETSY_API_BASE_URL = 'https://openapi.etsy.com/v3/application'`, `_RATE_LIMIT_QPS = 8`, `_MAX_RETRY_AFTER_SECONDS = 60`, `_PROACTIVE_REFRESH_WINDOW_SECONDS = 60`.
+- 19 mocked tests in `tests/test_etsy_api_client.py` (TransactionCase, post_install): init validation × 4, session headers × 2, ping × 4, rate-limit × 4, 401-refresh × 5.
+- Memory `feedback_odoo19_test_gotchas.md` will gain a #24 once committed: `BaseCase._assertRaises` calls `issubclass(exception, AccessError)`, which fails on tuple — never pass a tuple of expected exceptions to `with self.assertRaises(...)` in Odoo tests.
+
+**Q-resolved (architect's W2 advisory; outcomes)**:
+- **Q3 (rate limiter)**: per-instance `TokenBucket(rate=8, period=1.0)`. Imported from `multichannel_hub_core.utils.rate_limiter` — the architect's "long-term home" was reached early in P0-18a. **Phase 1 refactor task removed from backlog** (the per-shop bucket lives in core; if multi-shop fairness becomes an issue, that's a P1 ticket on top of the existing core utility).
+- **Q5 (module home)**: lands in `etsy_integration` per the advisory. Re-home to `etsy_channel_api` deferred to ADR-003 Phase 1 (P1-XX), with the API surface intentionally narrow (`shop` + `ping()`) so the move is mechanical.
+
+**Surprises (all resolved before commit)**:
+
+1. **Credential-loader path off-by-one**. Initial GREEN computed the credentials file path via `dirname(__file__)` chained 3 times then `'..', '..', 'secrets', 'credentials.json'`, which resolved to `other_projects/secrets/credentials.json` — outside the project. Code-reviewer caught it as CRITICAL (would 401 in production). Fix: hardcode `CREDENTIALS_PATH = '/opt/odoo/secrets/credentials.json'` to match what `controllers/etsy_oauth._read_credentials` already does (it reads from `ir.config_parameter` with the same string as the default). Convention now: in-container path is the source of truth; the Python computation is fragile when the file lives outside the addon. **If we ever need a portable computed path, derive from `env['ir.config_parameter']` like the controller does — but the service layer here doesn't take `env`, so the constant is fine.**
+
+2. **`BaseCase._assertRaises` does not accept tuples** (Odoo test gotcha). The RED test had `with self.assertRaises((ValueError, FileNotFoundError)):`, which crashed inside Odoo's overridden `_assertRaises`: `if issubclass(exception, AccessError)` — `issubclass` requires a class as first arg, not a tuple. Fix: my impl wraps `FileNotFoundError → ValueError` so the test only needs `ValueError`. Single-class `assertRaises(ValueError)` works fine. Saved to memory as gotcha #24.
+
+3. **Tz-naive datetime comparison** (security-reviewer MEDIUM). First GREEN used `datetime.now()` to compute the proactive-refresh threshold. Odoo Datetime fields read as **naive UTC**, so on a non-UTC host this would skew. Fix: switched to `datetime.utcnow()` for both the threshold and the `expires_at` write inside `_refresh_token`. Now matches Odoo's storage convention regardless of host TZ.
+
+4. **`self.shop.refresh()` doesn't exist on Odoo 19 recordsets** (memory gotcha #4). The RED test invalidated the cache via `self.shop.refresh()`; this raised `AttributeError` during GREEN run. Fix: `self.shop.invalidate_recordset()`. Test still asserts the expected post-refresh token state.
+
+**Q-deferred (security-reviewer LOW notes; revisit at hardening pass)**:
+
+- **DQ1 — Caller-side ACL gate**: `EtsyApiClient` does NOT check the calling user's access to the shop before instantiating. Service-layer responsibility per the class docstring; the orchestrator (cron, sync wizard, controller route) must gate access. Add a `check_access_rule` helper if/when this client is ever invoked from a user-controlled action.
+- **DQ2 — `requests.Session` redirect policy**: defaults to following redirects. Same finding as P0-18a, deferred to a hardening slice (P1-XX) that sets `session.max_redirects = 0` for both Etsy + Gearment clients.
+- **DQ3 — `path` argument to `_request()` accepts fully-qualified URLs accidentally**: `f"{base}/{path.lstrip('/')}"` doesn't validate that `path` is relative. Currently only `ping()` calls it with `'users/me'`; document the convention until `_request()` becomes user-callable.
+
+**Verification**:
+- `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration --test-tags=/etsy_integration --stop-after-init` → 0 fail / 0 error / 170 tests.
+- Full regression `-u etsy_integration,multichannel_hub_core,multichannel_hub_fulfillment` → 0 fail / 0 error / 236 tests.
+- No `_logger.info(` / `print(` introduced.
+- Reviews: code-reviewer PASS after credential-path fix; security-reviewer PASS with 3 LOW notes captured above.
+
+**Branch + commit**: `feature/006-master-plan-coding`. RED already on branch as `d84f92c3cbb`; GREEN + review fixes commit follows.
+
+**Unblocks**: P0-16 (`EtsyOrderSyncer` against dev shop with VCR fixtures) — has the rate-limited authenticated client to syndicate from.
+
+---
+
 ## 2026-04-27 — P0-14 OAuth2 PKCE sandbox landed
 
 **Slice scope (final, post-execution)**:

@@ -73,12 +73,12 @@ class TestEtsyApiClientInitialization(TransactionCase):
         self.assertIn('refresh_token', str(context.exception))
 
     def test_init_missing_credentials_file_raises(self):
-        """Missing credentials file or _read_credentials failure surfaces ValueError."""
+        """Missing credentials file surfaces ValueError (FileNotFoundError wrapped)."""
         with mock.patch(
             'odoo.addons.etsy_integration.services.etsy_api_client._read_credentials',
             side_effect=FileNotFoundError('secrets/credentials.json not found'),
         ):
-            with self.assertRaises((ValueError, FileNotFoundError)):
+            with self.assertRaises(ValueError):
                 EtsyApiClient(self.shop)
 
 
@@ -397,8 +397,8 @@ class TestEtsyApiClient401Refresh(TransactionCase):
 
         # Verify refresh was called
         self.assertTrue(mock_refresh.called)
-        # Verify shop record was updated
-        self.shop.refresh()
+        # Verify shop record was updated (Odoo 19: invalidate_recordset, no .refresh())
+        self.shop.invalidate_recordset()
         self.assertEqual(self.shop.sudo().etsy_oauth_access_token, 'new_access_token')
         self.assertEqual(self.shop.sudo().etsy_oauth_refresh_token, 'new_refresh_token')
         # Verify ping succeeded
