@@ -61,6 +61,9 @@ enterprise/
 enterprise.zip
 
 secrets/
+.env
+.env.*
+!.env.example
 
 # claude-mem auto-generated activity trackers
 custom_addons/**/CLAUDE.md

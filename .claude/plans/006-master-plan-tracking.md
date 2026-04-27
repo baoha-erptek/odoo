@@ -20,11 +20,11 @@
 
 | ID | Dependency | Owner | Submitted | Status | Last ping | Next action |
 |---|---|---|---|---|---|---|
-| E1 | Etsy app scope review (`transactions_r/w`, `listings_r/w`, `shops_r`, `email_r`, optional `conversations_r`) | Owner | — | `todo` | — | Owner submits this week per ADR-008 §4. Follow guide at [guides/vi/etsy-app-review-guide.md](../../specs/006-master-plan/guides/vi/etsy-app-review-guide.md) |
-| E2 | Gearment sandbox credentials | Owner | — | `todo` | — | Owner contacts Gearment. Follow guide at [guides/vi/gearment-sandbox-guide.md](../../specs/006-master-plan/guides/vi/gearment-sandbox-guide.md) |
-| E3 | Google Drive service-account creation (for ADR-006 §6 + Spec 004a US6) | Owner | — | `todo` | — | Owner creates GCP project, enables Drive API, generates service-account JSON key |
+| E1 | Etsy app scope review (`transactions_r/w`, `listings_r/w`, `shops_r`, `email_r`, optional `conversations_r`) | Owner | 2026-04-27 | `submitted-awaiting-review` | 2026-04-27 | Wait for Etsy review (3–8 weeks typical). Email parser remains active per ADR-008a v2 — no Phase 1 blocker since failover stays live. Re-ping at 2026-05-25 if no response. |
+| E2 | Gearment sandbox credentials | Owner | — | `partial` | 2026-04-27 | Dashboard login obtained (`.env` `GEARMENT_DASHBOARD_*`). API sandbox keys still TODO — owner to request `GEARMENT_API_KEY`/`GEARMENT_API_SECRET`/`GEARMENT_WEBHOOK_HMAC_SECRET` from Gearment dashboard or support. P0-18 spike can begin reconnaissance via dashboard now. |
+| E3 | Google Drive service-account creation (for ADR-006 §6 + Spec 004a US6) | Owner | 2026-04-27 | `done` | 2026-04-27 | Service-account JSON stored in `secrets/`. Wire up under P1-09 / P2-06. |
 
-**If E1 is not submitted by end of week**, escalate. E1 is on the critical path for Phase 1 cutover.
+**Phase 1 unblocked from external deps.** E1 submission means production cutover is now timeline-bound (3–8 weeks Etsy review + our coding) rather than blocked. Email parser stays active as permanent failover — no risk if scope review delays.
 
 ---
 
@@ -53,13 +53,41 @@
 | B7 | Author Vietnamese guide for Etsy app scope review submission | Architect | `done` | `guides/vi/etsy-app-review-guide.md` |
 | B8 | Author Vietnamese guide for Gearment sandbox onboarding | Architect | `done` | `guides/vi/gearment-sandbox-guide.md` |
 
+### 🎯 Active prioritization — coding-first to reach end-to-end pipeline test (set 2026-04-27)
+
+**Owner directive (2026-04-27)**: Finish the coding chain that lets us run an order **end-to-end** (ingest → fulfill → track) on staging before touching reporting/observability surfaces. Reporting is Phase-1 polish, not a Phase-0 blocker.
+
+**Critical path for E2E coding** (do these next, in order):
+
+1. **P0-20** — module decomposition into 4 modules (architectural prerequisite for all Phase 1 code)
+2. **P1-05** — `sale.order.fulfillment` delegation mixin (must land before any dashboard write hits `sale.order`)
+3. **P1-06** — unified `shipping.carrier` model + seed (consumed by both Etsy push + GKE import)
+4. **P0-14..17** — Spec 005 sandbox (OAuth PKCE → ApiClient → OrderSyncer → api.log) — code against dev token while E1 bakes
+5. **P0-18** — Gearment spike (unblocked partial 2026-04-27); start dashboard-driven discovery to unblock P4-01
+6. **P1-04** — address-change approval workflow (safety-critical; small surface)
+7. **P1-01** — Order Dashboard (the operator entry point)
+8. **P2-01..05** — tracking import wizard + carrier auto-detect (closes the loop back to Etsy push)
+9. **P4-01** — Gearment adapter (outbound fulfillment) — needs P0-18 + E2 API keys
+
+**Deferred until E2E green** (reporting/hardening — pick up in Phase 1 polish):
+
+- ~~P0-11 `multichannel.sync.health` dashboard tile~~ (model already shipped under W3.1; tile can wait)
+- ~~P0-12 ban `_logger.info`~~ (cleanup, not feature)
+- ~~P0-13 indexes~~ (perf, only matters once we have prod-scale traffic)
+- ~~P0-19 GKE schema fingerprint~~ (defensive; fold into P2-01)
+- ~~P4-03 Spec 006 Sales Pricing Audit~~ (pure reporting; explicitly Phase 4)
+
+**Phase 0 exit criteria revised**: drop "Health dashboard green for 7 days" from must-have. Keep "BA reconciliation sign-off" + "Spec 005 client passes integration tests against dev shop with zero writes to non-dev shops" + "staging operational." Health tile becomes a Phase 1 deliverable.
+
+---
+
 ### Phase 0 execution (starts when Wave B actions handed off to owner)
 
 | ID | Task | Owner | State | Depends on | Notes |
 |---|---|---|---|---|---|
-| P0-01 | Owner submits Etsy app scope review | Owner | `todo` | B7 | Uses E1 tracker row |
-| P0-02 | Owner obtains Gearment sandbox credentials | Owner | `todo` | B8 | Uses E2 tracker row |
-| P0-03 | Owner creates GDrive service-account JSON key | Owner | `todo` | — | Uses E3 tracker row |
+| P0-01 | Owner submits Etsy app scope review | Owner | `done` | B7 | **Submitted 2026-04-27**, awaiting Etsy review. Uses E1 tracker row. |
+| P0-02 | Owner obtains Gearment sandbox credentials | Owner | `doing` | B8 | **Dashboard creds in `.env` 2026-04-27**; API sandbox keys still pending. Uses E2 tracker row. |
+| P0-03 | Owner creates GDrive service-account JSON key | Owner | `done` | — | **JSON in `secrets/` 2026-04-27**. Uses E3 tracker row. |
 | P0-04 | Provision staging environment on `129.150.63.207` — docker-compose stack + nightly prod snapshot restore + point outbound calls at Etsy/Gearment sandboxes | Ops (assign) | `doing` | — | **Local equivalent landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (root `docker-compose.yml`, separate Postgres + Odoo containers, ports 8169/8172). Remote `129.150.63.207` deployment + nightly snapshot restore still TODO. |
 | P0-05 | Spec 002 US1 implementation (financial data) | Dev A | `done` | — | **Landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (T015–T020). Verified E2E against `tests/data/sample_single_order.txt`. |
 | P0-06 | Spec 002 US2 implementation (confirm workflow) | Dev A | `done` | P0-05 | **Landed 2026-04-26** on branch `002-etsy-config-fixes-mvp` (T021–T024). Auto-confirm helper writes `invoice_status='invoiced'` directly per R5; no `account.move` generated. |
@@ -74,7 +102,7 @@
 | P0-15 | Spec 005 sandbox — `EtsyApiClient` with rate limiter + retry/backoff | Dev B | `todo` | P0-14 | Per-client token bucket for sandbox, shared bucket as Phase 1 refactor (architect Q3) |
 | P0-16 | Spec 005 sandbox — `EtsyOrderSyncer` against dev shop with VCR fixtures | Dev B | `todo` | P0-15 | One-per-test VCR cassettes in `tests/fixtures/vcr/`, quarterly refresh (architect Q1) |
 | P0-17 | Spec 005 sandbox — `etsy.api.log` model + audit tests | Dev B | `todo` | P0-14 | `etsy.shop.sync_audit_mode` Boolean, read-only path in syncer (architect Q4) |
-| P0-18 | Gearment sandbox POC — 3-day spike (auth, rate limits, HMAC, draft/quote/confirm idempotency) | Dev B | `blocked` | E2 | Cannot start without creds |
+| P0-18 | Gearment sandbox POC — 3-day spike (auth, rate limits, HMAC, draft/quote/confirm idempotency) | Dev B | `doing` | E2 | **Unblocked partially 2026-04-27** — dashboard login available; can start manual API discovery (find docs, generate sandbox keys via dashboard). Full API spike begins once `GEARMENT_API_KEY`/`SECRET` populated in `.env`. |
 | P0-19 | GKE Excel schema fingerprinting — hash column layout, hard-fail on unknown | Dev A | `todo` | — | DA #4.3. Standalone utility that Spec 004a will consume |
 | P0-20 | Module decomposition kickoff — split `etsy_integration` into 4 modules (core / fulfillment / etsy_channel / etsy_channel_migration) | Architect + Dev B | `todo` | P0-11 | ADR-003. Must complete before Phase 1 code |
 | P0-21 | Spec 002 US3 (product config) + US4 (3-tier customer dedup + state/country resolution) | Dev A | `done` | P0-05 | **Landed 2026-04-26** on `main` (Wave 1 GREEN) — commits `5a2b9591d60` (US3) + `6d357cca651` (US4) + `aefbeb436ca` (closure). T025–T030 marked `[X]` in tasks.md. 6 W1 tests pass. Collateral install fix in `etsy_fiscal_data.xml` (tax_group_id + country_id). 4 inherited 002-MVP failures all share `cr.commit()` root cause; auto-cleared by T032 in W3. |
@@ -103,10 +131,10 @@
 | P1-07 | Spec 003 Vietnamese `.po` file + `_()` wrap all strings | Dev A | `todo` | P1-01 | BA R10 |
 | P1-08 | Spec 003 audit log — `tracking=True` across tracked fields + chatter tab AC | Dev A | `todo` | P1-01 | BA #8 |
 | P1-09 | ADR-006 revised — design-file GDrive upload wizard (service account, `storage_mode='gdrive'`, thumbnail local) | Dev B | `todo` | P0-03 | ADR-006 §3 revised |
-| P1-10 | Spec 005 production OAuth flow — replace dev token with per-shop prod OAuth | Dev B | `blocked` | E1 approved, P0-14..P0-17 | Cannot flip to prod without scopes |
-| P1-11 | Spec 005 pilot shop cutover — `sync_audit_mode=True` 1–2 weeks, BA review, flip `api_only` | Dev B + BA lead | `blocked` | P1-10 | ADR-002 cutover procedure |
-| P1-12 | Spec 005 `EtsyTrackingPusher` — wire to Tracking Dashboard writes, read `shipping.carrier.etsy_carrier_name` | Dev B | `blocked` | P1-10, P1-06 | US3 |
-| P1-13 | Spec 005 additional 2–4 shops cutover by end of Phase 1 | Dev B + BA lead | `blocked` | P1-11 | Target 3–5 shops total by Phase 1 exit |
+| P1-10 | Spec 005 production OAuth flow — replace dev token with per-shop prod OAuth | Dev B | `waiting` | E1 approved, P0-14..P0-17 | E1 submitted 2026-04-27, awaiting Etsy review. Coding can proceed against dev token; flip to prod once scopes land. |
+| P1-11 | Spec 005 pilot shop cutover — flip pilot shop's `etsy.shop.active_source='api'` once API adapter has succeeded ≥1× (per ADR-008a v2) | Dev B + BA lead | `waiting` | P1-10 | No 1-week audit mode needed — single canonical pipeline (ADR-008a). |
+| P1-12 | Spec 005 `EtsyTrackingPusher` — wire to Tracking Dashboard writes, read `shipping.carrier.etsy_carrier_name` | Dev B | `waiting` | P1-10, P1-06 | US3 |
+| P1-13 | Spec 005 additional 2–4 shops cutover by end of Phase 1 | Dev B + BA lead | `waiting` | P1-11 | Target 3–5 shops total by Phase 1 exit |
 
 **Phase 1 exit criteria**:
 - BA team working primarily in Odoo for order review, tracking management, address-change approvals
@@ -198,3 +226,4 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 - **2026-04-26**: W3.1 GREEN complete on `main` — T031–T034 (US5 import wizard hardening). Header-based column mapping replacing `_COL_*` constants, per-order savepoint inside 500-batch sync.health checkpoint loop, `warning_count` + `validation_notes` observability fields, new `test_import_wizard_headers.py` (5 methods). All 87 tests pass; 3 of 4 inherited 002-MVP failures cleared (`test_import_creates_order`, `test_import_multiple_lines_same_order`, `test_import_skips_duplicate`). 4th (`test_email_log_unique_constraint`) skipped — root cause is `_sql_constraints` UNIQUE not being deployed at SQL level, unrelated to W3.1 scope; investigation deferred. See `specs/002-etsy-config-fixes/findings.md` W3.1 entry. W3.2 (US6 migration wizard) is next.
 - **2026-04-26**: W3.2a GREEN complete on `main` — Spec 002 US6 backbone. Original W3.2 was ~1,410 LOC in one commit; split into W3.2a (backbone, ~860 LOC) and W3.2b (fix-helper bodies, planned ~700 LOC) for review hygiene. W3.2a landed: `etsy.data.migration.wizard` model + 12 fields (T035), anomaly quarantine to `tempfile.mkstemp` 0o600 CSV (T036), batched iteration with `last_processed_id` resumption (T037), `etsy.sync.health` per-batch checkpoints + final ok/warning/error state (T038), orchestration shell calling stub helpers (T046), wizard view + menu (`groups="sales_team.group_sale_manager"`) + ACL row (T047/T048/T049), `__init__.py` registration (T050). 12 new tests pass; 99 tests total green. Security fix: `tempfile.mkstemp()` replaces world-readable `open()` write to `/tmp`. Surprises captured in findings.md: Odoo 19 renamed `groups_id`→`group_ids`, `product.product.type`→`is_storable`, `mock.patch.object` doesn't work on recordset instances. Fix-helper bodies (T039–T045) + expanded tests (T051–T054) move to W3.2b.
 - **2026-04-26**: W3.2b GREEN complete on `main` — Spec 002 US6 fix-helper bodies. T039 (financial config), T040 (shipping lines, idempotent), T041 (price re-parse from Excel), T042 (product config + categorize), T043 (confirm + invoice_status), T044 (dedup CSV via `_normalize_text`), T045 (apply_merges via `base.partner.merge.automatic.wizard._merge`). +`approved_merges_file` field. 29 new tests across 4 files (T051–T054). 162 tests total green. Security boundary added per security-reviewer: `is_etsy_customer=True` required on both partners before merge — prevents a `sales_team.group_sale_manager` from crafting a CSV that merges the company partner into a customer. Status message sanitized to basename-only (no absolute path leak). Memory correction: Odoo 19 CE base ships `base.partner.merge.automatic.wizard._merge` — earlier note "no merge helper available, ~50 LOC inline" was wrong. P0-07 → `done`.
+- **2026-04-27**: External dependencies update + strategic re-prioritization. **E1 Etsy scope review SUBMITTED** (awaiting Etsy review, 3–8 weeks typical) — no longer blocks Phase 1 since email parser is permanent failover per ADR-008a v2. **E2 Gearment dashboard creds in `.env`** (`GEARMENT_DASHBOARD_*`); API sandbox keys still pending — P0-18 unblocked for dashboard-driven discovery. **E3 GDrive service-account JSON in `secrets/`** — done. P0-01/P0-03 → `done`, P0-02 → `doing`, P0-18 → `doing`. P1-10..13 moved from `blocked` to `waiting` (coding can proceed against dev token). Owner directive: **finish coding chain to E2E pipeline test first; reporting is Phase-1 polish**. Deferred: P0-11 dashboard tile, P0-12 logger ban, P0-13 indexes, P0-19 schema fingerprint. New critical path documented in tracker §"Active prioritization": P0-20 → P1-05 → P1-06 → P0-14..17 → P0-18 → P1-04 → P1-01 → P2-01..05 → P4-01. Security: `.env` added to `.gitignore` (was previously untracked but unprotected — SSH password + JIRA API key already in file).
