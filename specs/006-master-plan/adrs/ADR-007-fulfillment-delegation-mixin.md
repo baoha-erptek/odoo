@@ -1,11 +1,40 @@
 # ADR-007: `sale.order.fulfillment` Delegation Mixin
 
-- **Status**: Accepted
+- **Status**: Accepted (inheritance-direction amended 2026-04-27 — see banner)
 - **Date**: 2026-04-10
-- **Sign-off**: 2026-04-13 (owner)
+- **Sign-off**: 2026-04-13 (owner); inheritance direction re-signed 2026-04-27 (D-23)
 - **Deciders**: Owner, architect
 - **Affects**: Spec 003 (dashboard + channel fields), Spec 004 (fulfillment routing + partner + tracking)
-- **Related**: [tech-architect.md §1 "Is sale.order becoming a god object?"](../agent-reports/tech-architect.md)
+- **Related**: [tech-architect.md §1 "Is sale.order becoming a god object?"](../agent-reports/tech-architect.md), [decision-log.md D-23](../decision-log.md)
+
+> **Inheritance-direction amendment (2026-04-27, D-23):** the original §Decision below placed `_inherits` on `sale.order.fulfillment` pointing at `sale.order` ("`_inherits = {'sale.order': 'order_id'}`"). That direction is **inverted from what the ADR's prose describes** — Odoo's `_inherits` makes the *defining* model a subtype of the parent (it gains the parent's fields), not the other way around. The prose claim "`sale.order` automatically gains read/write access to all fulfillment fields" only holds if the relationship is reversed.
+>
+> **The corrected direction (Option A from P1-05 escalation, accepted by Owner 2026-04-27):**
+>
+> ```
+> sale.order.fulfillment   (in multichannel_hub_core, standalone Model)
+>   _name = 'sale.order.fulfillment'
+>   _description = 'Fulfillment lifecycle for a sale order'
+>   # all operational fields live here (see §Decision below for the field list)
+>
+> sale.order   (extension in multichannel_hub_core via _inherit)
+>   _inherit = 'sale.order'
+>   _inherits = {'sale.order.fulfillment': 'fulfillment_id'}
+>   fulfillment_id = fields.Many2one(
+>       'sale.order.fulfillment', required=True, ondelete='cascade',
+>       auto_join=True,
+>   )
+> ```
+>
+> With this direction, every `sale.order` (DB-wide, including non-Etsy/non-multichannel orders) gets a `fulfillment_id` and an auto-created `sale.order.fulfillment` sibling. That is a deliberate cost of `multichannel_hub_core` being a foundation dependency rather than a per-channel one — accepted by the Owner because (a) it gives `order.tracking_number` "Just Works" semantics that Spec 003 dashboards rely on, (b) the sibling row is cheap (FK + JOIN, no wide columns on `sale_order`), and (c) reversing `_inherits` later would require a much harder migration than backfilling siblings now.
+>
+> **What this banner overrides** in the §Decision section below:
+> - Replace `sale.order.fulfillment._inherits = {'sale.order': 'order_id'}` with the two-block layout above.
+> - The §Decision auto-create code snippet (`@api.model_create_multi` on `sale.order` that creates a fulfillment record after super().create) is **still required** — `_inherits` semantics in Odoo 19 create the sibling lazily on first delegated-field write, but Spec 003 dashboards read delegated fields immediately after create, so eager creation in the same transaction is mandatory.
+> - The "Form view layout" + "Indexing and search" + "What stays / what moves" sections remain valid as written.
+> - Existing-data backfill (every `sale.order` row needs a `fulfillment_id` after this slice installs) is handled by a `post_init_hook` in `multichannel_hub_core/__init__.py`.
+>
+> **Why this matters for downstream slices**: P1-06 (`shipping.carrier` model + seed) consumes the `shipping_carrier_id` field on `sale.order.fulfillment`. Spec 003 dashboards (P1-01) expect `order.fulfillment_status`, `order.tracking_number`, etc. to read transparently through delegation — the inverted direction makes that work; the original direction would have required `order.fulfillment_id.tracking_number` everywhere.
 
 ## Context
 
