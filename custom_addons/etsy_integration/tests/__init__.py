@@ -16,3 +16,4 @@ from . import test_data_migration_merges
 from . import test_etsy_oauth_pkce
 from . import test_etsy_shop_oauth_fields
 from . import test_etsy_oauth_flow
+from . import test_etsy_api_client
