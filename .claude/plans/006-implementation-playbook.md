@@ -11,7 +11,7 @@ This file is the operating manual every session should follow when picking up ma
 ## Operating principles
 
 1. **Slice-sized, not spec-sized.** A slice = one User Story or one P-task from the tracker. Never "implement the whole spec."
-2. **Single-workspace-on-main.** All forward coding happens in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` on branch `main`. Commit per checkpoint directly to `main`. Worktrees are reserved for **rework / bugfix** of already-shipped work (see "Worktree usage" below). This replaces the prior "worktree per slice" rule (2026-04-26 revision).
+2. **Single-workspace, long-lived feature branch off `main`** (revised 2026-04-27). All forward coding happens in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` on branch `feature/006-master-plan-coding`, cut from `main` 2026-04-27. Commit per checkpoint to that feature branch; merge back to `main` after the W7 E2E sprint passes. Worktrees are still reserved for **rework / bugfix** of already-shipped work (see "Worktree usage" below). This supersedes the 2026-04-26 "commit directly to `main`" rule, which itself superseded the original "worktree per slice".
 3. **Two-Phase Testing always.** Phase 1 (DB-level verification) + Phase 2 (ORM unit tests). See `rules/odoo/`.
 4. **Commits per checkpoint, not per task.** A "checkpoint" is a self-contained, installable, test-passing state — typically one User Story or one foundational layer. Body cites the task IDs it covers. Land directly on `main`.
 5. **Document drift is a defect.** If `tasks.md`, the tracker, an ADR, USER_GUIDE, or memory contradicts what was just implemented, fix the doc in the same commit (or the next one if it would balloon the diff).
@@ -34,7 +34,7 @@ Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2
 
 ### Phase 0 — Dispatch
 - Read tracker. Pick the highest-priority slice whose `Depends on` is satisfied.
-- Verify branch: `git branch --show-current` returns `main`. Working tree clean (`git status` shows no uncommitted changes from a previous slice).
+- Verify branch: `git branch --show-current` returns `feature/006-master-plan-coding` (revised 2026-04-27). Working tree clean (`git status` shows no uncommitted changes from a previous slice).
 - Stay in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` (the main workspace). Do **not** create a worktree for forward work.
 - TaskCreate items: one per slice task + one per exit-criterion check.
 
@@ -93,11 +93,11 @@ Update in the same checkpoint commit (or the next one if it would balloon):
 - Memory entries follow the auto-memory rules (`feedback`/`project`/`reference`/`user`).
 
 ### Phase 9 — Land
-- Forward work commits directly to `main` per checkpoint (single-workspace pattern). No PR, no merge step needed for forward slices.
+- Forward work commits to `feature/006-master-plan-coding` per checkpoint (revised 2026-04-27). No PR ceremony per slice. Merge back to `main` (fast-forward or rebase) after the W7 E2E sprint passes.
 - `/review` skill before each commit if the diff is large (>300 lines) or touches security-sensitive surfaces.
-- For **rework / bugfix** worktrees only: use `/ship` to push + open PR with VERSION/CHANGELOG bump.
-- E2E phase (after all spec coding is done): a dedicated E2E sprint runs `e2e-runner` agent across critical user flows, fixes regressions, then `/ship` once per E2E pass.
-- If trunk grows fast, run `/retro` weekly to surface drift.
+- For **rework / bugfix** worktrees only: branch off `main` (not the feature branch). Use `/ship` to push + open PR with VERSION/CHANGELOG bump.
+- E2E phase (after all spec coding is done): a dedicated E2E sprint runs `e2e-runner` agent across critical user flows, fixes regressions, then `/ship` once per E2E pass before the feature branch merges to `main`.
+- If the feature branch grows fast, run `/retro` weekly to surface drift.
 
 ---
 
@@ -138,13 +138,13 @@ This is the closest we can get to the Anthropic Advisor tool (`advisor_20260301`
 
 ## Parallel execution (revised 2026-04-26)
 
-In the single-workspace pattern, true parallelism within forward work is no longer possible — only one branch (`main`) is active at a time. Achieve parallelism instead via:
+In the single-workspace pattern, true parallelism within forward work is no longer possible — only one branch (`feature/006-master-plan-coding`) is active at a time. Achieve parallelism instead via:
 
 1. **Parallel research / planning agents**: spawn multiple `planner`, `architect`, `code-reviewer` agents in a single message when they read disjoint files. They produce advice; the orchestrator integrates results sequentially.
 2. **Sequential checkpoints, fast cadence**: complete one checkpoint, commit, immediately start the next. The 9-phase loop is short enough that sequential work approximates parallel throughput.
 3. **Rework / bugfix parallelism**: a hotfix worktree may run in parallel with forward main work, since they ship via different paths (rework worktree → `/ship` PR; forward → direct main commit).
 
-Conflicting work that must always serialize on `main`:
+Conflicting work that must always serialize on the feature branch:
 - Two checkpoints touching `services/order_creator.py`.
 - ADR-changing checkpoints with overlapping module-decomposition (ADR-003) impact.
 - Anything modifying `__manifest__.py` data list at the same time.
@@ -166,7 +166,7 @@ Conflicting work that must always serialize on `main`:
 
 ## Wave plan (revised 2026-04-26 — single-workspace, sequential)
 
-All forward work happens on `main` in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`. Sequential checkpoints, fast cadence. **Goal: finish ALL spec coding before opening the E2E phase.**
+All forward work happens on `feature/006-master-plan-coding` in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` (revised 2026-04-27). Sequential checkpoints, fast cadence. **Goal: finish ALL spec coding before opening the E2E phase, then merge feature branch to `main`.**
 
 | Wave | Slices | Tier | Status |
 |---|---|---|---|
@@ -197,3 +197,4 @@ If a slice cannot follow this loop (e.g., spec is missing tasks.md, scope is amb
 
 - **2026-04-26**: File created. Wave 1 + Wave 2 launched in parallel under this playbook.
 - **2026-04-26 (revision 1)**: Workflow pivot — from "worktree per slice" to **single-workspace-on-main**. All forward coding now lands directly on `main` in the primary workspace. Worktrees reserved for rework / bugfix only. Wave 1 (RED tests) and Wave 2 (planning + findings + tasks.md) consolidated to `main` via rebase; wave worktrees and branches pruned. Wave plan rewritten as sequential. Added Phase 7 principle: "Code first, E2E later" — finish ALL spec coding before E2E sprint (W7 gate).
+- **2026-04-27 (revision 2)**: Branching pivot — forward work moves from `main` to long-lived feature branch `feature/006-master-plan-coding` (cut from `main` 2026-04-27). `main` becomes the merge target, not the working branch, so it stays green during the multi-slice E2E coding push. Single-workspace pattern unchanged — we're still in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`, just on a different branch. Merge back to `main` (fast-forward or rebase) after W7 E2E sprint passes. Memory `feedback_use_worktree_for_new_work.md` revised to match. P0-20 (`multichannel_hub_core` skeleton) was the first slice landed under this revision.
