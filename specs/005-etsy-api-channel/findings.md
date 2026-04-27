@@ -4,6 +4,72 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-04-27 — P0-14 OAuth2 PKCE sandbox landed
+
+**Slice scope (final, post-execution)**:
+- `services/etsy_oauth.py` (pure functions): `generate_code_verifier`,
+  `generate_code_challenge`, `build_authorize_url`,
+  `exchange_code_for_token`, `refresh_access_token`
+- `controllers/etsy_oauth.py`: routes `/etsy/api/oauth/authorize`
+  (auth='user', shop-write ACL gated) and `/etsy/api/oauth/callback`
+  (auth='public', csrf=False, state-based replay defense)
+- `models/etsy_shop.py`: 3 new fields with `groups='base.group_system'`
+  (plaintext per Q2 deferral; Fernet-at-rest is P1-10 work)
+- 23 tests: 9 PKCE pure-function + 7 DB+ORM on the new fields + 7
+  HttpCase controller integration
+
+**Routing-namespace surprise**: original ADR-008 implied the OAuth callback
+would land at `/etsy/oauth/callback`, but Spec 001 already shipped a Gmail
+OAuth controller claiming that exact URL. To avoid a route collision (and
+to keep the Gmail flow stable per ADR-008a v2 — email parser stays as
+permanent failover), the new Etsy v3 API OAuth lives at
+`/etsy/api/oauth/...`. Future module decomposition (ADR-003 Phase 2) can
+revisit naming when the per-channel modules split out.
+
+**PKCE test-vector hallucination**: the tdd-guide's RED tests included a
+"RFC 7636 Appendix B" expected challenge value of
+`E9Mrozoa2owWoUeS_Z6OQ3OKN2iCHaEc292iNLsrgS8` for the verifier
+`dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXo`. Python's hashlib produces
+`xmcnc8avt3As1ZGvMdrjrrWgSSwK8XeDmIDLCfAoW38` for that input — the
+"expected" was wrong (RFC §B's published challenge value differs from
+the actual SHA256 of the published verifier; either the RFC has a typo
+or the agent paraphrased an incorrect source). Replaced with a verified
+vector (SHA256 of `'hello'` → `LPJNul-wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ`).
+Lesson: when a test has a memorized RFC vector, verify it against an
+independent computation before committing.
+
+**Test-harness surprise**: HttpCase tests in Odoo 19 follow redirects
+by default. When the authorize route correctly returns 302/303 to
+`https://www.etsy.com/oauth/connect`, the test harness's `requests`
+session follows it and gets blocked by Odoo's
+`Blocking un-mocked external HTTP request` middleware — surfacing as
+an opaque test error. Fix: pass `allow_redirects=False` to `url_open`.
+
+**Q2 reaffirmed (encryption deferred)**: tokens stored plaintext in
+`etsy_shop.etsy_oauth_access_token`. Field-level `groups='base.group_system'`
+ACL blocks UI reads for non-admins, but the column is plaintext on
+disk and in `pg_dump`. Acceptable for sandbox per Q2 (owner accepted
+2026-04-26). P1-10 must add Fernet-at-rest before any production token
+lands. Track this in tracker P1-10 as a hard prerequisite.
+
+**Security gate added late**: original /authorize route accepted any
+authenticated user with any `shop_id`. Security-reviewer (Opus) flagged
+as HIGH (privilege escalation: a salesman could trigger token rebind
+for a manager's shop). Fixed by adding `shop.check_access_rights('write')
++ shop.check_access_rule('write')`. Lesson: when a route accepts a
+user-supplied record ID, always gate with explicit ACL — auth='user'
+alone is not enough.
+
+**Werkzeug exception → 500 instead of 400**: raising
+`werkzeug.exceptions.BadRequest` in an Odoo 19 HttpCase test triggers
+the qweb 400 error template, which depends on assets unavailable in the
+test harness — the response bumps to 500. Workaround: return a plain
+`request.make_response(msg, status=400)` instead of raising. May be
+worth contributing back to Odoo as a documentation fix if the
+`werkzeug.exceptions.*` pattern is meant to work in HttpCase.
+
+---
+
 ## 2026-04-26 — Architecture Advisory: Sandbox Bootstrap Open Questions
 
 **Context**: Wave 2 planner (P0-14..17 sandbox bootstrap) raised 5 open questions before implementation. `architect` agent (Opus tier) produced this advisory. **Owner decision required** before sandbox coding starts.

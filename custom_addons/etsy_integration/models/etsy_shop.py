@@ -18,6 +18,21 @@ class EtsyShop(models.Model):
     revenue_total = fields.Float(
         string='Total Revenue', compute='_compute_order_count')
 
+    # Etsy OAuth2 PKCE token storage (P0-14, sandbox-mode 2026-04-27).
+    # Plaintext for Phase 0 with system-only field-level read ACL; Fernet
+    # encryption deferred to Phase 1 (P1-10) per Spec 005 findings Q2.
+    etsy_oauth_access_token = fields.Char(
+        string='Etsy OAuth Access Token',
+        groups='base.group_system',
+    )
+    etsy_oauth_refresh_token = fields.Char(
+        string='Etsy OAuth Refresh Token',
+        groups='base.group_system',
+    )
+    etsy_oauth_token_expires_at = fields.Datetime(
+        string='Etsy OAuth Token Expires At',
+    )
+
     _sql_constraints = [
         ('name_unique', 'UNIQUE(name)', 'Shop name must be unique!'),
     ]

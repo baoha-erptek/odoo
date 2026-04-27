@@ -13,3 +13,6 @@ from . import test_data_migration_fix_bodies
 from . import test_data_migration_resume
 from . import test_data_migration_idempotent
 from . import test_data_migration_merges
+from . import test_etsy_oauth_pkce
+from . import test_etsy_shop_oauth_fields
+from . import test_etsy_oauth_flow
