@@ -1,12 +1,16 @@
 # Master Plan — odoo19_esty Multichannel E-Commerce Hub
 
-**Date**: 2026-04-10 (original) · **Last revised**: 2026-04-13 ([ADR-008 API-first pivot](adrs/ADR-008-api-first-pivot.md))
-**Branch**: `005-etsy-api-channel`
-**Inputs**: End-user feedback (5 departments, `.0temp/end_user_feed_back/`) + Specs 001–005 + current module state
-**Method**: Three-agent review (BA/Odoo consultant, Technical architect, Devil's advocate)
-**Agent reports**: [ba-consultant.md](agent-reports/ba-consultant.md), [tech-architect.md](agent-reports/tech-architect.md), [devils-advocate.md](agent-reports/devils-advocate.md)
+**Date**: 2026-04-10 (original) · **Last revised**: 2026-04-26 (Stage-2 ADRs landed: [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md), [ADR-009](adrs/ADR-009-file-lifecycle.md), [ADR-010](adrs/ADR-010-configurable-order-pipeline.md), [ADR-012](adrs/ADR-012-gdrive-failover.md))
+**Branch**: `main` (single-workspace forward; worktrees reserved for rework)
+**Inputs**: End-user feedback (5 departments, `.0temp/end_user_feed_back/`) + Specs 001–005 + current module state + Stage-1 clarifications (`clarifications/`)
+**Method**: Three-agent review (BA/Odoo consultant, Technical architect, Devil's advocate) + Stage-1 synthesis (2026-04-26)
+**Agent reports**: [ba-consultant.md](agent-reports/ba-consultant.md), [tech-architect.md](agent-reports/tech-architect.md), [devils-advocate.md](agent-reports/devils-advocate.md), [SYNTHESIS-gap-2026-04-26.md](agent-reports/SYNTHESIS-gap-2026-04-26.md)
 
-> **Pivot notice (2026-04-13)**: Spec 005 (Etsy API v3) moves from Phase 3 to **Phase 0 sandbox + Phase 1 production cutover**. Email parsing enters maintenance mode for legacy shops only — no new features, only production-breaking fixes. Etsy app scope review becomes the critical-path external dependency. See [ADR-008](adrs/ADR-008-api-first-pivot.md) for the full decision.
+> **Pivot notice (2026-04-13, refined 2026-04-26)**: Spec 005 (Etsy API v3) moves from Phase 3 to **Phase 0 sandbox + Phase 1 production cutover**. Etsy app scope review is the critical-path external dependency. See [ADR-008](adrs/ADR-008-api-first-pivot.md).
+>
+> **Source-switching refinement (2026-04-26)**: API and email come from the same upstream (etsy.com) and produce the same canonical record. Build **one ingestion pipeline** with a swappable upstream adapter (`api` | `email`). The email parser is **not** legacy code; it is a **permanent failover** source — no retirement timeline, no sunset, no maintenance-mode caveat. Auto-failover on health-check failure; auto-recovery on probe success. See [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md). The `sync_mode` enum from ADR-002 is superseded by `etsy.shop.active_source`; the `etsy_channel_legacy` module name from ADR-003 is renamed to `etsy_channel_email`.
+>
+> **Stage-2 ADRs landed (2026-04-26)**: [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md) (single-pipeline source-switching), [ADR-009](adrs/ADR-009-file-lifecycle.md) (`design.file` + `design.file.route` + `design.print.batch`), [ADR-010](adrs/ADR-010-configurable-order-pipeline.md) (configurable order pipeline + resource assignment, supersedes the would-be hardcoded sub-state enum and collapses ADR-011), [ADR-012](adrs/ADR-012-gdrive-failover.md) (GDrive service account, queue+backoff, Discord as permanent escape hatch).
 
 ---
 
@@ -136,9 +140,9 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 ### Phase 1 — Three Dashboards + Approval Workflows + Spec 005 production cutover (5-8 weeks)
 
-**Goal**: Replace the Google Sheet entirely for BA and Marketing. Ship the safety-critical workflows. **And** begin per-shop cutover to `api_only` as soon as Etsy scopes are approved.
+**Goal**: Replace the Google Sheet entirely for BA and Marketing. Ship the safety-critical workflows. **And** begin per-shop default to `active_source='api'` as soon as Etsy scopes are approved (with email failover staying live behind the same canonical pipeline).
 
-**Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md)**: Spec 005 production cutover runs in parallel with dashboard work once scopes arrive. Dashboards don't block on scopes; cutover doesn't block on dashboards (but benefits from the Tracking Dashboard being live).
+**Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md), refined 2026-04-26 per [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md)**: Spec 005 production cutover runs in parallel with dashboard work once scopes arrive. Dashboards don't block on scopes; cutover doesn't block on dashboards (but benefits from the Tracking Dashboard being live). "Cutover" now means flipping `etsy.shop.active_source='api'`; the email adapter remains the per-shop failover source forever.
 
 | Work | Spec | Why |
 |---|---|---|
@@ -152,16 +156,17 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 | Unify carrier model: promote `sale.order.shipping_carrier` to `Many2one('shipping.carrier')`, delete `etsy.carrier.mapping` | 003 | Tech #1 |
 | Vietnamese UI: wrap all strings in `_()`, commit `.po` file | 003 | BA R10 |
 | Design file storage policy: GDrive-URL primary, filestore fallback, hard-fail if >10 MB to `ir_attachment` | 003 | [ADR-006 revised 2026-04-13](adrs/ADR-006-design-file-storage.md) |
-| **Spec 005 production cutover** (gated on scope approval): pilot shop flips `sync_audit_mode=True` (1–2 weeks), BA reviews audit log, flip to `sync_mode='api_only'`. Target: 3-5 shops cutover by end of Phase 1, rest in Phase 2. | 005 | ADR-008 §2 |
+| **Spec 005 production cutover** (gated on scope approval): pilot shop flips to `active_source='api'` once the API adapter has succeeded at least once; health-check cron + recovery probe per ADR-008a §3 govern auto-failover/auto-recovery. Target: 3-5 shops cutover by end of Phase 1, rest in Phase 2. | 005 | ADR-008a §2-§3 |
 | **Spec 005 production OAuth**: replace dev token with per-shop production OAuth flow; wire `EtsyTrackingPusher` to the Tracking Dashboard's tracking writes (reads `shipping.carrier.etsy_carrier_name`) | 005 | ADR-008 |
+| **Health metric tiles** (permanent ops): `active_source_per_shop`, `auto_failover_count_7d`, `time_since_last_recovery_probe_success`, `parser_template_drift` per ADR-008a §6 | 005/006 | ADR-008a §6 |
 
-**Exit criteria**: BA team working primarily in Odoo for order review, tracking management, and address-change approvals. Google Sheet in read-only mode. 4-week parallel run complete. Drift <1% for 10 consecutive days. At least one pilot shop running `sync_mode='api_only'` in production with zero data loss over the 30-day shadow-logging window.
+**Exit criteria**: BA team working primarily in Odoo for order review, tracking management, and address-change approvals. Google Sheet in read-only mode. 4-week parallel run complete. Drift <1% for 10 consecutive days. At least one pilot shop running `active_source='api'` in production with the health-check cron + recovery probe operational and zero data loss across at least one observed auto-failover/auto-recovery cycle (or 30 days without a failover event, whichever comes first).
 
 ### Phase 2 — Tracking Import + Process Dashboard + remaining shop cutovers (4-5 weeks)
 
-**Goal**: Close PD's biggest daily pain (tracking reconciliation) and give BA+PD a shared production view. **Complete the per-shop cutover to `api_only` for the remaining 14-16 shops.**
+**Goal**: Close PD's biggest daily pain (tracking reconciliation) and give BA+PD a shared production view. **Default `active_source='api'` for the remaining 14-16 shops** (email failover stays live behind the same canonical pipeline; nothing is decommissioned).
 
-**Revised 2026-04-13**: Spec 004a now includes the GDrive polling service (per [Q7 answer](#8-open-questions-for-follow-up)). Remaining shop cutovers run in the background against the already-live Spec 005 pipeline.
+**Revised 2026-04-13, refined 2026-04-26**: Spec 004a now includes the GDrive polling service (per [Q7 answer](#8-open-questions-for-follow-up); GDrive failover details per [ADR-012](adrs/ADR-012-gdrive-failover.md)). Remaining shop cutovers run in the background against the already-live Spec 005 pipeline. The email adapter is **not** sunset; it stays operational on the same cron and the same canonical pipeline as a permanent failover (ADR-008a §4).
 
 | Work | Spec | Why |
 |---|---|---|
@@ -172,9 +177,9 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 | **Process Dashboard** (NEW): unified VN+US production view with PD's 18 columns, status enum with Vietnamese labels and color coding, row tags from Phase 1 | 004a | BA #14, PD feedback |
 | Production status state machine with stock moves on transition to "Đã sản xuất" (reuse Odoo stock.move) | 004a | PD, Tech |
 | **GDrive polling service** (NEW per Q7 answer 2026-04-13): cron-driven poll of per-partner GDrive folders (GKE first, UniUni/YunExpress/USPS later), detect new Excel files by `file_id` + `modified_time`, auto-ingest via the Spec 004a wizard. OAuth via service account. Manual upload remains fallback. | 004a | Q7 answer |
-| Remaining per-shop cutovers to `sync_mode='api_only'` (14-16 shops) | 005 | ADR-008 §2 |
+| Remaining per-shop default to `active_source='api'` (14-16 shops) | 005 | ADR-008a §2 |
 
-**Exit criteria**: Daily GKE Excel imports run via wizard (manual OR auto-polled from GDrive). BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders. All 19 shops flipped to `api_only`; Gmail cron stops polling any live shop.
+**Exit criteria**: Daily GKE Excel imports run via wizard (manual OR auto-polled from GDrive). BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders. All 19 shops default to `active_source='api'`; the Gmail cron continues polling on the same schedule as the permanent failover source — it is never disabled.
 
 ### Phase 3 — REMOVED per [ADR-008](adrs/ADR-008-api-first-pivot.md)
 
@@ -190,7 +195,7 @@ The original Phase 3 content is preserved below for traceability but is no longe
 
 | Work | Spec | Why |
 |---|---|---|
-| Spec 005 rewrite: drop `dual` sync_mode, keep only `email_only` / `api_only` + 1-week audit mode as one-off | 005 | C3 |
+| Spec 005 rewrite: replace `sync_mode` enum with `etsy.shop.active_source` (`api` | `email`) per [ADR-008a v2 §2](adrs/ADR-008a-email-as-mandatory-backup.md); the 1-week audit mode is no longer needed since both sources share the same canonical pipeline | 005 | C3 (superseded by ADR-008a) |
 | Shared rate limiter utility (`multichannel_hub_core/utils/rate_limiter.py`) | 005 | Tech #4 |
 | Shared webhook controller base with HMAC + idempotency + rate-limit guard | 005 | Tech #5 |
 | `EtsyApiClient` — OAuth2 PKCE, token refresh, retry with backoff, quota monitoring | 005 US1/US5 | Core |
@@ -198,7 +203,7 @@ The original Phase 3 content is preserved below for traceability but is no longe
 | `EtsyTrackingPusher` — carrier name mapping (from `shipping.carrier.etsy_carrier_name`), `transactions_w` | 005 US3 | Core |
 | Webhook receiver with HMAC-SHA256 verification (downgraded from P1 to P2) | 005 US4 | Tech/BA scope cut |
 | Pre-Spec-005 validation pass: verify historical `etsy_order_id` format matches API response | 005 | Tech |
-| Pilot shop cutover: 2-week audit mode (email + API both parse, only API writes, log diffs), then flip `api_only` | 005 | Tech |
+| Pilot shop cutover: flip `active_source='api'` once API adapter has succeeded; health-check + recovery probe per ADR-008a §3 cover any subsequent transient outage. No "audit mode" needed — both adapters produce the same canonical record. | 005 | Tech (superseded by ADR-008a) |
 
 **Explicitly out of scope for MVP of Spec 005**: bidirectional listing management (US6, defer to P3), Etsy customer messaging (US7, deferred — Conversations scope not granted).
 
@@ -262,12 +267,21 @@ The original Phase 3 content is preserved below for traceability but is no longe
 | 8 | **Spec 002 SLA revision** — drop `<30 min`, adopt batch-resumable overnight + reconciliation sign-off | Approved (already reflected in plan.md 2026-04-10 revision) |
 | 9 | **Gearment sandbox access** — owner to obtain credentials for Phase 0 spike | Committed |
 
-Clarification applied to decision 3: `sync_mode` keeps exactly two values (`email_only`, `api_only`), with **`api_only` as the default for new shops**; existing 19 shops remain `email_only` until per-shop cutover (see [ADR-002](adrs/ADR-002-drop-dual-sync-mode.md)).
+Clarification applied to decision 3: `sync_mode` keeps exactly two values (`email_only`, `api_only`), with **`api_only` as the default for new shops**; existing 19 shops remain `email_only` until per-shop cutover (see [ADR-002](adrs/ADR-002-drop-dual-sync-mode.md)). **Superseded 2026-04-26 by [ADR-008a v2 §2](adrs/ADR-008a-email-as-mandatory-backup.md)**: the `sync_mode` enum is replaced by `etsy.shop.active_source` (`api` | `email`) with health-check-driven auto-failover and recovery-probe auto-recovery; the migration mapping is `email_only` → `active_source='email'`, `api_only` → `active_source='api'`.
 
 Additional ADRs accepted at the same sign-off (not in original §6 list but flagged during review):
 - [ADR-005](adrs/ADR-005-carrier-unification.md) — Unified `shipping.carrier`; delete `etsy.carrier.mapping`
 - [ADR-006](adrs/ADR-006-design-file-storage.md) — **Revised 2026-04-13**: GDrive-URL primary, filestore fallback, 10 MB cap
 - [ADR-007](adrs/ADR-007-fulfillment-delegation-mixin.md) — `sale.order.fulfillment` delegation mixin
+
+**Stage-2 ADRs accepted 2026-04-26 (recorded in `decision-log.md`):**
+
+| # | Decision | Outcome |
+|---|---|---|
+| 14 | **Email parser as permanent failover** behind a single canonical ingestion pipeline; source-switching via `etsy.shop.active_source`; health-check + recovery probe; supersedes ADR-002 sync_mode enum and ADR-003 `etsy_channel_legacy` naming | Approved ([ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md)) |
+| 15 | **File lifecycle data model** — `design.file` + `design.file.route` + `design.print.batch`; immutable history via `parent_file_id`; queued-job route delivery with stuck-route warning | Approved ([ADR-009](adrs/ADR-009-file-lifecycle.md)) |
+| 16 | **Configurable order pipeline** — `order.pipeline` + `order.pipeline.state` + `pipeline.team` + `order.pipeline.transition.log`; default seed is the 17 Vietnamese stages; admin can add pipelines (e.g., Gearment POD, Multi-Technique Hybrid); resource assignment per stage with per-order override; pipeline auto-versioning on first-use edit; collapses ADR-011 | Approved ([ADR-010](adrs/ADR-010-configurable-order-pipeline.md)) |
+| 17 | **GDrive failover** — service account, alert + queue + backoff on auth failure, **no auto-fallback to Discord**; Discord remains the permanent **manual** escape hatch (no sunset) | Approved ([ADR-012](adrs/ADR-012-gdrive-failover.md)) |
 
 **Pivot sign-off 2026-04-13 (supersedes decision 3):**
 

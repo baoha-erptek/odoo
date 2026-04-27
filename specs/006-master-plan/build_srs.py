@@ -24,8 +24,8 @@ OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "SRS_Multichannel_Hub_VN.xlsx")
 
 DOC_TITLE = "SRS — Hệ thống quản lý đơn hàng Etsy"
-DOC_VERSION = "v2.0 (bản đơn giản hoá cho nghiệp vụ)"
-DOC_DATE = "2026-04-13"
+DOC_VERSION = "v2.1 (đã tiếp thu bản red-pen của Owner ngày 2026-04-26)"
+DOC_DATE = "2026-04-26"
 DOC_OWNER = "Chủ dự án Etsy Shop"
 
 # --- Styles ----------------------------------------------------------------
@@ -149,8 +149,9 @@ SHEETS = [
     ("07_Dashboard_San_Xuat", "Dashboard Sản xuất (PD)"),
     ("08_Quy_Trinh_Duyet", "Quy trình duyệt (file thiết kế / địa chỉ / ticket)"),
     ("09_Tracking_Va_Fulfillment", "Nhập tracking & đẩy đơn sản xuất"),
-    ("10_Tinh_Nang_Mo_Rong", "Tính năng mở rộng (giai đoạn sau)"),
-    ("11_Phe_Duyet", "Phê duyệt & chữ ký"),
+    ("10_File_Va_Auto_Transition", "File lifecycle & Auto-transition (NEW v2.1)"),
+    ("11_Tinh_Nang_Mo_Rong", "Tính năng mở rộng (giai đoạn sau)"),
+    ("12_Phe_Duyet", "Phê duyệt & chữ ký"),
 ]
 
 
@@ -194,6 +195,22 @@ def build_cover(wb):
             "1. Không còn lấy đơn qua email — chỉ qua Etsy API.\n"
             "2. Giảm từ 24 xuống 12 sheet, tập trung nhu cầu thực tế.\n"
             "3. Viết lại bằng văn phong đời thường, bỏ thuật ngữ kỹ thuật.",
+        ),
+        (
+            "Thay đổi so với bản v2.0 (2026-04-26 — red-pen Owner)",
+            "1. Vai trò sửa lại: MP DUYỆT file thiết kế (không tự làm), "
+            "BA LÀM file thiết kế và đẩy nội bộ, RD check giá MỖI NGÀY.\n"
+            "2. Trạng thái sản xuất mở rộng từ ~10 lên ~17 sub-state "
+            "(CHỜ FILE → CHỜ DUYỆT → ĐÃ GỬI PROOF → US-od/Vietnam-od → "
+            "VN-Dish/[Fix]VN-Dish/VN-Dish NG/... → VN-Packed/VN-Packed 1 → "
+            "VN-Fulfilled).\n"
+            "3. Work-center group lại theo kỹ thuật in (paper/fabric/wood/"
+            "engrave/ceramic-print/ceramic-stamp/heatpress/embroidery/"
+            "assembly/personalize); admin reassign họ → line theo period.\n"
+            "4. Thêm Sheet 10 mới: File lifecycle & Auto-transition cho "
+            "pain points #11/#12/#13/#17/#18.\n"
+            "5. Thêm REQ-SYN-00 (BLOCKER): Owner ký memo business case "
+            "Etsy API trước Phase 0.",
         ),
     ]
     row = 4
@@ -316,12 +333,16 @@ def build_overview(wb):
     phases = [
         (
             "Giai đoạn 1 — MVP (khoảng 3-4 tháng)",
-            "• Kết nối Etsy API và tự lấy đơn mới.\n"
+            "• Kết nối Etsy API và tự lấy đơn mới (sau khi Owner ký memo "
+            "business case — REQ-SYN-00).\n"
             "• Chuẩn hoá 17.659 đơn cũ (sửa 423 đơn giá 0, gán tiền tệ, gộp "
             "khách trùng có BA duyệt).\n"
             "• 3 dashboard: Đơn hàng, Tracking, Sản xuất.\n"
             "• Duyệt file thiết kế và duyệt đổi địa chỉ.\n"
             "• Nhập tracking từ file Excel GKE Logistics.\n"
+            "• [v2.1] File lifecycle & routing (1 upload, route MP/BA/PD/"
+            "Partner) + Auto-transition trạng thái + governance reassign "
+            "work-center.\n"
             "ĐIỀU KIỆN KÝ NHẬN: BA Lead ký đối chiếu dữ liệu cũ; các phòng "
             "ban chạy Odoo thay thế Google Sheet 1 tháng, sai lệch <1%.",
         ),
@@ -329,8 +350,11 @@ def build_overview(wb):
             "Giai đoạn 2 — Mở rộng (khoảng 3-4 tháng)",
             "• Đẩy đơn sang Gearment qua API và nhận tracking về.\n"
             "• Hệ thống ticket cho yêu cầu replace/refund (BA duyệt).\n"
-            "• Dashboard kiểm soát giá (Pricing Audit) với quy đổi EUR.\n"
+            "• Dashboard kiểm soát giá (Pricing Audit) với quy đổi EUR + "
+            "auto-flag daily.\n"
             "• Xuất lịch sử tin nhắn Etsy ra file Excel.\n"
+            "• [v2.1] Customer Message Hub (export-only, aggregate 19 shop) "
+            "+ tracking-state hiển thị trên dashboard.\n"
             "ĐIỀU KIỆN KÝ NHẬN: đơn Gearment đi live không lỗi 2 tuần liên "
             "tiếp; phòng Sales Audit nghiệm thu dashboard.",
         ),
@@ -341,6 +365,8 @@ def build_overview(wb):
             "đã bán).\n"
             "• Scan sheet barcode cho PD.\n"
             "• Mở thêm kênh Amazon và Website.\n"
+            "• [v2.1] AI analytics — schema export contract cho BI tool / "
+            "AI assistant; multi-technique routing cho sản phẩm hybrid.\n"
             "ĐIỀU KIỆN KÝ NHẬN: quyết định chi tiết đưa ra khi kết thúc Giai "
             "đoạn 2, dựa trên feedback thực tế.",
         ),
@@ -384,28 +410,35 @@ def build_actors(wb):
         ),
         (
             "Phòng BA",
-            "Điều phối chính: rà soát đơn khó, duyệt đổi địa chỉ, duyệt "
-            "ticket replace/refund, đảm bảo chất lượng dữ liệu, đối chiếu "
-            "với Google Sheet cũ.",
+            "[v2.1] LÀM file thiết kế và đẩy nội bộ cho MP duyệt; điều phối "
+            "đơn (US-od / Vietnam-od); cung cấp tracking; duyệt đổi địa "
+            "chỉ; duyệt ticket replace/refund; đảm bảo chất lượng dữ liệu.",
             "Dashboard Đơn hàng, Dashboard Tracking, Duyệt đổi địa chỉ, "
             "Ticket.",
         ),
         (
             "Phòng Marketing (MP)",
-            "Quản lý các store Etsy, push đơn ưu tiên, trả lời khách, gửi "
-            "yêu cầu đổi địa chỉ, bật/tắt tự động đẩy tracking.",
-            "Dashboard Đơn hàng, form chi tiết đơn, popup thông báo.",
+            "[v2.1] Quản lý 19 store Etsy; push đơn ưu tiên; DUYỆT file "
+            "thiết kế do BA làm; gửi file preview cho khách; xử lý tin "
+            "nhắn khách; gửi yêu cầu đổi địa chỉ; set US-od / Vietnam-od; "
+            "bật/tắt auto-push tracking.",
+            "Dashboard Đơn hàng, form chi tiết đơn, popup thông báo, "
+            "Customer Message Hub.",
         ),
         (
             "Phòng Sản xuất (PD)",
-            "Làm hàng thực tế: in, thêu, khắc, ép nhiệt; scan hàng khi xong, "
-            "quản tồn kho nguyên vật liệu.",
-            "Dashboard Sản xuất, Scan sheet, màn hình tồn kho NVL.",
+            "[v2.1] Làm hàng thực tế: in giấy/vải/gỗ, khắc gỗ, in/tem gốm, "
+            "ép nhiệt, thêu, lắp ráp, cá nhân hóa; cập nhật ~17 sub-state "
+            "qua các bước; scan hàng khi xong; quản tồn kho NVL; "
+            "bulk-print A4 layout wizard.",
+            "Dashboard Sản xuất, Scan sheet, màn hình tồn kho NVL, "
+            "Bulk-print wizard.",
         ),
         (
-            "Phòng Kiểm soát giá (Sales Audit)",
-            "Đảm bảo đơn được bán đúng giá chính sách, phát hiện đơn lệch "
-            "giá, báo cáo đa tiền tệ.",
+            "Phòng Kiểm soát giá (Sales Audit / RD)",
+            "[v2.1] Kiểm tra giá bán + giá ship MỖI NGÀY; phát hiện đơn "
+            "lệch giá; báo cáo đa tiền tệ; báo trên Discord để MP sửa "
+            "trong ngày.",
             "Dashboard Kiểm soát giá (Pricing Audit).",
         ),
     ]
@@ -429,6 +462,20 @@ def build_actors(wb):
 
 def reqs_etsy_sync():
     return [
+        {
+            "id": "REQ-SYN-00",
+            "ten": "[NEW v2.1] Quyết định business case Etsy API (BLOCKER)",
+            "mota": (
+                "Email auto-feed của hệ thống cũ đã đạt <1% lỗi. Trước khi "
+                "đầu tư 6-8 tuần cho Spec 005 (OAuth + webhook + rate "
+                "limit), Owner phải ký memo giải trình lý do: investor "
+                "narrative? Latency yêu cầu? Scope mới? Nếu không có lý "
+                "do rõ, defer Spec 005 và giữ email parsing làm baseline."
+            ),
+            "ai_yc": "Devil's advocate N1 (red-pen)",
+            "priority": "P0",
+            "phase": "Giai đoạn 1",
+        },
         {
             "id": "REQ-SYN-01",
             "ten": "Kết nối tài khoản Etsy an toàn",
@@ -677,9 +724,11 @@ def reqs_order_dashboard():
             "mota": (
                 "Marketing bấm nút 'Push' trên đơn → đơn được đánh "
                 "dấu ưu tiên và tô màu đỏ. Lịch sử thao tác ghi lại "
-                "ai push và khi nào."
+                "ai push và khi nào. [v2.1] Đơn Amazon đặt CÙNG NGÀY "
+                "với đơn Etsy được auto-set Push (Amazon yêu cầu "
+                "thời gian ship strict hơn)."
             ),
-            "ai_yc": "Phòng Marketing (#4)",
+            "ai_yc": "Phòng Marketing (#4), Owner red-pen",
             "priority": "P1",
             "phase": "Giai đoạn 1",
         },
@@ -850,6 +899,20 @@ def reqs_tracking_dashboard():
             "priority": "P0",
             "phase": "Giai đoạn 1",
         },
+        {
+            "id": "REQ-TRK-08",
+            "ten": "[NEW v2.1] Hiển thị state tracking (in-transit / delivered / returned)",
+            "mota": (
+                "Hôm nay MP phải mở từng portal carrier để check state "
+                "tracking trước khi gửi khách. Cần lấy state trực tiếp "
+                "qua carrier webhook (USPS / UniUni / YunExpress nơi có "
+                "API), ghi vào stock.picking.x_tracking_state, live "
+                "update lên Tracking Dashboard qua bus.bus. Pain #16."
+            ),
+            "ai_yc": "Phòng Marketing (red-pen #16)",
+            "priority": "P1",
+            "phase": "Giai đoạn 2",
+        },
     ]
 
 
@@ -882,31 +945,38 @@ def reqs_process_dashboard():
         },
         {
             "id": "REQ-PRO-03",
-            "ten": "12 trạng thái sản xuất có màu",
+            "ten": "[REV v2.1] 17 sub-state sản xuất có màu (mở rộng theo red-pen)",
             "mota": (
-                "Trạng thái tiếng Việt có màu: Chờ sản xuất / Đã sản "
-                "xuất / Sản xuất 1 phần / NG-sx lại / Fix đơn / Duyệt "
-                "sai / SP thêu (hồng) / SP khắc (nâu) / SP ép nhiệt "
-                "(cam) / SP mới (xanh) / Fulfilled (xanh) / Quá hạn "
-                "sản xuất (xanh)."
+                "Sub-state hiện tại của PD: CHỜ FILE / CHỜ DUYỆT / ĐÃ "
+                "GỬI PROOF / US-od / Vietnam-od / VN-Dish (xanh lá) / "
+                "VN-Dish NG (đỏ — audit lỗi, cần làm lại) / [Fix]VN-"
+                "Dish (cam — MP cập nhật yêu cầu mới của khách) / VN-"
+                "SP mới (xanh dương) / VN-Apron / VN-Handkerchief / "
+                "Sản xuất 1 phần / VN-Packed / VN-Packed 1 (cần làm "
+                "rõ semantics — open decision #11) / VN-Fulfilled / "
+                "Duyệt sai / Quá hạn sản xuất."
             ),
-            "ai_yc": "Phòng Sản xuất (PD)",
+            "ai_yc": "Phòng Sản xuất (PD), Owner red-pen",
             "priority": "P0",
             "phase": "Giai đoạn 1",
         },
         {
             "id": "REQ-PRO-04",
-            "ten": "Danh sách Loại sản phẩm và Option",
+            "ten": "[REV v2.1] Work-center group theo kỹ thuật in",
             "mota": (
-                "Dropdown Loại sản phẩm: Ceramic dish, Tattoo, Khăn "
-                "tay, Đĩa gỗ, Thớt gỗ, Chuông gió, Door hanger, "
-                "Recipe dish, Bandana, Baby Bib, Tạp dề, Túi tote, "
-                "Mug, Sticker… Dropdown Option: Wave/Heart/Circle "
-                "square, Recipe Dish A/B/C với các kích thước, Wooden "
-                "Ring Dish, Size S/M/L… Quản trị có thể bổ sung."
+                "Group lại theo kỹ thuật in (thay vì cut/paint/laser): "
+                "Paper print → TAT (tattoo); Fabric print → APR (apron) "
+                "+ HK-P (khăn in) + TOT (tote); Wood print → DH (door "
+                "hanger); Wood engrave (WC_ENGRAVE_BH1) → WB + WWC + "
+                "WD + WVT; Ceramic print (WC_PRINT_BH1) → RD-P; "
+                "Ceramic stamp → RD-S; Heatpress (WC_HEATPRESS_BH2) → "
+                "HKF; Embroidery (WC_EMBROIDER_BH2) → HKF; Assembly "
+                "(WC_ASSEMBLE_BH1) → WCH; Personalize (WC_PERSONALIZE_*) "
+                "tùy chọn mọi họ. Admin được quyền reassign họ → line "
+                "theo period."
             ),
-            "ai_yc": "Phòng Sản xuất (PD)",
-            "priority": "P1",
+            "ai_yc": "Phòng Sản xuất (PD), Owner red-pen",
+            "priority": "P0",
             "phase": "Giai đoạn 1",
         },
         {
@@ -953,6 +1023,21 @@ def reqs_process_dashboard():
             ),
             "ai_yc": "Phòng Sản xuất (PD)",
             "priority": "P1",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-PRO-09",
+            "ten": "[NEW v2.1] Audit log + governance reassign work-center",
+            "mota": (
+                "Khi admin reassign 1 họ sản phẩm sang line khác, hệ "
+                "thống ghi mrp.routing.assignment.change (ai / khi nào "
+                "/ lý do). MO đang chạy giữ nguyên x_routing_id_at_"
+                "creation; chỉ MO mới sau ngày đổi mới dùng routing "
+                "mới. Cấm reassign khi có MO state=progress trong line "
+                "đó (chống vỡ BoM)."
+            ),
+            "ai_yc": "Devil's advocate N3 (red-pen)",
+            "priority": "P0",
             "phase": "Giai đoạn 1",
         },
     ]
@@ -1165,6 +1250,122 @@ def reqs_tracking_fulfillment():
             "priority": "P1",
             "phase": "Giai đoạn 2",
         },
+        {
+            "id": "REQ-TRF-09",
+            "ten": "[NEW v2.1] Chính sách orphan Gearment khi [Fix]VN-Dish",
+            "mota": (
+                "Khi MP trigger [Fix]VN-Dish (cập nhật yêu cầu mới của "
+                "khách sau khi đã thiết kế), draft/quote Gearment cũ "
+                "phải được cancel hoặc auto-expire để tránh tốn phí "
+                "storage. Document policy với Gearment trước Phase 0; "
+                "ghi vào contract."
+            ),
+            "ai_yc": "Devil's advocate N5 (red-pen)",
+            "priority": "P0",
+            "phase": "Giai đoạn 2",
+        },
+    ]
+
+
+def reqs_file_auto_transition():
+    """[NEW v2.1] File lifecycle, auto-transition status, message hub."""
+    return [
+        {
+            "id": "REQ-FIL-01",
+            "ten": "[NEW v2.1] Model `design.file` — 1 upload, route nhiều nơi",
+            "mota": (
+                "BA upload file thiết kế MỘT LẦN (lưu GDrive ID). Hệ "
+                "thống tạo design.file record. KHÔNG re-upload qua "
+                "Discord ở mỗi handover. Pain #11, #18 (red-pen)."
+            ),
+            "ai_yc": "MP, BA, PD (red-pen #11, #18)",
+            "priority": "P0",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-FIL-02",
+            "ten": "[NEW v2.1] Model `design.file.route` — quyền đọc theo recipient",
+            "mota": (
+                "Mỗi design.file link tới N route: recipient_type "
+                "(MP/BA/PD/Partner), recipient_id, state (pending → "
+                "sent → ack), delivery_ts. Audit trail toàn bộ luồng "
+                "file để giải quyết tình trạng lạc file (#11)."
+            ),
+            "ai_yc": "Phòng BA (red-pen #11)",
+            "priority": "P0",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-FIL-03",
+            "ten": "[NEW v2.1] Wizard `design.print.batch` — bulk download A4 layout",
+            "mota": (
+                "PD tick các file đã duyệt → bấm 'Generate A4 Layout' "
+                "→ Odoo render PDF dàn lên khổ A4 → download. Cache "
+                "24h trong ir.attachment, tự xóa sau timeout. Giải "
+                "quyết pain #12 — PD đỡ phải search Discord, "
+                "download, sắp Photoshop."
+            ),
+            "ai_yc": "Phòng PD (red-pen #12)",
+            "priority": "P1",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-FIL-04",
+            "ten": "[NEW v2.1] Discord giữ làm fallback documented",
+            "mota": (
+                "Discord không bị gỡ ngay khi go-live. Giữ làm "
+                "fallback documented trong cutover memo, sunset "
+                "date phải Owner ký. Tránh trường hợp Odoo/GDrive "
+                "down → PD không có channel handoff (devil's "
+                "advocate N4)."
+            ),
+            "ai_yc": "Devil's advocate N4 (red-pen)",
+            "priority": "P1",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-AUT-01",
+            "ten": "[NEW v2.1] Auto status transition trên `mrp.workorder.button_finish`",
+            "mota": (
+                "Server action: khi workorder cuối cùng finish → MO "
+                "x_substate tự advance (vd: producing_dish → packed). "
+                "KHÔNG dùng base.automation (fragile, khó debug). "
+                "Giải quyết pain #13 — bộ phận đỡ tự click chuyển "
+                "trạng thái thủ công."
+            ),
+            "ai_yc": "MP, BA, PD (red-pen #13)",
+            "priority": "P1",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-AUT-02",
+            "ten": "[NEW v2.1] `_update_design_file_route_state()` trên SO confirm",
+            "mota": (
+                "Khi BA confirm sale.order, hệ thống tự gọi method "
+                "explicit để update design.file.route (pending → sent) "
+                "cho các recipient liên quan (MP, PD). Giải quyết "
+                "pain #13 — auto routing thay vì click tay."
+            ),
+            "ai_yc": "Phòng BA (red-pen #13, #14)",
+            "priority": "P1",
+            "phase": "Giai đoạn 1",
+        },
+        {
+            "id": "REQ-MSG-01",
+            "ten": "[NEW v2.1] Customer Message Hub (export-only)",
+            "mota": (
+                "Cron mỗi giờ pull GET /v3/application/shops/:shop_id/"
+                "conversations từ Etsy; chỉ lưu summary (shop, "
+                "buyer_id, subject, last_update, count) vào etsy."
+                "customer.message.log. Click → mở Etsy portal. "
+                "KHÔNG ingest content (Etsy Conversations scope đã "
+                "bị reject). Giải quyết pain #17 — MP có 1 dashboard "
+                "tổng hợp 19 shop."
+            ),
+            "ai_yc": "Phòng Marketing (red-pen #17)",
+            "priority": "P2",
+            "phase": "Giai đoạn 2",
+        },
     ]
 
 
@@ -1204,6 +1405,21 @@ def reqs_extensions():
                 "đơn bán lệch giá."
             ),
             "ai_yc": "Phòng Sales Audit (RD)",
+            "priority": "P1",
+            "phase": "Giai đoạn 2",
+        },
+        {
+            "id": "REQ-EXT-03b",
+            "ten": "[NEW v2.1] Daily auto-flag đơn lệch giá",
+            "mota": (
+                "RD check giá MỖI NGÀY (red-pen sửa từ 'thỉnh thoảng' "
+                "→ 'mỗi ngày'). Cron mỗi sáng list đơn vượt threshold "
+                "lệch giá; gửi RD thông báo + tô màu trên dashboard. "
+                "Open question: auto-pause đơn lệch giá hay chỉ "
+                "dashboard read-only? — Owner quyết (devil's advocate "
+                "N7)."
+            ),
+            "ai_yc": "Phòng Sales Audit (red-pen)",
             "priority": "P1",
             "phase": "Giai đoạn 2",
         },
@@ -1325,13 +1541,40 @@ def reqs_extensions():
             "priority": "P2",
             "phase": "Giai đoạn 3",
         },
+        {
+            "id": "REQ-EXT-14",
+            "ten": "[NEW v2.1] AI analytics — schema export contract",
+            "mota": (
+                "Defer AI analytics build sang Phase 3+. Trong Phase "
+                "1 lock schema export cho sale.order, mrp.production, "
+                "mrp.workorder, design.file.route, partner.sync.log "
+                "để BI tool (Metabase / Looker) hoặc AI assistant đọc "
+                "sau. Tránh premature schema design. Pain #19."
+            ),
+            "ai_yc": "MP, BA, PD (red-pen #19)",
+            "priority": "P2",
+            "phase": "Giai đoạn 3",
+        },
+        {
+            "id": "REQ-EXT-15",
+            "ten": "[NEW v2.1] Multi-technique routing (sản phẩm hybrid)",
+            "mota": (
+                "Sản phẩm có 2-3 kỹ thuật (vd đĩa gốm + thêu + khắc) "
+                "phải đi qua nhiều WC. Quyết: sequential workorders "
+                "trên 1 MO, hay split MO theo từng kỹ thuật? Test "
+                "với 1 SKU mẫu trong Phase B. Devil's advocate N6."
+            ),
+            "ai_yc": "Tech, PD (red-pen)",
+            "priority": "P2",
+            "phase": "Giai đoạn 2",
+        },
     ]
 
 
 # --- Approval -------------------------------------------------------------
 
 def build_approval(wb):
-    ws = wb.create_sheet(title="11_Phe_Duyet")
+    ws = wb.create_sheet(title="12_Phe_Duyet")
     ws.column_dimensions["A"].width = 6
     ws.column_dimensions["B"].width = 28
     ws.column_dimensions["C"].width = 28
@@ -1445,10 +1688,20 @@ def main():
             reqs_tracking_fulfillment(),
         ),
         (
-            "10_Tinh_Nang_Mo_Rong",
+            "10_File_Va_Auto_Transition",
+            "[NEW v2.1] File lifecycle & Auto-transition — Giai đoạn 1-2",
+            "Các yêu cầu mới sinh từ red-pen của Owner (pain #11, #12, "
+            "#13, #14, #17, #18): file upload 1 lần - route nhiều nơi, "
+            "wizard bulk download A4, auto-transition trạng thái khi "
+            "workorder finish, Customer Message Hub aggregate 19 shop.",
+            reqs_file_auto_transition(),
+        ),
+        (
+            "11_Tinh_Nang_Mo_Rong",
             "Tính năng mở rộng (Giai đoạn 2-3)",
             "Các tính năng làm sau MVP: kiểm soát giá, tồn kho NVL, "
-            "catalog, scan barcode, Amazon, Website.",
+            "catalog, scan barcode, Amazon, Website, AI analytics, "
+            "multi-technique routing.",
             reqs_extensions(),
         ),
     ]
@@ -1463,7 +1716,7 @@ def main():
     print(f"Sheets: {len(wb.sheetnames)}")
     total_reqs = 0
     for s in wb.sheetnames:
-        if s.startswith(("03_", "04_", "05_", "06_", "07_", "08_", "09_", "10_")):
+        if s.startswith(("03_", "04_", "05_", "06_", "07_", "08_", "09_", "10_", "11_")):
             ws = wb[s]
             c = sum(
                 1

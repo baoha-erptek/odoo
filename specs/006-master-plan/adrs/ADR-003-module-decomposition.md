@@ -1,11 +1,13 @@
 # ADR-003: Decompose `etsy_integration` into Four Modules
 
-- **Status**: Accepted
+- **Status**: Accepted (module name amended 2026-04-26 — see banner)
 - **Date**: 2026-04-10
 - **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect
 - **Affects**: All specs 002–005 and future 006+
-- **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §2](../agent-reports/tech-architect.md)
+- **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §2](../agent-reports/tech-architect.md), [ADR-008a v2](ADR-008a-email-as-mandatory-backup.md)
+
+> **Module-name amendment (2026-04-26):** the third module is renamed from **`etsy_channel`** (with the legacy email parser scheduled to move to a separate `etsy_channel_legacy` per the original Phase-3 plan) to a peer split: **`etsy_channel_api`** (Etsy API v3 connector) and **`etsy_channel_email`** (email parser). Per [ADR-008a v2 §5](ADR-008a-email-as-mandatory-backup.md), the email parser is **not legacy code** — it is a permanent failover source behind the canonical ingestion pipeline. The `etsy_channel_legacy` name is rejected because it implied retirement; `etsy_channel_email` reflects peer status with `etsy_channel_api`. The four-module decomposition principle below is unchanged; only the names and contents of the channel modules are amended. Deprecation language inside the §Decision block (e.g., "email_parser.py … will be deprecated per ADR-002", `etsy_channel_legacy` boundaries) is overridden by ADR-008a.
 
 ## Context
 

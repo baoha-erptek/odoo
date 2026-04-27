@@ -1,11 +1,13 @@
 # ADR-002: Drop Dual-Mode Sync; Keep Only `email_only` / `api_only`
 
-- **Status**: Accepted
+- **Status**: Accepted (partially superseded 2026-04-26 — see banner)
 - **Date**: 2026-04-10
 - **Sign-off**: 2026-04-13 (owner)
 - **Deciders**: Owner, architect, BA lead
 - **Affects**: Spec 005 (Etsy API v3 channel integration)
-- **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §4](../agent-reports/tech-architect.md), [devils-advocate.md §1.3](../agent-reports/devils-advocate.md)
+- **Related**: [MASTER_PLAN.md §3](../MASTER_PLAN.md), [tech-architect.md §4](../agent-reports/tech-architect.md), [devils-advocate.md §1.3](../agent-reports/devils-advocate.md), [ADR-008a v2](ADR-008a-email-as-mandatory-backup.md)
+
+> **Supersession notice (2026-04-26):** the `sync_mode` enum (`email_only` / `api_only`) defined here is **superseded by `etsy.shop.active_source` (`api` | `email`) per [ADR-008a v2 §2](ADR-008a-email-as-mandatory-backup.md). Email is no longer a one-way legacy state — it is a permanent failover source behind the same canonical pipeline. The one-way cutover (Decision §2) and 30-day shadow logging (Decision §4 step 6) are also superseded — under the new model, source-switching is bidirectional and health-check-driven, not one-way and operator-driven. The `sync_audit_mode` Boolean (§3) and the per-shop cutover procedure (§4) are obsolete; existing data using the old enum maps as `email_only` → `active_source='email'`, `api_only` → `active_source='api'`. The decomposition rationale (Spec 005 should not run dual-write reconciliation) is unchanged and remains the architectural premise of ADR-008a.**
 
 ## Context
 
