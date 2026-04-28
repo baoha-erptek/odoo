@@ -212,12 +212,15 @@ class TestEtsyOrderIngestor(TransactionCase):
         self.assertTrue(result)
         self.assertEqual(result.etsy_order_id, "ORD-INGEST-NEW")
 
-    def test_ingest_returns_none_on_duplicate(self):
+    def test_ingest_returns_existing_order_on_duplicate(self):
+        """P0-16c FR-009: duplicate ingest no longer returns None — it
+        returns the existing order after a status-only re-sync (idempotent
+        when payload fields match what's already stored)."""
         payload = _build_payload(etsy_order_id="ORD-INGEST-DUP")
         first = self.ingestor.ingest(payload, self.shop)
         self.assertTrue(first)
         second = self.ingestor.ingest(payload, self.shop)
-        self.assertIsNone(second)
+        self.assertEqual(second.id, first.id)
 
     def test_ingest_writes_raw_source_id_to_order(self):
         """Audit hook: raw_source_id ('receipt:1234' or 'email_log:567')

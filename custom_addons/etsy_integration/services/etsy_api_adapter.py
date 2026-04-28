@@ -153,6 +153,9 @@ class EtsyApiAdapter:
             source='api',
             fetched_at=datetime.utcnow(),
             raw_source_id=f'receipt:{receipt_id}',
+            last_modified=self._unix_to_datetime(
+                receipt.get('last_modified_tsz') or receipt.get('updated_timestamp'),
+            ),
         )
 
     def _transaction_to_line_item(self, txn: dict) -> EtsyLineItemPayload:

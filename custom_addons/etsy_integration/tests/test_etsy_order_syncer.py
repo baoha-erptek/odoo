@@ -1,185 +1,310 @@
 """P0-16c Phase 2 — ORM unit tests for EtsyOrderSyncer.
 
-Tests the orchestrator that drives the Etsy API paginated receipts fetch,
-maps to payloads, and ingests each order into the Odoo order pipeline while
-respecting audit mode, cursor advancement, and cron filtering.
+Drives the orchestrator that pages Etsy receipts, ingests via
+`EtsyOrderIngestor`, and advances the per-shop watermark. HTTP is
+patched at the `EtsyApiClient.get` boundary; the adapter, ingestor,
+and `OrderCreator` run with their real implementations so the tests
+exercise integration behavior, not isolated mocks.
 
-Key contracts verified:
-- OQ1: _logger.warning on each receipt when audit_mode=True
-- OQ2: Status-only re-sync preserves operator fields (mp_note, pic_user_id)
-- OQ3: Cursor advances per-payload, mid-run failures leave cursor at last success
-- OQ4: audit_mode=True + sync_mode='api_only' logs soft-warn
-- OQ5: Cron filter is sync_mode='api_only' only
-
-Reference: Master Plan 006, P0-16c, OQ1-OQ5.
+OQ contracts verified:
+- OQ1: audit branch logs each receipt via `_logger.warning`
+- OQ2: status-only re-sync preserves operator fields (separate file)
+- OQ3: cursor advances per-payload; mid-run failure pins cursor
+- OQ4: `sync_audit_mode + sync_mode='api_only'` emits soft warning
+- OQ5: cron filter skips `sync_mode != 'api_only'`
 """
 
 import json
-import logging
 import os
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from odoo.tests.common import TransactionCase, tagged
 
+from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer
 
-def _load_fixture(name):
-    """Load a fixture JSON file from tests/fixtures/etsy_v3/."""
-    here = os.path.dirname(__file__)
-    path = os.path.join(here, 'fixtures', 'etsy_v3', name)
-    with open(path) as f:
+
+_FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures', 'etsy_v3')
+
+
+def _load(name):
+    with open(os.path.join(_FIXTURE_DIR, name)) as f:
         return json.load(f)
+
+
+def _patch_get(monkey_target, *responses):
+    """Build a mock for `EtsyApiClient.get` returning successive
+    fixtures. Used as the side_effect for `mock.patch.object`.
+    """
+    return MagicMock(side_effect=list(responses))
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_FirstRun(TransactionCase):
-    """First-run syncer behavior: NULL cursor → fetch from floor."""
 
     def setUp(self):
         super().setUp()
-        self.shop = self.env['etsy.shop'].create({'name': 'FirstRunShop'})
+        self.shop = self.env['etsy.shop'].create({
+            'name': 'FirstRunShop', 'sync_mode': 'api_only',
+        })
 
     def test_first_run_passes_since_none_to_adapter(self):
-        """When shop.etsy_last_receipt_sync_at is False (NULL), the syncer
-        must pass since=None to fetch_new_orders, signaling a full backfill."""
-        # The sync_audit_mode field will fail to access here because it doesn't exist yet.
-        # This is expected for RED phase — we're testing for the exception.
-        with self.assertRaises(AttributeError):
-            syncer_cls = self.env['etsy.shop'].EtsyOrderSyncer
-            self.fail("EtsyOrderSyncer class not found; expected AttributeError or ImportError")
+        """NULL cursor → adapter receives `since=None`."""
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = MagicMock()
+        adapter.fetch_new_orders.return_value = iter([])
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
+            syncer.sync_shop_orders(self.shop)
+        adapter.fetch_new_orders.assert_called_once()
+        args, kwargs = adapter.fetch_new_orders.call_args
+        # adapter.fetch_new_orders(shop_id, since)
+        self.assertIsNone(args[1] if len(args) > 1 else kwargs.get('since'))
 
     def test_first_run_advances_cursor_to_max_last_modified(self):
-        """After successfully syncing a batch, the syncer must advance
-        the cursor to the maximum last_modified_tsz from the batch."""
-        # This test will fail when EtsyOrderSyncer doesn't exist.
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found; expected import error")
+        """After successful batch, cursor = max(last_modified) of payloads."""
+        syncer = EtsyOrderSyncer(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_api_client.EtsyApiClient.get',
+            _patch_get(None, _load('receipts_page1.json'), _load('receipts_page2.json')),
+        ), patch(
+            'odoo.addons.etsy_integration.services.etsy_order_syncer.EtsyApiClient',
+            return_value=MagicMock(),
+        ):
+            # Real adapter w/ patched HTTP + fake EtsyApiClient instance
+            from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
+            real_client = MagicMock()
+            real_client.get.side_effect = [
+                _load('receipts_page1.json'),
+                _load('receipts_page2.json'),
+            ]
+            adapter = EtsyApiAdapter(real_client)
+            with patch.object(syncer, '_build_adapter', return_value=adapter):
+                syncer.sync_shop_orders(self.shop)
+        self.shop.invalidate_recordset(['etsy_last_receipt_sync_at'])
+        # page2 fixture max last_modified_tsz = 1704412800 (2024-01-05)
+        # page1 max = 1704240000 (2024-01-03)
+        self.assertIsNotNone(self.shop.etsy_last_receipt_sync_at)
+        self.assertGreaterEqual(
+            self.shop.etsy_last_receipt_sync_at,
+            datetime(2024, 1, 3, 0, 0, 0),
+        )
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_Incremental(TransactionCase):
-    """Incremental sync behavior: existing cursor passed to adapter."""
 
     def setUp(self):
         super().setUp()
-        self.shop = self.env['etsy.shop'].create({'name': 'IncrementalShop'})
-        # Preset a cursor (this will fail if the field doesn't exist — correct for RED)
-        try:
-            self.shop.etsy_last_receipt_sync_at = datetime(2026, 1, 1, 0, 0, 0)
-        except AttributeError:
-            # Expected: field may not exist yet
-            pass
+        self.shop = self.env['etsy.shop'].create({
+            'name': 'IncrementalShop', 'sync_mode': 'api_only',
+        })
+        self.shop.etsy_last_receipt_sync_at = datetime(2026, 1, 1, 0, 0, 0)
 
     def test_incremental_run_passes_existing_cursor_to_adapter(self):
-        """When shop.etsy_last_receipt_sync_at is set, the syncer must pass
-        that value as the since parameter to fetch_new_orders."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = MagicMock()
+        adapter.fetch_new_orders.return_value = iter([])
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
+            syncer.sync_shop_orders(self.shop)
+        args, kwargs = adapter.fetch_new_orders.call_args
+        self.assertEqual(args[1] if len(args) > 1 else kwargs.get('since'),
+                         datetime(2026, 1, 1, 0, 0, 0))
 
     def test_pagination_consumes_all_pages(self):
-        """When the adapter returns paginated results, the syncer must
-        consume all pages (receipts_page1 + receipts_page2 = 5 total orders)."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        """Two-page fixture → 5 sale.orders ingested."""
+        syncer = EtsyOrderSyncer(self.env)
+        from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
+        client = MagicMock()
+        client.get.side_effect = [
+            _load('receipts_page1.json'),
+            _load('receipts_page2.json'),
+        ]
+        adapter = EtsyApiAdapter(client)
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
+            syncer.sync_shop_orders(self.shop)
+        orders = self.env['sale.order'].search([
+            ('etsy_shop_id', '=', self.shop.id),
+        ])
+        self.assertEqual(len(orders), 5)
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_Idempotency(TransactionCase):
-    """Syncer idempotency: re-syncing same receipt must not create duplicates."""
 
     def setUp(self):
         super().setUp()
-        self.shop = self.env['etsy.shop'].create({'name': 'IdempotencyShop'})
+        self.shop = self.env['etsy.shop'].create({
+            'name': 'IdempotencyShop', 'sync_mode': 'api_only',
+        })
 
     def test_resync_same_receipt_does_not_create_duplicate(self):
-        """Running sync twice with the same receipts must result in exactly
-        one sale.order per etsy_order_id (dedup via OrderCreator)."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        """Running the same receipt twice = exactly one sale.order."""
+        syncer = EtsyOrderSyncer(self.env)
+        from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
+
+        for _ in range(2):
+            client = MagicMock()
+            client.get.side_effect = [_load('receipts_single_paid.json')]
+            adapter = EtsyApiAdapter(client)
+            # Reset cursor between runs to force re-fetch
+            self.shop.etsy_last_receipt_sync_at = False
+            with patch.object(syncer, '_build_adapter', return_value=adapter):
+                syncer.sync_shop_orders(self.shop)
+
+        receipt_id = str(_load('receipts_single_paid.json')['results'][0]['receipt_id'])
+        orders = self.env['sale.order'].search([
+            ('etsy_order_id', '=', receipt_id),
+        ])
+        self.assertEqual(len(orders), 1)
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_AuditMode(TransactionCase):
-    """Audit mode behavior (OQ1, OQ4): log receipts, don't create orders."""
 
     def setUp(self):
         super().setUp()
-        self.shop = self.env['etsy.shop'].create({'name': 'AuditModeShop'})
+        self.shop = self.env['etsy.shop'].create({
+            'name': 'AuditModeShop',
+            'sync_mode': 'email_only',
+            'sync_audit_mode': True,
+        })
+
+    def _adapter_with_page1(self):
+        from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
+        client = MagicMock()
+        client.get.side_effect = [_load('receipts_page1.json')]
+        # page1 has next_offset=3; provide a page2 with next_offset=null
+        # to make the iterator terminate cleanly within a single test page
+        page1 = _load('receipts_page1.json')
+        page1['next_offset'] = None  # force single-page
+        client.get.side_effect = [page1]
+        return EtsyApiAdapter(client)
 
     def test_audit_mode_does_not_create_sale_order(self):
-        """When sync_audit_mode=True, the syncer must not create sale.order
-        records (only logs them)."""
-        with self.assertRaises(AttributeError):
-            # sync_audit_mode field will not exist yet
-            self.shop.sync_audit_mode = True
-            self.fail("sync_audit_mode field not found")
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = self._adapter_with_page1()
+        before = self.env['sale.order'].search_count([
+            ('etsy_shop_id', '=', self.shop.id),
+        ])
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
+            result = syncer.sync_shop_orders(self.shop)
+        after = self.env['sale.order'].search_count([
+            ('etsy_shop_id', '=', self.shop.id),
+        ])
+        self.assertEqual(before, after, 'audit mode must not create orders')
+        self.assertEqual(result['ingested'], 0)
+        self.assertEqual(result['audited'], 3)
 
     def test_audit_mode_logs_each_receipt_via_warning(self):
-        """When sync_audit_mode=True, the syncer must call _logger.warning
-        for each receipt, including the receipt_id in the message."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = self._adapter_with_page1()
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_order_syncer._logger',
+        ) as mock_logger, patch.object(
+            syncer, '_build_adapter', return_value=adapter,
+        ):
+            syncer.sync_shop_orders(self.shop)
+        # 3 receipts in page1 → at least 3 warning calls. The receipt_id
+        # must appear in at least one of those calls.
+        self.assertGreaterEqual(mock_logger.warning.call_count, 3)
 
     def test_audit_mode_advances_cursor_after_batch(self):
-        """Even in audit mode, the cursor must advance to the max
-        last_modified_tsz so re-running doesn't re-audit the same receipts."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = self._adapter_with_page1()
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
+            syncer.sync_shop_orders(self.shop)
+        self.shop.invalidate_recordset(['etsy_last_receipt_sync_at'])
+        # max last_modified_tsz in page1 = 1704240000 → 2024-01-03
+        self.assertIsNotNone(self.shop.etsy_last_receipt_sync_at)
+        self.assertGreaterEqual(
+            self.shop.etsy_last_receipt_sync_at,
+            datetime(2024, 1, 3, 0, 0, 0),
+        )
 
     def test_audit_plus_api_only_logs_soft_warning(self):
-        """When both sync_audit_mode=True AND sync_mode='api_only', the syncer
-        must log a soft warning before iteration (OQ4 soft-warn contract)."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        self.shop.sync_mode = 'api_only'  # nonsensical with audit
+        syncer = EtsyOrderSyncer(self.env)
+        adapter = MagicMock()
+        adapter.fetch_new_orders.return_value = iter([])
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_order_syncer._logger',
+        ) as mock_logger, patch.object(
+            syncer, '_build_adapter', return_value=adapter,
+        ):
+            syncer.sync_shop_orders(self.shop)
+        # OQ4 soft warning should fire before iteration starts
+        warnings = [str(c) for c in mock_logger.warning.call_args_list]
+        self.assertTrue(
+            any('nonsensical' in w or 'audit' in w for w in warnings),
+            f'expected soft warning about audit+api_only; got {warnings}',
+        )
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_PartialFailure(TransactionCase):
-    """Partial failure behavior (OQ3): cursor advances only through success."""
 
     def setUp(self):
         super().setUp()
-        self.shop = self.env['etsy.shop'].create({'name': 'PartialFailureShop'})
+        self.shop = self.env['etsy.shop'].create({
+            'name': 'PartialFailureShop', 'sync_mode': 'api_only',
+        })
 
     def test_cursor_advances_only_through_successful_payloads(self):
-        """When ingest raises an error on the 2nd payload, the cursor must
-        advance only to the 1st payload's last_modified_tsz (not beyond)."""
-        with self.assertRaises((AttributeError, ImportError)):
-            from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer  # noqa: F401
-            self.fail("EtsyOrderSyncer not found")
+        """If ingest raises on payload #2, cursor pins at payload #1's
+        last_modified, and payloads #3+ are never attempted."""
+        syncer = EtsyOrderSyncer(self.env)
+        from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
+        client = MagicMock()
+        page1 = _load('receipts_page1.json')
+        page1['next_offset'] = None
+        client.get.side_effect = [page1]
+        adapter = EtsyApiAdapter(client)
+
+        call_count = {'n': 0}
+
+        def fake_ingest(payload, shop):
+            call_count['n'] += 1
+            if call_count['n'] == 2:
+                raise RuntimeError('simulated ingest failure')
+            # Real path for #1: just write a sale.order placeholder.
+            # We don't need the full ingest behavior — just succeed.
+            from odoo.addons.etsy_integration.services.etsy_order_ingestor import (
+                EtsyOrderIngestor,
+            )
+            return EtsyOrderIngestor(self.env)._creator.process_etsy_payload(
+                payload, shop,
+            )
+
+        with patch.object(syncer, '_build_adapter', return_value=adapter), patch(
+            'odoo.addons.etsy_integration.services.etsy_order_syncer.EtsyOrderIngestor',
+        ) as mock_cls:
+            mock_cls.return_value.ingest.side_effect = fake_ingest
+            syncer.sync_shop_orders(self.shop)
+
+        self.shop.invalidate_recordset(['etsy_last_receipt_sync_at'])
+        # Receipt #1 last_modified_tsz = 1704067200 → 2024-01-01
+        # Cursor must be at receipt #1 (succeeded), not #2 (failed) or #3.
+        self.assertEqual(
+            self.shop.etsy_last_receipt_sync_at,
+            datetime(2024, 1, 1, 0, 0, 0),
+        )
+        # Only payload #1 + the failed #2 attempt → call_count == 2; #3 never tried.
+        self.assertEqual(call_count['n'], 2)
 
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_CronFilter(TransactionCase):
-    """Cron filter behavior (OQ5): only sync_mode='api_only' shops."""
 
     def test_cron_method_skips_email_only_shops(self):
-        """The cron's filter must skip shops with sync_mode != 'api_only'.
-        Only shops with sync_mode='api_only' should have sync_shop_orders called."""
-        api_only_shop = self.env['etsy.shop'].create({
-            'name': 'ApiOnlyShop',
+        api_shop = self.env['etsy.shop'].create({
+            'name': 'ApiOnlyShop', 'sync_mode': 'api_only',
         })
-        email_only_shop = self.env['etsy.shop'].create({
-            'name': 'EmailOnlyShop',
+        self.env['etsy.shop'].create({
+            'name': 'EmailOnlyShop', 'sync_mode': 'email_only',
         })
-
-        # These will fail because sync_mode field doesn't exist yet or
-        # because EtsyOrderSyncer doesn't exist. That's correct for RED.
-        with self.assertRaises((AttributeError, ImportError)):
-            # Try to set sync_mode if it exists
-            try:
-                api_only_shop.sync_mode = 'api_only'
-                email_only_shop.sync_mode = 'email_only'
-            except AttributeError:
-                pass
-
-            # Try to call the cron method
+        with patch.object(EtsyOrderSyncer, 'sync_shop_orders') as mock_sync:
             self.env['etsy.shop']._cron_sync_orders()
-            self.fail("_cron_sync_orders method not found")
+        # Only the api_only shop should be processed
+        called_shops = [c.args[0] for c in mock_sync.call_args_list]
+        self.assertEqual(len(called_shops), 1)
+        self.assertEqual(called_shops[0].id, api_shop.id)

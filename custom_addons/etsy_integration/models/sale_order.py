@@ -45,6 +45,29 @@ class SaleOrder(models.Model):
         string='Source Record Reference', copy=False,
         help="Back-pointer to the originating record (e.g. 'receipt:1234' "
              "for API, 'email_log:567' for the email path).")
+    # Spec 005 P0-16c — payment + watermark fields driven by
+    # EtsyOrderIngestor on initial create AND on status-only re-sync
+    # (FR-009). Operator fields (mp_note, pic_user_id, design state)
+    # are NOT touched on re-sync — see EtsyOrderIngestor.ingest.
+    # `readonly=True` enforces single-writer at the UI level — operators
+    # see the value but cannot edit. The ORM still permits writes from
+    # the syncer/ingestor service code (channel-sourced single writer).
+    # Hard ACL (groups='base.group_system') was rejected because the
+    # Order Dashboard (P1-01) needs salesmen to read payment_status to
+    # filter unpaid orders. P0-17 will add tracking=True + mail.thread
+    # audit so any non-syncer write is detectable.
+    payment_status = fields.Selection(
+        selection=[
+            ('unpaid', 'Unpaid'),
+            ('paid', 'Paid'),
+        ],
+        string='Etsy Payment Status', copy=False, index=True, readonly=True,
+        help='Payment state mirrored from the Etsy receipt; updated on '
+             'every API re-sync.')
+    etsy_last_modified = fields.Datetime(
+        string='Etsy Last Modified', copy=False, index=True, readonly=True,
+        help='Mirrors the Etsy receipt last_modified timestamp. Used to '
+             'distinguish stale re-syncs from genuine updates.')
     is_etsy_order = fields.Boolean(
         string='Is Etsy Order', compute='_compute_is_etsy_order', store=True)
     etsy_price_anomaly = fields.Boolean(

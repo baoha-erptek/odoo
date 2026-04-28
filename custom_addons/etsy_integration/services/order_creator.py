@@ -524,6 +524,8 @@ class OrderCreator:
             'etsy_shipping_cost': payload.shipping_total or 0.0,
             'sync_source': payload.source,
             'etsy_raw_source_id': payload.raw_source_id,
+            'payment_status': payload.payment_status or False,
+            'etsy_last_modified': payload.last_modified or False,
             'order_line': [],
         }
         if currency:

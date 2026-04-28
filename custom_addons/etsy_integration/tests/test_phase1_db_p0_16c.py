@@ -40,28 +40,22 @@ class TestP0_16c_DatabaseStructure(TransactionCase):
     def test_sync_audit_mode_field_has_system_acl(self):
         """The `sync_audit_mode` field on `etsy.shop` must have system-only
         ACL (groups='base.group_system') to prevent operators from
-        triggering audit mode manually."""
+        triggering audit mode manually.
+
+        Odoo 19 stores field-level ACL on the in-memory `Field` object's
+        `groups` attribute (string), not on `ir.model.fields` — that
+        relational column exists but is unpopulated (`CLEANME unimplemented
+        field (empty table)` per `odoo/addons/base/models/ir_model.py`).
+        """
         field = self.env['etsy.shop']._fields.get('sync_audit_mode')
         self.assertIsNotNone(
             field,
-            "Field sync_audit_mode does not exist on etsy.shop; RED test passes."
+            "Field sync_audit_mode does not exist on etsy.shop."
         )
-
-        # Check ir.model.fields ACL via ORM
-        ir_fields = self.env['ir.model.fields'].search([
-            ('model_id.model', '=', 'etsy.shop'),
-            ('name', '=', 'sync_audit_mode'),
-        ])
-        self.assertTrue(
-            ir_fields,
-            "ir.model.fields row for etsy_shop.sync_audit_mode not found."
-        )
-        # The groups field should restrict access to system users
-        groups = ir_fields.groups_id
-        system_group = self.env.ref('base.group_system')
-        self.assertIn(
-            system_group, groups,
-            "base.group_system not in field ACL groups; verify groups='base.group_system'"
+        self.assertEqual(
+            field.groups, 'base.group_system',
+            f"sync_audit_mode field.groups should be 'base.group_system', "
+            f"got {field.groups!r}",
         )
 
     def test_cron_etsy_order_sync_exists(self):

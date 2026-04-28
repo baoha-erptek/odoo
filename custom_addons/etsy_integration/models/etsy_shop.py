@@ -1,6 +1,7 @@
 import logging
 
 from odoo import api, fields, models
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -50,6 +51,36 @@ class EtsyShop(models.Model):
              'fetches receipts modified after this timestamp.',
     )
 
+    # Spec 005 P0-16c — channel-source selector per ADR-002. Two values
+    # only; new shops default to 'email_only' until E1 scope review +
+    # per-shop cutover (P1-11). The syncer cron only fires for
+    # 'api_only' shops; 'email_only' shops continue using the Gmail
+    # cron (`_cron_fetch_etsy_emails`).
+    sync_mode = fields.Selection(
+        selection=[
+            ('email_only', 'Email Only'),
+            ('api_only', 'API Only'),
+        ],
+        string='Sync Mode',
+        default='email_only',
+        required=True,
+        groups='base.group_system',
+        help='Email Only: legacy Gmail-cron ingest. API Only: Etsy v3 '
+             'receipts cron ingest. Switch via P1-11 cutover only.',
+    )
+    # Spec 005 P0-16c (architect Q4) — when True the API syncer runs
+    # read-only: fetch receipts, log via _logger.warning, write zero
+    # sale.orders. Used during the 1-2 week pilot-shop cutover window
+    # for BA validation (ADR-002 §3). Soft-warn (no constraint) if both
+    # this and `sync_mode='api_only'` are True at sync time — see OQ4.
+    sync_audit_mode = fields.Boolean(
+        string='Audit Mode (read-only sync)',
+        default=False,
+        groups='base.group_system',
+        help='Read-only API sync: fetch receipts, compare, log diffs; '
+             'no sale.order writes. Use during cutover validation.',
+    )
+
     _sql_constraints = [
         ('name_unique', 'UNIQUE(name)', 'Shop name must be unique!'),
     ]
@@ -71,3 +102,43 @@ class EtsyShop(models.Model):
             'domain': [('etsy_shop_id', '=', self.id)],
             'context': {'default_etsy_shop_id': self.id},
         }
+
+    @api.model
+    def _cron_sync_orders(self):
+        """Scheduled action: incremental Etsy receipts sync per shop.
+
+        OQ5: Cron filters to shops with `sync_mode='api_only'` only.
+        Audit-mode flag is honored by the syncer but does NOT trigger
+        the cron; audit runs are typically manual during cutover.
+
+        Privilege: cron runner sets the user to `__system__`. The
+        explicit `_is_system()` gate is defense-in-depth in case this
+        ever gets exposed via RPC or a controller route — we never
+        want a non-admin caller to trigger sync (security-reviewer
+        P0-16c HIGH, mitigated).
+        """
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy order sync is restricted to system tasks; '
+                'this method is only callable by the cron runner.'
+            )
+
+        from ..services.etsy_order_syncer import EtsyOrderSyncer
+
+        shops = self.search([('sync_mode', '=', 'api_only')])
+        if not shops:
+            _logger.debug('Etsy API sync cron: no api_only shops configured.')
+            return
+
+        syncer = EtsyOrderSyncer(self.env)
+        for shop in shops:
+            try:
+                syncer.sync_shop_orders(shop)
+            except Exception:
+                # Per-shop isolation: one shop's failure must not stop
+                # others. The syncer logs internally; log here too with
+                # shop context for cron-level diagnostics.
+                _logger.exception(
+                    'Etsy API sync failed for shop %s (id=%s)',
+                    shop.name, shop.id,
+                )

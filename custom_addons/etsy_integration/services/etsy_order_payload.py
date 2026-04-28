@@ -92,3 +92,8 @@ class EtsyOrderPayload:
     source: Literal['api', 'email']
     fetched_at: datetime
     raw_source_id: str
+    # P0-16c — last-modified timestamp from the source. For API
+    # receipts this is `last_modified_tsz`; the syncer uses the max
+    # over a batch as the new watermark and FR-009 status-only re-sync
+    # uses it to distinguish stale fetches from genuine updates.
+    last_modified: datetime | None = None

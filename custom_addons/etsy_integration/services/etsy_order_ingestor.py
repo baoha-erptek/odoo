@@ -1,17 +1,18 @@
-"""EtsyOrderIngestor — single-writer ingestion service (P0-16b1).
+"""EtsyOrderIngestor — single-writer ingestion service.
 
-Thin wrapper around `OrderCreator.process_etsy_payload`. The wrapper
-exists so that future cross-cutting concerns — audit-mode
-short-circuit (P0-16c, architect Q4), status-only re-sync (FR-009),
-buyer-message persistence (REQ-MSG-01) — can land here without
-touching `OrderCreator` (which still serves the email path).
+Routes a canonical `EtsyOrderPayload` to the right write path:
 
-Single-writer invariant: only this service writes API-sourced
-`sale.order` records. The orchestrator (`EtsyOrderSyncer`, P0-16c)
-calls `ingest()` once per payload as it consumes adapter output.
-Direct callers (e.g. webhook handler in P1) MUST go through this
-class, not through `OrderCreator.process_etsy_payload` directly,
-so the audit hooks remain in one place.
+- New receipt (no matching `etsy_order_id`): delegate to
+  `OrderCreator.process_etsy_payload` for full create.
+- Existing receipt (matching `etsy_order_id`): apply FR-009 status-only
+  re-sync — update `payment_status` + `etsy_last_modified` only,
+  preserving operator fields (`mp_note`, `pic_user_id`, design state).
+
+P0-16b1 introduced the wrapper. P0-16c (this revision) hosts the
+status-only re-sync logic here, NOT inside `OrderCreator`, to keep
+single-writer semantics: only this service writes API-sourced re-syncs.
+The syncer (P0-16c orchestrator) calls `ingest()` once per payload as
+it consumes adapter output.
 """
 
 import logging
@@ -19,6 +20,12 @@ import logging
 from .order_creator import OrderCreator
 
 _logger = logging.getLogger(__name__)
+
+# FR-009 — fields written on status-only re-sync. Operator-owned
+# fields (mp_note, pic_user_id, design state) are intentionally
+# absent. Add to this list ONLY when a new field is provably
+# adapter-sourced and never operator-edited.
+_STATUS_ONLY_FIELDS = ('payment_status', 'etsy_last_modified')
 
 
 class EtsyOrderIngestor:
@@ -35,7 +42,44 @@ class EtsyOrderIngestor:
         self._creator = OrderCreator(env)
 
     def ingest(self, payload, shop):
-        """Apply `payload` to the database. Returns the created
-        `sale.order` recordset, or `None` if the payload was a
-        duplicate of an already-imported receipt."""
+        """Apply `payload` to the database.
+
+        Returns the `sale.order` record (created or re-synced). Returns
+        `None` if the payload had no usable line items (delegated to
+        `OrderCreator` which already handles that edge case).
+        """
+        existing = self._env['sale.order'].search(
+            [('etsy_order_id', '=', payload.etsy_order_id)], limit=1,
+        )
+        if existing:
+            return self._status_only_resync(existing, payload)
         return self._creator.process_etsy_payload(payload, shop)
+
+    def _status_only_resync(self, order, payload):
+        """FR-009 — refresh adapter-owned fields without disturbing
+        operator-owned fields. Idempotent: writing the same values is
+        a no-op as far as the operator is concerned.
+
+        We update `etsy_last_modified` regardless of monotonicity —
+        the syncer's cursor is the authoritative gate against stale
+        re-fetches; if the syncer hands us an older payload, that's
+        a bug in the syncer, not the ingestor. Letting the field
+        reflect the most recent fetch keeps it useful for diagnostics.
+        """
+        vals = {
+            'payment_status': payload.payment_status or False,
+            'etsy_last_modified': payload.last_modified or False,
+        }
+        # Filter out no-op writes so we don't churn `write_date` on
+        # orders whose payment status is unchanged.
+        vals = {
+            k: v for k, v in vals.items()
+            if order[k] != v
+        }
+        if vals:
+            order.write(vals)
+            _logger.debug(
+                'Etsy re-sync: order %s (#%s) updated %s',
+                order.name, payload.etsy_order_id, list(vals),
+            )
+        return order

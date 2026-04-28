@@ -153,7 +153,7 @@ class TestEtsyOrderIngestor_StatusOnlyResync(TransactionCase):
         self.ingestor.ingest(resync_payload, self.shop)
 
         # Verify mp_note is preserved
-        order.refresh()
+        order.invalidate_recordset()
         try:
             actual_note = (
                 order.fulfillment_id.mp_note
@@ -200,7 +200,7 @@ class TestEtsyOrderIngestor_StatusOnlyResync(TransactionCase):
         self.ingestor.ingest(resync_payload, self.shop)
 
         # Verify pic_user_id is preserved
-        order.refresh()
+        order.invalidate_recordset()
         try:
             actual_user = (
                 order.fulfillment_id.pic_user_id
@@ -223,27 +223,22 @@ class TestEtsyOrderIngestor_StatusOnlyResync(TransactionCase):
         # Create order with initial timestamp
         initial_payload = self._build_payload(
             etsy_order_id="X4",
-            order_date=datetime(2026, 4, 28, 10, 0, 0)
+            last_modified=datetime(2026, 4, 28, 10, 0, 0),
         )
         order = self.ingestor.ingest(initial_payload, self.shop)
         self.assertIsNotNone(order)
-
-        # Check if etsy_last_modified field exists
-        try:
-            initial_modified = order.etsy_last_modified
-        except AttributeError:
-            self.skipTest("etsy_last_modified field not found on sale.order")
-            return
+        initial_modified = order.etsy_last_modified
+        self.assertEqual(initial_modified, datetime(2026, 4, 28, 10, 0, 0))
 
         # Re-sync with newer timestamp
         newer_payload = self._build_payload(
             etsy_order_id="X4",
-            order_date=datetime(2026, 4, 28, 11, 0, 0)
+            last_modified=datetime(2026, 4, 28, 11, 0, 0),
         )
         self.ingestor.ingest(newer_payload, self.shop)
 
         # Verify field was updated
-        order.refresh()
+        order.invalidate_recordset()
         self.assertGreater(
             order.etsy_last_modified, initial_modified,
             "etsy_last_modified should be advanced on re-sync"
