@@ -4,6 +4,70 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-04-28 — P0-17 etsy.api.log model + audit retrofit + retention cron landed
+
+**Slice scope (final, post-execution)**:
+- `models/etsy_api_log.py` (NEW, ~140 LOC): `etsy.api.log` Model with 11 fields per data-model.md §3. Does NOT inherit `mail.thread` (high-volume). Composite index `(shop_id, request_started_at DESC)` declared in `init()` via raw SQL. `_cron_cleanup_old_logs` raw-SQL DELETE parameterized via psycopg2; threshold from `ir.config_parameter.etsy_integration.api_log_retention_days` (default 30, integer underflow guarded).
+- `services/etsy_order_syncer.py` `_audit_log`: P0-16c stopgap (`_logger.warning`) replaced with `self._env['etsy.api.log'].sudo().create({...})`. PII scrubbed — `response_summary` contains receipt_id + amount + currency only.
+- `security/etsy_security.xml`: new `group_etsy_api_log_reader` group.
+- `security/ir.model.access.csv`: 2 rows (reader read-only, system full).
+- `data/ir_cron_data.xml`: new `cron_etsy_api_log_cleanup` (daily).
+- `views/etsy_api_log_views.xml` (NEW): list (`decoration-danger` on 5xx) + read-only form + search; menu under Etsy Integration gated to `group_etsy_api_log_reader,base.group_system`.
+- `__manifest__.py`: `etsy_security.xml` reordered BEFORE `ir.model.access.csv` (CSV references the group).
+
+**Owner-confirmed planner OQs** (all 7 accepted as recommended):
+
+| OQ | Decision |
+|---|---|
+| OQ1 add `audit` to source enum | Yes — explicit, cheap. data-model.md §3 updated. |
+| OQ2 per-call API-client logging | Defer to P0-17b — pair with rate-limit header capture |
+| OQ3 dedicated reader group | Define now — 2 lines, no harm |
+| OQ4 retention SQL vs ORM | Raw SQL DELETE — fast on high-volume table; cron context = system |
+| OQ5 PII scrub depth | Aggressive — drop buyer_*, addresses, message_from_buyer |
+| OQ6 indexes | Just `(shop_id, request_started_at DESC)`; defer 2 others to P1 |
+| OQ7 audit log granularity | Per-receipt — enables row-level diff inspection |
+
+**Surprises (resolved before commit)**:
+
+1. **Odoo 19 renamed `res.groups.category_id` → `privilege_id`** (Many2one to `res.groups.privilege`). RED group XML used `category_id` per Odoo ≤18 convention; install fired `ValueError: Invalid field 'category_id' in 'res.groups'`. Fix: drop the `category_id` field entirely — `privilege_id` is optional in Odoo 19 (verified against `addons/product/security/product_security.xml`). Group works fine without a privilege; appears under a default group in Settings UI. **Captured to memory as gotcha #31.**
+
+2. **Search-view RelaxNG in Odoo 19 rejects `<group expand="0">`.** P0-17 search view used the standard pre-19 pattern `<group expand="0" string="Group By"><filter ... context="{'group_by': '...'}"/></group>`. Odoo 19 emits 3 RelaxNG warnings:
+   - `Invalid attribute expand for element group`
+   - `Element search has extra content: field`
+   - `Expecting an element field, got nothing`
+   The view loads fail with `ParseError`. Fix: drop `<group>` wrapper; group-by filters become flat siblings of regular filters, separated by `<separator/>`. **Captured to memory as gotcha #32.**
+
+3. **`TransactionCase.cr.commit()` is forbidden.** Retention RED tests inserted rows via raw SQL then called `self.env.cr.commit()` to make them visible to the cron's DELETE. Odoo's test cursor raises `AssertionError: Cannot commit or rollback a cursor from inside a test`. Fix: create rows via ORM at default time, then UPDATE `request_started_at` via raw SQL inside the savepoint + `invalidate_recordset()` to refresh the cache. The DELETE sees the backdated rows because UPDATE is visible within the same transaction. **Captured to memory as gotcha #33.**
+
+4. **Manifest `data` order matters when ACL CSV references a custom group.** RED + GREEN initially had `security/ir.model.access.csv` BEFORE `security/etsy_security.xml`; install failed with `No matching record found for external id 'etsy_integration.group_etsy_api_log_reader'`. Fix: load XML before CSV. Existing modules avoided this because they only used built-in group xmlids (`base.group_user`, `base.group_system`) which are loaded much earlier; new custom groups must precede the CSV that references them. **Already in memory gotcha #15-area; reaffirmed.**
+
+5. **tdd-guide `assertRaises(Exception)` was too broad.** `test_source_selection_rejects_invalid_value` used `with self.assertRaises(Exception)` — would have passed RED via the `KeyError: 'etsy.api.log'` from accessing the missing model. Tightened to `assertRaises(ValueError)` (Odoo's Selection write-time validation). Same family as the P0-16c `assertRaises(ImportError)` placeholder anti-pattern; reinforces the rule "always assert a specific exception type, never a base class".
+
+6. **tdd-guide audit retrofit tests passed raw fixture dicts as payloads** to a `MagicMock` adapter. The syncer's `_audit_log` expects `EtsyOrderPayload` dataclass instances (with `.last_modified` attr), not dicts. The mock returned `iter([fixture_data])` → a single dict was yielded → `payload.last_modified` raised `AttributeError`. Fix: replace the mock with a real `EtsyApiAdapter(MagicMock(client))` where `client.get.side_effect = [page]` — the adapter does the JSON→payload conversion, mirroring the production code path. P0-16c's `test_etsy_order_syncer.py` already showed this pattern; the agent didn't carry it over.
+
+**Q-resolved (security-reviewer P0-17, fixed inline)**:
+
+- **MEDIUM** — `sudo()` call in `_audit_log` lacked an inline comment per project rule. Added 5-line comment explaining the bypass rationale (etsy.api.log create requires `base.group_system`; cron context already has it; sudo() is defensive redundancy for any future manual admin trigger).
+
+**Q-deferred (security-reviewer P0-17 LOWs / accepted-with-mitigation)**:
+
+- **LOW** — Retention parameter has no upper bound (admin could set 999999 days = forever). Operational risk, not security. Defer to P1 hardening (config UI with spinner).
+- **LOW (escalates post-cutover)** — No record rules on `etsy.api.log`. A BA in `group_etsy_api_log_reader` for Shop A diagnostics can read logs for ALL shops. Acceptable in sandbox / pre-cutover; **flag for P0-17c (multi-tenant per-shop scoping) when production cutover begins multi-shop**.
+- **LOW** — Group lacks `privilege_id` (cosmetic; group appears in default UI bin). Optional polish.
+
+**Verification**:
+- `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration,multichannel_hub_core,multichannel_hub_fulfillment --test-tags=/etsy_integration,/multichannel_hub_core,/multichannel_hub_fulfillment --stop-after-init` → 0 fail / 0 error / 342 tests.
+- Module installs cleanly.
+- No `_logger.info(` / `print(` introduced beyond the new `_cron_cleanup_old_logs` operational summary line (cron-completion is a "significant operational event" per project rule).
+
+**Branch + commit**: `feature/006-master-plan-coding` `481bd4250d7`. RED already on branch as `d45576bd364`.
+
+**Doc drift fixed**: data-model.md §3 `source` Selection enum updated to include `audit` (resolves contradiction with findings 2026-04-26 architect Q4 recommendation).
+
+**Unblocks**: P1-04 (address-change approval workflow) — next critical-path slice per active prioritization. P0-17b (per-call EtsyApiClient logging + rate-limit header capture) is a dedicated future slice, not gating Phase 1.
+
+---
+
 ## 2026-04-28 — P0-16c EtsyOrderSyncer + audit mode + status-only re-sync landed
 
 **Slice scope (final, post-execution)**:

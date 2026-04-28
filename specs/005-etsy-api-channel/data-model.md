@@ -110,7 +110,7 @@ def migrate(cr, version):
 | `error_message` | Text | No | — | Exception/error details |
 | `quota_used_today` | Integer | No | — | From `X-RateLimit-Limit-Daily` header |
 | `quota_remaining_today` | Integer | No | — | |
-| `source` | Selection: `sync`/`tracking_push`/`webhook_register`/`listing_push`/`listing_pull`/`buyer_message_sync`/`health_check` | Yes | — | For filter/group |
+| `source` | Selection: `audit`/`sync`/`tracking_push`/`webhook_register`/`listing_push`/`listing_pull`/`buyer_message_sync`/`health_check` | Yes | — | For filter/group. `audit` added P0-17 (was missing pre-2026-04-28 — see findings 2026-04-26 architect Q4 conflict resolution). |
 
 **Retention**: cron-driven cleanup of rows >30 days (`ir.config_parameter`-tunable). Implements FR-035.
 
