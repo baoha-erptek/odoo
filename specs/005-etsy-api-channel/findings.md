@@ -4,6 +4,25 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-04-28 — P0-16a module-home decision (supersedes data-model.md §"Adapter contract" location)
+
+**Contradiction**: `data-model.md` line 260 places `EtsyChannelAdapter` Protocol + `EtsyOrderPayload` dataclasses in `multichannel_hub_core/services/`. `multichannel_hub_core/CLAUDE.md` (added under P0-20 skeleton) prohibits Etsy-specific code: *"This module has no Etsy-specific code. If a model, service, or view references `etsy_*` anything, it belongs in `etsy_channel`, not here."*
+
+**Decision (owner-confirmed 2026-04-28)**: place both files in `etsy_integration/services/`, NOT in `multichannel_hub_core`.
+
+**Rationale**:
+1. Module CLAUDE.md is the binding contract; data-model.md predates the rule.
+2. Both artifacts are Etsy-named (`EtsyChannelAdapter`, `EtsyOrderPayload`) — they belong with Etsy.
+3. When Amazon/website channels arrive, each channel will host its own canonical payload + adapter Protocol. A generic `OrderIngestor` in core can consume any payload by structural typing (Protocol/duck-typing) — no need to design that abstraction today.
+4. P0-16 only needs the Etsy half; abstraction-on-demand keeps core lean.
+
+**Implication for downstream slices**:
+- `EtsyOrderIngestor` (T008) likely also moves to `etsy_integration/services/` for P0-16; if a future Amazon adapter wants ingestion reuse, extract a generic ingestor into core at that point.
+- Spec 005 `data-model.md` line 260 is superseded by this entry; a follow-up doc edit in the next slice will update the path.
+- ADR-003 module decomposition still holds — this decision narrows what "shared core" means without changing the four-module split.
+
+---
+
 ## 2026-04-27 — P0-15 EtsyApiClient sandbox landed
 
 **Slice scope (final, post-execution)**:
