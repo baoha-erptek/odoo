@@ -1,6 +1,7 @@
 from . import etsy_shop
 from . import etsy_email_log
 from . import etsy_sync_health
+from . import etsy_api_log
 from . import sale_order
 from . import sale_order_line
 from . import product_product

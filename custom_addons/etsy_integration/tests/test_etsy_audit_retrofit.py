@@ -3,7 +3,9 @@
 Tests the `_audit_log` retrofit that writes etsy.api.log rows during
 audit-mode syncs, including PII scrubbing and per-receipt logging.
 
-This file tests the integration between the syncer and the new model.
+Pattern: real `EtsyApiAdapter` instance + mocked `EtsyApiClient.get`.
+This drives the receipt→payload mapping path through the real adapter
+so the test exercises the same wiring the production cron will use.
 
 Reference: Master Plan 006, P0-17 planner OQ2, OQ5, OQ7.
 """
@@ -14,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 from odoo.tests.common import TransactionCase, tagged
 
+from odoo.addons.etsy_integration.services.etsy_api_adapter import EtsyApiAdapter
 from odoo.addons.etsy_integration.services.etsy_order_syncer import EtsyOrderSyncer
 
 
@@ -26,169 +29,82 @@ def _load(name):
         return json.load(f)
 
 
+def _single_page_adapter(fixture_name):
+    """Build a real EtsyApiAdapter that returns the fixture as a single
+    page (next_offset=null), backed by a MagicMock EtsyApiClient."""
+    page = _load(fixture_name)
+    page['next_offset'] = None  # force single-page termination
+    client = MagicMock()
+    client.get.side_effect = [page]
+    return EtsyApiAdapter(client)
+
+
 @tagged('post_install', '-at_install')
 class TestEtsyOrderSyncer_AuditLogPersists(TransactionCase):
     """ORM tests for syncer audit log persistence to etsy.api.log."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up test shop."""
-        super().setUpClass()
-        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
-
     def setUp(self):
-        """Create a fresh shop for each test."""
         super().setUp()
         self.shop = self.env['etsy.shop'].create({
             'name': 'Audit Test Shop',
             'sync_mode': 'api_only',
+            'sync_audit_mode': True,
         })
 
-    def test_audit_run_creates_one_api_log_per_receipt(self):
-        """Syncer audit mode creates one etsy.api.log row per receipt."""
-        self.shop.sync_audit_mode = True
-
+    def _run_sync(self, fixture_name='receipts_page1.json'):
         syncer = EtsyOrderSyncer(self.env)
-
-        # Mock the adapter to return the fixture with 3 receipts
-        adapter = MagicMock()
-        fixture_data = _load('receipts_page1.json')
-        # Simulate paginated adapter behavior
-        adapter.fetch_new_orders.return_value = iter([fixture_data])
-
+        adapter = _single_page_adapter(fixture_name)
         with patch.object(syncer, '_build_adapter', return_value=adapter):
             syncer.sync_shop_orders(self.shop)
 
-        # Verify 3 audit logs were created (one per receipt in fixture)
-        audit_logs = self.env['etsy.api.log'].search([
-            ('shop_id', '=', self.shop.id),
-            ('source', '=', 'audit'),
-        ])
-
-        self.assertEqual(
-            len(audit_logs), 3,
-            f"Expected 3 audit logs for 3 receipts, got {len(audit_logs)}"
-        )
-
-    def test_audit_log_endpoint_field_set(self):
-        """Audit logs have endpoint field populated."""
-        self.shop.sync_audit_mode = True
-
-        syncer = EtsyOrderSyncer(self.env)
-        adapter = MagicMock()
-        adapter.fetch_new_orders.return_value = iter([_load('receipts_page1.json')])
-
-        with patch.object(syncer, '_build_adapter', return_value=adapter):
-            syncer.sync_shop_orders(self.shop)
-
-        audit_logs = self.env['etsy.api.log'].search([
-            ('shop_id', '=', self.shop.id),
-            ('source', '=', 'audit'),
-        ])
-
-        for log in audit_logs:
-            self.assertIsNotNone(
-                log.endpoint,
-                f"Log {log.id} should have endpoint populated"
-            )
-            self.assertTrue(
-                len(log.endpoint) > 0,
-                f"Log {log.id} endpoint should not be empty"
-            )
-
-    def test_audit_log_pii_scrubbed_from_response_summary(self):
-        """PII is not leaked in response_summary field."""
-        self.shop.sync_audit_mode = True
-
-        syncer = EtsyOrderSyncer(self.env)
-        adapter = MagicMock()
-        adapter.fetch_new_orders.return_value = iter([_load('receipts_page1.json')])
-
-        with patch.object(syncer, '_build_adapter', return_value=adapter):
-            syncer.sync_shop_orders(self.shop)
-
-        audit_logs = self.env['etsy.api.log'].search([
-            ('shop_id', '=', self.shop.id),
-            ('source', '=', 'audit'),
-        ])
-
-        # PII fragments to check
-        pii_fragments = [
-            'alice@example.com', 'bob@example.com', 'charlie@example.ca',
-            'Alice Buyer', 'Bob Builder', 'Charlie Customer',
-            '123 Main St', '456 Oak Ave', '789 Maple Rd',
-            'Please hurry!',  # message_from_buyer
-        ]
-
-        for log in audit_logs:
-            response_summary = log.response_summary or ''
-            for pii in pii_fragments:
-                self.assertNotIn(
-                    pii, response_summary,
-                    f"PII '{pii}' found in log {log.id} response_summary: "
-                    f"{response_summary[:100]}"
-                )
-
-    def test_audit_log_includes_receipt_id_and_amount(self):
-        """Audit log response_summary includes receipt ID and amount tokens."""
-        self.shop.sync_audit_mode = True
-
-        syncer = EtsyOrderSyncer(self.env)
-        adapter = MagicMock()
-        adapter.fetch_new_orders.return_value = iter([_load('receipts_page1.json')])
-
-        with patch.object(syncer, '_build_adapter', return_value=adapter):
-            syncer.sync_shop_orders(self.shop)
-
-        audit_logs = self.env['etsy.api.log'].search([
+    def _audit_logs(self):
+        return self.env['etsy.api.log'].search([
             ('shop_id', '=', self.shop.id),
             ('source', '=', 'audit'),
         ], order='id')
 
-        # Fixture has receipt IDs: 1001, 1002, 1003 with amounts 110, 55, 75 USD
-        expected_receipt_ids = ['1001', '1002', '1003']
-        expected_amounts = ['110', '55', '75']
+    def test_audit_run_creates_one_api_log_per_receipt(self):
+        """Audit mode creates one etsy.api.log row per receipt."""
+        self._run_sync()
+        self.assertEqual(len(self._audit_logs()), 3)
 
-        for i, log in enumerate(audit_logs):
-            response_summary = log.response_summary or ''
+    def test_audit_log_endpoint_field_set(self):
+        """Audit logs have non-empty endpoint."""
+        self._run_sync()
+        for log in self._audit_logs():
+            self.assertTrue(log.endpoint)
+
+    def test_audit_log_pii_scrubbed_from_response_summary(self):
+        """PII is not leaked in response_summary."""
+        self._run_sync()
+        pii_fragments = [
+            'alice@example.com', 'bob@example.com', 'charlie@example.ca',
+            'Alice Buyer', 'Bob Builder', 'Charlie Customer',
+            '123 Main St', '456 Oak Ave', '789 Maple Rd',
+            'Please hurry!',
+        ]
+        for log in self._audit_logs():
+            summary = log.response_summary or ''
+            for pii in pii_fragments:
+                self.assertNotIn(pii, summary,
+                                 f"PII '{pii}' leaked in log {log.id}: {summary[:100]}")
+
+    def test_audit_log_includes_receipt_id_and_amount(self):
+        """Audit log response_summary includes receipt id + amount + currency."""
+        self._run_sync()
+        logs = self._audit_logs()
+        receipt_ids = ['1001', '1002', '1003']
+        for log in logs:
+            summary = log.response_summary or ''
+            self.assertTrue(summary)
             self.assertTrue(
-                len(response_summary) > 0,
-                f"Log {log.id} should have non-empty response_summary"
+                any(rid in summary for rid in receipt_ids),
+                f"No receipt id in {summary!r}",
             )
-            # At least one receipt ID should be mentioned
-            self.assertTrue(
-                any(receipt_id in response_summary
-                    for receipt_id in expected_receipt_ids),
-                f"No receipt ID found in log {log.id} response_summary: "
-                f"{response_summary}"
-            )
-            # Currency code should be present
-            self.assertIn(
-                'USD', response_summary,
-                f"Currency code 'USD' not found in log {log.id} "
-                f"response_summary: {response_summary}"
-            )
+            self.assertIn('USD', summary)
 
     def test_no_audit_rows_in_normal_sync(self):
         """Normal (non-audit) sync does not create audit-source logs."""
-        # Shop with audit mode OFF
         self.shop.sync_audit_mode = False
-
-        syncer = EtsyOrderSyncer(self.env)
-        adapter = MagicMock()
-        adapter.fetch_new_orders.return_value = iter([_load('receipts_page1.json')])
-
-        with patch.object(syncer, '_build_adapter', return_value=adapter):
-            syncer.sync_shop_orders(self.shop)
-
-        # Verify NO audit-source logs were created
-        audit_logs = self.env['etsy.api.log'].search([
-            ('shop_id', '=', self.shop.id),
-            ('source', '=', 'audit'),
-        ])
-
-        self.assertEqual(
-            len(audit_logs), 0,
-            f"Normal sync should not create audit logs, "
-            f"but found {len(audit_logs)}"
-        )
+        self._run_sync()
+        self.assertEqual(len(self._audit_logs()), 0)

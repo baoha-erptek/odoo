@@ -195,18 +195,21 @@ class TestEtsyOrderSyncer_AuditMode(TransactionCase):
         self.assertEqual(result['ingested'], 0)
         self.assertEqual(result['audited'], 3)
 
-    def test_audit_mode_logs_each_receipt_via_warning(self):
+    def test_audit_mode_writes_api_log_per_receipt(self):
+        """P0-17 retrofit: audit mode writes one etsy.api.log row per
+        receipt with source='audit'. (Replaces the P0-16c version which
+        asserted _logger.warning calls — that contract was a stopgap.)"""
         syncer = EtsyOrderSyncer(self.env)
         adapter = self._adapter_with_page1()
-        with patch(
-            'odoo.addons.etsy_integration.services.etsy_order_syncer._logger',
-        ) as mock_logger, patch.object(
-            syncer, '_build_adapter', return_value=adapter,
-        ):
+        before = self.env['etsy.api.log'].search_count([
+            ('shop_id', '=', self.shop.id), ('source', '=', 'audit'),
+        ])
+        with patch.object(syncer, '_build_adapter', return_value=adapter):
             syncer.sync_shop_orders(self.shop)
-        # 3 receipts in page1 → at least 3 warning calls. The receipt_id
-        # must appear in at least one of those calls.
-        self.assertGreaterEqual(mock_logger.warning.call_count, 3)
+        after = self.env['etsy.api.log'].search_count([
+            ('shop_id', '=', self.shop.id), ('source', '=', 'audit'),
+        ])
+        self.assertEqual(after - before, 3)
 
     def test_audit_mode_advances_cursor_after_batch(self):
         syncer = EtsyOrderSyncer(self.env)

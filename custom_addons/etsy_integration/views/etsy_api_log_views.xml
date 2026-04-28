@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_etsy_api_log_tree" model="ir.ui.view">
+        <field name="name">etsy.api.log.tree</field>
+        <field name="model">etsy.api.log</field>
+        <field name="arch" type="xml">
+            <list string="Etsy API Log" decoration-danger="http_status &gt;= 500"
+                  decoration-warning="http_status &gt;= 400 and http_status &lt; 500"
+                  default_order="request_started_at desc">
+                <field name="request_started_at"/>
+                <field name="shop_id"/>
+                <field name="source"/>
+                <field name="endpoint"/>
+                <field name="http_status"/>
+                <field name="duration_ms"/>
+                <field name="error_message" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_api_log_form" model="ir.ui.view">
+        <field name="name">etsy.api.log.form</field>
+        <field name="model">etsy.api.log</field>
+        <field name="arch" type="xml">
+            <form string="Etsy API Log Entry" create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="shop_id"/>
+                            <field name="source"/>
+                            <field name="endpoint"/>
+                            <field name="http_status"/>
+                        </group>
+                        <group>
+                            <field name="request_started_at"/>
+                            <field name="duration_ms"/>
+                            <field name="quota_used_today"/>
+                            <field name="quota_remaining_today"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Request Summary">
+                            <field name="request_payload_summary" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Response Summary">
+                            <field name="response_summary" nolabel="1" readonly="1"/>
+                        </page>
+                        <page string="Error" invisible="not error_message">
+                            <field name="error_message" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_etsy_api_log_search" model="ir.ui.view">
+        <field name="name">etsy.api.log.search</field>
+        <field name="model">etsy.api.log</field>
+        <field name="arch" type="xml">
+            <search string="Etsy API Log">
+                <field name="endpoint"/>
+                <field name="shop_id"/>
+                <filter name="audit_runs" string="Audit"
+                        domain="[('source', '=', 'audit')]"/>
+                <separator/>
+                <filter name="group_by_shop" string="Shop"
+                        context="{'group_by': 'shop_id'}"/>
+                <filter name="group_by_source" string="Source"
+                        context="{'group_by': 'source'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_etsy_api_log" model="ir.actions.act_window">
+        <field name="name">Etsy API Log</field>
+        <field name="res_model">etsy.api.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_etsy_api_log_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Etsy API log entries yet.
+            </p>
+            <p>
+                This audit trail records every Etsy API call and audit-mode receipt comparison.
+                Rows older than the configured retention window (default 30 days) are
+                cleaned up daily.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_etsy_api_log"
+              name="API Log"
+              parent="menu_etsy_root"
+              action="action_etsy_api_log"
+              sequence="50"
+              groups="etsy_integration.group_etsy_api_log_reader,base.group_system"/>
+
+</odoo>

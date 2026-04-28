@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- P0-17: dedicated read-only group for diagnostics access to
+         etsy.api.log. Members can browse the log for incident review
+         without being given full system rights. -->
+    <record id="group_etsy_api_log_reader" model="res.groups">
+        <field name="name">Etsy API Log Reader</field>
+    </record>
+
     <record id="etsy_email_log_rule_user" model="ir.rule">
         <field name="name">Etsy Email Log: read all</field>
         <field name="model_id" ref="model_etsy_email_log"/>

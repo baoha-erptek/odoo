@@ -30,8 +30,8 @@ Features:
         'multichannel_hub_core',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'security/etsy_security.xml',
+        'security/ir.model.access.csv',
         'data/ir_cron_data.xml',
         'data/etsy_shipping_product.xml',
         'data/etsy_fiscal_data.xml',
@@ -42,6 +42,7 @@ Features:
         'views/etsy_sync_health_views.xml',
         'views/etsy_shop_views.xml',
         'views/etsy_email_log_views.xml',
+        'views/etsy_api_log_views.xml',
         'views/sale_order_views.xml',
         'views/res_config_settings_views.xml',
         'views/import_orders_wizard_views.xml',

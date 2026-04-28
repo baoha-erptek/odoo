@@ -105,20 +105,26 @@ class EtsyOrderSyncer:
         return EtsyApiAdapter(client)
 
     def _audit_log(self, shop, payload):
-        """Audit-mode receipt log. Temporary `_logger.warning` until
-        P0-17 ships `etsy.api.log` with `source='audit'`. Keep the
-        single call-site so P0-17 retrofit is a one-line change.
-
-        PII minimization: we deliberately do NOT log `buyer_name` or
-        `buyer_email` (security-reviewer P0-16c MEDIUM). Operational
-        diagnostics need only the receipt_id + amount + currency to
-        reconcile against the BA's spreadsheet during cutover. Buyer
-        identifiers move into `etsy.api.log` in P0-17 where the model
-        carries proper read ACL.
+        """Audit-mode receipt log. P0-17: writes one `etsy.api.log`
+        row per receipt with `source='audit'`. PII (buyer_name,
+        buyer_email, addresses) is intentionally absent from
+        `response_summary` — receipt_id + amount + currency are
+        sufficient for BA reconciliation against the GKE spreadsheet,
+        and `etsy.api.log` itself carries `etsy_api_log_reader` ACL,
+        not unrestricted operator read.
         """
-        _logger.warning(
-            'Etsy audit (shop=%s): receipt %s total=%s %s — '
-            'no sale.order written (sync_audit_mode=True).',
-            shop.name, payload.etsy_order_id,
-            payload.amount_total, payload.currency,
-        )
+        # sudo(): bypasses the etsy.api.log ACL gate (system-only
+        # create per security/ir.model.access.csv). The cron context
+        # is already __system__ so this is defensive redundancy — but
+        # it also lets a future manual admin trigger of sync_shop_orders
+        # write the audit row without elevating the caller's session.
+        self._env['etsy.api.log'].sudo().create({
+            'shop_id': shop.id,
+            'endpoint': 'GET /v3/application/shops/%s/receipts (audit mode)' % shop.id,
+            'source': 'audit',
+            'response_summary': (
+                'audit: receipt %s amount=%s %s — '
+                'no sale.order written (sync_audit_mode=True).'
+                % (payload.etsy_order_id, payload.amount_total, payload.currency)
+            ),
+        })
