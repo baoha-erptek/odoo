@@ -20,3 +20,4 @@ from . import test_etsy_api_client
 from . import test_etsy_order_payload
 from . import test_etsy_channel_adapter
 from . import test_etsy_order_ingestor
+from . import test_etsy_api_adapter

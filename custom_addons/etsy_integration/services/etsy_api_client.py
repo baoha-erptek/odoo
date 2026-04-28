@@ -239,3 +239,14 @@ class EtsyApiClient:
     def ping(self) -> dict:
         """Cheapest auth-validation call. Returns the user/me payload."""
         return self._request('GET', 'users/me')
+
+    def get(self, path: str, params: dict | None = None) -> dict:
+        """Authenticated GET against the Etsy v3 application surface.
+
+        Public wrapper around `_request('GET', ...)` for callers that
+        do not need the full request method/body machinery — the
+        `EtsyApiAdapter` (P0-16b2) is the only intended caller. Same
+        rate-limit + 401-refresh + 429-retry guarantees as `_request`.
+        """
+        kwargs = {'params': params} if params else {}
+        return self._request('GET', path, **kwargs)
