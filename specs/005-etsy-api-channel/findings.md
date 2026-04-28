@@ -4,6 +4,62 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-04-28 — P0-16c EtsyOrderSyncer + audit mode + status-only re-sync landed
+
+**Slice scope (final, post-execution)**:
+- `services/etsy_order_syncer.py` (NEW, ~110 LOC): `EtsyOrderSyncer.sync_shop_orders(shop)` orchestrator. `_build_adapter(shop)` factory hook for test override. `_audit_log(shop, payload)` single-call-site so P0-17 retrofit to `etsy.api.log` is one line.
+- `services/etsy_order_ingestor.py`: extended to route existing orders to `_status_only_resync` (FR-009 subset — payment_status + etsy_last_modified only; shipping_status / cancellation deferred to P0-17).
+- `services/etsy_order_payload.py`: additive `last_modified: datetime | None = None` field at end of frozen dataclass (backward-compatible).
+- `services/etsy_api_adapter.py`: `_receipt_to_payload` now reads `last_modified_tsz` (or `updated_timestamp` fallback) into the payload.
+- `services/order_creator.py` `process_etsy_payload`: writes `payment_status` + `etsy_last_modified` from payload during initial create.
+- `models/etsy_shop.py`: new `sync_mode` Selection [email_only, api_only] + `sync_audit_mode` Boolean, both `groups='base.group_system'`. New `_cron_sync_orders` method with `_is_system()` guard.
+- `models/sale_order.py`: new `payment_status` Selection [unpaid, paid] + `etsy_last_modified` Datetime, both `readonly=True` (chosen over `groups='base.group_system'` so dashboard salesmen retain read access).
+- `data/ir_cron_data.xml`: new cron `cron_etsy_order_sync`, 5min, filters `sync_mode='api_only'`.
+- 17 P0-16c tests (Phase 1 DB + Phase 2 ORM); pre-existing tests preserved.
+
+**Owner-confirmed planner OQs** (all 5 accepted as recommended):
+
+| OQ | Decision |
+|---|---|
+| OQ1 audit logging | `_logger.warning` per receipt; `etsy.api.log` retrofit in P0-17 |
+| OQ2 status-only depth | Full FR-009 (subset shipped: payment_status + etsy_last_modified); shipping_status / cancellation deferred to P0-17 alongside richer Selection taxonomy |
+| OQ3 cursor advancement | Per-payload (after each successful ingest) |
+| OQ4 audit + api_only constraint | Soft-warn (`_logger.warning`) only — no `@api.constrains` |
+| OQ5 cron filter | `sync_mode='api_only'` only — audit flag does NOT trigger cron |
+
+**Surprises (all resolved before commit)**:
+
+1. **`ir.model.fields` field-level ACL has no DB column.** RED test asserted ACL via `ir_fields.groups_id` (then tried `group_ids`) — both fail with `AttributeError`. The Many2many is `ir_model_fields.groups`, but its junction table `ir_model_fields_group_rel` is documented in `odoo/addons/base/models/ir_model.py` as `# CLEANME unimplemented field (empty table)`. Field-level ACL lives in-memory on the `Field` object's `.groups` attribute and is enforced by ORM, not stored in DB. **Fix**: assert `self.env['etsy.shop']._fields['sync_audit_mode'].groups == 'base.group_system'` instead. Phase 1 DB tests for field-level ACL must always go through the in-memory Field object.
+
+2. **tdd-guide produced placeholder RED tests that would silently flip FAIL→PASS.** The agent wrote 11 syncer tests, ~10 of which were `with self.assertRaises((AttributeError, ImportError)): from ... import EtsyOrderSyncer` — these "fail" only because the import raises ImportError, then `assertRaises` swallows it. Once GREEN lands and the import succeeds, `assertRaises` itself fires (no exception raised), turning a "passing" test green into a regression. **Fix**: rewrote `test_etsy_order_syncer.py` with proper mock-based contract assertions before running the post-GREEN test pass. **Lesson**: when a tdd-guide RED commit lands with "all tests fail for the right reason", verify that the "right reason" is contract-specific, not import-availability. An `assertRaises(ImportError)` is RED-poor — the test must exercise the actual contract method even when it doesn't yet exist. Captured to memory as a recurring tdd-guide failure mode.
+
+3. **Pre-existing duplicate-ingest semantic inverted by FR-009.** `test_ingest_returns_none_on_duplicate` asserted `self.assertIsNone(second)` — that was the P0-16b1 semantic. P0-16c FR-009 routes existing orders through status-only re-sync, which returns the (refreshed) order, not None. The pre-existing test caught this on first run; renamed to `test_ingest_returns_existing_order_on_duplicate` with `self.assertEqual(second.id, first.id)`. **Lesson**: when changing single-writer ingestor semantics, grep the test suite for prior expectations on return-shape — they are likely stale.
+
+4. **`order.refresh()` doesn't exist in Odoo 19.** tdd-guide wrote `order.refresh()` after re-sync to re-read fields. Odoo 19 dropped that method (gotcha #4 in memory). **Fix**: `order.invalidate_recordset()` (or scope to specific fields with `invalidate_recordset(['payment_status'])`).
+
+**Q-resolved (security-reviewer P0-16c, fixed inline)**:
+
+- **MEDIUM** — `payment_status` + `etsy_last_modified` had no field-level write restriction. Reviewer suggested `groups='base.group_system'`, which would hide them from dashboard salesmen who need read access to filter unpaid orders. **Resolution**: `readonly=True` (single-writer at UI level) instead. Hard ACL via `groups=` deferred until P0-17 when `tracking=True` + `mail.thread` audit gives us tamper detection without losing visibility.
+- **MEDIUM** — `_audit_log` logged `payload.buyer_name` into Odoo's log files (less protected than DB rows). PII minimization: dropped buyer_name; receipt_id + amount + currency are enough for BA reconciliation. Buyer identifiers move into `etsy.api.log` (proper read ACL) in P0-17.
+- **HIGH-mitigated** — `_cron_sync_orders` is `@api.model` with no privilege gate; the field-level ACL on OAuth tokens is the existing defense. **Resolution**: added explicit `if not self.env.user._is_system(): raise AccessError(...)` for defense-in-depth against accidental RPC exposure.
+
+**Q-deferred (security-reviewer P0-16c LOWs / accepted-with-mitigation)**:
+
+- **HIGH-mitigated, accepted** — Cursor advancement is non-durable until the cron transaction commits. Crash mid-batch = loss of cursor advance, but ingest idempotency (etsy_order_id dedup) + status-only re-sync idempotency mean the next cron tick re-fetches and writes are no-ops. Explicit `env.cr.commit()` per payload defers to P1-XX hardening.
+- **MEDIUM-mitigated, accepted** — `_status_only_resync` writes regardless of monotonicity → a stale payload could downgrade `payment_status` from 'paid' to 'unpaid'. Defense: the syncer's monotonic cursor (`payload_ts > last_seen`) is the authoritative gate. Documented in ingestor docstring.
+- **LOW** — Soft-warn (no constraint) on `sync_audit_mode + sync_mode='api_only'` per OQ4; an `@api.constrains` could be added pre-cutover (P1-11) if the soft warning gets ignored.
+
+**Verification**:
+- `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration,multichannel_hub_core,multichannel_hub_fulfillment --test-tags=/etsy_integration,/multichannel_hub_core,/multichannel_hub_fulfillment --stop-after-init` → 0 fail / 0 error / 320 tests.
+- Module installs cleanly; no new `_logger.info(` in models or services beyond the pre-existing operational cron-summary line (which is convention).
+- Reviews: code-reviewer PASS with 2 MINORs accepted; security-reviewer 2 MEDIUMs + 1 HIGH-mitigated fixed inline.
+
+**Branch + commit**: `feature/006-master-plan-coding` `b70daf6b07a`. RED already on branch as `74dc81db0de`.
+
+**Unblocks**: P0-17 (`etsy.api.log` model + audit reconciliation) and P1-12 (`EtsyTrackingPusher` — once Spec 005 US3 starts) — both share the cron + audit-log scaffolding this slice put in place.
+
+---
+
 ## 2026-04-28 — P0-16a module-home decision (supersedes data-model.md §"Adapter contract" location)
 
 **Contradiction**: `data-model.md` line 260 places `EtsyChannelAdapter` Protocol + `EtsyOrderPayload` dataclasses in `multichannel_hub_core/services/`. `multichannel_hub_core/CLAUDE.md` (added under P0-20 skeleton) prohibits Etsy-specific code: *"This module has no Etsy-specific code. If a model, service, or view references `etsy_*` anything, it belongs in `etsy_channel`, not here."*
