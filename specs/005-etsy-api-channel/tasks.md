@@ -60,14 +60,14 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 4: US2 — Direct order/receipt sync via canonical payload (P1)
 
-- [ ] T021 [US2] Implement `services/etsy_api_adapter.py` — implements `EtsyChannelAdapter` Protocol; `fetch_new_orders(shop_id, since)` wraps `EtsyApiClient` paginated receipt fetch; transforms each receipt to `EtsyOrderPayload`; emits via generator
+- [X] T021 [US2] Implement `services/etsy_api_adapter.py` — implements `EtsyChannelAdapter` Protocol; `fetch_new_orders(shop_id, since)` wraps `EtsyApiClient` paginated receipt fetch; transforms each receipt to `EtsyOrderPayload`; emits via generator — **landed P0-16b2 2026-04-28** (commit `ab48e8a8782`).
 - [ ] T022 [US2] Implement `services/etsy_order_syncer.py` — incremental sync orchestrator: reads `etsy_shop.etsy_last_receipt_sync_at`, calls `EtsyApiAdapter.fetch_new_orders`, passes to `EtsyOrderIngestor.ingest`, advances cursor
 - [ ] T023 [P] [US2] Add cron `cron_etsy_order_sync` (default 5min interval) per FR-012
 - [ ] T024 [P] [US2] Implement `models/etsy_api_log.py` — `etsy.api.log` model per data-model.md §3 (audit trail with retention policy)
 - [ ] T025 [P] [US2] Implement cron `cron_etsy_api_log_cleanup` per FR-035 (delete rows >retention_days)
 - [ ] T026 [US2] Extend `sale.order` in `models/sale_order.py` — add `sync_source`, `etsy_last_modified`, `etsy_tracking_push_status`, `etsy_tracking_push_at`, `etsy_tracking_push_error` per data-model.md §6
 - [ ] T027 [US2] Add composite index `(etsy_shop_id, etsy_last_modified DESC)` on `sale_order` per data-model.md §6 (Tech-architect recommendation)
-- [ ] T028 [P] [US2] Implement `EtsyApiAdapter` mapping function `_receipt_to_payload(receipt_dict) -> EtsyOrderPayload`: maps Etsy fields to canonical schema (handles currency, line_items, shipping_address, buyer_message, listing_id)
+- [X] T028 [P] [US2] Implement `EtsyApiAdapter` mapping function `_receipt_to_payload(receipt_dict) -> EtsyOrderPayload`: maps Etsy fields to canonical schema (handles currency, line_items, shipping_address, buyer_message, listing_id) — **landed P0-16b2 2026-04-28**. Money divisor handling + variations list→dict flattening + payment_status from is_paid + provenance fields covered.
 - [ ] T029 [P] [US2] Implement `EtsyOrderIngestor` status-only-update logic for re-sync (FR-009): when `etsy_order_id` exists, update payment_status / shipping_status / cancellation only; preserve `mp_note`, `pic_user_id`, design state
 - [ ] T030 [P] [US2] Phase-2 test `tests/test_api_adapter.py` — record VCR cassette for representative receipts (different currencies, gift-message, multi-line); verify payload-mapping correctness
 - [ ] T031 [P] [US2] Phase-2 test `tests/test_order_syncer.py` — incremental sync with `since` cursor, dedup by etsy_order_id, status-only update preserving operator data, pagination handling
