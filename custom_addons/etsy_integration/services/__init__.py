@@ -4,3 +4,6 @@ from . import order_creator
 from . import product_categorizer
 from . import image_downloader
 from . import etsy_api_client
+from . import etsy_order_payload
+from . import etsy_channel_adapter
+from . import etsy_order_ingestor

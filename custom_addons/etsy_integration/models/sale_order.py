@@ -22,6 +22,29 @@ class SaleOrder(models.Model):
     etsy_subtotal = fields.Float(string='Etsy Subtotal', digits=(12, 2))
     etsy_email_log_id = fields.Many2one(
         'etsy.email.log', string='Source Email', ondelete='set null')
+    # Spec 005 P0-16b1 — provenance for orders ingested via canonical
+    # `EtsyOrderPayload`. `sync_source` mirrors `payload.source`
+    # ('api'/'email') so operators can tell which adapter produced the
+    # record. `etsy_raw_source_id` stores `payload.raw_source_id`
+    # (e.g. `receipt:1234` or `email_log:567`) so we can navigate back
+    # to the originating record for audit + replay.
+    sync_source = fields.Selection(
+        selection=[
+            ('api', 'Etsy API'),
+            ('email', 'Etsy Email'),
+            # 'webhook' is reserved (Spec 005 US4 / Phase 1) so Odoo
+            # never adds a CHECK constraint that would reject the value
+            # when the webhook adapter lands. No code currently writes
+            # 'webhook' — adding it now is purely a forward-compat hook.
+            ('webhook', 'Etsy Webhook (reserved)'),
+        ],
+        string='Sync Source', copy=False, index=True,
+        help='Channel adapter that ingested this order; written by '
+             'EtsyOrderIngestor.')
+    etsy_raw_source_id = fields.Char(
+        string='Source Record Reference', copy=False,
+        help="Back-pointer to the originating record (e.g. 'receipt:1234' "
+             "for API, 'email_log:567' for the email path).")
     is_etsy_order = fields.Boolean(
         string='Is Etsy Order', compute='_compute_is_etsy_order', store=True)
     etsy_price_anomaly = fields.Boolean(

@@ -33,6 +33,23 @@ class EtsyShop(models.Model):
         string='Etsy OAuth Token Expires At',
     )
 
+    # Spec 005 P0-16b1 — incremental-sync watermark. The `EtsyOrderSyncer`
+    # (P0-16c) reads this when calling the adapter's `fetch_new_orders`
+    # and writes a fresh value once the batch ingests cleanly. NULL on
+    # newly created shops; the syncer treats NULL as "fetch from the
+    # configured floor" (a quarter-day lookback or shop creation date,
+    # decision deferred to P0-16c).
+    # System-only ACL parity with the OAuth token fields above —
+    # operators have no business reading or writing the sync watermark
+    # directly; only the syncer cron (running as system) needs access.
+    # P0-16b1 security review HIGH: tighten before P0-16c orchestrator.
+    etsy_last_receipt_sync_at = fields.Datetime(
+        string='Etsy Last Receipt Sync At',
+        groups='base.group_system',
+        help='Watermark for incremental Etsy receipt sync. The syncer '
+             'fetches receipts modified after this timestamp.',
+    )
+
     _sql_constraints = [
         ('name_unique', 'UNIQUE(name)', 'Shop name must be unique!'),
     ]

@@ -480,6 +480,148 @@ class OrderCreator:
             [('etsy_order_id', '=', str(order_id))], limit=1))
 
     # ------------------------------------------------------------------
+    # API-channel ingestion (Spec 005 P0-16b1)
+    # ------------------------------------------------------------------
+
+    def process_etsy_payload(self, payload, shop):
+        """Create a `sale.order` from a canonical `EtsyOrderPayload`.
+
+        Peer entry point to `process_parse_result`: same write logic
+        (partner-dedup, product creation, xmlid resolution, shipping
+        line) but the input shape is the canonical payload instead of
+        an email-derived `ParseResult`. Caller is `EtsyOrderIngestor`
+        (P0-16b1) or any future channel that emits `EtsyOrderPayload`.
+
+        Returns the created `sale.order` record, or `None` if the
+        receipt is already in Odoo (dedup by `etsy_order_id`).
+
+        Note: status-only re-sync (FR-009) is NOT implemented here —
+        when an existing order is re-ingested the call is a no-op
+        returning None. The syncer (P0-16c) will add the
+        update-on-existing path in a follow-up slice.
+        """
+        if self.is_duplicate_order(payload.etsy_order_id):
+            _logger.info(
+                'Skipping duplicate order %s (api ingest)',
+                payload.etsy_order_id,
+            )
+            return None
+
+        partner = self._payload_partner(payload)
+        currency = self._get_currency(payload.currency)
+        pricelist = self._get_pricelist(payload.currency)
+        fiscal_position = self._get_fiscal_position()
+        payment_term = self._get_payment_term()
+        sales_team = self._get_sales_team()
+
+        order_vals = {
+            'partner_id': partner.id,
+            'date_order': payload.order_date or odoo_fields.Datetime.now(),
+            'etsy_order_id': payload.etsy_order_id,
+            'etsy_shop_id': shop.id if shop else False,
+            'etsy_note_from_buyer': payload.buyer_message or '',
+            'etsy_gift_message': payload.gift_message or '',
+            'etsy_shipping_cost': payload.shipping_total or 0.0,
+            'sync_source': payload.source,
+            'etsy_raw_source_id': payload.raw_source_id,
+            'order_line': [],
+        }
+        if currency:
+            order_vals['currency_id'] = currency.id
+        if pricelist:
+            order_vals['pricelist_id'] = pricelist.id
+        if fiscal_position:
+            order_vals['fiscal_position_id'] = fiscal_position.id
+        if payment_term:
+            order_vals['payment_term_id'] = payment_term.id
+        if sales_team:
+            order_vals['team_id'] = sales_team.id
+
+        for item in payload.line_items:
+            if self.is_duplicate_transaction(item.transaction_id):
+                _logger.info(
+                    'Skipping duplicate transaction %s (api ingest)',
+                    item.transaction_id,
+                )
+                continue
+            product = self.find_or_create_product(item.title, '')
+            order_vals['order_line'].append((0, 0, {
+                'product_id': product.id,
+                'product_uom_qty': item.quantity or 1,
+                'price_unit': item.unit_price or 0.0,
+                'etsy_transaction_id': str(item.transaction_id),
+                'etsy_personalisation': item.personalisation or '',
+                'etsy_sku': item.sku or '',
+            }))
+
+        if not order_vals['order_line']:
+            _logger.warning(
+                'Order %s has no new transaction lines; skipping (api ingest).',
+                payload.etsy_order_id,
+            )
+            return None
+
+        shipping_total = payload.shipping_total or 0.0
+        shipping_product = self._get_shipping_product()
+        if shipping_total > 0 and shipping_product:
+            order_vals['order_line'].append((0, 0, {
+                'product_id': shipping_product.id,
+                'product_uom_qty': 1.0,
+                'price_unit': shipping_total,
+                'name': shipping_product.display_name,
+            }))
+
+        order = self._env['sale.order'].create(order_vals)
+        _logger.info(
+            'Created sale.order %s (Etsy #%s, source=api) with %d lines',
+            order.name, payload.etsy_order_id, len(order.order_line),
+        )
+        return order
+
+    def _payload_partner(self, payload):
+        """Map `EtsyOrderPayload.shipping_address` into the namespace
+        shape that `find_or_create_partner` already accepts.
+
+        This adapter is intentionally local: `find_or_create_partner`
+        is currently coupled to an email-shaped duck-typed object
+        (attributes `email`, `address1`, `country_code`, ...). Rather
+        than refactor the email path in this slice, we adapt at the
+        boundary. A future slice can normalize `find_or_create_partner`
+        to take explicit kwargs and drop this shim.
+
+        Gap noted: `EtsyAddressPayload` does not carry `phone` or
+        `country_name`. We pass empty strings; the partner record
+        will have no phone, and country resolution falls back to ISO
+        alpha-2 only. Phone is rarely critical for fulfillment via
+        Gearment (carriers use the address); add to the payload schema
+        only when an operator workflow surfaces the need.
+
+        Trust boundary: the `payload` MUST be either (a) hand-crafted
+        in test code, or (b) emitted by an adapter that has fetched it
+        from a trusted source (Etsy receipt API in P0-16b2; webhook
+        validator in P1). Webhook payloads must be validated against a
+        receipt re-fetch BEFORE calling `process_etsy_payload` —
+        `_payload_partner` does NOT re-validate the payload contents.
+        """
+        from types import SimpleNamespace
+        addr = payload.shipping_address
+        return self.find_or_create_partner(
+            SimpleNamespace(
+                email=payload.buyer_email or '',
+                name=addr.name,
+                address1=addr.street_1,
+                address2=addr.street_2 or '',
+                city=addr.city,
+                zipcode=addr.zip,
+                phone='',
+                country_code=addr.country_code,
+                country_name='',
+                state=addr.state or '',
+            ),
+            payload.buyer_name,
+        )
+
+    # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
