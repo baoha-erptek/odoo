@@ -24,3 +24,6 @@ from . import test_etsy_api_adapter
 from . import test_phase1_db_p0_16c
 from . import test_etsy_order_syncer
 from . import test_etsy_order_ingestor_status_only
+from . import test_phase1_db_p0_17
+from . import test_etsy_api_log
+from . import test_etsy_audit_retrofit
