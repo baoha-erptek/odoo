@@ -1,0 +1,132 @@
+{
+  "count": 3,
+  "results": [
+    {
+      "receipt_id": 1001,
+      "name": "Alice Buyer",
+      "country_iso": "US",
+      "created_timestamp": 1704067200,
+      "last_modified_tsz": 1704067200,
+      "grandtotal": {
+        "amount": 11000,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "total_shipping_cost": {
+        "amount": 1000,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-1001",
+          "listing_id": "L-1001",
+          "title": "Custom Mug",
+          "sku": "MUG-001",
+          "quantity": 1,
+          "price": {
+            "amount": 10000,
+            "divisor": 100,
+            "currency_code": "USD"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "123 Main St",
+      "second_line": null,
+      "city": "Boston",
+      "state": "MA",
+      "zip": "02108",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": null,
+      "buyer_email": "alice@example.com",
+      "gift_message": null
+    },
+    {
+      "receipt_id": 1002,
+      "name": "Bob Builder",
+      "country_iso": "US",
+      "created_timestamp": 1704153600,
+      "last_modified_tsz": 1704153600,
+      "grandtotal": {
+        "amount": 5500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "total_shipping_cost": {
+        "amount": 500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-1002",
+          "listing_id": "L-1002",
+          "title": "Wooden Box",
+          "sku": "BOX-001",
+          "quantity": 2,
+          "price": {
+            "amount": 2500,
+            "divisor": 100,
+            "currency_code": "USD"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "456 Oak Ave",
+      "second_line": null,
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97201",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": "Please hurry!",
+      "buyer_email": "bob@example.com",
+      "gift_message": null
+    },
+    {
+      "receipt_id": 1003,
+      "name": "Charlie Customer",
+      "country_iso": "CA",
+      "created_timestamp": 1704240000,
+      "last_modified_tsz": 1704240000,
+      "grandtotal": {
+        "amount": 7500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "total_shipping_cost": {
+        "amount": 1500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-1003",
+          "listing_id": "L-1003",
+          "title": "Ceramic Vase",
+          "sku": "VASE-001",
+          "quantity": 1,
+          "price": {
+            "amount": 6000,
+            "divisor": 100,
+            "currency_code": "USD"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "789 Maple Rd",
+      "second_line": null,
+      "city": "Toronto",
+      "state": "ON",
+      "zip": "M5V 3A8",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": null,
+      "buyer_email": "charlie@example.ca",
+      "gift_message": null
+    }
+  ],
+  "next_offset": 3
+}

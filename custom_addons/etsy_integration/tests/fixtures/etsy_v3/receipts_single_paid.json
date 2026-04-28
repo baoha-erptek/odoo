@@ -1,0 +1,48 @@
+{
+  "count": 1,
+  "results": [
+    {
+      "receipt_id": 2001,
+      "name": "Frank Finder",
+      "country_iso": "US",
+      "created_timestamp": 1704500000,
+      "last_modified_tsz": 1704500000,
+      "grandtotal": {
+        "amount": 12500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "total_shipping_cost": {
+        "amount": 2500,
+        "divisor": 100,
+        "currency_code": "USD"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-2001",
+          "listing_id": "L-2001",
+          "title": "Premium Watch",
+          "sku": "WATCH-001",
+          "quantity": 1,
+          "price": {
+            "amount": 10000,
+            "divisor": 100,
+            "currency_code": "USD"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "999 Diamond St",
+      "second_line": null,
+      "city": "New York",
+      "state": "NY",
+      "zip": "10001",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": null,
+      "buyer_email": "frank@example.com",
+      "gift_message": null
+    }
+  ],
+  "next_offset": null
+}

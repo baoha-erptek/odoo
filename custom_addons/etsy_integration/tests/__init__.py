@@ -21,3 +21,6 @@ from . import test_etsy_order_payload
 from . import test_etsy_channel_adapter
 from . import test_etsy_order_ingestor
 from . import test_etsy_api_adapter
+from . import test_phase1_db_p0_16c
+from . import test_etsy_order_syncer
+from . import test_etsy_order_ingestor_status_only
