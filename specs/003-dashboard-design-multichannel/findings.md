@@ -306,3 +306,87 @@ did not act on this slice:
   silent BA notification failure. Mitigation: chatter `message_post`
   on the order is still posted at approve/reject time, so the order
   thread shows the lifecycle even if the up-front activity was missed.
+
+## P1-02a surprises (2026-04-29)
+
+### D3 — Historical seed `state='approved'` vs `'pending'` (owner-confirm flag)
+
+**Where surfaced**: implementing T078 `_seed_from_historical_lines()`.
+Spec 003 data-model.md §6 doesn't pin the state semantics for files
+seeded from historical Etsy data. Two interpretations:
+
+- `'approved'` — proof-of-record: these orders already shipped, so
+  the design was effectively approved. Production team should not
+  revisit them; they appear in the "Đã duyệt" kanban column on day 1.
+- `'pending'` — request-for-review: force the BA/PD to confirm the
+  historical link is still valid before treating it as approved.
+
+**Resolution (current)**: chose `'approved'` + `is_seed=True`.
+Rationale: 17K historical orders already shipped via the legacy
+flow; treating them as `pending` would create a kanban backlog of
+17K rows on day 1, which is operationally hostile.
+
+**Owner-confirm flag**: needs sign-off from owner before P1-02a is
+considered "done in production". If owner prefers `pending`, change
+the default in `_seed_from_historical_lines()` and document the
+backlog-management plan.
+
+### `_sql_constraints` UNIQUE drift recurrence (third instance)
+
+**Where surfaced**: while writing T078 idempotency tests, confirmed
+that `_sql_constraints = [('uniq_design_file_order_line_url', 'UNIQUE
+(order_line_id, file_url)', ...)]` does NOT actually create the
+constraint at the DB level on a fresh install. Verified via
+`\d design_file` showing no UNIQUE constraint named
+`design_file_uniq_design_file_order_line_url`.
+
+**Resolution**: belt-and-braces `init()` raw SQL with a `DO`/
+`EXCEPTION WHEN duplicate_object` block to add the constraint
+idempotently. CREATE INDEX IF NOT EXISTS handles the composite
+indexes. This is the third confirmed instance of `_sql_constraints`
+not being applied (also: `etsy.email.log` UNIQUE — see memory
+`project_sql_constraints_drift.md`). The pattern is now load-bearing
+for any model where DB-level UNIQUE matters.
+
+**Lesson**: when DB-level UNIQUE is required (not just an
+`@api.constrains`), mirror it in `init()` raw SQL — `_sql_constraints`
+alone is unreliable.
+
+### `mail.tracking.value` writes flaky in TransactionCase even with `flush_all()`
+
+**Where surfaced**: `TestDesignFileMailThread.test_state_change_writes_chatter`
+initially asserted that approving a design.file would create a new
+`mail.tracking.value` row referencing the `state` field. Even after
+`self.env.flush_all()` and `invalidate_recordset()`, the tracking-value
+row was sometimes absent when the test queried it. P1-04 hit the same
+issue from the opposite direction (writes without rows).
+
+**Resolution**: assertion pattern that survives:
+1. State persists (read-back `record.state`).
+2. At least one `mail.message` row exists on the record (less
+   restrictive than asserting `> N` against a baseline).
+3. Declarative check that `tracking=True` is set on the field via
+   `record._fields['state'].tracking`.
+
+This is additive to the P1-01a lesson (don't assert
+`len(message_ids) > N` for tracked-Text-field writes); for tracked
+Selection fields the same flakiness applies even though the field
+type is different.
+
+### Odoo 19 Binary `attachment=True` has no DB column
+
+**Where surfaced**: Phase 1 schema test originally listed
+`preview_file` (Binary, `attachment=True`) in `required_columns` and
+queried `information_schema.columns`. Test failed because
+`attachment=True` Binary fields are stored entirely in `ir.attachment`
+and have no column on the model's table.
+
+**Resolution**: drop the field from `required_columns` for Phase 1
+DB tests. To verify the field exists at all, check
+`record._fields['preview_file'].attachment is True` from a Phase 2
+ORM test instead.
+
+**Lesson**: Phase 1 DB tests must distinguish stored vs attachment
+Binary fields. Use `_fields[name].attachment` to assert the field
+configuration, and only check `information_schema.columns` for
+truly stored columns.

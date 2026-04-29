@@ -31,9 +31,11 @@ class TestDesignFileTableExists(TransactionCase):
 
     def test_design_file_columns_exist(self):
         """Test that design_file table has all required columns."""
+        # design_file and preview_file are Binary(attachment=True) — they
+        # live in ir.attachment, not as columns on design_file.
         required_columns = [
             'id', 'name', 'order_id', 'order_line_id', 'parent_file_id',
-            'version', 'storage_mode', 'preview_file', 'file_url', 'file_name',
+            'version', 'storage_mode', 'file_url', 'file_name',
             'file_size', 'file_checksum', 'state', 'rejection_reason',
             'approved_by', 'approved_at', 'is_seed',
             'create_uid', 'create_date', 'write_uid', 'write_date'
