@@ -52,8 +52,8 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 **Goal**: BA sees commercial-state list view with thumbnails, decorations, inline edit, audit trail.
 **Independent test**: 17K rows render <3s; decorations + inline edit + chatter audit verified.
 
-- [ ] T021 [P] [US1] Extend `sale.order` in `models/sale_order.py` adding `sales_channel`, `channel_order_ref`, `x_pipeline_id`, `x_pipeline_state_id`, `has_pending_address_change` (computed, store=True per research.md R5) per data-model.md §1
-- [ ] T022 [US1] Add `sale.order` `@api.constrains` C-SO-001 (address-change lock) and C-SO-002 (pipeline policy) per data-model.md §1
+- [~] T021 [P] [US1] Extend `sale.order` in `models/sale_order.py` adding `sales_channel`, `channel_order_ref`, `x_pipeline_id`, `x_pipeline_state_id`, `has_pending_address_change` (computed, store=True per research.md R5) per data-model.md §1 — **partial in P1-04** (only `has_pending_address_change` + `address_change_request_ids` O2M); other 4 fields defer to P1-01.
+- [~] T022 [US1] Add `sale.order` `@api.constrains` C-SO-001 (address-change lock) and C-SO-002 (pipeline policy) per data-model.md §1 — **partial in P1-04** (C-SO-001 implemented as `write()` override with bypass-context; C-SO-002 pipeline policy defers to P1-01).
 - [ ] T023 [P] [US1] Extend `sale.order.line` in `models/sale_order_line.py` with rolled-up `design_status` (computed, store=True; lowest-of-children from `design_file_ids.state`) per data-model.md §3
 - [ ] T024 [US1] Create `views/order_dashboard_views.xml` with `ir.actions.act_window` "Order Dashboard" + `ir.ui.view` (list) — 14 columns per spec.md FR-001 (shop, channel, order_date, buyer, country, amount, discount, PIC, priority, MP_note, design_status, overdue_marker, tracking_state, image_128)
 - [ ] T025 [US1] Add row decorations to the Order Dashboard list view: `decoration-info` (qty≥2), `decoration-bf` (duplicate buyer 7-day window), `decoration-danger` (priority=push), `decoration-warning` (sales_channel=amazon)
@@ -106,18 +106,18 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 **Goal**: MP cannot edit destination directly; BA approves; bulk actions skip pending; ORM enforcement.
 **Independent test**: Request → activity to BA → approve atomic → label-buy blocked while pending.
 
-- [ ] T051 [US4] Implement `etsy.address.change.request` model in `models/etsy_address_change_request.py` per data-model.md §5 with `mail.thread` + `mail.activity.mixin` inheritance
-- [ ] T052 [US4] Implement constraints C-AC-001 (no requests on shipped/done/cancel orders), C-AC-002 (one outstanding per order), C-AC-003 (rejection_reason required when state=rejected)
-- [ ] T053 [US4] Implement `action_approve` method (atomic: writes new_values to `sale.order` with `context={'approve_address_change': True}`, sets state=approved, closes activity, posts chatter delta)
-- [ ] T054 [US4] Implement `action_reject` method (requires rejection_reason, posts chatter @mention to requester)
-- [ ] T055 [US4] Add auto-activity on create: `mail.activity.create` to `group_ba_lead` with summary "Approve address change for order <ref>", deadline +24h
-- [ ] T056 [P] [US4] Update `sale.order` C-SO-001 to recognise `context.get('approve_address_change')` bypass (data-model.md §1) — partial-write disabled when has_pending_address_change=True
-- [ ] T057 [P] [US4] Create `views/etsy_address_change_request_views.xml` with form, list, and Activity inbox visibility
-- [ ] T058 [US4] Add ACL: create allowed for marketing+ba; write (state) restricted to ba_lead; delete restricted to system
-- [ ] T059 [P] [US4] Modify `sale.order` form view to render destination fields readonly when has_pending_address_change=True with banner instructing user to file request
-- [ ] T060 [US4] Add "Request address change" button on `sale.order` form (visible only to MP when no pending request)
-- [ ] T061 [P] [US4] Modify Tracking Dashboard's bulk-shipped action (T035) to surface address-change skip warning explicitly (FR-017)
-- [ ] T062 [P] [US4] Phase-2 test `tests/test_address_change_workflow.py`: full lifecycle (request→approve, request→reject, server-side write blocked, bulk-action exclusion, atomic apply)
+- [X] T051 [US4] Implement `etsy.address.change.request` model in `models/etsy_address_change_request.py` per data-model.md §5 with `mail.thread` + `mail.activity.mixin` inheritance
+- [X] T052 [US4] Implement constraints C-AC-001 (no requests on shipped/done/cancel orders), C-AC-002 (one outstanding per order), C-AC-003 (rejection_reason required when state=rejected)
+- [X] T053 [US4] Implement `action_approve` method (atomic: writes new_values to `sale.order` with `context={'approve_address_change': True}`, sets state=approved, closes activity, posts chatter delta)
+- [X] T054 [US4] Implement `action_reject` method (requires rejection_reason, posts chatter @mention to requester)
+- [X] T055 [US4] Add auto-activity on create: `mail.activity.create` to `group_ba_lead` with summary "Approve address change for order <ref>", deadline +24h
+- [X] T056 [P] [US4] Update `sale.order` C-SO-001 to recognise `context.get('approve_address_change')` bypass (data-model.md §1) — partial-write disabled when has_pending_address_change=True (P1-04: folded into T022 — same constraint, with bypass-context detection)
+- [X] T057 [P] [US4] Create `views/etsy_address_change_request_views.xml` with form, list, and Activity inbox visibility
+- [X] T058 [US4] Add ACL: create allowed for marketing+ba; write (state) restricted to ba_lead; delete restricted to system
+- [X] T059 [P] [US4] Modify `sale.order` form view to render destination fields readonly when has_pending_address_change=True with banner instructing user to file request — **partial in P1-04**: banner + `partner_shipping_id` readonly attrs landed; full destination-field set lands when P1-01 wires the dashboard's expanded shipping-fields layout.
+- [~] T060 [US4] Add "Request address change" button on `sale.order` form (visible only to MP when no pending request) — **deferred to P1-01**: requires the wizard/quick-create UX co-designed with the Order Dashboard.
+- [~] T061 [P] [US4] Modify Tracking Dashboard's bulk-shipped action (T035) to surface address-change skip warning explicitly (FR-017) — **deferred to P1-03** (Tracking Dashboard slice owns T035).
+- [X] T062 [P] [US4] Phase-2 test `tests/test_address_change_workflow.py`: full lifecycle (request→approve, request→reject, server-side write blocked, bulk-action exclusion, atomic apply) — bulk-action exclusion test deferred to P1-03 caller integration.
 
 ---
 

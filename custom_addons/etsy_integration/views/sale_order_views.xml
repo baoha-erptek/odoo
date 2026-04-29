@@ -11,6 +11,23 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
+            <!-- P1-04 T059: address-change banner + lock partner_shipping_id
+                 while a request is pending. T060 ("Request address change"
+                 button) lands with the Order Dashboard in P1-01. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="has_pending_address_change" invisible="1"/>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not has_pending_address_change">
+                    <strong>Address change pending approval.</strong>
+                    Shipping fields are locked until a BA Lead resolves
+                    the open address-change request.
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
+                <attribute name="readonly">has_pending_address_change</attribute>
+            </xpath>
+
             <!-- Add Etsy notebook page before the closing notebook tag -->
             <xpath expr="//notebook" position="inside">
                 <page string="Etsy" name="etsy_tab" invisible="not is_etsy_order">
