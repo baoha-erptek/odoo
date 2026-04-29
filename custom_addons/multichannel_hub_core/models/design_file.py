@@ -129,15 +129,20 @@ class DesignFile(models.Model):
             CREATE INDEX IF NOT EXISTS design_file_order_line_id_state_idx
                 ON design_file (order_line_id, state)
         """)
-        # ALTER TABLE ADD CONSTRAINT is not idempotent; wrap in DO block
-        # so re-runs (-u) silently no-op when the constraint already exists.
+        # ALTER TABLE ADD CONSTRAINT is not idempotent; pre-check pg_constraint
+        # so re-runs (-u) silently no-op. Catching duplicate_object alone is not
+        # enough — PG creates an index with the constraint name, which raises
+        # duplicate_table (42P07), not duplicate_object (42710), on re-run.
         cr.execute("""
             DO $$ BEGIN
-                ALTER TABLE design_file
-                    ADD CONSTRAINT uniq_design_file_order_line_url
-                    UNIQUE (order_line_id, file_url);
-            EXCEPTION WHEN duplicate_object THEN
-                NULL;
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'uniq_design_file_order_line_url'
+                ) THEN
+                    ALTER TABLE design_file
+                        ADD CONSTRAINT uniq_design_file_order_line_url
+                        UNIQUE (order_line_id, file_url);
+                END IF;
             END $$
         """)
 
