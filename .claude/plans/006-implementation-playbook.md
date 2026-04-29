@@ -80,12 +80,15 @@ Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2
 
 ### Phase 7 — Document
 Update in the same checkpoint commit (or the next one if it would balloon):
-- `specs/<spec>/tasks.md` — `[X]` marks
-- `.claude/plans/006-master-plan-tracking.md` — task `state`, `last reviewed` date, blocker rows
+- `specs/<spec>/tasks.md` — `[X]` marks; partial = `[~]` with reason; deferred = `[~]` + target slice
+- `.claude/plans/006-master-plan-tracking.md` — task `state`, `last reviewed` date, blocker rows, **Change-log entry**
+- `specs/006-master-plan/MASTER_PLAN.md` — **status snapshot at the top of the slice's Phase section** (e.g., add `✅ P1-04 Address-change approval landed YYYY-MM-DD` under the relevant Phase). The MASTER_PLAN is the strategy doc; the tracker is the execution log; both must agree on what's done.
 - ADRs in `specs/006-master-plan/adrs/` — only if architecture diverged
 - `specs/<spec>/quickstart.md` — only if env vars / setup steps changed
 - `custom_addons/<module>/static/description/USER_GUIDE.md` — only if user-facing flow changed
 - `specs/<spec>/findings.md` — append surprises, blockers, deferred decisions (create file if absent)
+
+**Doc-drift rule**: if you can't summarize the slice in one MASTER_PLAN line, the slice is too vague — document the gap in `findings.md` instead and note `MASTER_PLAN n/a (architectural-only)` in the tracker.
 
 ### Phase 8 — Learn
 - Run `/learn` to extract reusable patterns into memory.
@@ -155,9 +158,10 @@ Conflicting work that must always serialize on the feature branch:
 
 | Change type | Touch |
 |---|---|
+| Slice landed | tasks.md `[X]`, tracker `state→done` + change-log entry, **MASTER_PLAN.md Phase status snapshot** |
 | New behavior visible to user | tasks.md `[X]`, USER_GUIDE.md, CHANGELOG via `/ship` |
 | Plan deviation | tracker Notes column + spec `findings.md` |
-| Architecture decision | new ADR in `specs/006-master-plan/adrs/` (numbered next), tracker Decision-log pointer updated |
+| Architecture decision | new ADR in `specs/006-master-plan/adrs/` (numbered next), tracker Decision-log pointer updated, MASTER_PLAN.md banner if it shifts the roadmap |
 | Surprise / pattern worth re-using | `/learn` → memory |
 | Blocker discovered | tracker State→`blocked`, dependency row updated, escalate to user |
 | Module decomposition (ADR-003) | new module dir, manifest, security/, tracker P0-20 progress |

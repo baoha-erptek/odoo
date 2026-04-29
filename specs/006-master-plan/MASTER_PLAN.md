@@ -144,6 +144,16 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 **Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md), refined 2026-04-26 per [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md)**: Spec 005 production cutover runs in parallel with dashboard work once scopes arrive. Dashboards don't block on scopes; cutover doesn't block on dashboards (but benefits from the Tracking Dashboard being live). "Cutover" now means flipping `etsy.shop.active_source='api'`; the email adapter remains the per-shop failover source forever.
 
+**Status snapshot (updated as slices land)**:
+
+- ✅ **P1-05 `sale.order.fulfillment` delegation mixin** (Spec 003 + ADR-007 Direction A) — landed 2026-04-27 on `feature/006-master-plan-coding`. 12 fields + `_inherits` extension on `sale.order`; post_init backfill for 17K existing orders.
+- ✅ **P1-06 unified `shipping.carrier`** (Spec 003 + ADR-005) — landed 2026-04-27. Standalone model + 7-row seed (USPS / UniUni / YunExpress / 4PX / DHL eCommerce / FedEx SmartPost / GKE Local); `shipping_carrier_id` Many2one on fulfillment row.
+- ✅ **P1-04 Address-change approval workflow** (Spec 003 US4, safety-critical) — landed 2026-04-29. New `etsy.address.change.request` model + `mail.thread` + 3 constraints + atomic `action_approve` with `approve_address_change=True` context bypass on C-SO-001; 3 BA groups; sale.order banner + readonly `partner_shipping_id` while pending. RPC-level group gate + Markup-escaped chatter bodies (security review CRITICAL fixes).
+- ⏳ **P1-01 Order Dashboard** (Spec 003 US1) — next per critical path. Picks up T021 remainder (`sales_channel`, `channel_order_ref`, `x_pipeline_id`, `x_pipeline_state_id`), T022 C-SO-002 (pipeline policy), T060 (Request-address-change wizard), and T059 destination-field readonly tail.
+- ⏳ **P1-02 Design file upload + 3-state approval** — after P1-01.
+- ⏳ **P1-03 Tracking Dashboard** — after P1-01; integrates T035 bulk-mark-shipped excluding orders with pending address change.
+- ⏳ **P1-10..13 Spec 005 production cutover** — `waiting` on E1 (Etsy scope review submitted 2026-04-27, awaiting 3–8 weeks).
+
 | Work | Spec | Why |
 |---|---|---|
 | Rewrite Spec 003: Order Dashboard | 003 (rewritten) | C4 |
