@@ -5,3 +5,5 @@ from . import test_phase2_shipping_carrier_orm
 from . import test_rate_limiter
 from . import test_dashboards_db
 from . import test_order_dashboard
+from . import test_design_file_db
+from . import test_design_file_lifecycle
