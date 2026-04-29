@@ -12,12 +12,16 @@ amazon_channel, website_channel) and by the fulfillment module
 (multichannel_hub_fulfillment).
 
 This is the first module landed under ADR-003 (four-module decomposition
-of the original etsy_integration monolith). The module is currently an
-empty installable skeleton; subsequent slices will populate it:
+of the original etsy_integration monolith). Active — Phase 1 dashboards +
+fulfillment delegation landed:
 
 - P1-05: sale.order.fulfillment delegation mixin (ADR-007)
-- P1-06: unified shipping.carrier model + initial seed (ADR-005)
-- Phase 1+: order.design.file, dashboards, sync.health, carrier_detector
+- P1-06: unified shipping.carrier model + 7-row seed (ADR-005)
+- P1-01a: Order Dashboard + sales_channel + row decorations
+- P1-02a: design.file MVP + 3-col kanban + 10MB cap
+- P1-03: Tracking Dashboard + Mark-Shipped + bus.bus channel
+- Remaining Phase 1+: design.file routing/GDrive/bulk-print, sync.health,
+  Process Dashboard, carrier_detector
     """,
     'author': 'Etsy Migration Team',
     'website': 'https://github.com/baoha/odoo19_esty',

@@ -7,20 +7,22 @@ Foundation module for the multichannel order pipeline on Odoo 19 CE.
 Hosts the shared building blocks consumed by every channel connector and the
 fulfillment layer:
 
-- `sale.order.fulfillment` delegation mixin (planned P1-05, ADR-007)
-- Unified `shipping.carrier` model + seed (planned P1-06, ADR-005)
-- `order.design.file` model + 3-state approval workflow
-- `multichannel.sync.health` observability model (renamed from
-  `etsy.sync.health`)
-- Order / Tracking / Process dashboards (Spec 003)
-- `carrier_detector.py` service
-- `order.return` model + state machine
-- Webhook controller base, rate-limiter utility
+- `sale.order.fulfillment` delegation mixin (P1-05 ✅, ADR-007 Direction A)
+- Unified `shipping.carrier` model + 7-row seed (P1-06 ✅, ADR-005)
+- `design.file` model + 3-col kanban + URL-mode + 10MB cap (P1-02a ✅)
+- Order Dashboard list view + decorations + Operations menu (P1-01a ✅)
+- Tracking Dashboard list + Mark-Shipped + bus.bus emit (P1-03 ✅)
+- `multichannel.sync.health` observability model — planned
+- Process Dashboard — planned (Spec 003 US3)
+- `carrier_detector.py` service — planned (Spec 004a)
+- `order.return` model + state machine — planned (Spec 004c)
+- Webhook controller base, rate-limiter utility (`utils/rate_limiter.py` ✅)
 
 ## Status
 
-Scaffold only — installable as an empty module. Content lands incrementally
-across Phase 1 slices.
+Active — Phase 1 dashboards + fulfillment delegation landed. Manifest at
+`19.0.1.0.5`. Content continues to land incrementally across remaining
+Phase 1 slices.
 
 ## Dependencies
 
