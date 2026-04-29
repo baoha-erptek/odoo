@@ -71,6 +71,17 @@ class SaleOrder(models.Model):
     # extension because `has_pending_address_change` is defined there
     # (mhc does not depend on etsy_integration).
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Stamp the reverse pointer on the auto-created fulfillment sibling
+        # so the Tracking Dashboard + bulk action can traverse from
+        # fulfillment → order without an extra search. Idempotent.
+        orders = super().create(vals_list)
+        for order in orders:
+            if order.fulfillment_id and not order.fulfillment_id.order_id:
+                order.fulfillment_id.order_id = order.id
+        return orders
+
     @api.depends('order_line', 'order_line.product_uom_qty')
     def _compute_qty_total(self):
         for order in self:

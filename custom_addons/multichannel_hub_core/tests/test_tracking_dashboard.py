@@ -16,7 +16,7 @@ import logging
 from unittest.mock import patch, ANY
 
 from odoo import fields
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, tagged
 
 _logger = logging.getLogger(__name__)
@@ -108,16 +108,16 @@ class TestTrackingDashboardActions(TransactionCase):
             'reason': 'Customer requested address change',
         })
 
-        # Create test users
+        # Create test users — Odoo 19 renamed res.users.groups_id -> group_ids.
         cls.salesman = cls.env['res.users'].create({
             'name': 'Test Salesman',
             'login': 'salesman@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('sales_team.group_sale_salesman').id])],
+            'group_ids': [(6, 0, [cls.env.ref('sales_team.group_sale_salesman').id])],
         })
         cls.prod_user = cls.env['res.users'].create({
             'name': 'Production User',
             'login': 'prod@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('multichannel_hub_core.group_production_team').id])],
+            'group_ids': [(6, 0, [cls.env.ref('multichannel_hub_core.group_production_team').id])],
         })
 
     def test_action_bulk_mark_shipped_excludes_pending_address(self):
@@ -134,7 +134,7 @@ class TestTrackingDashboardActions(TransactionCase):
         result = (self.fulfillment1 | self.fulfillment2).action_bulk_mark_shipped()
 
         # Verify: order1's fulfillment remains unchanged (excluded)
-        self.fulfillment1.refresh()
+        self.fulfillment1.invalidate_recordset()
         self.assertNotEqual(
             self.fulfillment1.tracking_state,
             'shipped',
@@ -142,13 +142,13 @@ class TestTrackingDashboardActions(TransactionCase):
         )
 
         # Verify: order2's fulfillment is marked shipped
-        self.fulfillment2.refresh()
+        self.fulfillment2.invalidate_recordset()
         self.assertEqual(
             self.fulfillment2.tracking_state,
             'shipped',
             "Fulfillment without pending address-change should be updated"
         )
-        self.assertIsNotNone(
+        self.assertTrue(
             self.fulfillment2.shipping_date,
             "shipping_date should be set when marking shipped"
         )
@@ -196,7 +196,7 @@ class TestTrackingDashboardActions(TransactionCase):
         result = self.fulfillment2.with_user(self.prod_user).action_bulk_mark_shipped()
 
         # Verify: action succeeds and fulfillment is marked shipped
-        self.fulfillment2.refresh()
+        self.fulfillment2.invalidate_recordset()
         self.assertEqual(self.fulfillment2.tracking_state, 'shipped')
 
     def test_search_by_tracking_number_returns_match(self):
@@ -322,17 +322,48 @@ class TestTrackingDashboardActions(TransactionCase):
             f"Payload should contain {required_keys}, got {actual_keys}"
         )
 
+    def test_direct_write_blocked_when_address_change_pending(self):
+        """FR-017 defense-in-depth — direct fulfillment.write() that touches
+        ship-progress fields must be blocked when parent has pending
+        address-change. Prevents bulk-action bypass via XML-RPC.
+        """
+        # order1 has pending address-change (set in setUpClass)
+        self.assertTrue(self.order1.has_pending_address_change)
+
+        with self.assertRaises(UserError):
+            self.fulfillment1.write({'tracking_state': 'shipped'})
+
+        with self.assertRaises(UserError):
+            self.fulfillment1.write({
+                'shipping_date': fields.Date.context_today(self.fulfillment1),
+            })
+
+    def test_direct_write_allowed_with_bypass_context(self):
+        """Bypass context flag exists for system tooling / explicit override."""
+        self.fulfillment1.with_context(
+            bypass_address_change_check=True
+        ).write({'tracking_state': 'shipped'})
+        self.fulfillment1.invalidate_recordset()
+        self.assertEqual(self.fulfillment1.tracking_state, 'shipped')
+
+    def test_direct_write_to_unrelated_field_allowed_when_pending(self):
+        """Operator notes (mp_note) must remain editable while address
+        change is pending — only ship-progress fields are locked.
+        """
+        self.fulfillment1.write({'mp_note': 'pending review'})
+        self.assertEqual(self.fulfillment1.mp_note, 'pending review')
+
     def test_action_bulk_mark_shipped_sets_shipping_date(self):
         """Test T035: shipping_date is set when marking shipped."""
-        # Verify: shipping_date not set initially
-        self.assertIsNone(self.fulfillment2.shipping_date)
+        # Verify: shipping_date not set initially (Odoo Date returns False, not None)
+        self.assertFalse(self.fulfillment2.shipping_date)
 
         # Action: mark shipped
         self.fulfillment2.action_bulk_mark_shipped()
 
         # Verify: shipping_date is set to today
-        self.fulfillment2.refresh()
-        self.assertIsNotNone(self.fulfillment2.shipping_date)
+        self.fulfillment2.invalidate_recordset()
+        self.assertTrue(self.fulfillment2.shipping_date)
         self.assertEqual(
             self.fulfillment2.shipping_date,
             fields.Date.context_today(self.fulfillment2),

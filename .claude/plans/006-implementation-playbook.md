@@ -35,8 +35,9 @@ Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2
 ### Phase 0 — Dispatch
 - Read tracker. Pick the highest-priority slice whose `Depends on` is satisfied.
 - Verify branch: `git branch --show-current` returns `feature/006-master-plan-coding` (revised 2026-04-27). Working tree clean (`git status` shows no uncommitted changes from a previous slice).
-- Stay in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` (the main workspace). Do **not** create a worktree for forward work.
+- Stay in `/home/odoo/odoo_dev/other_projects/odoo19_esty/` (the main workspace). Do **not** create a worktree for forward work (exception: see "Parallelism modes" below).
 - TaskCreate items: one per slice task + one per exit-criterion check.
+- **Automation**: invoke the `/dispatch-slice` skill (`.claude/skills/dispatch-slice/SKILL.md`) to perform this phase deterministically. Telegram-triggered dispatch (DM bot `dispatch <slice-id>` or `dispatch next`) routes through the same skill in the active session.
 
 ### Phase 1 — Plan
 - Spawn `planner` agent (Opus-class for cross-spec, Sonnet-class for in-spec).
@@ -77,6 +78,7 @@ Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2
 - Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 - No Claude attribution (per `git-workflow.md`).
 - If a hook fails, fix root cause and create a NEW commit; never `--amend` past hooks.
+- **Mid-slice exit (any reason — session crash, owner interrupt, blocker discovered after Phase 2/3 work has begun)**: commit a WIP checkpoint `[<module>] chore(wip): P<slice-id> phase <N> partial — <next step>` before the session ends. The next session resumes from `git log` + tracker, never from memory or open editor state.
 
 ### Phase 7 — Document
 Update in the same checkpoint commit (or the next one if it would balloon):
@@ -152,6 +154,48 @@ Conflicting work that must always serialize on the feature branch:
 - ADR-changing checkpoints with overlapping module-decomposition (ADR-003) impact.
 - Anything modifying `__manifest__.py` data list at the same time.
 
+### Parallelism modes (codified 2026-04-29)
+
+Three sanctioned modes only. Anything else is anti-playbook and produces rework.
+
+**Mode 1 — In-slice parallel agents** (default; no setup)
+- Single message, multiple `Agent` calls when files are disjoint.
+- Standard for Phase 4: `code-reviewer` + `security-reviewer` in parallel.
+- Extend to Phase 1 (`planner` + `architect`) and Phase 7 (`doc-updater` + tracker edit) when the planner explicitly OK's it.
+
+**Mode 2 — Disjoint-module slice parallelism via worktrees** (case-by-case; owner-approved)
+- Allowed when both candidate slices touch **different modules** AND **no shared models in `multichannel_hub_core`** AND **no `__manifest__.py` data-list conflict**.
+- Example green-light: P1-02b (design.file routing in `multichannel_hub_core`) ↔ P0-18b (Gearment webhook in `multichannel_hub_fulfillment`).
+- Example red-light: P1-02b ↔ P1-03 (both extend `sale.order` in `multichannel_hub_core`) → must serialize.
+- Mechanic: secondary worktree off `feature/006-master-plan-coding` named `feature/006-mp-coding-<slice-id>`. Rebase onto feature branch before merge. Owner approves the parallel-OK pair before kickoff.
+
+**Mode 3 — Hotfix worktree off `main`** (already permitted; unchanged)
+- Branch off `main`, ship via `/ship`, rebase forward into feature branch if needed.
+
+**Reject**: per-slice forward-work worktrees off feature branch as routine practice. Mode 1 + sequential cadence already approximates ~90% of true parallel throughput without merge-tax.
+
+---
+
+## Why no persistent "Project Manager" agent (rationale 2026-04-29)
+
+Future sessions will be tempted to build a long-running PM daemon. Don't. This is intentional.
+
+| Concern | Why it disqualifies a PM daemon |
+|---|---|
+| Context bloat | Long-running session crosses 5-min cache TTL repeatedly; cost scales linearly with idle time |
+| Source-of-truth duplication | PM in-memory state would shadow tracker/`tasks.md`, creating drift — the same problem the Doc-drift rule (Phase 7) explicitly bans |
+| Concurrency hazard | PM dispatching while a developer-session is mid-slice on the feature branch reproduces the parallel-slice problem the Parallelism modes section forbids |
+| Diminishing return | Phase 0 dispatch is ~3 minutes manual work, ~2x/day. Daemon idle cost > automation savings |
+
+**Replacement**: stateless rituals.
+- Pick next slice → `/dispatch-slice` skill at session start.
+- Track state → tracker (already mandatory).
+- Spawn agents → playbook 9-phase loop (already mandatory).
+- Cross-session memory → auto-memory + `/learn`.
+- Tmux orchestration → only Mode 2 worktree pair when owner approves; on-demand `dmux`, never standing service.
+
+Net: **playbook + tracker + auto-memory + `/dispatch-slice` skill IS the PM**. No process to keep alive, no state to lose, no bloat to manage.
+
 ---
 
 ## Document update matrix
@@ -202,3 +246,4 @@ If a slice cannot follow this loop (e.g., spec is missing tasks.md, scope is amb
 - **2026-04-26**: File created. Wave 1 + Wave 2 launched in parallel under this playbook.
 - **2026-04-26 (revision 1)**: Workflow pivot — from "worktree per slice" to **single-workspace-on-main**. All forward coding now lands directly on `main` in the primary workspace. Worktrees reserved for rework / bugfix only. Wave 1 (RED tests) and Wave 2 (planning + findings + tasks.md) consolidated to `main` via rebase; wave worktrees and branches pruned. Wave plan rewritten as sequential. Added Phase 7 principle: "Code first, E2E later" — finish ALL spec coding before E2E sprint (W7 gate).
 - **2026-04-27 (revision 2)**: Branching pivot — forward work moves from `main` to long-lived feature branch `feature/006-master-plan-coding` (cut from `main` 2026-04-27). `main` becomes the merge target, not the working branch, so it stays green during the multi-slice E2E coding push. Single-workspace pattern unchanged — we're still in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`, just on a different branch. Merge back to `main` (fast-forward or rebase) after W7 E2E sprint passes. Memory `feedback_use_worktree_for_new_work.md` revised to match. P0-20 (`multichannel_hub_core` skeleton) was the first slice landed under this revision.
+- **2026-04-29 (revision 3)**: Operating-model additions in response to owner's parallel-execution + Telegram-dispatch + persistent-PM questions. (1) Codified "Parallelism modes" subsection (Mode 1 in-slice agents / Mode 2 disjoint-module worktrees / Mode 3 hotfix). (2) Phase 0 references new `/dispatch-slice` skill (Telegram-trigger compatible). (3) Phase 6 adds explicit WIP-commit rule for mid-slice exits. (4) New "Why no persistent PM agent" section locks in the stateless-PM design (bloat / drift / concurrency / ROI). No code changed; doc-only revision.

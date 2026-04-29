@@ -71,14 +71,14 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 **Goal**: Dedicated tracking view with bulk actions, search, GKE export.
 **Independent test**: 13 columns; tracking search; bulk mark-shipped excludes pending-address rows; export round-trips.
 
-- [ ] T032 [P] [US2] Add fields to `sale.order.fulfillment` per data-model.md §2: `tracking_number`, `shipping_carrier_id` (M2O carrier), `shipping_date`, `label_status`, `tracking_state`, `pic_user_id`, `pd_pic_user_id`, `mp_note`, `pd_note`, `order_priority`, `production_blocked`, `block_reason`, `warehouse_zone`, `etsy_ship_notified_at`
-- [ ] T033 [US2] Add C-SOF-001 constraint (block_reason required when production_blocked) per data-model.md §2
-- [ ] T034 [P] [US2] Create `views/tracking_dashboard_views.xml` with list view + 13 columns per spec.md US2 acceptance (buyer, shop, channel, tracking_number, carrier, shipping_date, label_status, tracking_state, has_pending_address_change, overdue_marker)
-- [ ] T035 [US2] Implement bulk action "Mark Shipped" via `model.action_bulk_mark_shipped` server action that excludes rows with `has_pending_address_change=True` and emits on-screen warning per FR-017
-- [ ] T036 [US2] Implement Excel export action with column order matching GKE import format (FR-006 round-trip)
-- [ ] T037 [P] [US2] Add bus.bus push hook on `sale.order.fulfillment.write` for live update within 5 s (REQ-TRK-08, but actual carrier-webhook ingestion stays scoped to Spec 005 / 004a — here we just declare the bus channel)
-- [ ] T038 [P] [US2] Phase-2 test `tests/test_tracking_dashboard.py`: bulk action exclusion logic, search by indexed `tracking_number`, export-import round-trip
-- [ ] T039 [US2] Add menu entry `Operations → Tracking Dashboard`
+- [X] T032 [P] [US2] Add fields to `sale.order.fulfillment` per data-model.md §2 — **landed in P1-03**: `tracking_number/shipping_carrier_id/shipping_date/label_status/tracking_state/mp_note/pd_note/pic_user_id/order_priority/production_blocked/block_reason` already on disk from P1-05/P1-06; P1-03 adds `pd_pic_user_id`, `warehouse_zone`, `order_id` back-ref (mhc) and `etsy_ship_notified_at` (etsy_integration `_inherit` extension, `groups='base.group_system'` per security review).
+- [X] T033 [US2] Add C-SOF-001 constraint (block_reason required when production_blocked) per data-model.md §2 — already landed in P1-05 (`_check_block_reason_when_blocked`); P1-03 added regression-guard test.
+- [X] T034 [P] [US2] Create `views/tracking_dashboard_views.xml` with list view + 13 columns per spec.md US2 acceptance — **landed in P1-03** (list + search + 5 group-by filters; flat group-by per Odoo 19 RNG).
+- [X] T035 [US2] Implement bulk action "Mark Shipped" via `model.action_bulk_mark_shipped` — **landed in P1-03**. Silent-skip + sticky warning notification (FR-017). RPC `has_group(group_production_team OR base.group_system)` gate at method entry; write-level `_ADDRESS_LOCK_FIELDS` defense-in-depth blocks direct-RPC bypass (security-review CRITICAL fix).
+- [~] T036 [US2] Implement Excel export action with column order matching GKE import format (FR-006 round-trip) — **deferred to P2-01** (Spec 004a US1 owns canonical GKE schema fingerprint; designing export here risks divergence — owner-acked deferral 2026-04-29).
+- [X] T037 [P] [US2] Add bus.bus push hook on `sale.order.fulfillment.write` — **landed in P1-03**: channel `multichannel_hub.fulfillment_update`, gate set `{tracking_number, tracking_state, label_status, shipping_date, production_blocked, block_reason}`, emit on write+create, web-client subscription deferred.
+- [X] T038 [P] [US2] Phase-2 test `tests/test_tracking_dashboard.py`: bulk action exclusion + search-by-tracking_number + warehouse_zone filter + bus.bus emit gate + RPC gate + write-level FR-017 — **landed in P1-03**. Export round-trip test deferred with T036.
+- [X] T039 [US2] Add menu entry `Operations → Tracking Dashboard` — **landed in P1-03**.
 
 ---
 

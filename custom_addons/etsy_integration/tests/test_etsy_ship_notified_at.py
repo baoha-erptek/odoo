@@ -83,8 +83,8 @@ class TestEtsyShipNotifiedAt(TransactionCase):
         self.fulfillment.write({'etsy_ship_notified_at': test_datetime})
 
         # Verify: field is written and readable
-        self.fulfillment.refresh()
-        self.assertIsNotNone(self.fulfillment.etsy_ship_notified_at)
+        self.fulfillment.invalidate_recordset()
+        self.assertTrue(self.fulfillment.etsy_ship_notified_at)
         self.assertEqual(
             self.fulfillment.etsy_ship_notified_at,
             test_datetime,
@@ -121,7 +121,8 @@ class TestEtsyShipNotifiedAt(TransactionCase):
             'tracking_state': 'none',
         })
 
-        self.assertIsNone(
+        # Odoo Datetime returns False (not None) when unset
+        self.assertFalse(
             new_fulfillment.etsy_ship_notified_at,
             "etsy_ship_notified_at should be NULL by default"
         )
@@ -133,13 +134,13 @@ class TestEtsyShipNotifiedAt(TransactionCase):
         # Set the field
         test_datetime = odoo_fields.Datetime.now()
         self.fulfillment.write({'etsy_ship_notified_at': test_datetime})
-        self.fulfillment.refresh()
+        self.fulfillment.invalidate_recordset()
 
         # Update another field
         self.fulfillment.write({'tracking_state': 'delivered'})
 
         # Verify: etsy_ship_notified_at is preserved
-        self.fulfillment.refresh()
+        self.fulfillment.invalidate_recordset()
         self.assertEqual(
             self.fulfillment.etsy_ship_notified_at,
             test_datetime,

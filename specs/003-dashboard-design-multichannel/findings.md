@@ -390,3 +390,83 @@ ORM test instead.
 Binary fields. Use `_fields[name].attachment` to assert the field
 configuration, and only check `information_schema.columns` for
 truly stored columns.
+
+---
+
+## P1-03 (2026-04-29) — Tracking Dashboard surprises
+
+### `_sql_constraints` drift fix needs pre-check, not EXCEPTION clause
+
+**Where surfaced**: P1-02a's `design_file.init()` raw-SQL UNIQUE
+constraint creation used `DO $$ BEGIN ... EXCEPTION WHEN
+duplicate_object THEN NULL END $$`. On module `-u` re-run during P1-03
+RED, install failed with `ERROR: relation "uniq_..." already exists`.
+
+**Root cause**: PostgreSQL creates an *index relation* with the
+constraint name when ADD CONSTRAINT UNIQUE runs. Re-running ADD
+CONSTRAINT raises `duplicate_table` (42P07) — the index relation
+exists — not `duplicate_object` (42710) which would fire only on a
+duplicate constraint name.
+
+**Resolution**: switch to pre-check via `pg_constraint`:
+```sql
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '...') THEN
+        ALTER TABLE ... ADD CONSTRAINT ...;
+    END IF;
+END $$
+```
+
+Canonical template for `_sql_constraints` drift mitigation.
+
+### `_inherits` Direction A leaves no auto back-reference
+
+**Where surfaced**: P1-05 chose Direction A (`sale.order._inherits =
+{'sale.order.fulfillment': 'fulfillment_id'}`). P1-03's dashboard list
+view + bulk action needs fulfillment → sale.order traversal — no auto
+reverse exists.
+
+**Resolution**: explicit `order_id` Many2one on `sale.order.fulfillment`
++ stamp in `sale.order.create()` override + backfill migration
+`19.0.1.0.5/post-stamp-fulfillment-order-id.py`. Stored, indexed,
+ondelete='cascade'. Computed-search alternative rejected — would lose
+dashboard sort/filter capability on order columns.
+
+### Odoo 19 search-view RNG rejects `<group expand="0">` (third confirmation)
+
+**Where surfaced**: tracking_dashboard_views.xml had group-by filters
+inside `<group expand="0">`. RNG failed: `Invalid attribute expand for
+element group` + `Element search has extra content: field`.
+
+**Resolution**: flatten group-by filters as direct children of
+`<search>`, separated by `<separator/>` from regular filters.
+
+### production_team lacks default `sale.order` read ACL
+
+**Where surfaced**: `action_bulk_mark_shipped` traverses
+`fulfillment.order_id.has_pending_address_change` to enforce FR-017.
+Production_team users hit `AccessError`.
+
+**Resolution**: wrap read-only checks in `sudo()` with inline
+justification. Actual `write()` runs in caller's context so write-ACLs
+still apply. Same pattern in bus push helper (order_name payload).
+
+### FR-017 needs write-level defense-in-depth
+
+**Where surfaced**: security-reviewer (CRITICAL) — bulk action's
+filter-then-write pattern can be bypassed by a production_team user
+calling `fulfillment.write({tracking_state: 'shipped'})` directly via
+XML-RPC.
+
+**Resolution**: `_ADDRESS_LOCK_FIELDS = {'tracking_number',
+'tracking_state', 'shipping_date', 'label_status'}` + write() override
+raises `UserError` when any of these touch a fulfillment whose parent
+has `has_pending_address_change=True`. Bypass via
+`bypass_address_change_check=True` context flag for system tooling.
+Mirrors P1-04's `approve_address_change=True` pattern on
+`sale.order.write()`.
+
+**Lesson**: when a bulk action enforces a business rule via filtering,
+the same rule MUST also be enforced at the model `write()` boundary.
+Direct RPC bypass is the default attack surface for any action_*-gated
+business rule.
