@@ -27,3 +27,5 @@ from . import test_etsy_order_ingestor_status_only
 from . import test_phase1_db_p0_17
 from . import test_etsy_api_log
 from . import test_etsy_audit_retrofit
+from . import test_address_change_db
+from . import test_address_change_workflow
