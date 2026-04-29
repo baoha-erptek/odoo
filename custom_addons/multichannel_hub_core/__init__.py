@@ -9,19 +9,8 @@ _logger = logging.getLogger(__name__)
 _BACKFILL_BATCH_SIZE = 1000
 
 
-def post_init_hook(env):
-    """Backfill `fulfillment_id` on every existing `sale.order` row.
-
-    When `multichannel_hub_core` installs onto a database that already
-    contains `sale.order` data (e.g., the etsy_integration test fixtures
-    or production orders), the newly added `fulfillment_id` column is
-    populated as NULL. The ORM then refuses to write to those rows
-    because `fulfillment_id` is `required=True`. We create a fresh
-    `sale.order.fulfillment` sibling for each orphan and assign it.
-
-    Batched to avoid a single 17K-row UPDATE on the existing Etsy
-    backlog.
-    """
+def _backfill_fulfillment_id(env):
+    """P1-05: ensure every existing sale.order has a fulfillment_id sibling."""
     SaleOrder = env['sale.order']
     Fulfillment = env['sale.order.fulfillment']
 
@@ -39,3 +28,59 @@ def post_init_hook(env):
         for order, sibling in zip(SaleOrder.browse(batch_ids), siblings):
             order.fulfillment_id = sibling.id
         env.cr.commit()
+
+
+def _backfill_sales_channel(env):
+    """P1-01a (FR-025): set sales_channel + channel_order_ref on existing
+    sale.order rows. Idempotent — only touches rows where
+    sales_channel IS NULL. Etsy orders detected via etsy_order_id IS NOT
+    NULL (column lives in the etsy_integration extension; safe to read
+    via raw SQL since this helper runs only when both modules are
+    installed against the same DB).
+    """
+    cr = env.cr
+    # Only run if etsy_order_id column exists (etsy_integration installed).
+    cr.execute("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'sale_order'
+          AND column_name = 'etsy_order_id'
+    """)
+    has_etsy_col = bool(cr.fetchone())
+
+    if has_etsy_col:
+        cr.execute("""
+            UPDATE sale_order
+               SET sales_channel = 'etsy',
+                   channel_order_ref = etsy_order_id
+             WHERE sales_channel IS NULL
+               AND etsy_order_id IS NOT NULL
+               AND etsy_order_id <> ''
+        """)
+        etsy_rows = cr.rowcount
+    else:
+        etsy_rows = 0
+
+    cr.execute("""
+        UPDATE sale_order
+           SET sales_channel = 'other'
+         WHERE sales_channel IS NULL
+    """)
+    other_rows = cr.rowcount
+
+    if etsy_rows or other_rows:
+        _logger.info(
+            "multichannel_hub_core: FR-025 backfill — %s etsy rows, %s other rows",
+            etsy_rows, other_rows,
+        )
+
+
+def post_init_hook(env):
+    """Backfill fulfillment_id (P1-05) and sales_channel (P1-01a / FR-025).
+
+    Both fires only on fresh install (`-i`); the upgrade path (`-u`)
+    runs the matching `migrations/19.0.1.0.3/post-fr025-backfill.py`
+    script per memory gotcha #12.
+    """
+    _backfill_fulfillment_id(env)
+    _backfill_sales_channel(env)

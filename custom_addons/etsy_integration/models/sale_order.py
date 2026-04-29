@@ -1,6 +1,6 @@
 import logging
 
-from odoo import _, api, fields, models
+from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -102,6 +102,20 @@ class SaleOrder(models.Model):
          'Etsy Order ID must be unique!'),
     ]
 
+    def init(self):
+        # P1-01a — composite index for the Tracking-Dashboard saved
+        # search "Etsy orders with pending address change" per
+        # data-model.md §1. `sales_channel` is in mhc, `has_pending_address_change`
+        # is in this module — etsy_integration is the lowest-level
+        # module where both columns are guaranteed to exist.
+        super().init()
+        tools.create_index(
+            self.env.cr,
+            'sale_order_sales_channel_pending_addr_idx',
+            self._table,
+            ['sales_channel', 'has_pending_address_change'],
+        )
+
     @api.depends('etsy_order_id')
     def _compute_is_etsy_order(self):
         for order in self:
@@ -138,6 +152,23 @@ class SaleOrder(models.Model):
                     "request first."
                 ) % ', '.join(blocked.mapped('name')))
         return super().write(vals)
+
+    def action_request_address_change(self):
+        """T060: open the etsy.address.change.request quick-create form
+        pre-filled with the current order. Hidden when a request is
+        already pending.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Request address change'),
+            'res_model': 'etsy.address.change.request',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_order_id': self.id,
+            },
+        }
 
     def _etsy_auto_confirm(self):
         """Confirm the order, force-validate its pickings, mark as invoiced.

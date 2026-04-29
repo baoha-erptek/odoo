@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P1-01a Order Dashboard — channel-agnostic operator triage view.
+         Decorations follow FR-003 (qty>=2 / duplicate buyer / Push-Urgent /
+         Amazon). Tracking + production fields delegate from
+         sale.order.fulfillment via the _inherits link from P1-05. -->
+    <record id="order_dashboard_list_view" model="ir.ui.view">
+        <field name="name">sale.order.list.order_dashboard</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Order Dashboard"
+                  decoration-info="qty_total &gt;= 2"
+                  decoration-bf="is_duplicate_buyer"
+                  decoration-danger="order_priority in ('push','urgent')"
+                  decoration-warning="sales_channel == 'amazon'"
+                  default_order="date_order desc"
+                  multi_edit="1">
+                <field name="qty_total" column_invisible="1"/>
+                <field name="is_duplicate_buyer" column_invisible="1"/>
+                <field name="order_priority" column_invisible="1"/>
+                <field name="name" string="Reference"/>
+                <field name="sales_channel"/>
+                <field name="date_order"/>
+                <field name="partner_id"/>
+                <field name="amount_total" widget="monetary"/>
+                <field name="mp_note" optional="show"/>
+                <field name="pic_user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="tracking_state" optional="show"/>
+                <field name="is_overdue_approval" widget="boolean_toggle"
+                       string="Overdue" optional="show"/>
+                <!-- has_pending_address_change column is declared by
+                     etsy_integration; loading order means this view
+                     can't reference it directly. Add a search filter
+                     instead when the search-view slice lands. -->
+            </list>
+        </field>
+    </record>
+
+    <record id="action_order_dashboard" model="ir.actions.act_window">
+        <field name="name">Order Dashboard</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="order_dashboard_list_view"/>
+        <field name="context">{}</field>
+        <!-- Access gated at two layers: the parent menu item's
+             groups="sales_team.group_sale_salesman", and sale.order's
+             standard ACLs at ORM read-time. ir.actions.act_window in
+             Odoo 19 does not expose a direct group field. -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No orders yet — orders ingested from any channel land here.
+            </p>
+        </field>
+    </record>
+</odoo>

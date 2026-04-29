@@ -45,8 +45,8 @@ class SaleOrderFulfillment(models.Model):
         required=True,
         tracking=True,
     )
-    mp_note = fields.Text(string='Marketing Note')
-    pd_note = fields.Text(string='Production Note')
+    mp_note = fields.Text(string='Marketing Note', tracking=True)
+    pd_note = fields.Text(string='Production Note', tracking=True)
     pic_user_id = fields.Many2one(
         'res.users',
         string='Person In Charge',
