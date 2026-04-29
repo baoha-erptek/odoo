@@ -29,3 +29,4 @@ from . import test_etsy_api_log
 from . import test_etsy_audit_retrofit
 from . import test_address_change_db
 from . import test_address_change_workflow
+from . import test_etsy_ship_notified_at
