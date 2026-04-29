@@ -224,6 +224,17 @@ This is non-negotiable — past sessions cut corners and produced rework.
 
 **When the playbook breaks** (ambiguous spec, blocker mid-slice, contradicting ADRs): **STOP**, do not improvise. Update tracker `state→blocked`, append to `findings.md`, escalate to user with the contradiction documented. Resume only when blocker has a written resolution.
 
+### Telegram-triggered slice dispatch
+
+When a Telegram DM arrives (`<channel source="telegram" user="...">`) from an allowlisted owner ID (`1013317517` or `8560005895`, per memory `reference_telegram_routing.md`) AND the message body matches one of:
+
+- `^dispatch\s+next\s*$` → invoke `/dispatch-slice` skill with `next`
+- `^dispatch\s+(P\d+-\d+[a-z]?)\s*$` → invoke `/dispatch-slice` skill with the matched slice ID
+
+route the message into the skill via the `Skill` tool BEFORE writing any other reply. Reject group-chat triggers (`-5233783589` is a different project). Reply via `telegram.reply` with: chosen slice ID + branch/tree state + planner dispatch confirmation. The skill itself enforces Phase 0 hygiene (clean tree, correct branch, dependencies satisfied); refuse and explain via `telegram.reply` if any check fails.
+
+This rule exists because the harness does not auto-invoke skills on Telegram message arrival — without it, default Claude behavior is a freeform chat reply, which would skip Phase 0 hygiene.
+
 ---
 
 ## Specs Reference
