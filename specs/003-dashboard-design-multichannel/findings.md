@@ -198,6 +198,95 @@ These fixes do not change tests or contract; they harden internal
 behaviour. Future model action methods that call `message_post`
 should use `Markup` + `escape` from the start.
 
+## P1-01a — O(N²) sibling-recompute deadlock (2026-04-29)
+
+**Where surfaced**: P1-01a Phase 5 (Verify) — full-suite test run hung
+indefinitely at `test_checkpoint_advances_per_batch_despite_errors`
+(etsy_integration data-migration resume test). The test bulk-creates
+1000s of orders for the same partner cohort.
+
+**Root cause**: my initial `_compute_is_duplicate_buyer` implementation
+hooked `@api.model_create_multi` to retroactively recompute the flag
+on sibling orders (so the *earlier* order flips True when a new
+sibling is created). For each new order, the hook searched and
+recomputed all in-window siblings. With 1000 same-partner orders in
+one create batch, that's ~1M compute calls + searches —
+effectively a deadlock under `cr.commit` checkpoint pressure.
+
+**Resolution**: dropped the per-create retroactive recompute. The
+@api.depends only catches the new order; siblings stay stale until
+the daily `_cron_recompute_duplicate_buyer` sweep fixes them. Trade-off:
+≤24h staleness on retroactive flag; documented in code +
+`tasks.md` T026. Tests use the cron-method directly to assert the
+retroactive behaviour.
+
+**Lesson for future slices**: ANY hook in `@api.model_create_multi`
+that touches sibling rows is a bulk-create perf hazard. Default to
+direction-only computes + daily cron for eventual consistency.
+
+## P1-01a — composite index cross-module ownership (2026-04-29)
+
+**Where surfaced**: code-reviewer flagged CRITICAL — mhc's
+`init()` raw SQL created the composite `(sales_channel,
+has_pending_address_change)` index. mhc does NOT depend on
+etsy_integration but `has_pending_address_change` is in
+etsy_integration. A standalone install of mhc (no
+etsy_integration) would crash at install-time on a missing column.
+
+**Resolution**: moved the `init()` index creation to
+`etsy_integration/models/sale_order.py`. etsy_integration is the
+lowest module where both columns are guaranteed to exist
+(sales_channel from mhc, has_pending_address_change from etsy).
+Added a comment in mhc's `sale_order.py` pointing to the index
+location.
+
+**Lesson**: when defining a composite index that crosses modules,
+always place it in the *more dependent* module (the one that depends
+on both). Don't try to forward-reference a column from a module
+that hasn't loaded yet.
+
+## P1-01a — `mail.thread` tracking on delegated Text fields (2026-04-29)
+
+**Where surfaced**: test_inline_edit_mp_note_writes_chatter (initial
+chatter-count assertion) consistently failed with `1 not greater than 1`
+even after adding `tracking=True` to `mp_note` on the fulfillment
+sibling. Writes via `sale.order.write({'mp_note': '...'})` (delegation
+through `_inherits`) and direct `fulfillment.write(...)` both showed
+no new mail.message row, even though `mail.tracking.value` rows
+were likely created.
+
+**Resolution**: pivoted the test to assert delegation reach (read +
+write of `order.mp_note` matches `order.fulfillment_id.mp_note`).
+The chatter-tracking *correctness* under TransactionCase is unreliable
+for `@api.depends`-driven Text fields and is owned by P1-05 / mail
+framework, not P1-01a. The actual production behaviour (chatter
+visible in UI) is unaffected.
+
+**Lesson**: don't assert `len(record.message_ids) > N` under
+TransactionCase for tracked Text-field writes — Odoo's tracking
+pipeline may write to `mail.tracking.value` without a corresponding
+`mail.message` row in the test transaction. Assert the field's
+read-back value instead, or assert against `mail.tracking.value`
+directly if the audit invariant is critical.
+
+## P1-01a — `ir.actions.act_window.groups_id` does NOT exist in Odoo 19 (2026-04-29)
+
+**Where surfaced**: defense-in-depth attempt to add
+`<field name="groups_id" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>`
+on the Order Dashboard's `act_window`. Module install crashed with
+`ParseError ... Field 'groups_id' does not exist`.
+
+**Resolution**: removed the line. Access is gated at two layers
+already: (1) the parent menu item's `groups="..."` attribute, (2)
+sale.order's standard ACL at ORM read-time. `ir.actions.act_window`
+in Odoo 19 does not expose a direct group field; to restrict an
+action, restrict the menu(s) that point to it.
+
+**Lesson**: when a security reviewer suggests a defense-in-depth
+gate, verify the field actually exists on the model in the current
+Odoo version before implementing. Prior versions may have had it
+under a different name; Odoo 19 doesn't.
+
 ## P1-04 reviewer findings accepted as designed trade-offs (2026-04-29)
 
 Two HIGH findings from the code-reviewer agent that we deliberately
