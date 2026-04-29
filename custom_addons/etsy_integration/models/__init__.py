@@ -4,6 +4,7 @@ from . import etsy_sync_health
 from . import etsy_api_log
 from . import sale_order
 from . import sale_order_line
+from . import etsy_address_change_request
 from . import product_product
 from . import res_partner
 from . import res_config_settings

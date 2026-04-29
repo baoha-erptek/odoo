@@ -28,8 +28,9 @@ class TestAddressChangeWorkflow(TransactionCase):
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
 
         # Create BA lead group member (R3 mitigation: activity posting requires group member)
+        # Odoo 19 renamed res.users.groups_id -> group_ids.
         cls.ba_lead_group = cls.env.ref('etsy_integration.group_ba_lead')
-        cls.env.user.write({'groups_id': [(4, cls.ba_lead_group.id)]})
+        cls.env.user.write({'group_ids': [(4, cls.ba_lead_group.id)]})
 
         # Create test partner for orders
         cls.partner = cls.env['res.partner'].create({
@@ -38,10 +39,11 @@ class TestAddressChangeWorkflow(TransactionCase):
             'is_company': False,
         })
 
-        # Create test product
+        # Create test product. Odoo 19 replaced `type='product'` with the
+        # boolean `is_storable=True`.
         cls.product = cls.env['product.product'].create({
             'name': 'Test Product',
-            'type': 'product',
+            'is_storable': True,
         })
 
         # Create base sales order
@@ -57,16 +59,27 @@ class TestAddressChangeWorkflow(TransactionCase):
         })
 
     def _create_address_change_request(self, order=None, **kwargs):
-        """Factory method for test address-change requests."""
+        """Factory method for test address-change requests.
+
+        Odoo 19 addresses live on res.partner, not sale.order — so the
+        only sale.order destination field is `partner_shipping_id`. The
+        new_values payload swaps the shipping partner.
+        """
         if order is None:
             order = self.order
-
+        new_partner = self.env['res.partner'].create({
+            'name': 'New Shipping Partner',
+            'street': '123 New Street',
+            'is_company': False,
+        })
         defaults = {
             'order_id': order.id,
-            'requested_fields': ['partner_shipping_id', 'street'],
+            'requested_fields': ['partner_shipping_id'],
             'new_values': {
-                'partner_shipping_id': {'id': self.partner.id, 'display_name': self.partner.name},
-                'street': '123 New Street',
+                'partner_shipping_id': {
+                    'id': new_partner.id,
+                    'display_name': new_partner.name,
+                },
             },
             'state': 'requested',
             'reason': 'Buyer requested address change',
@@ -97,9 +110,10 @@ class TestAddressChangeWorkflow(TransactionCase):
         Per data-model.md §5 C-AC-001: Order must NOT be in final state
         (`shipped`, `done`, `cancel`) at create time.
         """
-        # Set order to 'sale' state and mark as done
+        # Odoo 19 removed sale.order.state='done'; use 'cancel' (also a
+        # final state per data-model.md C-AC-001).
         self.order.action_confirm()
-        self.order.write({'state': 'done'})
+        self.order.action_cancel()
 
         # Attempt to create request on a shipped order
         with self.assertRaises(ValidationError) as ctx:
@@ -132,8 +146,8 @@ class TestAddressChangeWorkflow(TransactionCase):
         """
         request = self._create_address_change_request(state='requested')
 
-        # Store old values for chatter verification
-        old_street = self.order.street
+        # Store old shipping partner for verification
+        old_partner_id = self.order.partner_shipping_id.id
 
         # Call action_approve
         request.action_approve()
@@ -145,12 +159,11 @@ class TestAddressChangeWorkflow(TransactionCase):
         self.assertEqual(request.approved_by, self.env.user)
         self.assertIsNotNone(request.approved_at)
 
-        # Verify sale.order address was updated
-        self.assertEqual(
-            self.order.street,
-            request.new_values.get('street'),
-            "Address should be updated to new_values"
-        )
+        # Verify sale.order shipping partner was updated to new_values
+        new_partner_id = request.new_values.get('partner_shipping_id', {}).get('id')
+        self.assertNotEqual(old_partner_id, new_partner_id)
+        self.assertEqual(self.order.partner_shipping_id.id, new_partner_id,
+                         "Shipping partner should be updated from new_values")
 
         # Verify mail.activity was closed
         activity = self.env['mail.activity'].search([
@@ -200,27 +213,34 @@ class TestAddressChangeWorkflow(TransactionCase):
         called via `with_context(approve_address_change=True)` (R2 mitigation).
         """
         # Create an address-change request in 'requested' state
-        request = self._create_address_change_request(state='requested')
+        self._create_address_change_request(state='requested')
 
-        # Verify has_pending_address_change is True
-        self.order.refresh()
+        # Verify has_pending_address_change is True. Odoo 19 removed
+        # recordset.refresh(); use invalidate_recordset() instead.
+        self.order.invalidate_recordset()
         self.assertTrue(
             self.order.has_pending_address_change,
             "has_pending_address_change should be True when request is 'requested'"
         )
 
-        # Attempt direct write to shipping address — should fail
+        # Pick another partner to swap into partner_shipping_id.
+        bypass_partner = self.env['res.partner'].create({
+            'name': 'Bypass Partner',
+            'is_company': False,
+        })
+
+        # Attempt direct write to shipping partner — should be locked.
         with self.assertRaises(UserError) as ctx:
-            self.order.write({'street': '456 Blocked Street'})
+            self.order.write({'partner_shipping_id': bypass_partner.id})
 
         error_msg = str(ctx.exception)
         self.assertIn('pending', error_msg.lower())
 
         # Now write with the bypass context — should succeed
         self.order.with_context(approve_address_change=True).write({
-            'street': '789 Approved Street'
+            'partner_shipping_id': bypass_partner.id,
         })
-        self.assertEqual(self.order.street, '789 Approved Street')
+        self.assertEqual(self.order.partner_shipping_id, bypass_partner)
 
     def test_has_pending_address_change_compute_recomputes_on_state_change(self):
         """Test has_pending_address_change computes correctly on state transitions.
@@ -229,13 +249,14 @@ class TestAddressChangeWorkflow(TransactionCase):
         computed with `store=True`, `@api.depends('address_change_request_ids.state')`.
         Must recompute when request.state transitions.
         """
+        # Odoo 19 removed recordset.refresh(); use invalidate_recordset().
         # Initially, should be False
-        self.order.refresh()
+        self.order.invalidate_recordset()
         self.assertFalse(self.order.has_pending_address_change)
 
         # Create request in 'requested' state
         request = self._create_address_change_request(state='requested')
-        self.order.refresh()
+        self.order.invalidate_recordset()
         self.assertTrue(
             self.order.has_pending_address_change,
             "should be True when request is 'requested'"
@@ -243,7 +264,7 @@ class TestAddressChangeWorkflow(TransactionCase):
 
         # Approve the request
         request.action_approve()
-        self.order.refresh()
+        self.order.invalidate_recordset()
         self.assertFalse(
             self.order.has_pending_address_change,
             "should be False when request is 'approved' (not 'requested')"
@@ -276,8 +297,14 @@ class TestAddressChangeWorkflow(TransactionCase):
             f"Activity summary should mention order '{self.order.name}'"
         )
 
-        # Verify activity type is "To Do"
-        self.assertEqual(activity.activity_type_id.category, 'todo')
+        # Verify activity type is the canonical "To Do" type. Odoo 19
+        # mail.activity.type categories are {default, upload_file,
+        # phonecall, meeting, reminder, grant_approval} — the "To Do"
+        # template (mail.mail_activity_data_todo) carries category='default'.
+        self.assertEqual(
+            activity.activity_type_id,
+            self.env.ref('mail.mail_activity_data_todo'),
+        )
 
         # Verify deadline is +24h (approximately)
         now = fields.Datetime.now()
@@ -289,6 +316,24 @@ class TestAddressChangeWorkflow(TransactionCase):
             time_diff, 2,
             f"Deadline should be ~24h from now, got {actual_deadline}"
         )
+
+    def test_non_ba_lead_cannot_call_action_approve_via_rpc(self):
+        """Security regression: action_approve must enforce group_ba_lead at RPC.
+
+        Form button hides via ``groups=``, but RPC bypasses view-level
+        gates. The model method must check the group itself.
+        """
+        marketing_only_user = self.env['res.users'].create({
+            'name': 'Marketing Only',
+            'login': 'marketing_only@example.com',
+            'group_ids': [
+                (6, 0, [self.env.ref('etsy_integration.group_marketing_user').id])
+            ],
+        })
+        request = self._create_address_change_request(state='requested')
+        with self.assertRaises(UserError) as ctx:
+            request.with_user(marketing_only_user).action_approve()
+        self.assertIn('ba lead', str(ctx.exception).lower())
 
     def test_create_request_with_valid_data_stores_correctly(self):
         """Regression guard: Create request with valid data and verify field signature.

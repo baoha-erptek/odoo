@@ -1,8 +1,18 @@
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
+
+# Spec 003 C-SO-001: shipping-destination fields locked while an
+# address-change request is pending. Keep this set in lock-step with
+# data-model.md §1.
+_ADDRESS_LOCK_FIELDS = frozenset({
+    'partner_shipping_id',
+    'street', 'street2', 'city', 'zip',
+    'state_id', 'country_id',
+})
 
 
 class SaleOrder(models.Model):
@@ -76,6 +86,17 @@ class SaleOrder(models.Model):
         help='True when an Etsy order has a non-positive amount_total — '
              'used by the migration wizard to quarantine bad data.')
 
+    # P1-04 (Spec 003 US4): address-change approval workflow.
+    address_change_request_ids = fields.One2many(
+        'etsy.address.change.request', 'order_id',
+        string='Address Change Requests')
+    has_pending_address_change = fields.Boolean(
+        string='Has Pending Address Change',
+        compute='_compute_has_pending_address_change',
+        store=True, compute_sudo=True, index=True,
+        help='True when at least one address-change request is in '
+             "'requested' state. Locks shipping fields per C-SO-001.")
+
     _sql_constraints = [
         ('etsy_order_id_unique', 'UNIQUE(etsy_order_id)',
          'Etsy Order ID must be unique!'),
@@ -90,6 +111,33 @@ class SaleOrder(models.Model):
     def _compute_etsy_price_anomaly(self):
         for order in self:
             order.etsy_price_anomaly = bool(order.etsy_order_id) and order.amount_total <= 0
+
+    @api.depends('address_change_request_ids.state')
+    def _compute_has_pending_address_change(self):
+        for order in self:
+            order.has_pending_address_change = any(
+                req.state == 'requested'
+                for req in order.address_change_request_ids
+            )
+
+    def write(self, vals):
+        """C-SO-001: block destination-field writes while a request is pending.
+
+        Bypass via context flag `approve_address_change=True` — set by
+        `etsy.address.change.request.action_approve` only.
+        """
+        if (
+            not self.env.context.get('approve_address_change')
+            and any(f in vals for f in _ADDRESS_LOCK_FIELDS)
+        ):
+            blocked = self.filtered('has_pending_address_change')
+            if blocked:
+                raise UserError(_(
+                    "Address change is pending approval on order(s) %s; "
+                    "shipping fields are locked. Approve or reject the "
+                    "request first."
+                ) % ', '.join(blocked.mapped('name')))
+        return super().write(vals)
 
     def _etsy_auto_confirm(self):
         """Confirm the order, force-validate its pickings, mark as invoiced.

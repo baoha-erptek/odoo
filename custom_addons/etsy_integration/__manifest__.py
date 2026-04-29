@@ -44,6 +44,7 @@ Features:
         'views/etsy_email_log_views.xml',
         'views/etsy_api_log_views.xml',
         'views/sale_order_views.xml',
+        'views/etsy_address_change_request_views.xml',
         'views/res_config_settings_views.xml',
         'views/import_orders_wizard_views.xml',
         'views/data_migration_wizard_views.xml',
