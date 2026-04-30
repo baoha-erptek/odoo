@@ -88,6 +88,24 @@ class SaleOrder(models.Model):
         help='True if any design.file.route on this order is pending/failed '
              'and >2h old. Shows the stuck-route alert badge on Order Dashboard.')
 
+    # P1-PIPELINE-MIN — fulfillment route resolved from product/category master data.
+    x_pipeline_id = fields.Many2one(
+        'order.pipeline',
+        string='Fulfillment Pipeline',
+        compute='_compute_x_pipeline_id',
+        store=True,
+        index=True,
+        help='Resolved per ADR-010 §2: order line product.template '
+             '→ product.category → ICP fallback. Recomputed when order_line / '
+             'product changes.',
+    )
+    x_pipeline_channel_hint = fields.Selection(
+        related='x_pipeline_id.channel_hint',
+        string='Pipeline Channel',
+        store=True,
+        readonly=True,
+    )
+
     _sql_constraints = []  # Reserved for downstream slices.
 
     # NB: the composite (sales_channel, has_pending_address_change) index
@@ -105,6 +123,17 @@ class SaleOrder(models.Model):
             if order.fulfillment_id and not order.fulfillment_id.order_id:
                 order.fulfillment_id.order_id = order.id
         return orders
+
+    @api.depends(
+        'order_line',
+        'order_line.product_id',
+        'order_line.product_id.product_tmpl_id.x_default_pipeline_id',
+        'order_line.product_id.product_tmpl_id.categ_id.x_default_pipeline_id',
+    )
+    def _compute_x_pipeline_id(self):
+        from ..services.pipeline_resolver import resolve_pipeline_for_order
+        for order in self:
+            order.x_pipeline_id = resolve_pipeline_for_order(order)
 
     @api.depends('order_line', 'order_line.product_uom_qty')
     def _compute_qty_total(self):

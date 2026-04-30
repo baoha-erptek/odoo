@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- order.pipeline list + form (admin master-data editor). -->
+  <record id="view_order_pipeline_list" model="ir.ui.view">
+    <field name="name">order.pipeline.list</field>
+    <field name="model">order.pipeline</field>
+    <field name="arch" type="xml">
+      <list string="Fulfillment Pipelines" editable="bottom">
+        <field name="sequence" widget="handle"/>
+        <field name="name"/>
+        <field name="code"/>
+        <field name="channel_hint"/>
+        <field name="is_active" widget="boolean_toggle"/>
+        <field name="description" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_order_pipeline_form" model="ir.ui.view">
+    <field name="name">order.pipeline.form</field>
+    <field name="model">order.pipeline</field>
+    <field name="arch" type="xml">
+      <form string="Fulfillment Pipeline">
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="code"/>
+              <field name="channel_hint"/>
+            </group>
+            <group>
+              <field name="sequence"/>
+              <field name="is_active"/>
+            </group>
+          </group>
+          <group string="Description">
+            <field name="description" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_order_pipeline" model="ir.actions.act_window">
+    <field name="name">Fulfillment Pipelines</field>
+    <field name="res_model">order.pipeline</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_order_pipeline"
+            name="Fulfillment Pipelines"
+            parent="menu_operations_root"
+            action="action_order_pipeline"
+            sequence="50"
+            groups="sales_team.group_sale_manager"/>
+
+  <!-- product.template form extension — show x_default_pipeline_id. -->
+  <record id="view_product_template_form_pipeline" model="ir.ui.view">
+    <field name="name">product.template.form.pipeline</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_form_view"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='categ_id']" position="after">
+        <field name="x_default_pipeline_id"
+               options="{'no_create': True}"
+               help="Override category default. Drives sale.order.x_pipeline_id."/>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- product.category form extension — show x_default_pipeline_id. -->
+  <record id="view_product_category_form_pipeline" model="ir.ui.view">
+    <field name="name">product.category.form.pipeline</field>
+    <field name="model">product.category</field>
+    <field name="inherit_id" ref="product.product_category_form_view"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='parent_id']" position="after">
+        <field name="x_default_pipeline_id"
+               options="{'no_create': True}"
+               help="Fallback when individual products don't override."/>
+      </xpath>
+    </field>
+  </record>
+</odoo>

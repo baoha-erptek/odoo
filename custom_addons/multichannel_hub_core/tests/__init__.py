@@ -10,3 +10,5 @@ from . import test_design_file_lifecycle
 from . import test_design_file_lifecycle_p1_02b
 from . import test_tracking_dashboard_db
 from . import test_tracking_dashboard
+from . import test_order_pipeline_db
+from . import test_pipeline_resolver_orm

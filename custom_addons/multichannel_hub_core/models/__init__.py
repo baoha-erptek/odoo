@@ -1,4 +1,7 @@
 from . import shipping_carrier
+from . import order_pipeline
+from . import product_category_pipeline
+from . import product_template_pipeline
 from . import sale_order_fulfillment
 from . import sale_order
 from . import design_file
