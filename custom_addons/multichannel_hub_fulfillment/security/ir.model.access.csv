@@ -1,1 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gearment_api_log_system,gearment.api.log system,model_gearment_api_log,base.group_system,1,1,1,1
+access_gearment_api_log_sale_manager,gearment.api.log sale manager read-only,model_gearment_api_log,sales_team.group_sale_manager,1,0,0,0
