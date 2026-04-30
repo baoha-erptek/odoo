@@ -19,6 +19,7 @@ import logging
 from datetime import timedelta
 
 from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -106,6 +107,20 @@ class SaleOrder(models.Model):
         readonly=True,
     )
 
+    # P1-PIPELINE-FULL — current stage on the resolved pipeline.
+    x_pipeline_state_id = fields.Many2one(
+        'order.pipeline.state',
+        string='Pipeline State',
+        ondelete='set null',
+        index=True,
+        tracking=True,
+        domain="[('pipeline_id', '=', x_pipeline_id)]",
+        help="Current stage on the order's pipeline. Auto-assigned to "
+             "x_pipeline_id.initial_state_id on first resolve. Mutate via "
+             "_write_pipeline_state(new_state, note) to persist a "
+             "transition.log row in the same transaction.",
+    )
+
     _sql_constraints = []  # Reserved for downstream slices.
 
     # NB: the composite (sales_channel, has_pending_address_change) index
@@ -119,10 +134,97 @@ class SaleOrder(models.Model):
         # so the Tracking Dashboard + bulk action can traverse from
         # fulfillment → order without an extra search. Idempotent.
         orders = super().create(vals_list)
+        Log = self.env['order.pipeline.transition.log']
         for order in orders:
             if order.fulfillment_id and not order.fulfillment_id.order_id:
                 order.fulfillment_id.order_id = order.id
+            # P1-PIPELINE-FULL: stamp initial pipeline state + audit log.
+            pipeline = order.x_pipeline_id
+            if (pipeline and pipeline.initial_state_id
+                    and not order.x_pipeline_state_id):
+                # Bypass write() defense (below) for the system-driven initial
+                # stamp — guarded by `bypass_pipeline_state_guard` context.
+                order.with_context(
+                    bypass_pipeline_state_guard=True,
+                ).x_pipeline_state_id = pipeline.initial_state_id
+                # sudo: transition log is system-of-record; initial state
+                # assignment is automatic and audited. Bypass bounded to log
+                # row creation here — the order field write above runs under
+                # the user's ACL.
+                Log.sudo().create({
+                    'sale_order_id': order.id,
+                    'pipeline_id': pipeline.id,
+                    'from_state_id': False,
+                    'to_state_id': pipeline.initial_state_id.id,
+                    'change_type': 'initial',
+                    'note': _('Initial state on order create'),
+                })
         return orders
+
+    def write(self, vals):
+        """FR-017 defense-in-depth: reject direct x_pipeline_state_id writes.
+
+        State transitions must go through `_write_pipeline_state(...)` so an
+        audit row lands in `order.pipeline.transition.log` in the same
+        transaction. The helper sets `bypass_pipeline_state_guard` in context
+        before its own field write to opt out of this check.
+        """
+        if (
+            'x_pipeline_state_id' in vals
+            and not self.env.context.get('bypass_pipeline_state_guard')
+        ):
+            raise ValidationError(_(
+                "Direct writes to 'Pipeline State' are not allowed. "
+                "Use sale.order._write_pipeline_state(new_state, note) so "
+                "the transition is recorded in the audit log."
+            ))
+        return super().write(vals)
+
+    def _write_pipeline_state(self, new_state, note=None,
+                              change_type='manual'):
+        """Transition this order to a new pipeline state; persist audit log.
+
+        Validates new_state belongs to the order's pipeline, writes the log
+        row + the field in the same transaction. Caller may wrap in their
+        own try/except to handle ValidationError.
+
+        :param new_state: order.pipeline.state recordset (1 record)
+        :param note: optional human-readable transition reason
+        :param change_type: enum value from order.pipeline.transition.log.change_type
+        """
+        self.ensure_one()
+        if not new_state:
+            raise ValidationError(_("Cannot transition to an empty state."))
+        new_state.ensure_one()
+        if self.x_pipeline_id and new_state.pipeline_id != self.x_pipeline_id:
+            raise ValidationError(_(
+                "State '%(state)s' belongs to pipeline '%(other)s', not the "
+                "order's pipeline '%(own)s'.",
+                state=new_state.name,
+                other=new_state.pipeline_id.name,
+                own=self.x_pipeline_id.name,
+            ))
+        if new_state.next_state_ids:
+            # Enforcement deferred — pipelines without next_state_ids set are
+            # treated as "any forward move allowed". Strict enforcement lands
+            # in P1-PIPELINE-FULL+ once the seed graph is complete.
+            pass
+        from_state = self.x_pipeline_state_id
+        # Bypass the write() guard — this helper IS the audited path.
+        self.with_context(
+            bypass_pipeline_state_guard=True,
+        ).x_pipeline_state_id = new_state.id
+        # sudo: transition log is system-of-record; salesman may transition
+        # their own orders but should not write log rows directly. Bypass is
+        # bounded to this helper.
+        self.env['order.pipeline.transition.log'].sudo().create({
+            'sale_order_id': self.id,
+            'pipeline_id': new_state.pipeline_id.id,
+            'from_state_id': from_state.id if from_state else False,
+            'to_state_id': new_state.id,
+            'change_type': change_type,
+            'note': note,
+        })
 
     @api.depends(
         'order_line',

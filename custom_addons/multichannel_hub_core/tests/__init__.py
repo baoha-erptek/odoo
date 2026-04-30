@@ -12,3 +12,5 @@ from . import test_tracking_dashboard_db
 from . import test_tracking_dashboard
 from . import test_order_pipeline_db
 from . import test_pipeline_resolver_orm
+from . import test_pipeline_state_db
+from . import test_pipeline_state_machine_orm

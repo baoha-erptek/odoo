@@ -15,3 +15,12 @@ access_design_file_upload_wizard_system,design.file.upload.wizard system,model_d
 access_order_pipeline_user,order.pipeline read for salesman,model_order_pipeline,sales_team.group_sale_salesman,1,0,0,0
 access_order_pipeline_manager,order.pipeline manager full,model_order_pipeline,sales_team.group_sale_manager,1,1,1,1
 access_order_pipeline_system,order.pipeline system full,model_order_pipeline,base.group_system,1,1,1,1
+access_order_pipeline_state_user,order.pipeline.state read for salesman,model_order_pipeline_state,sales_team.group_sale_salesman,1,0,0,0
+access_order_pipeline_state_manager,order.pipeline.state manager full,model_order_pipeline_state,sales_team.group_sale_manager,1,1,1,1
+access_order_pipeline_state_system,order.pipeline.state system full,model_order_pipeline_state,base.group_system,1,1,1,1
+access_order_pipeline_transition_log_user,order.pipeline.transition.log read for salesman,model_order_pipeline_transition_log,sales_team.group_sale_salesman,1,0,0,0
+access_order_pipeline_transition_log_manager,order.pipeline.transition.log manager read,model_order_pipeline_transition_log,sales_team.group_sale_manager,1,0,0,0
+access_order_pipeline_transition_log_system,order.pipeline.transition.log system full,model_order_pipeline_transition_log,base.group_system,1,1,1,1
+access_pipeline_team_user,pipeline.team read for salesman,model_pipeline_team,sales_team.group_sale_salesman,1,0,0,0
+access_pipeline_team_manager,pipeline.team manager full,model_pipeline_team,sales_team.group_sale_manager,1,1,1,1
+access_pipeline_team_system,pipeline.team system full,model_pipeline_team,base.group_system,1,1,1,1

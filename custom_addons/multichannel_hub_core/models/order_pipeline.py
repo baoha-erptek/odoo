@@ -41,6 +41,37 @@ class OrderPipeline(models.Model):
              "downstream adapter selection. Not a state machine.",
     )
 
+    # P1-PIPELINE-FULL — child stages + initial state + in-use protection.
+    state_ids = fields.One2many(
+        'order.pipeline.state',
+        'pipeline_id',
+        string='Stages',
+    )
+    initial_state_id = fields.Many2one(
+        'order.pipeline.state',
+        string='Initial State',
+        compute='_compute_initial_state_id',
+        store=True,
+    )
+    is_in_use = fields.Boolean(
+        string='In Use',
+        compute='_compute_is_in_use',
+        store=False,
+    )
+
+    @api.depends('state_ids.is_initial')
+    def _compute_initial_state_id(self):
+        for pipeline in self:
+            initial = pipeline.state_ids.filtered(lambda s: s.is_initial)[:1]
+            pipeline.initial_state_id = initial.id if initial else False
+
+    def _compute_is_in_use(self):
+        for pipeline in self:
+            count = self.env['sale.order'].search_count(
+                [('x_pipeline_id', '=', pipeline.id)], limit=1,
+            )
+            pipeline.is_in_use = bool(count)
+
     _sql_constraints = [
         ('uniq_order_pipeline_code',
          'UNIQUE(code)',

@@ -27,11 +27,62 @@
               <field name="name"/>
               <field name="code"/>
               <field name="channel_hint"/>
+              <field name="initial_state_id" readonly="1"/>
             </group>
             <group>
               <field name="sequence"/>
               <field name="is_active"/>
+              <field name="is_in_use" readonly="1"/>
             </group>
+          </group>
+          <notebook>
+            <page string="Stages">
+              <field name="state_ids">
+                <list editable="bottom">
+                  <field name="sequence" widget="handle"/>
+                  <field name="code"/>
+                  <field name="name"/>
+                  <field name="is_initial" widget="boolean_toggle"/>
+                  <field name="is_terminal" widget="boolean_toggle"/>
+                  <field name="team_id"/>
+                  <field name="color" widget="color_picker" optional="hide"/>
+                </list>
+              </field>
+            </page>
+            <page string="Description">
+              <field name="description" nolabel="1"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- order.pipeline.state standalone form (admin edit). -->
+  <record id="view_order_pipeline_state_form" model="ir.ui.view">
+    <field name="name">order.pipeline.state.form</field>
+    <field name="model">order.pipeline.state</field>
+    <field name="arch" type="xml">
+      <form string="Pipeline Stage">
+        <sheet>
+          <group>
+            <group>
+              <field name="pipeline_id" options="{'no_create': True}"/>
+              <field name="name"/>
+              <field name="code"/>
+              <field name="team_id" options="{'no_create': True}"/>
+            </group>
+            <group>
+              <field name="sequence"/>
+              <field name="is_initial"/>
+              <field name="is_terminal"/>
+              <field name="color" widget="color_picker"/>
+            </group>
+          </group>
+          <group string="Allowed Next States" colspan="2">
+            <field name="next_state_ids" nolabel="1" widget="many2many_tags"
+                   options="{'no_create': True}"
+                   domain="[('pipeline_id', '=', pipeline_id), ('id', '!=', id)]"/>
           </group>
           <group string="Description">
             <field name="description" nolabel="1"/>
@@ -40,6 +91,94 @@
       </form>
     </field>
   </record>
+
+  <!-- pipeline.team views -->
+  <record id="view_pipeline_team_list" model="ir.ui.view">
+    <field name="name">pipeline.team.list</field>
+    <field name="model">pipeline.team</field>
+    <field name="arch" type="xml">
+      <list string="Pipeline Teams" editable="bottom">
+        <field name="sequence" widget="handle"/>
+        <field name="name"/>
+        <field name="code"/>
+        <field name="member_ids" widget="many2many_tags"
+               options="{'no_create': True}"/>
+        <field name="is_active" widget="boolean_toggle"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_pipeline_team_form" model="ir.ui.view">
+    <field name="name">pipeline.team.form</field>
+    <field name="model">pipeline.team</field>
+    <field name="arch" type="xml">
+      <form string="Pipeline Team">
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="code"/>
+            </group>
+            <group>
+              <field name="sequence"/>
+              <field name="is_active"/>
+            </group>
+          </group>
+          <group string="Members">
+            <field name="member_ids" nolabel="1"
+                   options="{'no_create': True}"/>
+          </group>
+          <group string="Description">
+            <field name="description" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_pipeline_team" model="ir.actions.act_window">
+    <field name="name">Pipeline Teams</field>
+    <field name="res_model">pipeline.team</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_pipeline_team"
+            name="Pipeline Teams"
+            parent="menu_operations_root"
+            action="action_pipeline_team"
+            sequence="55"
+            groups="sales_team.group_sale_manager"/>
+
+  <!-- order.pipeline.transition.log read-only audit list. -->
+  <record id="view_pipeline_transition_log_list" model="ir.ui.view">
+    <field name="name">order.pipeline.transition.log.list</field>
+    <field name="model">order.pipeline.transition.log</field>
+    <field name="arch" type="xml">
+      <list string="Pipeline Transitions" create="false" edit="false">
+        <field name="timestamp"/>
+        <field name="sale_order_id"/>
+        <field name="pipeline_id"/>
+        <field name="from_state_id"/>
+        <field name="to_state_id"/>
+        <field name="user_id"/>
+        <field name="change_type"/>
+        <field name="note" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="action_pipeline_transition_log" model="ir.actions.act_window">
+    <field name="name">Pipeline Transitions</field>
+    <field name="res_model">order.pipeline.transition.log</field>
+    <field name="view_mode">list</field>
+  </record>
+
+  <menuitem id="menu_pipeline_transition_log"
+            name="Pipeline Transitions"
+            parent="menu_operations_root"
+            action="action_pipeline_transition_log"
+            sequence="60"
+            groups="sales_team.group_sale_manager"/>
 
   <record id="action_order_pipeline" model="ir.actions.act_window">
     <field name="name">Fulfillment Pipelines</field>
