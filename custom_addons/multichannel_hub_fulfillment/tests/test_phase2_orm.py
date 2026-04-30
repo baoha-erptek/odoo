@@ -54,14 +54,14 @@ class TestTrackingImportLogORM(TransactionCase):
             'multichannel_hub_fulfillment.group_ba_shipping', raise_if_not_found=False
         ) or cls.env['res.groups'].create({
             'name': 'BA Shipping',
-            'users': [],
+            'user_ids': [],
         })
 
         cls.ba_manager_group = cls.env.ref(
             'multichannel_hub_fulfillment.group_ba_manager', raise_if_not_found=False
         ) or cls.env['res.groups'].create({
             'name': 'BA Manager',
-            'users': [],
+            'user_ids': [],
             'implied_ids': [(4, cls.ba_shipping_group.id)],
         })
 
@@ -300,14 +300,14 @@ class TestTrackingImportWizardORM(TransactionCase):
             'multichannel_hub_fulfillment.group_ba_shipping', raise_if_not_found=False
         ) or cls.env['res.groups'].create({
             'name': 'BA Shipping',
-            'users': [],
+            'user_ids': [],
         })
 
         cls.ba_manager_group = cls.env.ref(
             'multichannel_hub_fulfillment.group_ba_manager', raise_if_not_found=False
         ) or cls.env['res.groups'].create({
             'name': 'BA Manager',
-            'users': [],
+            'user_ids': [],
             'implied_ids': [(4, cls.ba_shipping_group.id)],
         })
 
