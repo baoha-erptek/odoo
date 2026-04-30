@@ -41,3 +41,84 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 **Branch + commit**: `feature/006-master-plan-coding`, single commit `[multichannel_hub_fulfillment] feat: gearment auth probe + token-bucket rate limiter (P0-18a)`.
 
 **Unblocks**: P0-18b (live sandbox POC + webhook signature discovery).
+
+---
+
+## P0-18b1 planner notes (2026-04-30)
+
+### Gearment API live verified
+
+- Base URL `https://apiv2.gearment.com/integration-handler` works with owner's
+  `.env` `GEARMENT_API_KEY` (16 chars) + `GEARMENT_API_SECRET` (66 chars).
+- `GET api/v3/catalog?limit=1` returned `legacy_product_id=2`, print_locations
+  `[pocket, right_sleeve, front, back, left_sleeve]`, `product_avatar_url`.
+- This is owner's real Gearment account, NOT a separate sandbox. P0-18b1 must
+  treat it as live: catalog read OK; draft/quote/confirm via mocks ONLY.
+
+### Slice scope
+
+- IN: `GearmentAdapter` Protocol + concrete impl, `GearmentOrderPayload` dataclass,
+  `gearment.api.log` audit model, retention cron, env-gated live catalog probe test
+- OUT: webhook signature discovery (P0-18b2 — needs ngrok), live POST draft/confirm
+  (P4-01 + owner sign-off), full state machine (P4-01)
+
+### Open questions for P0-18b2
+
+| ID | Question | Probe | Default while waiting |
+|---|---|---|---|
+| DQ1 | webhook signature header name + HMAC algorithm | inspect first inbound POST after register | assume `X-Webhook-Signature` + HMAC-SHA256 hex of body |
+| DQ2 | idempotency: header `Idempotency-Key` honored, OR dedupe on `reference_id` body field, OR neither | live POST draft twice with same key/ref | adapter sends BOTH (belt-and-braces) |
+| DQ3 | `vendor_id` semantics in callback payloads | inspect P0-18b2 webhook content | log only; routing logic deferred |
+| DQ4 | HTTPS scheme assertion on `base_url` | unit test | tighten to `https://` only — P0-18a LOW item |
+| DQ5 | redirect policy on `requests.Session` | review code | set `session.max_redirects=0` — P0-18a LOW item |
+
+### Print-location mapping (preliminary from P0-18a ping)
+
+`design.file.role` → Gearment `print_location.code`:
+- `front` → `front` ✓
+- `back` → `back` ✓
+- `pocket` → `pocket` ✓
+- `sleeve` → ambiguous (`left_sleeve` vs `right_sleeve`) — **owner pick** at P4-01;
+  P0-18b1 defaults to `front` and emits a warning when role is ambiguous
+
+### Idempotency: dual approach
+
+Belt-and-braces until DQ2 resolves:
+1. HTTP header `Idempotency-Key: sha256(external_order_id)` — set on every POST
+2. Body field `reference_id = external_order_id` — set in `GearmentOrderPayload.serialize()`
+
+If Gearment honors only one, the other is harmless. If neither, retry strategy
+needs P4-01 redesign — flag explicitly in P0-18b2.
+
+### `gearment.api.log` mirror of `etsy.api.log`
+
+Same proven design from Spec 005 P0-17:
+- 11 fields, no `mail.thread`
+- Composite index in `init()` (drift-template applies)
+- Selection `source` 6 values (one more than Etsy's 8 — `health_check` carved out
+  vs lumping into `probe`)
+- Daily retention cron, ICP-configurable
+- ACL: `group_system` full, `group_sale_manager` read
+
+### Live-probe test gating
+
+`test_gearment_adapter_phase1.py::test_catalog_live_probe` runs only when env
+`MULTICHANNEL_HUB_FULFILLMENT_LIVE_API=1`. Default CI skip. This avoids both
+quota burn and accidental production traffic in tests.
+
+### ADR audit
+
+- ADR-001 (Spec 004 split into 4a/4b/4c): P0-18b1 is firmly Spec 004b territory
+  (Gearment partner adapter). No amendment.
+- ADR-003 (4-module decomposition): adapter lives in
+  `multichannel_hub_fulfillment` (already created P0-18a). No amendment.
+- ADR-007 (sale.order.fulfillment delegation): P0-18b1 doesn't touch fulfillment
+  model — adapter is upstream of the model. Will integrate in P4-01.
+
+### Suggested commits
+
+1. `[multichannel_hub_fulfillment] docs(P0-18b1): planner Phase 1 spec artifacts (this commit)`
+2. `[multichannel_hub_fulfillment] test(P0-18b1): RED gearment_adapter + payload + api_log tests (T080-T082)`
+3. `[multichannel_hub_fulfillment] feat(P0-18b1): GREEN GearmentAdapter Protocol + payload + api.log model (T083-T089)`
+4. `[multichannel_hub_fulfillment] docs(P0-18b1): tracker done + tasks [X] + findings update`
+

@@ -432,3 +432,43 @@ Response: {"status": "ok"} or {"status": "error", "message": "..."}
 3. Map `event` type to appropriate handler
 4. Create partner.sync.log record (type=callback)
 5. Update order fields based on event type
+
+---
+
+## NEW (P0-18b1 2026-04-30): `gearment.api.log`
+
+Per-call audit log for Gearment API interactions. Mirrors `etsy.api.log` (Spec 005 P0-17) — proven retention + ACL pattern.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `sale_order_id` | Many2one(`sale.order`, `ondelete='set null'`) | No | Null for catalog/system probes; set for order-specific operations |
+| `endpoint` | Char | Yes | HTTP method + path, e.g. `POST /api/v3/orders` |
+| `http_status` | Integer | No | Response code; null on connection failure |
+| `request_started_at` | Datetime | Yes | Indexed for range queries |
+| `duration_ms` | Integer | No | Wall-clock latency |
+| `request_payload_summary` | Text | No | JSON body sent (Auth headers scrubbed; PII scrubbed: no buyer name, no order ref) |
+| `response_summary` | Text | No | JSON response truncated to 4 KB |
+| `error_message` | Text | No | Exception details on failure |
+| `rate_limit_remaining` | Integer | No | From `X-RateLimit-Remaining` if Gearment provides one |
+| `source` | Selection | Yes | `probe` / `draft` / `quote` / `confirm` / `callback` / `health_check` |
+
+**Inherits**: none (deliberate — high write volume; mail.thread would balloon storage)
+
+**Indexes** (in `init()` raw SQL, drift-template per memory `project_sql_constraints_drift`):
+- `(sale_order_id, request_started_at DESC)` — recent activity per order
+- `(source, request_started_at DESC)` — deferred to P0-13 perf slice
+- `(http_status)` — deferred
+
+**Retention**:
+- Cron `_cron_cleanup_old_logs` daily; deletes rows where `request_started_at < now() - <retention>` days
+- ICP `multichannel_hub_fulfillment.api_log_retention_days` (default 30)
+
+**Security**:
+- `group_system` full R/W/C/U
+- `group_sale_manager` R only
+- No record rules in P0-18b1; per-shop rules deferred to P4-01
+
+**Audit hygiene**:
+- All `request_payload_summary` writes go through a `_scrub_pii(payload_dict) -> dict` helper that drops `buyer_name`, `address_line_1/2`, `email`, `phone`, `notes` (matches P0-17 `_audit_log` pattern in P0-16c)
+- `Authorization` header MUST never appear in stored payload — assert in test
+
