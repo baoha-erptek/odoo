@@ -52,4 +52,10 @@
             </p>
         </field>
     </record>
+
+    <menuitem id="menu_order_dashboard"
+              name="Order Dashboard"
+              parent="menu_operations_root"
+              action="action_order_dashboard"
+              sequence="10"/>
 </odoo>
