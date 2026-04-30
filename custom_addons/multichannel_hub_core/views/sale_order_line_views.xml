@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Extend sale.order.line form view to add Upload button -->
+        <record id="sale_order_line_form_upload_button" model="ir.ui.view">
+            <field name="name">sale.order.line.form.upload.button</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.sale_order_line_view_form_readonly"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <button name="%(multichannel_hub_core.action_design_file_upload_wizard)d"
+                            type="action"
+                            string="Upload Design"
+                            class="btn-primary"
+                            invisible="design_status != 'none'"
+                            groups="multichannel_hub_core.group_production_team"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

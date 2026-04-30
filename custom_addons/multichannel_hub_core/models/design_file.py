@@ -59,7 +59,11 @@ class DesignFile(models.Model):
     version = fields.Integer(string='Version', default=1, required=True)
 
     storage_mode = fields.Selection(
-        [('small', 'Small (filestore ≤10 MB)'), ('url', 'URL')],
+        [
+            ('small', 'Small (filestore ≤10 MB)'),
+            ('url', 'URL'),
+            ('gdrive', 'Google Drive'),
+        ],
         string='Storage Mode',
         required=True,
         default='url',
@@ -75,6 +79,30 @@ class DesignFile(models.Model):
     file_name = fields.Char(string='File Name')
     file_size = fields.Integer(string='File Size (bytes)')
     file_checksum = fields.Char(string='SHA-256 Checksum')
+
+    # P1-09 — Google Drive upload (storage_mode='gdrive')
+    gdrive_file_id = fields.Char(
+        string='GDrive File ID',
+        help="Google Drive file ID after successful upload (storage_mode='gdrive').",
+    )
+    gdrive_web_view_link = fields.Char(
+        string='GDrive Web Link',
+        help="Shareable view-only Google Drive link after successful upload.",
+    )
+    gdrive_upload_error = fields.Text(
+        string='GDrive Upload Error',
+        help="Error message if the GDrive upload failed (to be retried or corrected).",
+    )
+    gdrive_upload_state = fields.Selection(
+        [
+            ('pending', 'Pending Upload'),
+            ('uploaded', 'Uploaded'),
+            ('failed', 'Upload Failed'),
+        ],
+        string='GDrive Upload State',
+        default='pending',
+        help="Tracks GDrive upload progress (storage_mode='gdrive' only).",
+    )
 
     state = fields.Selection(
         [
@@ -198,6 +226,27 @@ class DesignFile(models.Model):
                     "storage mode.",
                     name=rec.name or '?',
                 ))
+
+    @api.constrains('storage_mode', 'gdrive_upload_state', 'gdrive_file_id')
+    def _check_gdrive_upload_state_consistency(self):
+        """C-DF-006: gdrive mode requires gdrive_upload_state='uploaded' + gdrive_file_id."""
+        for rec in self:
+            if rec.storage_mode != 'gdrive':
+                continue
+            if rec.gdrive_upload_state == 'uploaded':
+                if not rec.gdrive_file_id:
+                    raise ValidationError(_(
+                        "Design file '%(name)s' is marked 'uploaded' but has no "
+                        "gdrive_file_id. This is an internal error; contact support.",
+                        name=rec.name or '?',
+                    ))
+            elif rec.gdrive_upload_state == 'pending':
+                if rec.gdrive_file_id or rec.gdrive_web_view_link:
+                    raise ValidationError(_(
+                        "Design file '%(name)s' is 'pending' upload but already has "
+                        "gdrive_file_id or web_view_link. Clear these fields first.",
+                        name=rec.name or '?',
+                    ))
 
     # ------------------------------------------------------------- helpers
 

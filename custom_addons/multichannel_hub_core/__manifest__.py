@@ -40,6 +40,8 @@ fulfillment delegation landed:
         'views/tracking_dashboard_views.xml',
         'views/menu.xml',
         'views/design_file_views.xml',
+        'views/design_file_upload_wizard.xml',
+        'views/sale_order_line_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
