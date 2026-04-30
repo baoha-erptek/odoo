@@ -128,7 +128,9 @@ class SaleOrder(models.Model):
         'order_line',
         'order_line.product_id',
         'order_line.product_id.product_tmpl_id.x_default_pipeline_id',
+        'order_line.product_id.product_tmpl_id.categ_id',
         'order_line.product_id.product_tmpl_id.categ_id.x_default_pipeline_id',
+        'order_line.product_id.product_tmpl_id.categ_id.parent_id',
     )
     def _compute_x_pipeline_id(self):
         from ..services.pipeline_resolver import resolve_pipeline_for_order

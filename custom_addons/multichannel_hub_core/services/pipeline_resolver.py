@@ -48,7 +48,7 @@ def resolve_pipeline_for_product(template):
     → ICP fallback → first-active fallback.
     """
     if not template:
-        return template.env['order.pipeline'] if template else None
+        return None
 
     env = template.env
 
@@ -65,7 +65,13 @@ def resolve_pipeline_for_product(template):
 
 
 def resolve_default_pipeline(env):
-    """Return the system-default pipeline (ICP code, then first-active)."""
+    """Return the system-default pipeline (ICP code, then first-active).
+
+    sudo() on ICP read is safe — no user data exposed; ICP is system-wide
+    configuration. Default ACL on ir.config_parameter restricts to
+    base.group_system but every authenticated user must be able to read
+    system defaults to resolve their own orders.
+    """
     Pipeline = env['order.pipeline']
     code = env['ir.config_parameter'].sudo().get_param(DEFAULT_PIPELINE_ICP_KEY)
     if code:
