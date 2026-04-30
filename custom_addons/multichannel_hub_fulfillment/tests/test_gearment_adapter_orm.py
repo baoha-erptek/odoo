@@ -54,6 +54,19 @@ class TestGearmentApiAdapter(TransactionCase):
     def setUp(self):
         super().setUp()
         self.env = self.env(context=dict(self.env.context, tracking_disable=True))
+        # Set required env vars (matches P0-18a TestGearmentApiClientSession pattern).
+        # GearmentApiClient reads these at construction; without them tests can't
+        # instantiate the adapter regardless of mocked Session.
+        import os
+        os.environ['GEARMENT_API_KEY'] = 'test_key_p018b1'
+        os.environ['GEARMENT_API_SECRET'] = 'test_secret_p018b1'
+        os.environ['GEARMENT_API_BASE_URL'] = 'http://api.gearment.test'
+
+    def tearDown(self):
+        import os
+        for key in ('GEARMENT_API_KEY', 'GEARMENT_API_SECRET', 'GEARMENT_API_BASE_URL'):
+            os.environ.pop(key, None)
+        super().tearDown()
 
     @mock.patch('odoo.addons.multichannel_hub_fulfillment.services.gearment_api_client.requests.Session')
     def test_test_connection_returns_true_on_ping_ok(self, mock_session_class):
@@ -239,7 +252,7 @@ class TestGearmentApiAdapter(TransactionCase):
         # Clear any existing logs
         self.env['gearment.api.log'].search([]).unlink()
 
-        adapter = GearmentApiAdapter()
+        adapter = GearmentApiAdapter(env=self.env)
         payload = GearmentOrderPayload(
             external_order_id='SO003',
             platform='etsy',
@@ -282,7 +295,7 @@ class TestGearmentApiAdapter(TransactionCase):
 
         self.env['gearment.api.log'].search([]).unlink()
 
-        adapter = GearmentApiAdapter()
+        adapter = GearmentApiAdapter(env=self.env)
         payload = GearmentOrderPayload(
             external_order_id='SO004',
             platform='etsy',
@@ -332,7 +345,7 @@ class TestGearmentApiAdapter(TransactionCase):
 
         self.env['gearment.api.log'].search([]).unlink()
 
-        adapter = GearmentApiAdapter()
+        adapter = GearmentApiAdapter(env=self.env)
         payload = GearmentOrderPayload(
             external_order_id='SO005',
             platform='etsy',

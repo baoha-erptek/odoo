@@ -101,7 +101,7 @@ class TestGearmentApiLogDatabase(TransactionCase):
         """Verify ir.model.access row for group_system has all perms."""
         acl = self.env['ir.model.access'].search([
             ('model_id.model', '=', 'gearment.api.log'),
-            ('group_id.name', '=', 'base.group_system'),
+            ('group_id', '=', self.env.ref('base.group_system').id),
         ])
 
         self.assertTrue(acl, "ACL row must exist for gearment.api.log + group_system")
@@ -116,7 +116,7 @@ class TestGearmentApiLogDatabase(TransactionCase):
         """Verify ir.model.access row for group_sale_manager is read-only."""
         acl = self.env['ir.model.access'].search([
             ('model_id.model', '=', 'gearment.api.log'),
-            ('group_id.name', '=', 'sales_team.group_sale_manager'),
+            ('group_id', '=', self.env.ref('sales_team.group_sale_manager').id),
         ])
 
         self.assertTrue(acl, "ACL row must exist for gearment.api.log + group_sale_manager")
