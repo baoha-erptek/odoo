@@ -1,19 +1,17 @@
 """GDrive upload service — Google Drive API wrapper for design files."""
+import io
 import logging
 import os
-import re
 
 try:
     import google.auth.exceptions
     from google.oauth2 import service_account
     from googleapiclient import discovery
+    from googleapiclient.http import MediaIoBaseUpload
 except ImportError:
     google = None
 
 _logger = logging.getLogger(__name__)
-
-# Sanitize folder names for Drive query strings (mimeType='...' and name='...')
-_FOLDER_NAME_SAFE_RE = re.compile(r'^[a-zA-Z0-9_\-]{1,255}$')
 
 
 class GdriveUploader:
@@ -85,9 +83,7 @@ class GdriveUploader:
                 'name': file_name,
                 'parents': [folder_id],
             }
-            media = __import__('googleapiclient.http', fromlist=['MediaIoBaseUpload'])
-            io = __import__('io')
-            media_body = media.MediaIoBaseUpload(
+            media_body = MediaIoBaseUpload(
                 io.BytesIO(file_blob), mimetype='application/octet-stream'
             )
             file_obj = (
