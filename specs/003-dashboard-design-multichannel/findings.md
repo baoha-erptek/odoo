@@ -675,3 +675,90 @@ lib pin, historical backfill).
 [multichannel_hub_core] feat(P1-09): GdriveUploader + thumbnail generator + upload wizard (T094-T101)
 ```
 
+
+---
+
+## P1-09 retry surprises (2026-04-30)
+
+### First-attempt GREEN failed two ways simultaneously
+
+GREEN agent #1 (`51d4aac4b7b`) was reverted because it failed two
+orthogonal checks at once:
+
+1. **Spec drift — invented field names**. Agent introduced
+   `gdrive_upload_state` / `gdrive_web_view_link` / `gdrive_upload_error`
+   instead of the spec field set
+   (`gdrive_file_id` / `gdrive_preview_url` computed /
+   `gdrive_folder_id` / `gdrive_thumbnail`). Agent's own report claimed
+   "24 RED tests now GREEN, 202 total passing", but tests reference the
+   spec names → cannot have run. The agent self-deceived; no harness
+   verification caught it.
+
+2. **Security blockers stacked**. Drive query injection on `shop.name`
+   (single quote breaks `q=` interpolation), missing `sudo()` justification,
+   no blob size cap before Pillow, no filename sanitization. All of these
+   could and should have been baked in from the start of GREEN.
+
+**Lesson — agent verification gap**: trust-but-verify with grep against
+spec field names + an actual `docker exec ... --test-tags` run before
+treating an agent's "all tests pass" claim as truth. The CLAUDE.md note
+"Trust but verify: an agent's summary describes what it intended to do,
+not necessarily what it did" is exactly this case.
+
+### Retry succeeded
+
+Retry GREEN (`f7c4ff7d04e` + cleanup `e892ea226fa`) baked in 6 security
+fixes from the start (3a query escape, 3b sudo comment, 3c 100MB cap,
+3d filename regex, 3e MAX_IMAGE_PIXELS, 3f credential leak fix) and
+strictly enforced spec field names. Reviews: code-reviewer 2 LOW issues
+fixed inline; security-reviewer APPROVE (10 / 10 vectors clean). 202 mhc
+tests green.
+
+### Option Y manifest decision rationale
+
+Spec said `x_gdrive_design_folder_id` cache lives "on `etsy.shop`" —
+ambiguous about WHICH module hosts the field definition. Two options:
+
+- **Option X** — define in `multichannel_hub_core/models/etsy_shop.py`
+  via `_inherit = 'etsy.shop'`. Forces mhc to depend on
+  `etsy_integration`. **Violates** mhc's own CLAUDE.md rule:
+  "no Etsy-specific code in this module."
+- **Option Y** — define in
+  `etsy_integration/models/etsy_shop_gdrive.py`. Fields land on the same
+  `etsy.shop` model; tests still pass. mhc stays Etsy-agnostic.
+
+**Picked Y.** The CLAUDE.md rule is canonical: when spec ambiguity
+collides with module-boundary policy, policy wins. Future channels
+(Amazon / Website) get their own folder-cache field on their own shop
+model, not in mhc.
+
+### FR-017 6th confirmation
+
+`design.file.upload.wizard.action_upload` raises `AccessError` if caller
+lacks `group_production_team` AND `base.group_system`. Test
+`TestRpcGateFR017.test_non_production_team_user_cannot_call_action_upload`
+covers it. Memory `feedback_fr017_write_defense_in_depth` updated to 6th
+slice confirmation (P1-02a, P1-04, P1-03, P1-02b, P1-09 retry — counted
+as one not two).
+
+### `pg_constraint` drift template not exercised
+
+P1-09 added 4 fields + 1 `@api.constrains`, no UNIQUE / SQL constraints.
+The `_sql_constraints` mirror-in-`init()` pattern (memory
+`project_sql_constraints_drift`) was not exercised here. 4 prior slices
+remain canonical references.
+
+### Decompression-bomb defense added
+
+`Image.MAX_IMAGE_PIXELS = 50_000_000` set in
+`design_thumbnail_generator.py` module-load. Tighter than Pillow's default
+~89 MP. Pillow raises `Image.DecompressionBombError` on exceed; thumbnail
+generator catches → returns None → `gdrive_thumbnail` stays empty
+(non-fatal, graceful degradation).
+
+### Drive query single-quote escape
+
+`folder_name.replace('\\', '\\\\').replace("'", "\\'")` order matters:
+backslash MUST be escaped first, otherwise `\\'` introduced by quote-escape
+gets re-doubled. Verified with `o'brien` and `shop\backup` cases.
+

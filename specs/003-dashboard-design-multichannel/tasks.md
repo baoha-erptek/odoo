@@ -153,7 +153,7 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 
 **ADR alignment**: ADR-006 §3 (storage modes) + §6 (folder structure + write policy); ADR-012 §3 (no auto-fallback on failure — surface error). Both ADRs verified consistent with this slice; no amendments needed (planner audit 2026-04-30).
 
-- [ ] T094 [P] [US5] [P1-09] Implement `services/gdrive_uploader.py` in `multichannel_hub_core` (ADR-006 §3 + §6)
+- [X] T094 [P] [US5] [P1-09] Implement `services/gdrive_uploader.py` in `multichannel_hub_core` (ADR-006 §3 + §6)
   - Service-account auth via `google-api-python-client` + `google-auth`; reads JSON from `/opt/odoo/secrets/gdrive-service-account.json` (matching P0-15 credential-path pattern)
   - Scopes: `https://www.googleapis.com/auth/drive.file` (minimum — app-created files only)
   - Public API: `upload_file(file_blob, file_name, folder_id) → {file_id, web_view_link, error}` and `ensure_shop_folder(shop) → folder_id`
@@ -163,7 +163,7 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
   - Audit: every call logged via `_logger.debug` (file_id, folder_id, result); no PII (no buyer name / order number)
   - Library pin: `google-api-python-client>=2.80.0`, `google-auth>=2.16.0` in `requirements.txt`
 
-- [ ] T095 [P] [US5] [P1-09] Implement `services/design_thumbnail_generator.py`
+- [X] T095 [P] [US5] [P1-09] Implement `services/design_thumbnail_generator.py`
   - Public API: `generate_thumbnail(file_blob, max_size_kb=256) → bytes | None`
   - Library: Pillow (`pillow>=9.0.0`) — pure-python, no system deps. Wand fallback deferred (see findings P1-09 thumbnail-library decision)
   - Input formats: TIFF, PSD (via `psd-tools` if needed), JPEG, PNG, BMP, GIF
@@ -171,7 +171,7 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
   - Fallback: generation failure → returns `None` (caller stores empty `gdrive_thumbnail`; non-fatal)
   - Timeout: ≤ 2s wall-clock; abort beyond
 
-- [ ] T096 [P] [US5] [P1-09] Add fields to `design.file` model in `multichannel_hub_core/models/design_file.py`
+- [X] T096 [P] [US5] [P1-09] Add fields to `design.file` model in `multichannel_hub_core/models/design_file.py`
   - `gdrive_file_id` Char
   - `gdrive_preview_url` Char (computed `store=True`, `@api.depends('gdrive_file_id')`, returns `https://drive.google.com/file/d/{gdrive_file_id}/view`)
   - `gdrive_folder_id` Char
@@ -179,7 +179,7 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
   - Extend `storage_mode` Selection: append `('gdrive', 'GDrive')`
   - Implement constraint C-DF-006 (`@api.constrains('storage_mode', 'gdrive_file_id', 'gdrive_folder_id')`)
 
-- [ ] T097 [US5] [P1-09] Create `models/design_file_upload_wizard.py` (TransientModel `design.file.upload.wizard`)
+- [X] T097 [US5] [P1-09] Create `models/design_file_upload_wizard.py` (TransientModel `design.file.upload.wizard`)
   - Fields: `file_blob` Binary, `file_name` Char, `storage_mode` Selection {small, url, gdrive} default `'gdrive'`, `file_url` Char, `gdrive_folder_id` Char, `thumbnail_blob` Binary (computed preview), `order_id` / `order_line_id` Many2one (from context)
   - Constraint C-DUW-001: `storage_mode='gdrive'` requires `gdrive_folder_id` non-empty
   - Method `action_upload()`:
@@ -190,24 +190,24 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
     - Post chatter on parent `sale.order` after creation
   - ACL: `group_production_team` + `group_system` callable; `group_marketing_user` + `group_ba_user` read-only
 
-- [ ] T098 [P] [US5] [P1-09] Create `views/design_file_upload_wizard.xml` (form + ir.actions.act_window)
+- [X] T098 [P] [US5] [P1-09] Create `views/design_file_upload_wizard.xml` (form + ir.actions.act_window)
   - Modal form with file input, mode radio (gdrive default), URL input (visible if mode=url), folder picker (visible if mode=gdrive), thumbnail preview, progress indicator
   - Buttons: "Upload & Create" (action_upload) / "Cancel"
   - Help text wrapped in `_()` for i18n (Vietnamese .po lands in P1-07)
 
-- [ ] T099 [US5] [P1-09] Wire wizard into `sale.order.line` form (button "Upload Design File")
+- [X] T099 [US5] [P1-09] Wire wizard into `sale.order.line` form (button "Upload Design File")
   - Extend existing `multichannel_hub_core/views/sale_order_views.xml` (or sub-view if cleaner)
   - Action passes `default_order_id` + `default_order_line_id` + `default_gdrive_folder_id` (from shop cache) via context
   - Visible to `group_production_team` + `group_system`
 
-- [ ] T100 [P] [US5] [P1-09] Phase-1 (DB) test in `tests/test_gdrive_upload_db.py`
+- [X] T100 [P] [US5] [P1-09] Phase-1 (DB) test in `tests/test_gdrive_upload_db.py`
   - Verify schema: `design_file` table has columns `gdrive_file_id`, `gdrive_preview_url`, `gdrive_folder_id`, `gdrive_thumbnail`
   - Verify `storage_mode` Selection includes `'gdrive'`
   - Verify TransientModel `design.file.upload.wizard` is registered
   - Verify `etsy.shop.x_gdrive_design_folder_id` Char field exists (cache field)
   - Verify ACL rows for wizard
 
-- [ ] T101 [P] [US5] [P1-09] Phase-2 (ORM unit) test in `tests/test_gdrive_upload_orm.py` — coverage ≥80%
+- [X] T101 [P] [US5] [P1-09] Phase-2 (ORM unit) test in `tests/test_gdrive_upload_orm.py` — coverage ≥80%
   - `TestGdriveUploader`: mocked auth + upload (mock `google.auth.default`, `googleapiclient.discovery.build`); upload success → returns dict with `file_id`; auth failure → returns `{error: ..., file_id: None}`; folder cache hit on second `ensure_shop_folder()` call (no extra Drive calls)
   - `TestThumbnailGenerator`: 50MB TIFF input → ≤256KB JPEG output; corrupted blob → returns None (no raise)
   - `TestUploadWizard`: gdrive-mode happy path creates `design.file(storage_mode='gdrive', gdrive_file_id=...)`; Drive failure raises `ValidationError`; chatter posted to parent `sale.order`; C-DUW-001 catches missing `gdrive_folder_id`
