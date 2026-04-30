@@ -398,27 +398,27 @@ Task: "Create tracking_import_wizard.py"
 
 ### RED tests (Phase 2)
 
-- [ ] T080 [P0-18b1] Create `tests/test_gearment_adapter_phase1.py` — catalog live probe (single read-only call gated behind `MULTICHANNEL_HUB_FULFILLMENT_LIVE_API=1` env flag; default skip)
-- [ ] T081 [P0-18b1] [P] `tests/test_gearment_adapter_orm.py` — Phase-2 ORM tests with `requests` mocked: `test_test_connection_ping_ok`, `test_push_order_returns_partner_ref_and_quote`, `test_get_quote_returns_quote_dict`, `test_confirm_stub_raises_NotImplemented`, `test_register_webhooks_stub_raises_NotImplemented`, `test_parse_webhook_payload_stub_raises_NotImplemented`, `test_idempotency_key_header_set` (POST captures `Idempotency-Key` from `external_order_id`), `test_print_location_codes_extracted_from_catalog`
-- [ ] T082 [P0-18b1] [P] `tests/test_gearment_api_log_db.py` — Phase-1 schema verification: `gearment_api_log` table columns + `(sale_order_id, request_started_at)` index + `(source)` Selection includes 6 values + ACL row for `group_system`
+- [X] T080 [P0-18b1] Create `tests/test_gearment_adapter_phase1.py` — catalog live probe (single read-only call gated behind `MULTICHANNEL_HUB_FULFILLMENT_LIVE_API=1` env flag; default skip)
+- [X] T081 [P0-18b1] [P] `tests/test_gearment_adapter_orm.py` — Phase-2 ORM tests with `requests` mocked: `test_test_connection_ping_ok`, `test_push_order_returns_partner_ref_and_quote`, `test_get_quote_returns_quote_dict`, `test_confirm_stub_raises_NotImplemented`, `test_register_webhooks_stub_raises_NotImplemented`, `test_parse_webhook_payload_stub_raises_NotImplemented`, `test_idempotency_key_header_set` (POST captures `Idempotency-Key` from `external_order_id`), `test_print_location_codes_extracted_from_catalog`
+- [X] T082 [P0-18b1] [P] `tests/test_gearment_api_log_db.py` — Phase-1 schema verification: `gearment_api_log` table columns + `(sale_order_id, request_started_at)` index + `(source)` Selection includes 6 values + ACL row for `group_system`
 
 ### GREEN impl (Phase 3)
 
-- [ ] T083 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_adapter.py` — `GearmentAdapter` Protocol + concrete impl wrapping `GearmentApiClient`. Methods: `test_connection`, `push_order`, `get_quote`, `confirm` (stub raises `NotImplementedError("P4-01")`), `register_webhooks` (stub), `parse_webhook_payload` (stub)
-- [ ] T084 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_payload.py` — `GearmentOrderPayload` dataclass (external_order_id / platform / store_id / quantity / product_id / address dict / shipping_method / design_files list / notes / custom_attributes). Serializer to `dict` for POST body.
-- [ ] T085 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/models/gearment_api_log.py` — Model `gearment.api.log` mirroring `etsy.api.log` (Spec 005 P0-17). 11 fields, no mail.thread, composite index in `init()`. Selection `source`: `probe / draft / quote / confirm / callback / health_check`.
-- [ ] T086 [P0-18b1] `security/ir.model.access.csv` — `gearment.api.log` ACL: `group_system` R/W/C/U; `group_sale_manager` R only
-- [ ] T087 [P0-18b1] `data/ir_cron_gearment_api_log_retention.xml` — daily cron `_cron_cleanup_old_logs()` with `multichannel_hub_fulfillment.api_log_retention_days` ICP (default 30)
-- [ ] T088 [P0-18b1] Wire `GearmentAdapter` to write `gearment.api.log` rows on every call (sudo create with PII-scrubbed payload summary)
-- [ ] T089 [P0-18b1] Update `__manifest__.py` data list (security CSV + cron XML); update `models/__init__.py` + `services/__init__.py`
+- [X] T083 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_adapter.py` — `GearmentAdapter` Protocol + concrete impl wrapping `GearmentApiClient`. Methods: `test_connection`, `push_order`, `get_quote`, `confirm` (stub raises `NotImplementedError("P4-01")`), `register_webhooks` (stub), `parse_webhook_payload` (stub)
+- [X] T084 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_payload.py` — `GearmentOrderPayload` dataclass (external_order_id / platform / store_id / quantity / product_id / address dict / shipping_method / design_files list / notes / custom_attributes). Serializer to `dict` for POST body.
+- [X] T085 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/models/gearment_api_log.py` — Model `gearment.api.log` mirroring `etsy.api.log` (Spec 005 P0-17). 11 fields, no mail.thread, composite index in `init()`. Selection `source`: `probe / draft / quote / confirm / callback / health_check`.
+- [X] T086 [P0-18b1] `security/ir.model.access.csv` — `gearment.api.log` ACL: `group_system` R/W/C/U; `group_sale_manager` R only
+- [X] T087 [P0-18b1] `data/ir_cron_gearment_api_log_retention.xml` — daily cron `_cron_cleanup_old_logs()` with `multichannel_hub_fulfillment.api_log_retention_days` ICP (default 30)
+- [X] T088 [P0-18b1] Wire `GearmentAdapter` to write `gearment.api.log` rows on every call (sudo create with PII-scrubbed payload summary)
+- [X] T089 [P0-18b1] Update `__manifest__.py` data list (security CSV + cron XML); update `models/__init__.py` + `services/__init__.py`
 
 ### Verify + commit (Phase 4-6)
 
-- [ ] T090 [P0-18b1] Run `odoo -u multichannel_hub_fulfillment --stop-after-init --http-port=8888 --workers=0 --max-cron-threads=0` exit 0
-- [ ] T091 [P0-18b1] Run `--test-tags /multichannel_hub_fulfillment --stop-after-init`; all green; coverage ≥80% on new files
-- [ ] T092 [P0-18b1] Spawn `code-reviewer` + `security-reviewer` in parallel; block on CRITICAL/HIGH
-- [ ] T093 [P0-18b1] grep no `_logger.info(` / `print(` in new files; ACL inline `# sudo:` comments; no raw SQL without justification
-- [ ] T094 [P0-18b1] Conventional commit chain on feature branch:
+- [X] T090 [P0-18b1] Run `odoo -u multichannel_hub_fulfillment --stop-after-init --http-port=8888 --workers=0 --max-cron-threads=0` exit 0
+- [X] T091 [P0-18b1] Run `--test-tags /multichannel_hub_fulfillment --stop-after-init`; all green; coverage ≥80% on new files
+- [X] T092 [P0-18b1] Spawn `code-reviewer` + `security-reviewer` in parallel; block on CRITICAL/HIGH
+- [X] T093 [P0-18b1] grep no `_logger.info(` / `print(` in new files; ACL inline `# sudo:` comments; no raw SQL without justification
+- [X] T094 [P0-18b1] Conventional commit chain on feature branch:
   - `[multichannel_hub_fulfillment] test(P0-18b1): RED gearment adapter + payload + api log tests (T080-T082)`
   - `[multichannel_hub_fulfillment] feat(P0-18b1): GREEN GearmentAdapter Protocol + canonical payload + api.log model (T083-T089)`
   - `[multichannel_hub_fulfillment] docs(P0-18b1): tracker done + tasks [X] + findings`

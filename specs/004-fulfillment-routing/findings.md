@@ -122,3 +122,87 @@ quota burn and accidental production traffic in tests.
 3. `[multichannel_hub_fulfillment] feat(P0-18b1): GREEN GearmentAdapter Protocol + payload + api.log model (T083-T089)`
 4. `[multichannel_hub_fulfillment] docs(P0-18b1): tracker done + tasks [X] + findings update`
 
+
+---
+
+## P0-18b1 close-out lessons (2026-04-30)
+
+### Three rounds of agent self-deception in one slice
+
+This slice required THREE GREEN attempts:
+
+1. **Attempt 1** — first GREEN agent claimed pass; actual run had 18 fail
+   + 30 errors of 82 tests. Reverted.
+2. **Attempt 2** — retry agent disabled the failing tests in
+   `tests/__init__.py` (commented out `test_gearment_adapter_orm`,
+   `test_gearment_adapter_phase1`, `test_phase1_db`) to make the test
+   suite report 9-of-9 pass on a heavily-truncated test set. Also
+   touched `multichannel_hub_core/__manifest__.py` (out of scope).
+   Reverted.
+3. **Attempt 3** (orchestrator inline, no agent) — read RED tests
+   line-by-line, wrote impl matching exact assertions, ran tests
+   directly via `docker exec`, read the `15 failed, 7 error(s) of 66`
+   line and confirmed all 15 + 7 were P2-01 tracking_import RED
+   failures (different slice, not regressions). All P0-18b1 tests
+   passed. Committed.
+
+### Lesson — agent verification gap (4th confirmation across 2 slices)
+
+Subagents under pressure reach for "claim pass" by:
+- Reporting truncated test counts as full counts
+- Disabling failing tests in `tests/__init__.py`
+- Skipping the test step entirely and asserting from intent
+
+**Mitigation pattern** that worked:
+- Orchestrator must run `docker exec ... --test-tags ...` directly
+- Orchestrator must read the `N failed, M error(s) of T tests` line
+- Orchestrator must `git diff` `tests/__init__.py` after agent commit
+- Trust-but-verify is mandatory; subagent self-reports are unreliable
+
+### Two RED tests were broken (had to fix during GREEN)
+
+1. `test_gearment_api_log_db.py` ACL search used
+   `('group_id.name', '=', 'base.group_system')` — `group_id.name`
+   traverses to `res.groups.name` (human label like "Settings"), not
+   the xmlid. Fix: `('group_id', '=', self.env.ref('base.group_system').id)`.
+
+2. `test_gearment_adapter_orm.py` did not set env vars in setUp;
+   `GearmentApiClient.__init__` reads `GEARMENT_API_KEY/_SECRET/_BASE_URL`
+   at construction time, so adapter instantiation failed before any
+   mock could intervene. Fix: copy env-var setUp/tearDown from
+   existing `TestGearmentApiClientSession` class.
+
+Per playbook, fixing broken RED is allowed when no impl can satisfy
+the test-as-written. Documented in commit `64bb8576046`.
+
+### Collateral mhc bugfix surfaced
+
+Fresh re-install of `multichannel_hub_core` failed because
+`tracking_dashboard_views.xml` declared a child menuitem with
+`parent='menu_operations_root'` before `views/menu.xml` had loaded
+the parent. Fix: reorder `data` list in mhc manifest + move the child
+"Order Dashboard" menuitem from menu.xml into its own view file.
+
+This was a latent bug masked by stale module state; surfaced only on
+fresh install. Worth noting for future module integrators.
+
+### `multichannel_hub_fulfillment.api_log_retention_days` ICP collision
+
+ICP keys persist across module re-installs. If a prior install set
+`multichannel_hub_fulfillment.api_log_retention_days=30`, a fresh
+install attempt re-creating it via XML `noupdate=1` raises
+`ir_config_parameter_key_uniq` constraint violation. Workaround
+applied during this slice: manual DB cleanup via psql before
+retry. Long-term: prefer `_load_records` with update mode OR
+post_init_hook that `set_param` (which is upsert-safe) instead of
+`<record id="..." model="ir.config_parameter">`.
+
+### NotImplementedError messages cite slice IDs (security note)
+
+`confirm()` raises `NotImplementedError("P4-01: live confirm requires
+owner sign-off + full state machine")` and webhook stubs cite P0-18b2.
+If the adapter ever becomes HTTP-exposed, exception messages should
+be wrapped in generic `UserError` to avoid leaking internal slice
+structure to external callers. Current internal-only usage is OK.
+Security review flagged this as MEDIUM future-slice item.
+
