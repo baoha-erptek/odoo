@@ -1,0 +1,307 @@
+"""
+Phase 1: Database verification tests for tracking.import models.
+
+Tests verify data integrity at the database level:
+- Table tracking_import_log exists with correct columns and indexes
+- Table tracking_import_line exists with correct columns and constraints
+- UNIQUE constraints on (log_id, source_row_hash) are enforced at DB level
+- Composite indexes on (state, create_date DESC) and (log_id, state) exist
+- ACL rows are properly defined for all three models
+- Constraints are properly mirrored in init() per drift template
+
+Tests use direct SQL queries to verify database schema and constraints.
+"""
+
+from odoo.tests.common import TransactionCase, tagged
+
+
+@tagged('post_install', '-at_install')
+class TestTrackingImportLogDB(TransactionCase):
+    """Phase 1: Verify tracking.import.log table exists with correct schema."""
+
+    def test_tracking_import_log_table_exists(self):
+        """Test that tracking_import_log table exists in the database."""
+        self.env.cr.execute("""
+            SELECT to_regclass('public.tracking_import_log')
+        """)
+        result = self.env.cr.fetchone()
+
+        self.assertIsNotNone(
+            result[0],
+            "tracking_import_log table should exist in database"
+        )
+
+    def test_tracking_import_log_columns_exist(self):
+        """Test that tracking_import_log table has all required columns."""
+        required_columns = [
+            'id', 'name', 'state', 'source', 'source_gdrive_file_id',
+            'filename', 'file_size_bytes', 'schema_hash', 'header_columns',
+            'is_new_schema', 'total_rows', 'matched_count', 'unmatched_count',
+            'conflict_count', 'error_count', 'imported_count',
+            'address_change_flagged_count', 'start_at', 'finish_at',
+            'triggered_by_user_id', 'notes',
+            'create_uid', 'create_date', 'write_uid', 'write_date'
+        ]
+
+        self.env.cr.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'tracking_import_log'
+            AND table_schema = 'public'
+        """)
+        existing_columns = {row[0] for row in self.env.cr.fetchall()}
+
+        for col in required_columns:
+            self.assertIn(
+                col,
+                existing_columns,
+                f"Column '{col}' should exist in tracking_import_log table"
+            )
+
+    def test_tracking_import_log_composite_index_state_create_date(self):
+        """Test that tracking_import_log has composite index on (state, create_date DESC)."""
+        self.env.cr.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = 'tracking_import_log'
+        """)
+        indexes = {row[0]: row[1] for row in self.env.cr.fetchall()}
+
+        state_create_found = any(
+            'state' in idx_def and 'create_date' in idx_def
+            for idx_def in indexes.values()
+        )
+        self.assertTrue(
+            state_create_found,
+            "Composite index on (state, create_date DESC) should exist"
+        )
+
+    def test_tracking_import_log_schema_hash_index(self):
+        """Test that tracking_import_log has index on schema_hash field."""
+        self.env.cr.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = 'tracking_import_log'
+        """)
+        indexes = {row[0]: row[1] for row in self.env.cr.fetchall()}
+
+        schema_hash_found = any(
+            'schema_hash' in idx_def
+            for idx_def in indexes.values()
+        )
+        self.assertTrue(
+            schema_hash_found,
+            "Index on schema_hash should exist"
+        )
+
+    def test_tracking_import_log_acl_rows_exist(self):
+        """Test that ACL rows are defined for tracking.import.log."""
+        self.env.cr.execute("""
+            SELECT COUNT(*)
+            FROM ir_model_access
+            WHERE model_id = (
+                SELECT id FROM ir_model WHERE model = 'tracking.import.log'
+            )
+        """)
+        acl_count = self.env.cr.fetchone()[0]
+
+        self.assertGreaterEqual(
+            acl_count,
+            3,
+            "At least 3 ACL rows should be defined for tracking.import.log "
+            "(group_ba_shipping, group_ba_manager, base.group_system)"
+        )
+
+
+@tagged('post_install', '-at_install')
+class TestTrackingImportLineDB(TransactionCase):
+    """Phase 1: Verify tracking.import.line table exists with correct schema."""
+
+    def test_tracking_import_line_table_exists(self):
+        """Test that tracking_import_line table exists in the database."""
+        self.env.cr.execute("""
+            SELECT to_regclass('public.tracking_import_line')
+        """)
+        result = self.env.cr.fetchone()
+
+        self.assertIsNotNone(
+            result[0],
+            "tracking_import_line table should exist in database"
+        )
+
+    def test_tracking_import_line_columns_exist(self):
+        """Test that tracking_import_line table has all required columns."""
+        required_columns = [
+            'id', 'log_id', 'row_number', 'source_row_hash', 'state',
+            'raw_order_number', 'raw_tracking_number', 'raw_carrier_label',
+            'raw_shipping_date', 'raw_payload', 'parsed_shipping_date',
+            'sale_order_id', 'fulfillment_id', 'detected_carrier_id',
+            'applied_carrier_id', 'address_change_flag', 'error_message', 'notes',
+            'create_uid', 'create_date', 'write_uid', 'write_date'
+        ]
+
+        self.env.cr.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'tracking_import_line'
+            AND table_schema = 'public'
+        """)
+        existing_columns = {row[0] for row in self.env.cr.fetchall()}
+
+        for col in required_columns:
+            self.assertIn(
+                col,
+                existing_columns,
+                f"Column '{col}' should exist in tracking_import_line table"
+            )
+
+    def test_tracking_import_line_unique_constraint_idempotency(self):
+        """Test that UNIQUE constraint on (log_id, source_row_hash) exists."""
+        self.env.cr.execute("""
+            SELECT constraint_name
+            FROM information_schema.table_constraints
+            WHERE table_name = 'tracking_import_line'
+            AND constraint_type = 'UNIQUE'
+        """)
+        unique_constraints = {row[0] for row in self.env.cr.fetchall()}
+
+        # Check that the specific idempotency constraint exists
+        idempotency_found = any(
+            'idempotency' in constraint_name.lower()
+            for constraint_name in unique_constraints
+        )
+        self.assertTrue(
+            idempotency_found,
+            "UNIQUE constraint 'tracking_import_line_idempotency_uniq' "
+            "on (log_id, source_row_hash) should exist"
+        )
+
+    def test_tracking_import_line_composite_index_log_state(self):
+        """Test that tracking_import_line has composite index on (log_id, state)."""
+        self.env.cr.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = 'tracking_import_line'
+        """)
+        indexes = {row[0]: row[1] for row in self.env.cr.fetchall()}
+
+        log_state_found = any(
+            'log_id' in idx_def and 'state' in idx_def
+            for idx_def in indexes.values()
+        )
+        self.assertTrue(
+            log_state_found,
+            "Composite index on (log_id, state) should exist"
+        )
+
+    def test_tracking_import_line_sale_order_index(self):
+        """Test that tracking_import_line has index on sale_order_id."""
+        self.env.cr.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = 'tracking_import_line'
+        """)
+        indexes = {row[0]: row[1] for row in self.env.cr.fetchall()}
+
+        sale_order_found = any(
+            'sale_order_id' in idx_def
+            for idx_def in indexes.values()
+        )
+        self.assertTrue(
+            sale_order_found,
+            "Index on sale_order_id should exist"
+        )
+
+    def test_tracking_import_line_source_row_hash_index(self):
+        """Test that tracking_import_line has index on source_row_hash."""
+        self.env.cr.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = 'tracking_import_line'
+        """)
+        indexes = {row[0]: row[1] for row in self.env.cr.fetchall()}
+
+        hash_found = any(
+            'source_row_hash' in idx_def
+            for idx_def in indexes.values()
+        )
+        self.assertTrue(
+            hash_found,
+            "Index on source_row_hash should exist"
+        )
+
+    def test_tracking_import_line_acl_rows_exist(self):
+        """Test that ACL rows are defined for tracking.import.line."""
+        self.env.cr.execute("""
+            SELECT COUNT(*)
+            FROM ir_model_access
+            WHERE model_id = (
+                SELECT id FROM ir_model WHERE model = 'tracking.import.line'
+            )
+        """)
+        acl_count = self.env.cr.fetchone()[0]
+
+        self.assertGreaterEqual(
+            acl_count,
+            3,
+            "At least 3 ACL rows should be defined for tracking.import.line "
+            "(group_ba_shipping, group_ba_manager, base.group_system)"
+        )
+
+
+@tagged('post_install', '-at_install')
+class TestTrackingImportWizardDB(TransactionCase):
+    """Phase 1: Verify tracking.import.wizard table and ACLs exist."""
+
+    def test_tracking_import_wizard_table_exists(self):
+        """Test that tracking_import_wizard table exists (TransientModel)."""
+        self.env.cr.execute("""
+            SELECT to_regclass('public.tracking_import_wizard')
+        """)
+        result = self.env.cr.fetchone()
+
+        self.assertIsNotNone(
+            result[0],
+            "tracking_import_wizard table should exist in database"
+        )
+
+    def test_tracking_import_wizard_columns_exist(self):
+        """Test that tracking_import_wizard has required columns."""
+        required_columns = [
+            'id', 'excel_file', 'excel_filename', 'state',
+            'schema_hash', 'is_new_schema', 'header_diff_html',
+            'preview_log_id'
+        ]
+
+        self.env.cr.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'tracking_import_wizard'
+            AND table_schema = 'public'
+        """)
+        existing_columns = {row[0] for row in self.env.cr.fetchall()}
+
+        for col in required_columns:
+            self.assertIn(
+                col,
+                existing_columns,
+                f"Column '{col}' should exist in tracking_import_wizard table"
+            )
+
+    def test_tracking_import_wizard_acl_rows_exist(self):
+        """Test that ACL rows are defined for tracking.import.wizard."""
+        self.env.cr.execute("""
+            SELECT COUNT(*)
+            FROM ir_model_access
+            WHERE model_id = (
+                SELECT id FROM ir_model WHERE model = 'tracking.import.wizard'
+            )
+        """)
+        acl_count = self.env.cr.fetchone()[0]
+
+        self.assertGreaterEqual(
+            acl_count,
+            2,
+            "At least 2 ACL rows should be defined for tracking.import.wizard "
+            "(group_ba_shipping, group_ba_manager)"
+        )
