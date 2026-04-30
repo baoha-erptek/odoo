@@ -5,11 +5,13 @@
     'summary': 'Fulfillment integration service for multichannel operations',
     'author': 'Etsy Migration Team',
     'depends': [
-        'multichannel_hub_core',
+        # 'multichannel_hub_core',  # TEMP: Blocked by broken menu.xml load order. Restore after P1-xx fixes.
+        'sale_management',  # Provides sale.order base
+        'stock',
     ],
     'data': [
-        'security/ir.model.access.csv',
     ],
+    'post_init_hook': 'post_init_create_acl_and_cron',
     'installable': True,
     'application': False,
     'license': 'LGPL-3',
