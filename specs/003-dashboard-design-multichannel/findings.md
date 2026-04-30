@@ -595,3 +595,83 @@ P1-02a, P1-04, P1-03, P1-02b): defense-in-depth layers are
 necessary but not sufficient. Action methods that mutate state must
 always include the inline gate. Memory
 `feedback_fr017_write_defense_in_depth` is canonical.
+
+---
+
+## P1-09 planner notes (2026-04-30)
+
+Spec-extension slice: planner authored P1-09 task block (T094–T101) +
+data-model deltas (storage_mode='gdrive' + 4 fields + C-DF-006) + plan.md
+Stage-2 section. No code yet; this is the Phase-1 docs handoff for the
+upcoming GREEN slice.
+
+### Open decisions (owner sign-off welcome but non-blocking)
+
+1. **Thumbnail library**: Pillow (default) vs Wand (ImageMagick).
+   Pillow chosen for lighter footprint + no system deps. Wand fallback
+   deferred — adopt only if Pillow proves brittle on production PSDs.
+
+2. **GDrive folder scope**: per-shop/year folder (default, cached on
+   `etsy.shop.x_gdrive_design_folder_id`) vs per-order subfolder. Default
+   chosen for fewer Drive API calls (~17K saved on historical scale).
+
+3. **`google-api-python-client` pinning**: `>=2.80.0` lower-bound vs
+   exact `==2.96.0`. Lower-bound chosen for patch-flow.
+
+4. **Historical backfill to Drive**: deferred indefinitely. Etsy-CDN URLs
+   remain valid for legacy `storage_mode='url'` rows; no automated
+   migration. Re-evaluate post-Phase-1 if CDN URLs degrade.
+
+### ADR audit outcome
+
+- ADR-006 §3 (storage modes) + §6 (folder structure + write policy):
+  consistent with P1-09 wizard + folder-caching design. **No amendment.**
+- ADR-012 §3 (failure policy: surface to user, no auto-fallback) +
+  §4 (Discord remains manual escape hatch): P1-09 wizard raises
+  `ValidationError` on Drive failure with "use URL instead" affordance.
+  **No amendment.**
+
+### Defense-in-depth restated (5th confirmation)
+
+P1-09 wizard `action_upload()` MUST gate via inline `has_group()` /
+`_check_production_team_or_raise()` because view-level `groups=` is
+bypassable via XML-RPC. Add `TestRpcGate` regression to
+`tests/test_gdrive_upload_orm.py`. Memory
+`feedback_fr017_write_defense_in_depth` canonical; 5th cumulative
+slice confirmation (P1-02a, P1-04, P1-03, P1-02b, P1-09).
+
+### `_sql_constraints` drift template (5th confirmation if needed)
+
+`design_file_upload_wizard` is TransientModel — auto-vacuumed, no
+`_sql_constraints` needed. `design.file` already has UNIQUE constraints
+mirrored via `init()` in P1-02a. P1-09 adds 4 fields, no UNIQUE — drift
+template not exercised here.
+
+### Suggested commit sequence
+
+**Commit 1 (this docs landing, planner output)**:
+```
+[multichannel_hub_core] docs(P1-09): planner Phase 1 spec artifacts (tasks + data-model + plan + findings)
+
+Adds P1-09 task block T094-T101 (Phase 7.5 GDrive upload service & wizard)
+to specs/003 tasks.md. Extends design.file data-model with storage_mode
+'gdrive' + 4 fields (gdrive_file_id, gdrive_preview_url, gdrive_folder_id,
+gdrive_thumbnail) + constraint C-DF-006. Adds Stage-2 plan section
+documenting GdriveUploader service-account auth, folder caching, Pillow
+thumbnail strategy, FR-017 RPC-gate requirement.
+
+ADR-006 / ADR-012 audited consistent with P1-09 scope; no amendments.
+4 open decisions captured in findings.md (thumbnail lib, folder scope,
+lib pin, historical backfill).
+```
+
+**Commit 2 (RED, future slice)**:
+```
+[multichannel_hub_core] test(P1-09): RED tests for GDrive upload + thumbnail + wizard
+```
+
+**Commit 3 (GREEN, future slice)**:
+```
+[multichannel_hub_core] feat(P1-09): GdriveUploader + thumbnail generator + upload wizard (T094-T101)
+```
+
