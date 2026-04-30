@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- design.file.upload.wizard form view -->
+    <record id="design_file_upload_wizard_form" model="ir.ui.view">
+        <field name="name">design.file.upload.wizard form</field>
+        <field name="model">design.file.upload.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="order_id" readonly="1" />
+                        <field name="storage_mode" />
+                        <field name="file_name" />
+                    </group>
+
+                    <group string="File Content">
+                        <field name="file_blob" filename="file_name" />
+                    </group>
+
+                    <group string="URL Mode">
+                        <field name="file_url" />
+                    </group>
+
+                    <group string="GDrive Mode">
+                        <field name="gdrive_folder_id" />
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button
+                        name="action_upload"
+                        type="object"
+                        string="Upload"
+                        class="btn-primary"
+                    />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open wizard -->
+    <record id="design_file_upload_wizard_action" model="ir.actions.act_window">
+        <field name="name">Upload Design File</field>
+        <field name="res_model">design.file.upload.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

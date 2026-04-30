@@ -1,4 +1,5 @@
 from . import etsy_shop
+from . import etsy_shop_gdrive
 from . import etsy_email_log
 from . import etsy_sync_health
 from . import etsy_api_log

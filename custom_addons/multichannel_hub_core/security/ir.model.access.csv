@@ -10,3 +10,5 @@ access_design_file_manager_full,design.file manager full,model_design_file,sales
 access_design_file_route_salesman_read,design.file.route read for salesman,model_design_file_route,sales_team.group_sale_salesman,1,0,0,0
 access_design_file_route_production_team,design.file.route production team,model_design_file_route,group_production_team,1,1,1,0
 access_design_file_route_manager_full,design.file.route manager full,model_design_file_route,sales_team.group_sale_manager,1,1,1,1
+access_design_file_upload_wizard_production_team,design.file.upload.wizard production team,model_design_file_upload_wizard,group_production_team,1,1,1,0
+access_design_file_upload_wizard_system,design.file.upload.wizard system,model_design_file_upload_wizard,base.group_system,1,1,1,1

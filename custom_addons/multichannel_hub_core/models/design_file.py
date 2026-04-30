@@ -59,7 +59,11 @@ class DesignFile(models.Model):
     version = fields.Integer(string='Version', default=1, required=True)
 
     storage_mode = fields.Selection(
-        [('small', 'Small (filestore ≤10 MB)'), ('url', 'URL')],
+        [
+            ('small', 'Small (filestore ≤10 MB)'),
+            ('url', 'URL'),
+            ('gdrive', 'Google Drive'),
+        ],
         string='Storage Mode',
         required=True,
         default='url',
@@ -75,6 +79,20 @@ class DesignFile(models.Model):
     file_name = fields.Char(string='File Name')
     file_size = fields.Integer(string='File Size (bytes)')
     file_checksum = fields.Char(string='SHA-256 Checksum')
+
+    # GDrive storage fields (P1-09)
+    gdrive_file_id = fields.Char(string='GDrive File ID')
+    gdrive_folder_id = fields.Char(string='GDrive Folder ID')
+    gdrive_preview_url = fields.Char(
+        string='GDrive Preview URL',
+        compute='_compute_gdrive_preview_url',
+        store=True,
+    )
+    gdrive_thumbnail = fields.Binary(
+        string='GDrive Thumbnail',
+        attachment=True,
+        help='Cached thumbnail generated from GDrive file.',
+    )
 
     state = fields.Selection(
         [
@@ -154,6 +172,19 @@ class DesignFile(models.Model):
             END $$
         """)
 
+    # --------------------------------------------------------------- compute
+
+    @api.depends('gdrive_file_id')
+    def _compute_gdrive_preview_url(self):
+        """Compute GDrive preview URL from file_id."""
+        for rec in self:
+            if rec.gdrive_file_id:
+                rec.gdrive_preview_url = (
+                    f"https://drive.google.com/file/d/{rec.gdrive_file_id}/view"
+                )
+            else:
+                rec.gdrive_preview_url = ''
+
     # --------------------------------------------------------------- constraints
 
     @api.constrains('order_id', 'order_line_id')
@@ -196,6 +227,19 @@ class DesignFile(models.Model):
                     "Design file '%(name)s' uses URL storage mode but has no "
                     "file_url. Paste a GDrive / CDN link or switch to small "
                     "storage mode.",
+                    name=rec.name or '?',
+                ))
+
+    @api.constrains('storage_mode', 'gdrive_file_id', 'gdrive_folder_id')
+    def _check_storage_mode_gdrive_requires_ids(self):
+        """C-DF-006: storage_mode='gdrive' requires both gdrive_file_id and gdrive_folder_id."""
+        for rec in self:
+            if rec.storage_mode != 'gdrive':
+                continue
+            if not rec.gdrive_file_id or not rec.gdrive_folder_id:
+                raise ValidationError(_(
+                    "Design file '%(name)s' uses GDrive storage mode but is missing "
+                    "file ID and/or folder ID. Both are required.",
                     name=rec.name or '?',
                 ))
 
