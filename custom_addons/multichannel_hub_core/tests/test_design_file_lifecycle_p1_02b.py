@@ -29,7 +29,7 @@ from unittest import mock
 
 from psycopg2 import IntegrityError
 
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
 _logger = logging.getLogger(__name__)
@@ -296,14 +296,26 @@ class TestPhase2ORM_RouteCRUD(TransactionCase):
             delivery_method='gdrive_share',
         )
 
-        # Attempt to create a second route with identical key
-        with self.assertRaises((ValidationError, IntegrityError)):
-            route2 = self._create_route(
-                design_file_id=self.design_file.id,
-                recipient_user_id=self.production_user.id,
-                recipient_type='mp',
-                delivery_method='gdrive_share',
+        # Attempt to create a second route with identical key.
+        # Odoo's TransactionCase._assertRaises does an issubclass(exc, AccessError)
+        # check that breaks on tuples, so handle both expected exceptions manually.
+        # Wrap in a savepoint so the failed INSERT does not poison the
+        # outer transaction.
+        try:
+            with self.env.cr.savepoint():
+                route2 = self._create_route(
+                    design_file_id=self.design_file.id,
+                    recipient_user_id=self.production_user.id,
+                    recipient_type='mp',
+                    delivery_method='gdrive_share',
+                )
+                self.env.flush_all()
+            self.fail(
+                "Duplicate idempotency_key should have raised "
+                "IntegrityError or ValidationError"
             )
+        except (ValidationError, IntegrityError):
+            pass
 
 
 @tagged('post_install', '-at_install')
@@ -487,13 +499,15 @@ class TestPhase2ORM_RouteStateMachine(TransactionCase):
         """Test state transitions: pending -> sent -> acknowledged."""
         route = self._create_route()
 
-        # Initial state should be 'pending'
+        # Initial state should be 'pending'.
+        # Odoo Datetime fields read as False when unset (not None).
         self.assertEqual(route.state, 'pending')
-        self.assertIsNone(route.sent_at)
-        self.assertIsNone(route.acknowledged_at)
+        self.assertFalse(route.sent_at)
+        self.assertFalse(route.acknowledged_at)
 
-        # Transition to 'sent' (via action_dispatch)
-        with mock.patch.object(route, 'action_dispatch', return_value=True):
+        # Transition to 'sent' (via action_dispatch).
+        # Patch the class (Odoo records do not allow per-instance attr override).
+        with mock.patch.object(type(route), 'action_dispatch', return_value=True):
             route.write({'state': 'sent'})
             route.write({'sent_at': self.env.cr.now()})
 
@@ -505,6 +519,43 @@ class TestPhase2ORM_RouteStateMachine(TransactionCase):
 
         self.assertEqual(route.state, 'acknowledged')
         self.assertFalse(not route.acknowledged_at)
+
+    def test_action_dispatch_blocked_for_non_production_team(self):
+        """C0-DR-001 regression — non-production-team user cannot
+        action_dispatch via RPC bypass."""
+        route = self._create_route()
+        regular_user = self.env['res.users'].create({
+            'name': 'Salesman',
+            'login': 'salesman_p1_02b@test.com',
+            'email': 'salesman_p1_02b@test.com',
+            'group_ids': [(6, 0, [
+                self.env.ref('sales_team.group_sale_salesman').id,
+                self.env.ref('base.group_user').id,
+            ])],
+        })
+        with self.assertRaises(AccessError):
+            route.with_user(regular_user).action_dispatch()
+        # State must not have flipped.
+        route.invalidate_recordset()
+        self.assertEqual(route.state, 'pending')
+
+    def test_action_acknowledge_blocked_for_non_production_team(self):
+        """C0-DR-001 regression — non-production-team user cannot
+        action_acknowledge via RPC bypass."""
+        route = self._create_route()
+        regular_user = self.env['res.users'].create({
+            'name': 'Salesman2',
+            'login': 'salesman2_p1_02b@test.com',
+            'email': 'salesman2_p1_02b@test.com',
+            'group_ids': [(6, 0, [
+                self.env.ref('sales_team.group_sale_salesman').id,
+                self.env.ref('base.group_user').id,
+            ])],
+        })
+        with self.assertRaises(AccessError):
+            route.with_user(regular_user).action_acknowledge()
+        route.invalidate_recordset()
+        self.assertEqual(route.state, 'pending')
 
     def test_route_state_machine_pending_to_failed(self):
         """Test failure transition: pending -> failed with reason."""
@@ -587,12 +638,13 @@ class TestPhase2ORM_RouterService(TransactionCase):
 
     def test_dispatch_returns_queued_count_and_deduped_count(self):
         """Verify dispatch returns {'queued': int, 'deduped': int}."""
+        Router = self.env['design.file.router']
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(Router),
             'dispatch',
             return_value={'queued': 3, 'deduped': 0}
         ) as mock_dispatch:
-            result = self.env['design.file.router'].dispatch(self.design_file.id)
+            result = Router.dispatch(self.design_file.id)
 
             self.assertIsInstance(result, dict)
             self.assertIn('queued', result)
@@ -602,16 +654,17 @@ class TestPhase2ORM_RouterService(TransactionCase):
 
     def test_route_idempotency_key_dedup(self):
         """Verify calling dispatch twice with same identity deduplicates."""
+        Router = self.env['design.file.router']
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(Router),
             'dispatch',
             side_effect=[
                 {'queued': 3, 'deduped': 0},  # First call: 3 new routes
                 {'queued': 0, 'deduped': 3},  # Second call: same 3 already exist
             ]
         ) as mock_dispatch:
-            result1 = self.env['design.file.router'].dispatch(self.design_file.id)
-            result2 = self.env['design.file.router'].dispatch(self.design_file.id)
+            result1 = Router.dispatch(self.design_file.id)
+            result2 = Router.dispatch(self.design_file.id)
 
             self.assertEqual(result1['queued'], 3)
             self.assertEqual(result1['deduped'], 0)
@@ -620,13 +673,15 @@ class TestPhase2ORM_RouterService(TransactionCase):
 
     def test_dispatch_creates_routes_for_internal_production_recipient_types(self):
         """Verify dispatch creates routes for mp/ba/pd on internal-production orders."""
-        # Mock the dispatch method to track calls
+        # Mock the dispatch method on the class (Odoo records reject per-
+        # instance attribute writes).
+        Router = self.env['design.file.router']
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(Router),
             'dispatch',
             return_value={'queued': 3, 'deduped': 0}
         ) as mock_dispatch:
-            result = self.env['design.file.router'].dispatch(self.design_file.id)
+            result = Router.dispatch(self.design_file.id)
 
             mock_dispatch.assert_called_once_with(self.design_file.id)
             self.assertEqual(result['queued'], 3)
@@ -641,8 +696,9 @@ class TestPhase2ORM_RouterService(TransactionCase):
             'delivery_method': 'gdrive_share',
         })
 
-        # Mock dispatch to set route to failed state
-        with mock.patch.object(route, 'action_dispatch', side_effect=Exception("Network error")):
+        # Mock action_dispatch to set route to failed state.
+        # Patch on the class — Odoo records do not allow per-instance overrides.
+        with mock.patch.object(type(route), 'action_dispatch', side_effect=Exception("Network error")):
             try:
                 route.action_dispatch()
             except Exception:
@@ -989,7 +1045,7 @@ class TestPhase2ORM_OnConfirmRouting(TransactionCase):
         order, design_file = self._create_order_with_approved_design()
 
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(self.env['design.file.router']),
             'dispatch',
             return_value={'queued': 3, 'deduped': 0}
         ) as mock_dispatch:
@@ -1025,7 +1081,7 @@ class TestPhase2ORM_OnConfirmRouting(TransactionCase):
         })
 
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(self.env['design.file.router']),
             'dispatch',
             return_value={'queued': 0, 'deduped': 0}
         ) as mock_dispatch:
@@ -1047,7 +1103,7 @@ class TestPhase2ORM_OnConfirmRouting(TransactionCase):
         order, design_file = self._create_order_with_approved_design()
 
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(self.env['design.file.router']),
             'dispatch',
             side_effect=Exception("Network error")
         ):
@@ -1079,7 +1135,7 @@ class TestPhase2ORM_OnConfirmRouting(TransactionCase):
         })
 
         with mock.patch.object(
-            self.env['design.file.router'],
+            type(self.env['design.file.router']),
             'dispatch',
             return_value={'queued': 1, 'deduped': 0}
         ):

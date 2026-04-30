@@ -7,3 +7,6 @@ access_shipping_carrier_manager,shipping.carrier manager,model_shipping_carrier,
 access_design_file_salesman_read,design.file read for salesman,model_design_file,sales_team.group_sale_salesman,1,0,0,0
 access_design_file_production_team,design.file production team,model_design_file,group_production_team,1,1,1,0
 access_design_file_manager_full,design.file manager full,model_design_file,sales_team.group_sale_manager,1,1,1,1
+access_design_file_route_salesman_read,design.file.route read for salesman,model_design_file_route,sales_team.group_sale_salesman,1,0,0,0
+access_design_file_route_production_team,design.file.route production team,model_design_file_route,group_production_team,1,1,1,0
+access_design_file_route_manager_full,design.file.route manager full,model_design_file_route,sales_team.group_sale_manager,1,1,1,1

@@ -98,6 +98,14 @@ class DesignFile(models.Model):
         help="True for rows backfilled from historical etsy_design_link_* columns (T078).",
     )
 
+    # P1-02b — Design file routing
+    route_ids = fields.One2many(
+        'design.file.route',
+        'design_file_id',
+        string='Routes',
+        help="Delivery routes for this design file (P1-02b routing).",
+    )
+
     _sql_constraints = [
         # Declarative form — also enforced via init() raw SQL because
         # _sql_constraints UNIQUE has been observed to silently fail to
