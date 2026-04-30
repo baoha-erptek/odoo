@@ -9,6 +9,7 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/ir_cron_gearment_api_log_retention.xml',
     ],
     'installable': True,
     'application': False,
