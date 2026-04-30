@@ -4,7 +4,7 @@ Mirrors etsy.api.log (Spec 005 P0-17): high-volume audit table without
 mail.thread, daily retention cron, ACL gated to system + sale_manager-read.
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from odoo import _, api, fields, models
 
@@ -93,7 +93,7 @@ class GearmentApiLog(models.Model):
                 "Invalid api_log_retention_days=%r; falling back to 30", param,
             )
             retention_days = 30
-        cutoff = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=retention_days)
         # Raw SQL: cron runs trusted; ORM unlink would scale O(n) on tens of
         # thousands of rows. Justified per common/security.md raw-SQL exception.
         self.env.cr.execute(
