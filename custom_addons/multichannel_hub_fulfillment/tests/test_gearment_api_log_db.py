@@ -81,6 +81,7 @@ class TestGearmentApiLogDatabase(TransactionCase):
             FROM pg_indexes
             WHERE schemaname = 'public'
             AND tablename = 'gearment_api_log'
+            AND indexname LIKE '%request_started_at%'
         """)
         indexes = self.env.cr.fetchall()
 
@@ -93,15 +94,14 @@ class TestGearmentApiLogDatabase(TransactionCase):
 
         self.assertTrue(
             found,
-            f"Composite index on (sale_order_id, request_started_at) must exist. Found indexes: {[idx[0] for idx in indexes]}"
+            "Composite index on (sale_order_id, request_started_at) must exist"
         )
 
     def test_acl_group_system_full(self):
         """Verify ir.model.access row for group_system has all perms."""
-        system_group = self.env.ref('base.group_system')
         acl = self.env['ir.model.access'].search([
             ('model_id.model', '=', 'gearment.api.log'),
-            ('group_id', '=', system_group.id),
+            ('group_id.name', '=', 'base.group_system'),
         ])
 
         self.assertTrue(acl, "ACL row must exist for gearment.api.log + group_system")
@@ -114,10 +114,9 @@ class TestGearmentApiLogDatabase(TransactionCase):
 
     def test_acl_group_sale_manager_read_only(self):
         """Verify ir.model.access row for group_sale_manager is read-only."""
-        sale_manager_group = self.env.ref('sales_team.group_sale_manager')
         acl = self.env['ir.model.access'].search([
             ('model_id.model', '=', 'gearment.api.log'),
-            ('group_id', '=', sale_manager_group.id),
+            ('group_id.name', '=', 'sales_team.group_sale_manager'),
         ])
 
         self.assertTrue(acl, "ACL row must exist for gearment.api.log + group_sale_manager")
