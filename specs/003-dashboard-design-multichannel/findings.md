@@ -470,3 +470,128 @@ Mirrors P1-04's `approve_address_change=True` pattern on
 the same rule MUST also be enforced at the model `write()` boundary.
 Direct RPC bypass is the default attack surface for any action_*-gated
 business rule.
+
+## P1-02b (2026-04-29) — Design-file routing surprises
+
+### `_sql_constraints` drift template — 4th confirmation
+
+**Where surfaced**: P1-02b `design.file.route` adds UNIQUE on
+`idempotency_key`. Followed the canonical template from
+`design_file.py:114-148` (`pg_constraint IF NOT EXISTS` pre-check, NOT
+EXCEPTION clause). Worked first try.
+
+**Lesson**: pattern is now load-bearing across 4 distinct addons
+(`etsy.email.log`, `design.file`, `design.file.route`, plus the
+implicit P1-03 fulfillment use). Memory `project_sql_constraints_drift`
+remains canonical. Continue using `pg_constraint IF NOT EXISTS` mirror
+for every new UNIQUE.
+
+### `groups_id` → `group_ids` recurrence (3rd)
+
+**Where surfaced**: `tdd-guide` agent generated `setUpClass` fixtures
+using `'groups_id': [(6, 0, [...])]` on `res.users.create()`. Setup
+errored with `ValueError: Invalid field 'groups_id' in 'res.users'`
+even though `feedback_odoo19_test_gotchas.md` explicitly notes the
+Odoo 19 rename. Caught by setUpClass error → manual replace.
+
+**Lesson**: agent doesn't always honor memory entries even when
+load-bearing. Phase 2 (RED) bring-up should always include a quick
+grep for `groups_id` in test fixtures before claiming RED-green.
+
+### `mock.patch.object(record, 'method', ...)` on Odoo Models is read-only
+
+**Where surfaced**: 5 RED tests in `TestPhase2ORM_RouterService` +
+`TestPhase2ORM_OnConfirmRouting` patched `dispatch` / `action_dispatch`
+on a record-instance. Got
+`AttributeError: 'design.file.router' object attribute 'dispatch' is
+read-only` because Odoo records expose method attributes via the
+registry-merged class descriptor protocol; per-instance `setattr`
+fails.
+
+**Resolution**: patch the type (registry-merged class) instead:
+```python
+Router = self.env['design.file.router']
+with mock.patch.object(type(Router), 'dispatch', return_value=...):
+    Router.dispatch(file_id)
+```
+
+For records: `mock.patch.object(type(route), 'action_dispatch', ...)`.
+The class lookup finds the mocked method during the dispatch call.
+
+**Lesson** (new memory candidate for `feedback_odoo19_test_gotchas`):
+NEVER `mock.patch.object(env_record, 'method', ...)` — always wrap in
+`type(...)`. Same applies to `mock.patch.object(env['model'], ...)`.
+
+### `assertRaises((Validation, IntegrityError))` tuple breaks Odoo's `_assertRaises` override
+
+**Where surfaced**: idempotency-key UNIQUE-at-DB test passed both
+exception classes as a tuple to `self.assertRaises`. Odoo's
+`TransactionCase._assertRaises` override does
+`if issubclass(exception, AccessError):` to log access failures —
+that `issubclass(tuple, ...)` raises
+`TypeError: issubclass() arg 1 must be a class`.
+
+**Resolution**: avoid the override by wrapping in a savepoint and
+manually catching:
+```python
+try:
+    with self.env.cr.savepoint():
+        self._create_route(... duplicate identity ...)
+        self.env.flush_all()
+    self.fail("Duplicate idempotency_key should have raised")
+except (ValidationError, IntegrityError):
+    pass
+```
+
+The savepoint also keeps the failed INSERT from poisoning the outer
+transaction.
+
+**Lesson**: prefer single-class `assertRaises` in Odoo
+`TransactionCase`. If you need to match multiple exception types, use
+the manual try/except pattern.
+
+### `information_schema.referential_constraints` schema gotcha
+
+**Where surfaced**: Phase 1 DB test
+`test_foreign_key_design_file_cascade` queried
+`SELECT constraint_name, delete_rule FROM
+information_schema.referential_constraints WHERE table_name=...`
+expecting standard column names. PG raised
+`column "table_name" does not exist`.
+
+**Resolution**: the standards-compliant view exposes only
+`(constraint_name, delete_rule, update_rule, ...)`. To filter by
+table+column, JOIN with `information_schema.key_column_usage`:
+```sql
+SELECT rc.constraint_name, rc.delete_rule
+FROM information_schema.referential_constraints rc
+JOIN information_schema.key_column_usage kcu
+  ON kcu.constraint_name = rc.constraint_name
+ AND kcu.constraint_schema = rc.constraint_schema
+WHERE kcu.table_name = 'design_file_route'
+  AND kcu.column_name = 'design_file_id'
+```
+
+**Lesson**: when writing Phase 1 DB tests for FK semantics, always JOIN
+`referential_constraints` with `key_column_usage` to filter by
+table/column.
+
+### C0-DR-001 reaffirms FR-017 pattern: action methods need explicit `has_group()`
+
+**Where surfaced**: security-reviewer flagged `action_dispatch()` and
+`action_acknowledge()` as missing RPC-level authorization. The
+`ir.model.access.csv` row only gates CRUD; action methods are
+reachable via XML-RPC by any user with read perm on the model.
+
+**Resolution**: added `_check_production_team_or_raise()` helper
+(mirrors P1-02a pattern in `design_file.py:223-232`) and called it as
+the first line of both action methods. Added 2 regression tests
+verifying salesman → AccessError + state unchanged.
+
+**Lesson** (FR-017 pattern restated for the 4th time across slices —
+P1-02a, P1-04, P1-03, P1-02b): defense-in-depth layers are
+**[ACL] + [view groups] + [action method `has_group()` gate] +
+[`write()`-override mirror for protected fields]**. The first two are
+necessary but not sufficient. Action methods that mutate state must
+always include the inline gate. Memory
+`feedback_fr017_write_defense_in_depth` is canonical.
