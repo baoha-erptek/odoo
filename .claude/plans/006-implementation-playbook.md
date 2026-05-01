@@ -119,6 +119,21 @@ A slice is **done** only when **all** are true:
 - [ ] ACLs defined for any new model; sudo() commented; raw SQL commented
 - [ ] At least one `/learn` insight (or explicit "none" note)
 - [ ] `findings.md` updated if anything surprised us
+- [ ] **Frontend view sanity (Odoo 19 OWL)**: every `decoration-*` and dynamic
+  attribute (`invisible=`, `readonly=`, `column_invisible=`) referencing a
+  non-trivial expression has its referenced fields **explicitly loaded** in
+  the same view, including dotted M2O paths via either a direct
+  `<field name="rel_id.field" invisible="1"/>` or a related/computed mirror
+  on the line model. OWL 2 errors at view-render with "field is undefined"
+  when this is missed; the failure is invisible to module-install tests
+  because the registry knows the field — only the JS client trips. (See
+  memory entry #61.)
+- [ ] **Deploy hygiene** (when rsync'ing changes to a remote Odoo container):
+  after `-u` of the new code, `DELETE FROM ir_attachment WHERE name LIKE
+  'web.assets%'` and `docker restart <odoo>` so the JS bundle is
+  regenerated. Otherwise browsers see stale bundles unaware of the new
+  fields and raise OwlError. Tell the operator to hard-reload after the
+  deploy. (See memory entry #62.)
 
 Failure of any criterion → slice does not exit. Fix or split.
 

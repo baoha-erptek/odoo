@@ -8,10 +8,17 @@
         <field name="model">sale.order.fulfillment</field>
         <field name="arch" type="xml">
             <list string="Tracking Dashboard"
-                  decoration-warning="order_id.has_pending_address_change"
+                  decoration-warning="order_address_change_pending"
                   decoration-info="order_priority == 'push'"
                   decoration-danger="order_priority == 'urgent'"
                   default_order="shipping_date desc, id desc">
+                <!-- Odoo 19 OWL: dotted-field references in decoration
+                     attributes need the field LOADED on the record.
+                     `order_address_change_pending` is the related Boolean
+                     declared on sale.order.fulfillment so the list can
+                     read it via web_search_read without a sale.order
+                     round-trip. -->
+                <field name="order_address_change_pending" column_invisible="1"/>
                 <field name="order_id"/>
                 <field name="order_id" string="Buyer"
                        widget="many2one_avatar_user" optional="hide"/>

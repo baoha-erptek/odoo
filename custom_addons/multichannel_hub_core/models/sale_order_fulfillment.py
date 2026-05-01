@@ -47,6 +47,20 @@ class SaleOrderFulfillment(models.Model):
         copy=False,
     )
 
+    # Mirror of `sale.order.has_pending_address_change` (declared by
+    # etsy_integration). Computed via getattr so that mhc remains
+    # architecturally independent of etsy_integration — when that
+    # module is absent, the column stays False and the Tracking
+    # Dashboard's `decoration-warning` simply never fires.
+    order_address_change_pending = fields.Boolean(
+        string='Order Address Change Pending',
+        compute='_compute_order_address_change_pending',
+        store=False,
+        help='Mirror of order_id.has_pending_address_change for the '
+             "Tracking Dashboard list-view decoration. False when the "
+             'etsy_integration module is not installed.',
+    )
+
     tracking_number = fields.Char(string='Tracking Number', index=True, tracking=True)
     shipping_date = fields.Date(string='Shipping Date', tracking=True)
     shipping_carrier_id = fields.Many2one(
@@ -270,3 +284,17 @@ class SaleOrderFulfillment(models.Model):
                 'sticky': True,
             },
         }
+
+    @api.depends('order_id')
+    def _compute_order_address_change_pending(self):
+        """Mirror order.has_pending_address_change without a hard
+        dependency on etsy_integration.
+
+        Uses getattr() so installations without etsy_integration still
+        render the Tracking Dashboard list view (the field returns False
+        and the decoration-warning never fires).
+        """
+        for rec in self:
+            order = rec.order_id
+            rec.order_address_change_pending = bool(
+                getattr(order, 'has_pending_address_change', False))
