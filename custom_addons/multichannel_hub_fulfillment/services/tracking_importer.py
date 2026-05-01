@@ -166,9 +166,14 @@ def apply_to_fulfillment(env, lines):
                     vals['shipping_date'] = line.parsed_shipping_date
                 if 'tracking_state' in line.fulfillment_id._fields:
                     vals['tracking_state'] = 'shipped'
-                if (line.applied_carrier_id
+                # P2-02: apply detected_carrier_id ONLY when fulfillment
+                # has no carrier yet (Spec 004a US2 AC: never overwrite).
+                carrier_to_apply = (line.applied_carrier_id
+                                    or line.detected_carrier_id)
+                if (carrier_to_apply
                         and not line.fulfillment_id.shipping_carrier_id):
-                    vals['shipping_carrier_id'] = line.applied_carrier_id.id
+                    vals['shipping_carrier_id'] = carrier_to_apply.id
+                    line.applied_carrier_id = carrier_to_apply.id
                 if vals:
                     line.fulfillment_id.write(vals)
                 line.state = 'imported'

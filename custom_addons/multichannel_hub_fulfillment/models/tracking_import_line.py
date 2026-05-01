@@ -9,7 +9,7 @@ Composite (log_id, state) index for log-detail view.
 No mail.thread (high-volume; 500+ rows per import).
 """
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class TrackingImportLine(models.Model):
@@ -75,6 +75,13 @@ class TrackingImportLine(models.Model):
 
     address_change_flag = fields.Boolean(
         string='Address-Change Flagged', default=False)
+    needs_review = fields.Boolean(
+        string='Needs Review',
+        default=False,
+        index=True,
+        help="P2-02: True when carrier auto-detection fell back to "
+             "`other` or could not match any prefix regex.",
+    )
     error_message = fields.Text(string='Error Message')
     notes = fields.Char(string='Notes')
 
@@ -124,3 +131,35 @@ class TrackingImportLine(models.Model):
                     "Line on row %(row)s is 'error' but has no error_message.",
                     row=line.row_number,
                 ))
+
+    # ------------------------------------------------------------------
+    # P2-02 — bulk re-detect carrier action.
+    # ------------------------------------------------------------------
+    def _check_ba_shipping_or_raise(self):
+        """FR-017 (8th confirmation): re-detect must be RPC-gated."""
+        if not (self.env.user.has_group(
+                'multichannel_hub_fulfillment.group_ba_shipping')
+                or self.env.user.has_group('base.group_system')):
+            raise AccessError(_(
+                "Only BA Shipping operators can re-detect carriers."))
+
+    def action_re_detect_carriers(self):
+        """Re-run carrier auto-detection on the selected lines.
+
+        Updates `detected_carrier_id` + `needs_review` only. **Never**
+        writes to `sale.order.fulfillment.shipping_carrier_id` (per
+        Spec 004a US2 AC: detection is advisory after manual selection).
+        """
+        self._check_ba_shipping_or_raise()
+        from ..services import carrier_detector
+        compiled = carrier_detector._compiled_cache_for(self.env)
+        other = carrier_detector._other_carrier(self.env)
+        for line in self:
+            carrier, needs_review = carrier_detector.detect_carrier(
+                self.env, line.raw_tracking_number,
+                compiled=compiled, other=other)
+            line.write({
+                'detected_carrier_id': carrier.id if carrier else False,
+                'needs_review': needs_review,
+            })
+        return True

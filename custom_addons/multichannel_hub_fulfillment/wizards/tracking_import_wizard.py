@@ -24,7 +24,7 @@ from markupsafe import Markup
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 
-from ..services import gke_excel_parser, tracking_importer
+from ..services import carrier_detector, gke_excel_parser, tracking_importer
 
 _logger = logging.getLogger(__name__)
 
@@ -197,6 +197,18 @@ class TrackingImportWizard(models.TransientModel):
 
         # Resolve in same transaction so preview shows match counts.
         counts = tracking_importer.resolve_orders(self.env, log.line_ids)
+
+        # P2-02: auto-detect carrier per line. Pre-fetch cache + 'other'
+        # fallback once to avoid N×M master-data scans.
+        compiled = carrier_detector._compiled_cache_for(self.env)
+        other_carrier = carrier_detector._other_carrier(self.env)
+        for line in log.line_ids:
+            carrier, needs_review = carrier_detector.detect_carrier(
+                self.env, line.raw_tracking_number,
+                compiled=compiled, other=other_carrier)
+            line.detected_carrier_id = carrier.id if carrier else False
+            line.needs_review = needs_review
+
         log.write({
             'matched_count': counts.get('matched', 0),
             'unmatched_count': counts.get('unmatched', 0),

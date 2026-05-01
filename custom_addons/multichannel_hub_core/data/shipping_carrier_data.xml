@@ -60,4 +60,12 @@
         <field name="notes">Internal Vietnam-side distribution label; no public tracking URL.</field>
     </record>
 
+    <record id="shipping_carrier_other" model="shipping.carrier">
+        <field name="name">Other / Unknown</field>
+        <field name="code">other</field>
+        <field name="sequence">999</field>
+        <field name="etsy_carrier_name">other</field>
+        <field name="notes">Fallback carrier when tracking number does not match any known prefix regex (P2-02). Lines flagged with this carrier should be reviewed and either get a custom regex added, or be assigned a real carrier manually.</field>
+    </record>
+
 </odoo>

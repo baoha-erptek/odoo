@@ -93,6 +93,17 @@
     </field>
   </record>
 
+  <!-- P2-02: bulk re-detect carriers server action. -->
+  <record id="action_re_detect_carriers" model="ir.actions.server">
+    <field name="name">Re-detect Carriers</field>
+    <field name="model_id" ref="model_tracking_import_line"/>
+    <field name="binding_model_id" ref="model_tracking_import_line"/>
+    <field name="binding_view_types">list</field>
+    <field name="state">code</field>
+    <field name="code">action = records.action_re_detect_carriers()</field>
+    <field name="group_ids" eval="[(4, ref('multichannel_hub_fulfillment.group_ba_shipping'))]"/>
+  </record>
+
   <record id="action_tracking_import_log" model="ir.actions.act_window">
     <field name="name">GKE Tracking Imports</field>
     <field name="res_model">tracking.import.log</field>

@@ -7,6 +7,8 @@ from . import test_phase2_orm
 from . import test_gearment_api_log_db
 from . import test_gearment_adapter_orm
 from . import test_gearment_adapter_phase1
+from . import test_carrier_detector_db
+from . import test_carrier_detector_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -16,4 +18,6 @@ __all__ = [
     'test_gearment_api_log_db',
     'test_gearment_adapter_orm',
     'test_gearment_adapter_phase1',
+    'test_carrier_detector_db',
+    'test_carrier_detector_orm',
 ]

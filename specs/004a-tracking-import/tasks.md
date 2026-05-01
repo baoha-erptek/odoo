@@ -109,3 +109,41 @@ Legend: `[ ]` open, `[X]` done, `[~]` partial.
 | Excel export from Tracking Dashboard (T036 from P1-03) | P2-01 explicitly OWNS export-import schema symmetry; export logic itself stays deferred |
 | Vietnamese `.po` translation | P1-07 |
 | `tracking.import.log` audit-tab AC across changes | P1-08 |
+
+---
+
+# Tasks — Spec 004a Slice P2-02
+
+**Slice**: P2-02 Carrier auto-detection (US2)
+**Module**: `multichannel_hub_fulfillment` (+ shipping.carrier seed extension in mhc)
+**Branch**: `feature/006-master-plan-coding`
+
+## Phase 2 — RED
+
+- [X] **T2-02-01** Test fixture: tracking-number samples per carrier (USPS 22-digit, UniUni `UUS...`, YunExpress `YT...`, unknown).
+- [X] **T2-02-02** `test_phase1_db.py::test_shipping_carrier_other_seed_exists` — assert carrier with `code='other'` is seeded.
+- [X] **T2-02-03** `test_phase1_db.py::test_tracking_import_line_needs_review_column` — column exists.
+- [X] **T2-02-04** `test_phase2_orm.py::test_detector_matches_usps_prefix`.
+- [X] **T2-02-05** `test_phase2_orm.py::test_detector_matches_uniuni_prefix`.
+- [X] **T2-02-06** `test_phase2_orm.py::test_detector_matches_yunexpress_prefix`.
+- [X] **T2-02-07** `test_phase2_orm.py::test_detector_falls_back_to_other_on_unknown` — unknown → carrier `other` + `needs_review=True`.
+- [X] **T2-02-08** `test_phase2_orm.py::test_detector_handles_empty_tracking_number` — None/empty → False + needs_review.
+- [X] **T2-02-09** `test_phase2_orm.py::test_detector_skips_inactive_carriers`.
+- [X] **T2-02-10** `test_phase2_orm.py::test_detector_sequence_priority_on_overlap` — multiple matches → highest-priority (lowest sequence) wins.
+- [X] **T2-02-11** `test_phase2_orm.py::test_wizard_preview_populates_detected_carrier_id` — preview hook fills field.
+- [X] **T2-02-12** `test_phase2_orm.py::test_bulk_redetect_action_updates_lines` — re-detect action updates line carriers.
+- [X] **T2-02-13** `test_phase2_orm.py::test_bulk_redetect_gated_to_ba_shipping` — non-BA → AccessError.
+- [X] **T2-02-14** `test_phase2_orm.py::test_bulk_redetect_does_not_overwrite_order_carrier` — order's existing carrier untouched.
+- [X] **T2-02-15** `test_phase2_orm.py::test_carrier_regex_constraint_rejects_dangerous_pattern` — regex matching empty string raises ValidationError.
+
+## Phase 3 — GREEN
+
+- [X] **T2-02-16** Add `code='other'` carrier seed in `shipping_carrier_data.xml` (sequence=999, low priority fallback).
+- [X] **T2-02-17** `services/carrier_detector.py` — pure-function `detect_carrier(env, tracking_number)`; cached compiled regexes via lru_cache; `re.match()` (anchored).
+- [X] **T2-02-18** Add `needs_review` Boolean field on `tracking.import.line` (default False).
+- [X] **T2-02-19** `@api.constrains('tracking_prefix_regex')` on `shipping.carrier` — reject patterns that match empty string.
+- [X] **T2-02-20** Wire detector into `tracking_import_wizard.action_preview()` after `resolve_orders()`.
+- [X] **T2-02-21** Add `action_re_detect_carriers()` on `tracking.import.line` with `_check_ba_shipping_or_raise()` gate.
+- [X] **T2-02-22** Server action + button in views: list-view bulk action calls `action_re_detect_carriers()`.
+
+## Phase 4-8 — Review/Verify/Commit/Document/Learn (orchestrator inline; no separate task IDs).
