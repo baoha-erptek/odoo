@@ -78,12 +78,18 @@ def make_users():
     Users = env['res.users']
     G = env.ref
 
+    # Demo: every role also gets group_sale_manager so they can SEE all
+    # 30 demo orders during the user-manual walk-through. Standard Odoo
+    # salesman role applies an "Own Documents Only" record rule that
+    # would otherwise hide orders created by another user. Production
+    # deployment can revisit per-team scoping later.
+    sale_mgr = G('sales_team.group_sale_manager')
     role_groups = {
-        'kinhdoanh': [G('sales_team.group_sale_salesman')],
-        'sanxuat': [G('multichannel_hub_core.group_production_team')],
-        'ba_shipping': [G('multichannel_hub_fulfillment.group_ba_shipping')],
-        'ba_manager': [G('multichannel_hub_fulfillment.group_ba_manager')],
-        'quanly': [G('sales_team.group_sale_manager')],
+        'kinhdoanh': [G('sales_team.group_sale_salesman'), sale_mgr],
+        'sanxuat': [G('multichannel_hub_core.group_production_team'), sale_mgr],
+        'ba_shipping': [G('multichannel_hub_fulfillment.group_ba_shipping'), sale_mgr],
+        'ba_manager': [G('multichannel_hub_fulfillment.group_ba_manager'), sale_mgr],
+        'quanly': [sale_mgr],
     }
 
     users = {}
@@ -234,7 +240,7 @@ def country_id(env, code_or_name: str):
 # ---------------------------------------------------------------------------
 # 6. Build sale orders + partners.
 # ---------------------------------------------------------------------------
-def make_orders(products_by_pipeline, source_rows):
+def make_orders(products_by_pipeline, source_rows, kinhdoanh_user):
     SaleOrder = env['sale.order']
     Partner = env['res.partner']
 
@@ -262,6 +268,7 @@ def make_orders(products_by_pipeline, source_rows):
             product = next(product_cycle)
             so = SaleOrder.create({
                 'partner_id': partner.id,
+                'user_id': kinhdoanh_user.id,
                 'sales_channel': 'etsy',
                 'channel_order_ref': row['order_ref'],
                 'client_order_ref': f'DEMO-{pipeline_code}-{j:02d}',
@@ -348,7 +355,7 @@ cleanup()
 users = make_users()
 products = make_products()
 rows = load_orders(n=30)
-orders = make_orders(products, rows)
+orders = make_orders(products, rows, users['kinhdoanh'])
 position_states(orders)
 verify(orders)
 env.cr.commit()
