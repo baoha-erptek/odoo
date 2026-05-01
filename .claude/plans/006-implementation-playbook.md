@@ -254,6 +254,25 @@ If a slice cannot follow this loop (e.g., spec is missing tasks.md, scope is amb
 4. Decide: regenerate tasks.md (`/speckit-tasks`), open ADR, or escalate to user.
 5. Resume only when the blocker has a documented resolution.
 
+### Bug surfaces post-slice (or during E2E)
+
+Lightweight bugfix flow inspired by `spec-kit-bugfix` (taxonomy adopted; tooling not — patterns implemented inline using existing playbook artifacts):
+
+1. **Report BEFORE patching.** Append a `## Bug-YYYY-MM-DD-<short-slug>` block to the relevant `specs/<spec>/findings.md` with these fields:
+   - **Type:** one of `spec_gap` / `spec_conflict` / `implementation_drift` / `untested_flow` / `dependency_issue` (per spec-kit-bugfix taxonomy).
+   - **Severity:** `BLOCKER` / `MAJOR` / `MINOR`.
+   - **Symptom:** verbatim error / user-visible failure.
+   - **Suspected slice:** which slice ID introduced the field/view/code involved.
+   - **Trigger surface:** what flow exercised the bug for the first time.
+   - **Root cause:** filled after investigation (pre-patch line for "TBD").
+2. **Patch surgically.** Fix code + add a `**Patch:** <commit hash>` line to the bug report. Cite the bug-id in the commit body.
+3. **Test added.** Add a regression test where feasible; write `**Test added:** <commit hash>` or `**Test added:** none — manual verify` with one-sentence justification.
+4. **Prevention.** If the bug class is reusable across modules → add a memory entry; if it changes the Slice exit-criteria checklist → update this playbook. Cite the memory entry # in the bug report's `**Prevention:**` field.
+5. **Reopen tasks** (don't delete) when a falsely-completed task surfaces during the bugfix. Add a new task ID `T-<original-slice>-<seq>-fix` and annotate the original `[~]` with `(reopened — Bug-YYYY-MM-DD-<slug>)`.
+6. **Hotfix-on-trunk vs new slice:** BLOCKER + small surface → patch directly on `feature/006-master-plan-coding` with the bug-id in the commit body. MAJOR/MINOR with broader scope → spin a new slice (e.g., P1-03d).
+
+This flow is **inline** — no external tooling, no `/speckit.bugfix.*` commands required. The spec-kit-bugfix repo (https://github.com/Quratulain-bilal/spec-kit-bugfix) was reviewed 2026-05-01 but not installed (untrusted external code; existing playbook + tracker + findings.md + memory cover the same ground).
+
 ---
 
 ## Change log

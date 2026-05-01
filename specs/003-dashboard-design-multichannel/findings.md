@@ -762,3 +762,64 @@ generator catches → returns None → `gdrive_thumbnail` stays empty
 backslash MUST be escaped first, otherwise `\\'` introduced by quote-escape
 gets re-doubled. Verified with `o'brien` and `shop\backup` cases.
 
+
+---
+
+## Bug-2026-05-01-owl-decoration-dotted-field
+
+**Type:** Untested flow (Odoo 19 OWL 2 client-side eval not exercised by
+module-install tests).
+
+**Severity:** BLOCKER — opening Tracking Dashboard / sale.order form on
+demo_esty raised OwlError at view-render time, halting end-user E2E demo.
+
+**Symptom:** Browser console
+```
+OwlError: An error occured in the owl lifecycle
+Caused by: "sale.order"."has_pending_address_change" field is undefined.
+```
+
+**Suspected slice:** P1-03 (Tracking Dashboard, Spec 003 US2) — landed
+2026-04-29 commit `ce..` series; the list view added decoration
+`decoration-warning="order_id.has_pending_address_change"`.
+
+**Trigger surface:** P0-04 staging deploy 2026-05-01 — first time the
+view rendered against demo_esty in production-like browser flow. Local
+dev runs had not exercised the dashboard recently after etsy_integration
+was decoupled from mhc per ADR-003.
+
+**Root cause:** Odoo 19 OWL 2 list view requires every field referenced
+in dynamic attributes (`decoration-*`, `invisible=`, `column_invisible=`,
+`readonly=`) to be loaded into the per-row dataset. `<field name="order_id"/>`
+fetches only id+display_name; the dotted target field never lands on the
+record. Server-side arch parse and module-install both pass — only the
+JS client at view-render trips. Tests via `--test-tags` install + ORM
+unit tests don't exercise OWL.
+
+**Compounded by:** mhc must NOT depend on etsy_integration (ADR-003),
+so the naïve fix `<field name="order_id.has_pending_address_change"/>`
+on the mhc-owned view would couple modules incorrectly.
+
+**Patch:** Commit `c4f3012138c` on `feature/006-master-plan-coding`.
+Declared a transient computed Boolean `order_address_change_pending` on
+`sale.order.fulfillment` (mhc) that does
+`getattr(order_id, 'has_pending_address_change', False)`. Returns False
+when etsy_integration is absent → mhc-only deployments still render the
+dashboard. List view decorates against the new field with explicit
+`<field name="order_address_change_pending" column_invisible="1"/>` so
+OWL loads it per row.
+
+**Test added:** None (E2E browser-level; covered by manual hard-reload
+verify on staging). Future P1-03d slice can add a Tour test that opens
+the dashboard with mixed pending/non-pending rows. Ticket logged as
+follow-up.
+
+**Prevention** (memory + playbook):
+- Memory entry #61 — OWL 2 dotted-field decoration rule.
+- Memory entry #62 — deploy-hygiene: invalidate web.assets ir.attachments +
+  docker restart after rsync deploys.
+- Playbook §"Slice exit criteria" — added two checkboxes: frontend view
+  sanity for every decoration/dynamic attribute, and remote-deploy
+  hygiene.
+
+**Bugfix-flow tag:** untested_flow (per spec-kit-bugfix taxonomy).
