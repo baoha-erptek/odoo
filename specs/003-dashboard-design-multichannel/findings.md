@@ -823,3 +823,64 @@ follow-up.
   hygiene.
 
 **Bugfix-flow tag:** untested_flow (per spec-kit-bugfix taxonomy).
+
+---
+
+## Bug-2026-05-01-demo-orderline-salesman-stale
+
+**Type:** implementation_drift (raw-SQL bypass of ORM compute chain).
+
+**Severity:** BLOCKER — demo_kinhdoanh sees orders but the lines table on
+each order is empty; products invisible; demo unusable.
+
+**Symptom:** Login as demo_kinhdoanh on `demo_esty` → open any order →
+"Order Lines" tab is empty. Server log shows
+`ir.rule: Access Denied by record rules for operation: read on record
+ids: [N], uid: 5, model: sale.order.line`.
+
+**Suspected slice:** P0-04 staging deploy (today's session). Earlier
+fix-pass (Bug fix-#475) ran a raw `UPDATE sale_order SET user_id=5
+WHERE client_order_ref LIKE 'DEMO-%'` to make demo orders visible to
+demo_kinhdoanh. Did NOT trigger ORM recompute of related stored field
+`sale.order.line.salesman_id` (`related='order_id.user_id'`). Lines kept
+the original `salesman_id=admin (1)`, which the standard Odoo record
+rule "Personal Order Lines"
+(`['|', ('salesman_id', '=', user.id), ('salesman_id', '=', False)]`)
+filters out for the salesman role.
+
+**Trigger surface:** First demo session for owner on `odoo.hatafax.com`
+2026-05-01 13:00 GMT.
+
+**Root cause:** Mutating a source field of a `related=...,store=True`
+field via raw SQL bypasses Odoo's compute graph. The stored derived
+column never refreshes. ORM-level reads then mismatch SQL-level data,
+and record-rule evaluation runs against the stale derived column.
+
+**Patch:** Live ORM recompute on staging via `odoo shell -d demo_esty`:
+
+```python
+SO = env['sale.order'].search([('client_order_ref','like','DEMO-%')])
+SO.invalidate_recordset()
+SO.write({'user_id': SO[0].user_id.id})  # forces salesman_id recompute
+env.cr.commit()
+```
+
+Verified: all 30 demo lines now have `salesman_id=5`.
+
+**Test added:** None on staging itself. Source seed script
+`deployment/scripts/seed-demo-esty.py` already creates orders with
+`user_id=kinhdoanh.id` via ORM `SaleOrder.create({...})` — fresh re-seeds
+do NOT hit this issue. Bug only surfaced because we patched ownership
+post-hoc with raw SQL.
+
+**Prevention:**
+- Memory entry #63 (new): never use raw SQL to update a field that is
+  the source of `related=stored` or `compute=stored` derived fields —
+  the derived columns won't refresh until the ORM is involved.
+  Recovery recipe: `recordset.invalidate_recordset(); recordset.write({
+  '<source_field>': recordset[0].<source_field>.id})` or call
+  `model._compute_<derived>()` explicitly.
+- Seed script remains the canonical path; today's commit `bd79b585308`
+  baked correct ownership in.
+
+**Bugfix-flow tag:** implementation_drift.
