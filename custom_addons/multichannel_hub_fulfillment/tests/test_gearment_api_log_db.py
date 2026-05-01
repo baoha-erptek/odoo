@@ -129,15 +129,16 @@ class TestGearmentApiLogDatabase(TransactionCase):
 
     def test_retention_cron_exists(self):
         """Verify ir.cron record for _cron_cleanup_old_logs exists."""
-        cron = self.env['ir.cron'].search([
+        crons = self.env['ir.cron'].search([
             ('model_id.model', '=', 'gearment.api.log'),
         ])
 
-        self.assertTrue(cron, "Cron job for gearment.api.log retention must exist")
+        self.assertTrue(crons, "Cron job for gearment.api.log retention must exist")
 
-        # Verify the method name references cleanup
-        self.assertIn('cleanup', cron.code.lower(),
-                     "Cron code must reference cleanup method")
+        # Verify at least one cron references cleanup.
+        self.assertTrue(
+            any('cleanup' in (c.code or '').lower() for c in crons),
+            "At least one cron must reference cleanup method")
 
     def test_retention_icp_default(self):
         """Verify ir.config_parameter for retention days defaults to 30."""

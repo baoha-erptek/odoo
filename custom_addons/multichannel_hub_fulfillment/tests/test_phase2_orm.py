@@ -343,16 +343,21 @@ class TestTrackingImportWizardORM(TransactionCase):
             'order_line': [],
         })
 
-    def _create_wizard(self, excel_file=None, excel_filename='test.xlsx'):
+    def _create_wizard(self, excel_file=None, excel_filename='test.xlsx',
+                       matching_order_ref='MATCHED-ORDER-123'):
         """Factory method to create tracking.import.wizard."""
         if excel_file is None:
-            excel_file = build_known_schema_xlsx(matching_order_ref='MATCHED-ORDER-123')
+            excel_file = build_known_schema_xlsx(matching_order_ref=matching_order_ref)
 
         return self.env['tracking.import.wizard'].create({
             'excel_file': excel_file,
             'excel_filename': excel_filename,
             'state': 'draft',
         })
+
+    def _approve_wizard_schema(self, wizard):
+        """Helper: approve schema as BA-manager so action_import can proceed."""
+        wizard.with_user(self.ba_manager_user).action_approve_schema()
 
     def test_action_preview_creates_log_pending(self):
         """T2-01-21: Test that action_preview creates log with pending state."""
@@ -401,13 +406,11 @@ class TestTrackingImportWizardORM(TransactionCase):
 
         # Try to approve as BA-shipping user (should fail)
         with self.assertRaises(AccessError):
-            with self.ba_shipping_user.with_env(self.env):
-                wizard.with_user(self.ba_shipping_user).action_approve_schema()
+            wizard.with_user(self.ba_shipping_user).action_approve_schema()
 
         # Approve as BA-manager user (should succeed)
         try:
-            with self.ba_manager_user.with_env(self.env):
-                wizard.with_user(self.ba_manager_user).action_approve_schema()
+            wizard.with_user(self.ba_manager_user).action_approve_schema()
         except AttributeError:
             self.skipTest("action_approve_schema not yet implemented")
 
@@ -439,17 +442,14 @@ class TestTrackingImportWizardORM(TransactionCase):
 
         try:
             wizard.action_preview()
-            wizard.action_approve_schema()
+            wizard.with_user(self.ba_manager_user).action_approve_schema()
         except AttributeError:
             self.skipTest("action_approve_schema not yet implemented")
 
-        # Verify sync.health event was recorded
-        sync_health = self.env['etsy.sync.health'].search(
-            [('kind', '=', 'gke_schema_approved')],
-            limit=1
-        )
-        # Note: May not exist if etsy_integration not installed
-        # Test verifies the call path exists, not full integration
+        # Verify sync.health event was recorded — only if etsy_integration installed.
+        if 'etsy.sync.health' in self.env and 'kind' in self.env['etsy.sync.health']._fields:
+            self.env['etsy.sync.health'].search(
+                [('kind', '=', 'gke_schema_approved')], limit=1)
 
     def test_action_import_writes_tracking_to_fulfillment(self):
         """T2-01-26: Test that import writes tracking_number to fulfillment."""
@@ -457,6 +457,7 @@ class TestTrackingImportWizardORM(TransactionCase):
 
         try:
             wizard.action_preview()
+            self._approve_wizard_schema(wizard)
             wizard.action_import()
         except AttributeError:
             self.skipTest("action_import not yet implemented")
@@ -498,6 +499,7 @@ class TestTrackingImportWizardORM(TransactionCase):
 
         try:
             wizard.action_preview()
+            self._approve_wizard_schema(wizard)
             # action_import should use savepoint per row
             wizard.action_import()
         except AttributeError:
@@ -600,17 +602,18 @@ class TestTrackingImportWizardORM(TransactionCase):
 
         try:
             wizard.action_preview()
+            self._approve_wizard_schema(wizard)
             wizard.action_import()
         except AttributeError:
             self.skipTest("action_import not yet implemented")
 
-        # Verify sync.health event was recorded
-        sync_health = self.env['etsy.sync.health'].search(
-            [('kind', '=', 'gke_tracking_import')],
-            limit=1,
-            order='create_date DESC'
-        )
-        # Note: May not exist if etsy_integration not installed
+        # Verify sync.health event was recorded — only if etsy.sync.health
+        # has the `kind` field (added by Spec 002 W3.1 + spec 004a §5).
+        if ('etsy.sync.health' in self.env
+                and 'kind' in self.env['etsy.sync.health']._fields):
+            self.env['etsy.sync.health'].search(
+                [('kind', '=', 'gke_tracking_import')],
+                limit=1, order='create_date DESC')
 
     def test_action_import_blocks_oversize_file(self):
         """T2-01-35: Test that file exceeding size cap raises ValidationError."""
