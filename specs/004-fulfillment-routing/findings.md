@@ -263,3 +263,47 @@ Once secret is known, the verify code is ~30 LOC: `hmac.compare_digest(base64.ur
 - Reject if `X-Connect-Timestamp` differs from server time by > 5 minutes (replay window)
 - Cache `X-Connect-Nonce` for 10 minutes; reject duplicates (replay)
 - Verify `X-Connect-Client-Key` matches `GEARMENT_API_KEY` (mis-routed-shop defense)
+
+---
+
+## P0-18b2a follow-up — HMAC scheme cracked (2026-05-02, same day)
+
+Scraped `https://developers.gearment.com/_bundle/webhook.yaml` (the OpenAPI bundle linked from `webhook.md`). Signature spec lives in the YAML's `tags[].description` section, NOT on the rendered docs page (`/webhook/signature.md` is a 341-byte stub). Bundle has Go + NodeJS + Java reference impls.
+
+### Verified against captured probe row 3
+
+```
+secret         = GEARMENT_API_SECRET (the SAME credential we use for API requests; the
+                 doc just calls it "API signature" because the dashboard UI labels the
+                 field that way under Setting Teams → Developer settings → API credentials)
+algorithm      = HMAC-SHA256
+url_path       = "/gearment/webhook"
+signing_string = url_path + nonce + timestamp + base64url(body)   # NO separators
+encoding       = base64-URLsafe (Go: `base64.URLEncoding` includes '=' padding)
+header         = X-Connect-Signature
+compare        = constant-time (hmac.compare_digest)
+```
+
+Local crack confirmed `nNqkvTj5v9Qg4rwaKYhlAjQS-3N_gMc-whSGp-VypVE=` matches when secret = `GEARMENT_API_SECRET`. **`GEARMENT_WEBHOOK_HMAC_SECRET` in `.env:24` is redundant — drop or alias.**
+
+### Edge cases observed in samples
+
+- Go uses `base64.URLEncoding` (with `=` padding) for both body-encoding AND signature-encoding. JS sample strips padding from body-encoding but Gearment's signing service still computes against padded; tested both — match works either way for this body length (210 → 280-char b64 with no actual padding chars added).
+- Java sample uses standard `Base64.getEncoder()` (NOT urlsafe) for the final signature — but that contradicts the Go ref AND our captured `X-Connect-Signature` value contains `-`/`_`/`=`. Treat Java sample as buggy doc; trust the Go canonical.
+
+### Spec drift to fix in P0-18b2b implementation
+
+- Topic key in body is `type` (e.g. `"order_completed"`), NOT `event` / `topic`. Update `_detect_topic` heuristic in `controllers/gearment_webhook.py`.
+- V3 enum has `tracking_order_updated` (NOT `tracking_updated` as we registered — Gearment dashboard auto-corrects? Either name accepted? Verify on next probe).
+- V1 payload includes `api_key` field in body (legacy auth carried in payload). V3 dropped it; HMAC + headers replace it.
+
+### Topic enum (V3, full list from yaml)
+
+`order_completed`, `order_cancelled`, `tracking_order_updated`, `order_on_hold`, `shipping_address_verified`, `shipping_address_unverified`, `product_out_of_stock`, `variant_created`, `variant_updated`.
+
+### What unblocks P0-18b2b
+
+- Verify code: ~30 LOC in `controllers/gearment_webhook.py`
+- Use existing `GEARMENT_API_SECRET` from `.env`
+- Replay defenses (P0-18b2b adds): timestamp window 5min, nonce cache (in-memory or `gearment.api.log` lookup) for 10min
+- Mismatch → 401 + audit-log row + drop body-write to `request_body` (don't store hostile payloads); keep header capture
