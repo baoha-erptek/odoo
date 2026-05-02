@@ -325,3 +325,41 @@ The verify path now works end-to-end on staging. When the owner re-fires the Gea
 Backups left on staging:
 - `/etc/nginx/sites-available/odoo.hatafax.com.bak.2026-05-02` (P0-18b2a nginx patch)
 - `/odoo/esty19/docker-compose.yml.bak.2026-05-02` (P0-18b2b env_file patch)
+
+---
+
+## P0-18b2c — staging deploy + end-to-end smoke verified (2026-05-02)
+
+Deployed mhc + mhf to staging, bounced container, fired self-signed
+Python probe with `body.order.reference='S00029'` (real demo order on
+staging `demo_esty` DB):
+
+```
+HTTP 200: {"status": "ok"}
+```
+
+Audit row 6 captured:
+| field | value |
+|---|---|
+| signature_verified | True |
+| business_handled | True |
+| business_summary | `order_completed:tracking_set:USPS` |
+| sale_order_id | 29 (= S00029) |
+| topic_seen | `order_completed` |
+
+`sale_order_fulfillment` for S00029 reflected the write:
+- `tracking_number = P0-18B2C-9400111`
+- `tracking_url = https://track.usps.com/p018b2c`
+- `tracking_state = shipped`
+- `shipping_date = 2026-05-02`
+
+P0-18b2 fully closed. Owner can now register the dashboard webhook
+against any reference matching a real demo order to see the full
+inbound-webhook → fulfillment write loop without writing custom
+self-signed probes.
+
+Note for ops: the existing nginx route still proxies all
+`/gearment/webhook` traffic to the `demo_esty` DB via `X-Odoo-Database`
+header injection (P0-18b2a). When promoting to production, swap the
+target DB and re-fire one signed probe to verify env vars +
+nginx routing on the prod path.
