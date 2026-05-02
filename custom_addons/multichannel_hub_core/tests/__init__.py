@@ -14,3 +14,4 @@ from . import test_order_pipeline_db
 from . import test_pipeline_resolver_orm
 from . import test_pipeline_state_db
 from . import test_pipeline_state_machine_orm
+from . import test_design_proof_orm

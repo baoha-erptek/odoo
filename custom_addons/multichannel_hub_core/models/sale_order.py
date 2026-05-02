@@ -19,7 +19,7 @@ import logging
 from datetime import timedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -416,3 +416,68 @@ class SaleOrder(models.Model):
         result = super().unlink()
         fulfillments.sudo().exists().unlink()
         return result
+
+    # ------------------------------------------------------------------
+    # P1-DESIGN+GEARMENT — Order Dashboard kanban actions
+    # ------------------------------------------------------------------
+    def _all_design_files(self):
+        """Return all design.file records on this order (header + line)."""
+        return self.design_file_ids | self.order_line.design_file_ids
+
+    def action_dashboard_send_proof(self):
+        """Send a proof for every pending/rejected design file on the order.
+
+        FR-017 RPC gate. Used by Order Dashboard kanban "Gửi Proof" button.
+        """
+        # Cross-module check via has_group; group_ba_shipping declared by
+        # multichannel_hub_fulfillment, group_production_team by mhc.
+        u = self.env.user
+        if not (u.has_group('multichannel_hub_fulfillment.group_ba_shipping')
+                or u.has_group('multichannel_hub_core.group_production_team')
+                or u.has_group('base.group_system')):
+            raise AccessError(_(
+                "Only BA Shipping or Production Team members may send "
+                "design proofs."))
+        sent = 0
+        for order in self:
+            files = order._all_design_files().filtered(
+                lambda f: f.state in ('pending', 'rejected'))
+            if files:
+                files.action_send_proof_to_buyer()
+                sent += len(files)
+        return {
+            'type': 'ir.actions.client', 'tag': 'display_notification',
+            'params': {
+                'title': _("Design proofs sent"),
+                'message': _("%s design file(s) flipped to 'proof_sent'.", sent),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_dashboard_approve_designs(self):
+        """Approve every proof_sent design file on the order.
+
+        FR-017 RPC gate — production team only (MP role).
+        """
+        u = self.env.user
+        if not (u.has_group('multichannel_hub_core.group_production_team')
+                or u.has_group('base.group_system')):
+            raise AccessError(_(
+                "Only Production Team members may approve design files."))
+        approved = 0
+        for order in self:
+            files = order._all_design_files().filtered(
+                lambda f: f.state == 'proof_sent')
+            if files:
+                files.action_approve()
+                approved += len(files)
+        return {
+            'type': 'ir.actions.client', 'tag': 'display_notification',
+            'params': {
+                'title': _("Designs approved"),
+                'message': _("%s design file(s) flipped to 'approved'.", approved),
+                'type': 'success',
+                'sticky': False,
+            },
+        }

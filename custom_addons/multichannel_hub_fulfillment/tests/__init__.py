@@ -9,6 +9,7 @@ from . import test_gearment_adapter_orm
 from . import test_gearment_adapter_phase1
 from . import test_carrier_detector_db
 from . import test_carrier_detector_orm
+from . import test_gearment_auto_push_orm
 
 __all__ = [
     'test_gearment_api_client',

@@ -17,6 +17,9 @@ References: ADR-006 §3, ADR-009 §1, data-model.md §6, FR-018..023.
 """
 import base64
 import logging
+from html import escape
+
+from markupsafe import Markup
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
@@ -97,6 +100,7 @@ class DesignFile(models.Model):
     state = fields.Selection(
         [
             ('pending', 'Chờ duyệt'),
+            ('proof_sent', 'Đã gửi proof'),
             ('approved', 'Duyệt'),
             ('rejected', 'Cần chỉnh lại'),
         ],
@@ -109,6 +113,11 @@ class DesignFile(models.Model):
     rejection_reason = fields.Text(string='Rejection Reason', tracking=True)
     approved_by = fields.Many2one('res.users', string='Approved By', readonly=True, ondelete='set null')
     approved_at = fields.Datetime(string='Approved At', readonly=True)
+    # P1-DESIGN+GEARMENT — buyer-preview audit (D2 §2.1 row 3 + 5).
+    proof_sent_at = fields.Datetime(string='Proof Sent At', readonly=True, tracking=True)
+    proof_sent_by = fields.Many2one(
+        'res.users', string='Proof Sent By',
+        readonly=True, ondelete='set null', tracking=True)
 
     is_seed = fields.Boolean(
         string='Historical Seed',
@@ -279,16 +288,68 @@ class DesignFile(models.Model):
         if self.env.user.has_group('base.group_system'):
             return
         raise AccessError(_(
-            "Only members of the Production Team may change the approval state "
-            "of a design file."
+            "Only members of the Production Team may approve or reject "
+            "a design file."
+        ))
+
+    def _check_ba_or_production_or_raise(self):
+        """P1-DESIGN+GEARMENT — BA may send proofs; MP/system may also.
+
+        BA cannot approve (that gate stays via `_check_production_team_or_raise`).
+        """
+        u = self.env.user
+        if (u.has_group('multichannel_hub_fulfillment.group_ba_shipping')
+                or u.has_group('multichannel_hub_core.group_production_team')
+                or u.has_group('base.group_system')):
+            return
+        raise AccessError(_(
+            "Only BA Shipping or Production Team members may send a "
+            "design proof to the buyer."
         ))
 
     # ------------------------------------------------------------- CRUD overrides
 
+    # State transitions allowed for the proof-cycle.
+    _ALLOWED_STATE_TRANSITIONS = {
+        'pending': {'proof_sent', 'approved', 'rejected'},
+        'proof_sent': {'approved', 'rejected', 'pending'},
+        'approved': set(),
+        'rejected': {'pending', 'proof_sent'},
+    }
+
+    # State-machine enforcement happens in write() before super(); a
+    # @api.constrains can't see the OLD state once the write has applied
+    # (Odoo's _origin == self for stored writes).
+
     def write(self, vals):
-        """Gate state writes (covers kanban drag-drop, which calls write under the hood)."""
-        if 'state' in vals:
-            self._check_production_team_or_raise()
+        """Gate state writes by destination + enforce state machine.
+
+        - target=proof_sent → BA+ allowed (sending a proof is BA work).
+        - target in {approved, rejected, pending} → MP only.
+        Internal context flag `bypass_design_state_guard` opts out of
+        BOTH the ACL gate and the transition guard (used by
+        `action_send_proof_to_buyer`).
+        """
+        if 'state' in vals and not self.env.context.get(
+                'bypass_design_state_guard'):
+            target = vals['state']
+            if target == 'proof_sent':
+                self._check_ba_or_production_or_raise()
+            else:
+                self._check_production_team_or_raise()
+            # Enforce allowed transitions on each record.
+            for rec in self:
+                old = rec.state
+                if old == target:
+                    continue
+                allowed = self._ALLOWED_STATE_TRANSITIONS.get(old, set())
+                if target not in allowed:
+                    raise ValidationError(_(
+                        "Cannot move design file '%(name)s' from "
+                        "'%(old)s' to '%(new)s'.",
+                        name=rec.name or '?',
+                        old=old, new=target,
+                    ))
         return super().write(vals)
 
     # ------------------------------------------------------------- actions
@@ -316,6 +377,43 @@ class DesignFile(models.Model):
             rec.write({
                 'state': 'rejected',
                 'rejection_reason': effective_reason,
+            })
+
+    def action_send_proof_to_buyer(self, buyer_message=None):
+        """P1-DESIGN+GEARMENT — BA sends design proof to buyer.
+
+        Per D2 §2.1 row 3+5. Allowed for files in {pending, rejected};
+        transitions state to `proof_sent` and posts the proof URL +
+        buyer message to the parent sale.order's chatter (Markup+escape
+        for XSS hygiene).
+        """
+        self._check_ba_or_production_or_raise()
+        for rec in self:
+            if rec.state not in ('pending', 'rejected'):
+                raise ValidationError(_(
+                    "Cannot send proof for design '%(name)s' in state "
+                    "'%(state)s' — only pending or rejected files may "
+                    "be re-sent.",
+                    name=rec.name or '?', state=rec.state,
+                ))
+            order = rec.order_id or (rec.order_line_id.order_id if rec.order_line_id else None)
+            if order:
+                url = rec.file_url or rec.gdrive_preview_url or '(no URL on file)'
+                msg = (buyer_message or '').strip()
+                body = Markup(
+                    '<p><strong>Proof sent for design '
+                    f'{escape(rec.name or "")}</strong></p>'
+                    f'<p>URL: <a href="{escape(url)}" rel="noopener">'
+                    f'{escape(url)}</a></p>'
+                    + (f'<p>Buyer note: {escape(msg)}</p>' if msg else '')
+                )
+                order.message_post(body=body)
+            rec.with_context(
+                bypass_design_state_guard=True,
+            ).write({
+                'state': 'proof_sent',
+                'proof_sent_at': fields.Datetime.now(),
+                'proof_sent_by': self.env.user.id,
             })
 
     # ------------------------------------------------------------- T078 historical seed
