@@ -454,3 +454,26 @@ Task: "Create tracking_import_wizard.py"
 - Tests green; coverage ≥80% on changed files
 - Tracker P0-18b2a → done; P0-18b2b + P0-18b2c rows added in `blocked` state
 
+
+## Phase 0: P0-18b2b — HMAC verify + replay defenses
+
+**Slice scope**: HMAC-SHA256 signature verify against `GEARMENT_API_SECRET`; 5-min past + 1-min future timestamp window; 10-min nonce dedup; topic detection updated for body['type']; failure path returns 401 + audit row + truncated body. NO business writes (P0-18b2c).
+**Dep**: P0-18b2a ✓; HMAC scheme cracked from `https://developers.gearment.com/_bundle/webhook.yaml`.
+**Unblocks**: P0-18b2c (topic routing + sale.order writes).
+
+- [X] T112 [P0-18b2b] Plan in `_archive/p0-18b2b-plan.md`
+- [X] T113 [P0-18b2b] RED tests: 13 unit + 12 HttpCase covering signature math, replay window, nonce dedup, header presence, body truncation
+- [X] T114 [P0-18b2b] GREEN: `_compute_signature` + `_verify_signature` module-level helpers; refactor `_record_inbound` to call verify first
+- [X] T115 [P0-18b2b] GREEN: extend `gearment.api.log` with `nonce_value`/`request_timestamp` indexed + `signature_verified`/`verify_failure_reason`; composite index `(nonce_value, request_timestamp)`
+- [X] T116 [P0-18b2b] GREEN: `_detect_topic` checks body['type'] first
+- [X] T117 [P0-18b2b] Relax 5 P0-18b2a HTTP tests to `assertIn(status, (200, 401))` since unsigned probes now return 401
+- [X] T118 [P0-18b2b] code-reviewer + security-reviewer parallel: 0 CRITICAL/HIGH; 1 BLOCKER (real creds in test) + 1 MEDIUM (hardcoded url_path) both fixed inline; UNIQUE(nonce, ts) constraint TOCTOU deferred to P0-18b2c with documentation
+- [X] T119 [P0-18b2b] Verify: 132 mhf + 537 cross-module green; module installs clean
+- [X] T120 [P0-18b2b] Conventional commit + tracker update + tasks.md
+- [ ] T121 [P0-18b2b] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, restart `esty19_odoo`, fire dashboard simulator, confirm `gearment.api.log` row has `signature_verified=true` + `verify_failure_reason=''` + `topic_seen='order_completed'`
+
+**Slice exit criteria**:
+- T112-T120 [X]; T121 left for Phase-7 ops session
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2b → done; P0-18b2c row updated to absorb deferred UNIQUE constraint
+

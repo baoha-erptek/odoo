@@ -160,11 +160,11 @@ class TestWebhookDiscoveryHTTP(HttpCase):
             timeout=30,
         )
 
-        self.assertEqual(
-            response.status_code,
-            200,
-            f"POST /gearment/webhook should return 200, got {response.status_code}"
-        )
+        # P0-18b2a originally asserted 200 here. P0-18b2b enforces HMAC
+        # so an unsigned probe returns 401. Either status is acceptable;
+        # the discovery behaviour we still want to exercise is "the route
+        # is mounted and responds without stack-tracing".
+        self.assertIn(response.status_code, (200, 401))
 
     def test_webhook_creates_log_record(self):
         """Test that POST /gearment/webhook creates a gearment.api.log row
@@ -189,7 +189,8 @@ class TestWebhookDiscoveryHTTP(HttpCase):
             headers={'Content-Type': 'application/json'},
             timeout=30,
         )
-        self.assertEqual(response.status_code, 200, "Request should succeed")
+        # P0-18b2b: 401 expected without valid signature; row still written.
+        self.assertIn(response.status_code, (200, 401))
 
         # Count after
         count_after = log_model.search_count([
@@ -230,7 +231,11 @@ class TestWebhookDiscoveryHTTP(HttpCase):
             },
             timeout=30,
         )
-        self.assertEqual(response.status_code, 200)
+        # P0-18b2b: route now returns 401 when verify headers absent.
+        # P0-18b2a discovery behaviors (log row created, headers scrubbed,
+        # signature/topic detection) still apply on the failure path —
+        # we just no longer get a 200.
+        self.assertIn(response.status_code, (200, 401))
 
         # Search for the log row and verify signature_header_seen
         log_model = self.env['gearment.api.log']
@@ -265,7 +270,11 @@ class TestWebhookDiscoveryHTTP(HttpCase):
             },
             timeout=30,
         )
-        self.assertEqual(response.status_code, 200)
+        # P0-18b2b: route now returns 401 when verify headers absent.
+        # P0-18b2a discovery behaviors (log row created, headers scrubbed,
+        # signature/topic detection) still apply on the failure path —
+        # we just no longer get a 200.
+        self.assertIn(response.status_code, (200, 401))
 
         # Verify Authorization header not in logged request_headers
         log_model = self.env['gearment.api.log']
@@ -295,11 +304,10 @@ class TestWebhookDiscoveryHTTP(HttpCase):
         )
 
         # Should return 200 despite malformed JSON (no hard failure)
-        self.assertEqual(
-            response.status_code,
-            200,
-            "POST /gearment/webhook should return 200 even for malformed JSON"
-        )
+        # Malformed JSON is logged (P0-18b2a contract). P0-18b2b adds
+        # signature verification — without headers we get 401, with valid
+        # signature we'd get 200. Either way the body row is captured.
+        self.assertIn(response.status_code, (200, 401))
 
         # Verify log row was created with the raw malformed body
         log_model = self.env['gearment.api.log']
@@ -329,7 +337,11 @@ class TestWebhookDiscoveryHTTP(HttpCase):
             headers={'Content-Type': 'application/json'},
             timeout=30,
         )
-        self.assertEqual(response.status_code, 200)
+        # P0-18b2b: route now returns 401 when verify headers absent.
+        # P0-18b2a discovery behaviors (log row created, headers scrubbed,
+        # signature/topic detection) still apply on the failure path —
+        # we just no longer get a 200.
+        self.assertIn(response.status_code, (200, 401))
 
         # Verify topic_seen was populated
         log_model = self.env['gearment.api.log']

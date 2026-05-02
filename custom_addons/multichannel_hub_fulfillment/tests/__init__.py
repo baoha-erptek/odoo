@@ -12,6 +12,7 @@ from . import test_carrier_detector_orm
 from . import test_gearment_auto_push_orm
 from . import test_webhook_discovery_db
 from . import test_webhook_discovery_orm
+from . import test_webhook_verify_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -26,4 +27,5 @@ __all__ = [
     'test_gearment_auto_push_orm',
     'test_webhook_discovery_db',
     'test_webhook_discovery_orm',
+    'test_webhook_verify_orm',
 ]

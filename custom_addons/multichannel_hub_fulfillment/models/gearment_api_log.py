@@ -87,8 +87,30 @@ class GearmentApiLog(models.Model):
     )
     topic_seen = fields.Char(
         string='Topic Seen',
-        help="Webhook topic/event extracted from body['event'], body['topic'], "
-             "or X-Topic header; empty if not detectable.",
+        help="Webhook topic/event extracted from body['type'] (real Gearment payloads), "
+             "body['event'], body['topic'], or X-Topic header; empty if not detectable.",
+    )
+    nonce_value = fields.Char(
+        string='Nonce',
+        index=True,
+        help="X-Connect-Nonce header value; used by P0-18b2b replay-protection lookup.",
+    )
+    request_timestamp = fields.Integer(
+        string='Request Timestamp (Unix)',
+        index=True,
+        help="X-Connect-Timestamp header parsed to int (unix epoch seconds). "
+             "Indexed to support nonce-dedup window queries.",
+    )
+    signature_verified = fields.Boolean(
+        string='Signature Verified',
+        default=False,
+        help="True if HMAC-SHA256 verify against GEARMENT_API_SECRET passed.",
+    )
+    verify_failure_reason = fields.Char(
+        string='Verify Failure Reason',
+        help="Reason code on verify failure: missing_*_header, client_key_mismatch, "
+             "timestamp_invalid, timestamp_outside_window, nonce_replay, "
+             "signature_mismatch. Empty when signature_verified=True.",
     )
 
     def init(self):
@@ -101,6 +123,12 @@ class GearmentApiLog(models.Model):
         self.env.cr.execute("""
             CREATE INDEX IF NOT EXISTS gearment_api_log_order_request_started_at_idx
             ON gearment_api_log (sale_order_id, request_started_at DESC)
+        """)
+        # P0-18b2b: composite index for nonce-replay lookup window queries.
+        # Search pattern: WHERE nonce_value = ? AND request_timestamp > now-600
+        self.env.cr.execute("""
+            CREATE INDEX IF NOT EXISTS gearment_api_log_nonce_ts_idx
+            ON gearment_api_log (nonce_value, request_timestamp)
         """)
 
     @api.model
