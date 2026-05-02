@@ -430,3 +430,27 @@ Task: "Create tracking_import_wizard.py"
 - Open Q-items DQ1-DQ5 documented (webhook HMAC, idempotency-key behavior on real POST, vendor_id, HTTPS scheme, redirect policy)
 - Tracker P0-18b1 → done
 
+## Phase 0: P0-18b2a — Webhook discovery-mode controller
+
+**Slice scope**: minimal log-only `/gearment/webhook` controller; capture inbound headers + body to `gearment.api.log` so HMAC signature header name + algorithm can be discovered by inspecting the audit table. NO HMAC verify, NO topic routing, NO business writes.
+**Dep**: P0-18b1 ✓; webhook URL `https://odoo.hatafax.com/gearment/webhook` reachable via staging nginx; 3 V3 webhooks registered on Gearment dashboard 2026-05-02.
+**Unblocks**: P0-18b2b (HMAC verify), P0-18b2c (topic routing).
+
+- [X] T100 [P0-18b2a] Plan in `_archive/p0-18b2a-plan.md`
+- [X] T101 [P0-18b2a] RED tests: `tests/test_webhook_discovery_db.py` (4 Phase-1 DB) + `tests/test_webhook_discovery_orm.py` (8 Phase-2 ORM/HttpCase)
+- [X] T102 [P0-18b2a] GREEN: extend `gearment.api.log` with `direction`/`request_headers`/`request_body`/`signature_header_seen`/`topic_seen` + `inbound_webhook` source value
+- [X] T103 [P0-18b2a] GREEN: new `controllers/gearment_webhook.py` (`type='http'`, `auth='public'`, `csrf=False`, `save_session=False`); explicit + dynamic header scrubs; pre-read body cap via `Content-Length`; sudo() inline-justified
+- [X] T104 [P0-18b2a] GREEN: register `controllers/__init__.py` in module `__init__.py`; bump manifest 19.0.1.0.6 → 19.0.1.0.7
+- [X] T105 [P0-18b2a] Update existing `test_source_selection_values` to include `inbound_webhook`
+- [X] T106 [P0-18b2a] Add helper-function unit tests for `_content_length_exceeds_cap` (Werkzeug test client overrides Content-Length, so HttpCase cannot exercise the guard — pure unit tests instead)
+- [X] T107 [P0-18b2a] code-reviewer + security-reviewer parallel: 0 CRITICAL; 2 HIGH fixed inline (body DoS pre-check + drop `exc_info=True` from WARNING)
+- [X] T108 [P0-18b2a] Verify: `-u multichannel_hub_fulfillment` exit 0; 119 mhf tests + 512 cross-module tests all green
+- [X] T109 [P0-18b2a] Conventional commit
+- [X] T110 [P0-18b2a] Update `research.md` with V3 payload schema + dashboard observations; update tracker P0-18b2 split into a/b/c with this slice marked done
+- [ ] T111 [P0-18b2a] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, restart `esty19_odoo`, fire dashboard simulator at full URL `https://odoo.hatafax.com/gearment/webhook`, inspect `gearment.api.log` to capture real signature header + algorithm; document in `findings.md`
+
+**Slice exit criteria**:
+- T100-T110 `[X]`; T111 left for Phase-7 ops (separate session or follow-up)
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2a → done; P0-18b2b + P0-18b2c rows added in `blocked` state
+

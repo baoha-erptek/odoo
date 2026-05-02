@@ -60,12 +60,19 @@ class TestGearmentApiLogDatabase(TransactionCase):
                          f"Column '{col}' must exist in gearment_api_log")
 
     def test_source_selection_values(self):
-        """Verify source field has exactly 6 selection values."""
+        """Verify source field has the expected selection values.
+
+        Original 6 from P0-18b1; 'inbound_webhook' added by P0-18b2a
+        for webhook discovery-mode log rows.
+        """
         model = self.env['gearment.api.log']
         source_field = model._fields['source']
         selection_values = dict(source_field.selection)
 
-        expected_sources = {'probe', 'draft', 'quote', 'confirm', 'callback', 'health_check'}
+        expected_sources = {
+            'probe', 'draft', 'quote', 'confirm', 'callback', 'health_check',
+            'inbound_webhook',
+        }
         actual_sources = set(selection_values.keys())
 
         self.assertEqual(

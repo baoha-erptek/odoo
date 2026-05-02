@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 class GearmentApiLog(models.Model):
     _name = 'gearment.api.log'
-    _description = 'Gearment API call audit log'
+    _description = 'Gearment API call and webhook audit log'
     _order = 'request_started_at desc, id desc'
 
     sale_order_id = fields.Many2one(
@@ -57,10 +57,38 @@ class GearmentApiLog(models.Model):
             ('confirm', 'Confirm'),
             ('callback', 'Callback'),
             ('health_check', 'Health Check'),
+            ('inbound_webhook', 'Inbound Webhook'),
         ],
         string='Source',
         required=True,
         default='probe',
+    )
+    direction = fields.Selection(
+        [
+            ('outbound', 'Outbound API Call'),
+            ('inbound', 'Inbound Webhook'),
+        ],
+        string='Direction',
+        help="Outbound = Odoo→Gearment API call. Inbound = Gearment→Odoo webhook callback. "
+             "Nullable for backward compat with rows created before P0-18b2a.",
+    )
+    request_headers = fields.Text(
+        string='Request Headers',
+        help="JSON dict of inbound HTTP headers; Authorization/Cookie/secret-* keys scrubbed.",
+    )
+    request_body = fields.Text(
+        string='Request Body',
+        help="Inbound webhook body; truncated to 4096 chars.",
+    )
+    signature_header_seen = fields.Char(
+        string='Signature Header Seen',
+        help="Heuristic capture of the first incoming header whose name contains 'signature'. "
+             "Empty in discovery mode if Gearment did not send one.",
+    )
+    topic_seen = fields.Char(
+        string='Topic Seen',
+        help="Webhook topic/event extracted from body['event'], body['topic'], "
+             "or X-Topic header; empty if not detectable.",
     )
 
     def init(self):
