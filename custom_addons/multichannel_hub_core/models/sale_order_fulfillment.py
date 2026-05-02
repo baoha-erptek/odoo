@@ -7,6 +7,7 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 # routine edits) — keeps the channel signal-to-noise ratio high.
 _BUS_TRIGGER_FIELDS = frozenset({
     'tracking_number',
+    'tracking_url',
     'tracking_state',
     'label_status',
     'shipping_date',
@@ -62,6 +63,12 @@ class SaleOrderFulfillment(models.Model):
     )
 
     tracking_number = fields.Char(string='Tracking Number', index=True, tracking=True)
+    tracking_url = fields.Char(
+        string='Tracking URL',
+        tracking=True,
+        help="Direct carrier-tracking deeplink. Populated from inbound Gearment "
+             "webhooks when present; preferred over a tracking_url_template build.",
+    )
     shipping_date = fields.Date(string='Shipping Date', tracking=True)
     shipping_carrier_id = fields.Many2one(
         'shipping.carrier',

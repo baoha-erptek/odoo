@@ -477,3 +477,26 @@ Task: "Create tracking_import_wizard.py"
 - Tests green; coverage ≥80% on changed files
 - Tracker P0-18b2b → done; P0-18b2c row updated to absorb deferred UNIQUE constraint
 
+
+## Phase 0: P0-18b2c — Topic dispatch + fulfillment writes
+
+**Slice scope**: per-topic handlers (order_completed/cancelled/tracking_order_updated/on_hold + 5 log-only); sale.order lookup by `body.order.reference`; fulfillment write under `bypass_address_change_check=True`; UNIQUE(nonce, ts) partial index hardens b2b TOCTOU race; new audit fields `business_handled` + `business_summary`; new fulfillment field `tracking_url`.
+**Dep**: P0-18b2b ✓
+**Closes**: P0-18b2 (all sub-slices done).
+
+- [X] T122 [P0-18b2c] Plan in `_archive/p0-18b2c-plan.md`
+- [X] T123 [P0-18b2c] RED tests: 5 Phase-1 DB + 14 dispatcher unit + 3 HttpCase E2E
+- [X] T124 [P0-18b2c] GREEN: dispatcher service + 5 handlers + log-only fan-out + soft-fail strategy
+- [X] T125 [P0-18b2c] GREEN: extend gearment.api.log (`business_handled`/`business_summary`) + UNIQUE PARTIAL index narrowed to `signature_verified=TRUE`; DROP+CREATE pattern
+- [X] T126 [P0-18b2c] GREEN: extend sale.order.fulfillment (`tracking_url`) + add to `_BUS_TRIGGER_FIELDS`
+- [X] T127 [P0-18b2c] GREEN: controller calls dispatcher when verified; populates audit row with biz fields; catches `psycopg2.IntegrityError` → 401 + cr.rollback
+- [X] T128 [P0-18b2c] code-reviewer + security-reviewer parallel: 0 CRITICAL/HIGH; 1 LOW (rollback-failure test) + 2 doc fixes (DoS IP log + secret blast-radius docstring + ERROR log level for rollback failure) applied inline
+- [X] T129 [P0-18b2c] Verify: 153 mhf + 558 cross-module green; module installs `-u multichannel_hub_core,multichannel_hub_fulfillment` exit 0
+- [X] T130 [P0-18b2c] Conventional commit + tracker P0-18b2c→done + tasks.md
+- [ ] T131 [P0-18b2c] **Phase 7 (ops)**: rsync mhc+mhf to staging, bounce container, fire signed POST or dashboard simulator with reference matching a real demo order, confirm fulfillment.tracking_number written + audit row has business_handled=True + business_summary starts 'order_completed'
+
+**Slice exit criteria**:
+- T122-T130 [X]; T131 left for Phase-7 ops session
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2c → done; P0-18b2 row marked complete
+

@@ -22,8 +22,14 @@ import logging
 import os
 import time
 
+import psycopg2
+
 from odoo import http
 from odoo.http import request
+
+from odoo.addons.multichannel_hub_fulfillment.services.gearment_webhook_dispatcher import (
+    GearmentWebhookDispatcher,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -203,6 +209,20 @@ class GearmentWebhookController(http.Controller):
             verified = self._record_inbound()
             if not verified:
                 status = 401
+        except psycopg2.IntegrityError:
+            # P0-18b2c: UNIQUE(nonce_value, request_timestamp) partial index
+            # raised because a concurrent request beat us to the audit insert
+            # with the same (nonce, ts) tuple. That IS the replay-protection
+            # outcome we want — return 401 just like the search-based path.
+            # The cursor must be rolled back so subsequent ORM use stays sane;
+            # _record_inbound's create() consumed it, so we end the request
+            # here without further DB writes.
+            request.env.cr.rollback()
+            _logger.warning(
+                "P0-18b2c: duplicate (nonce, ts) blocked at DB constraint; "
+                "returning 401 nonce_replay_db",
+            )
+            status = 401
         except Exception as exc:  # noqa: BLE001 — log path resilience
             _logger.warning(
                 "P0-18b2b: failed to log inbound Gearment webhook (%s: %s); "
@@ -250,9 +270,44 @@ class GearmentWebhookController(http.Controller):
             request_path=request.httprequest.path,
         )
 
+        # P0-18b2c security review CRIT-1: log unverified probes with the
+        # source IP so log aggregation can detect DoS pumping (an attacker
+        # without the secret can still create audit rows with empty/random
+        # nonce). Log only — no rate-limit response (don't leak limits).
+        if not verified:
+            _logger.warning(
+                "P0-18b2c: unverified webhook from ip=%s reason=%s "
+                "client_key=%r",
+                request.httprequest.remote_addr or 'unknown',
+                failure_reason,
+                raw_headers.get('X-Connect-Client-Key', '')[:80],
+            )
+
         headers_scrubbed = _scrub_headers(raw_headers)
         signature_header = _detect_signature_header(raw_headers)
         topic = _detect_topic(body_dict, raw_headers)
+
+        # P0-18b2c: dispatch verified payloads to topic handlers. We capture
+        # the resolved sale.order.id so the audit row carries a Many2one
+        # reference for fast filtering ("show all webhooks that landed on
+        # SO-12345"). Soft-failures keep the row visible with a summary
+        # string (e.g. 'order_not_found'); the controller still returns 200.
+        business_handled = False
+        business_summary = ''
+        sale_order_id = False
+        if verified:
+            dispatcher = GearmentWebhookDispatcher(request.env)
+            business_handled, business_summary = dispatcher.dispatch(
+                topic, body_dict,
+            )
+            reference = (body_dict.get('order') or {}).get('reference', '')
+            if reference:
+                # sudo: same boundary as the dispatcher's own search; we only
+                # need the id for the audit Many2one. Read-only.
+                order = request.env['sale.order'].sudo().search(
+                    [('name', '=', reference)], limit=1,
+                )
+                sale_order_id = order.id if order else False
 
         # On verify failure, store at most _FAIL_BODY_CAP bytes of the body
         # so we keep enough for forensics but don't archive hostile payloads
@@ -286,9 +341,15 @@ class GearmentWebhookController(http.Controller):
             'request_timestamp': ts_int,
             'signature_verified': verified,
             'verify_failure_reason': failure_reason,
+            'business_handled': business_handled,
+            'business_summary': business_summary,
+            'sale_order_id': sale_order_id,
         })
         _logger.debug(
-            "P0-18b2b: logged webhook (verified=%s reason=%s topic=%s body_len=%d)",
-            verified, failure_reason or '(none)', topic or '(none)', len(body_text),
+            "P0-18b2c: logged webhook (verified=%s reason=%s topic=%s "
+            "biz_handled=%s biz_summary=%s body_len=%d)",
+            verified, failure_reason or '(none)',
+            topic or '(none)', business_handled,
+            business_summary or '(none)', len(body_text),
         )
         return verified

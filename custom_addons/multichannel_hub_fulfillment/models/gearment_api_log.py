@@ -110,7 +110,20 @@ class GearmentApiLog(models.Model):
         string='Verify Failure Reason',
         help="Reason code on verify failure: missing_*_header, client_key_mismatch, "
              "timestamp_invalid, timestamp_outside_window, nonce_replay, "
+             "nonce_replay_db (UNIQUE-index race detected), "
              "signature_mismatch. Empty when signature_verified=True.",
+    )
+    business_handled = fields.Boolean(
+        string='Business Handled',
+        default=False,
+        help="True if a topic-handler ran (P0-18b2c dispatcher); soft-fails like "
+             "order_not_found also count as handled=True if dispatch attempted.",
+    )
+    business_summary = fields.Char(
+        string='Business Summary',
+        help="Short human-readable result of the topic dispatch, e.g. "
+             "'order_completed:tracking_set:USPS', 'order_not_found', "
+             "'unknown_topic:foo'. Empty for unverified or non-webhook rows.",
     )
 
     def init(self):
@@ -129,6 +142,29 @@ class GearmentApiLog(models.Model):
         self.env.cr.execute("""
             CREATE INDEX IF NOT EXISTS gearment_api_log_nonce_ts_idx
             ON gearment_api_log (nonce_value, request_timestamp)
+        """)
+        # P0-18b2c: UNIQUE partial index hardens the b2b TOCTOU race
+        # (search-then-create). Constraint is intentionally narrowed to
+        # ``signature_verified = TRUE`` rows only — that is the set we must
+        # protect: two concurrent VERIFIED inserts with the same (nonce, ts)
+        # would let the dispatcher run twice for one event, double-writing
+        # business state. Failure rows (signature_verified=False) record
+        # rejected probes and the search-based nonce_replay path still works
+        # against them. Outbound rows (empty nonce / ts=0) remain free.
+        # On collision: PG raises IntegrityError; controller catches it
+        # and returns 401 with no audit row (the rejected attempt is
+        # already implicit in the original verified row).
+        # Drop+create so the WHERE clause stays in sync with the source —
+        # CREATE INDEX IF NOT EXISTS does not check predicate equality.
+        self.env.cr.execute(
+            "DROP INDEX IF EXISTS gearment_api_log_nonce_ts_unique"
+        )
+        self.env.cr.execute("""
+            CREATE UNIQUE INDEX gearment_api_log_nonce_ts_unique
+            ON gearment_api_log (nonce_value, request_timestamp)
+            WHERE signature_verified = TRUE
+              AND nonce_value IS NOT NULL AND nonce_value <> ''
+              AND request_timestamp IS NOT NULL AND request_timestamp > 0
         """)
 
     @api.model
