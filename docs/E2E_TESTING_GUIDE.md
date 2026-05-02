@@ -339,18 +339,18 @@ Smoke test:
 
 ---
 
-## 10. Webhook (P0-18b2 — partial)
+## 10. Webhook (P0-18b2 — shipped)
 
-**Status:** webhook controller code is **not yet deployed**. This
-section will become live once owner registers the webhook in the
-Gearment dashboard and the dev team lands the controller.
+**Status:** webhook controller is live at `https://odoo.hatafax.com/gearment/webhook`. HMAC-SHA256 verified against `GEARMENT_API_SECRET`; replay defenses (5-min past + 1-min future window, nonce dedup) active. Handlers: `order_completed`, `order_cancelled`, `tracking_order_updated`, `order_on_hold`, plus 5 log-only topics. End-to-end verified 2026-05-02 — see `docs/E2E_DEMO_RUN_2026-05-02.md`.
 
-When live:
+To trigger a verification probe:
 
-1. Trigger a Gearment status change in their dashboard.
-2. Watch `tail -f /var/log/odoo19/odoo.log | grep gearment` on staging.
-3. Expect a `POST /gearment/webhook` log line + a new
-   `gearment.api.log` row with `direction='inbound'`.
+1. Run `scripts/e2e_demo_2026_05_02.py --section 10` (self-signs HMAC against `.env:GEARMENT_API_SECRET`); OR fire the Gearment dashboard simulator at the registered webhook entry.
+2. Expect HTTP 200 `{"status":"ok"}` for verified payload, 401 `{"error":"unauthorized"}` for bad signature.
+3. Verify a new row in `gearment.api.log` with `direction='inbound'`, `signature_verified=true`, `business_handled=true`.
+4. For `order_completed` payload: the matched `sale.order.fulfillment` row gets `tracking_number`, `tracking_state='shipped'`, `shipping_date`, `tracking_url` populated.
+
+Note: pipeline-state advance from `confirmed → shipped` is owned by `P4-01` (deferred); the webhook handler only writes fulfillment fields.
 
 ---
 
@@ -372,7 +372,7 @@ BUILD: feature/006-master-plan-coding @ <commit hash>
 §7 process dashb.   : PASS / FAIL
 §8 pipeline FSM     : PASS / FAIL
 §9 gearment probe   : PASS / FAIL / SKIP
-§10 webhook         : SKIP (P0-18b2 not deployed)
+§10 webhook         : PASS / FAIL
 
 Critical bugs found : ____
 Cosmetic issues     : ____
@@ -383,9 +383,6 @@ Sign-off            : Y / N
 
 ## 12. Known limitations / not-yet-shipped
 
-- **P0-18b2 webhook controller** — owner must register endpoint in
-  Gearment dashboard first; controller code lands after first inbound
-  POST is inspected.
 - **P2-03 Process Dashboard stock-move hook** — not yet shipped; PD
   remains read-only for inventory.
 - **P2-04 import-log replay UI** — not yet shipped; failures are

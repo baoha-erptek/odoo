@@ -363,3 +363,65 @@ Note for ops: the existing nginx route still proxies all
 header injection (P0-18b2a). When promoting to production, swap the
 target DB and re-fire one signed probe to verify env vars +
 nginx routing on the prod path.
+
+## P0-18b2 — Phase 7 ops close-out (2026-05-02 23:17 UTC)
+
+End-to-end verification complete. Tracker row 107 flipped `doing →
+done`.
+
+Verification driver: `scripts/e2e_demo_2026_05_02.py` (Playwright sync
+API + self-signed HMAC POST). Self-signed instead of dashboard
+simulator because the simulator UI flow was not documented in the
+repo and writing a Python HMAC helper that reuses the in-tree
+`_compute_signature` (controllers/gearment_webhook.py:96-108) was
+faster than reverse-engineering the dashboard UI.
+
+Probe payload: `order_completed` topic against `S00013`
+(`client_order_ref=DEMO-gearment_pod-02`, `gearment_pod/confirmed`,
+empty fulfillment).
+
+Outcome:
+
+- HTTP 200 `{"status":"ok"}`.
+- `gearment.api.log` row id=8 — `direction=inbound`, `topic_seen=order_completed`,
+  `signature_verified=true`, `business_handled=true`,
+  `business_summary='order_completed:tracking_set:USPS'`.
+- `sale.order.fulfillment id=13` write deltas:
+  - `tracking_number`: `(empty) → 9400111202555560000001`
+  - `tracking_state`: `(empty) → shipped`
+  - `shipping_date`: `(empty) → 2026-05-02`
+  - `tracking_url`: `(empty) → https://tools.usps.com/...`
+- Pipeline state stayed at `gearment_pod/confirmed` (handler is
+  fulfillment-only by design; pipeline FSM advance is P4-01 scope).
+
+Run artefacts:
+
+- `docs/E2E_DEMO_RUN_2026-05-02.md` (pass/fail report).
+- `docs/screenshots/2026-05-02/*.png` (9 screenshots, sections
+  0/1.1/3/4/6/8.3/10).
+- `docs/E2E_TESTING_GUIDE.md` §10 + §12 updated: webhook moved from
+  "not yet deployed" to shipped; P0-18b2 dropped from limitations
+  list.
+
+Lessons:
+
+- Staging deploy was already at HEAD (rsync no-op); module versions
+  in `ir_module_module.latest_version` are an authoritative pre-flight
+  check — saves a needless `-u` cycle when disk is already in sync.
+- No menu/action xmlid was seeded for `gearment.api.log`; reaching it
+  via the direct `/odoo/<model>` URL works in Odoo 19 web client and
+  saves the cost of authoring a one-off action XML. If the log
+  becomes a routine ops surface, add an action under the
+  `Operations` menu in a follow-up doc-only slice.
+- Multi-DB selector page (`/web/login` lands on database list) ate
+  several Playwright retries before the test added `?db=demo_esty`.
+  Future Playwright runs against this staging stack must always
+  pin the DB in the URL.
+- `tests/data/sample_50_orders.xlsx` does not exist on staging;
+  guide §5 (Tracking Import) needs a fixture before that section can
+  run end-to-end on demo_esty. Filed as future work, not a P0-18b2
+  blocker.
+- Helper `_compute_signature` is also useful as a public ops tool;
+  the demo script effectively reuses it inline. Consider exporting
+  it from `controllers/gearment_webhook.py` to a `services/` helper
+  in a future cleanup if more probes need self-signing.
