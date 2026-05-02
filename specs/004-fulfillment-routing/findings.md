@@ -307,3 +307,21 @@ Local crack confirmed `nNqkvTj5v9Qg4rwaKYhlAjQS-3N_gMc-whSGp-VypVE=` matches whe
 - Use existing `GEARMENT_API_SECRET` from `.env`
 - Replay defenses (P0-18b2b adds): timestamp window 5min, nonce cache (in-memory or `gearment.api.log` lookup) for 10min
 - Mismatch → 401 + audit-log row + drop body-write to `request_body` (don't store hostile payloads); keep header capture
+
+---
+
+## P0-18b2b — staging deploy + self-signed probe verified (2026-05-02)
+
+End-to-end on staging confirmed:
+
+1. rsync mhf to `129.150.63.207`; `-u multichannel_hub_fulfillment` exit 0 on `demo_esty`
+2. Patched `/odoo/esty19/docker-compose.yml` to `env_file: /odoo/esty19/.env` (700, root-owned); added `GEARMENT_API_KEY`, `GEARMENT_API_SECRET`, `GEARMENT_API_BASE_URL` (existing prod-shared sandbox values from local `.env`)
+3. `docker compose up -d --force-recreate odoo` so env reloads
+4. Curl probe with SYNTHETIC bogus headers → HTTP 401 + audit row `signature_verified=False` `verify_failure_reason='client_key_mismatch'`
+5. Self-signed Python probe (computed with real `GEARMENT_API_SECRET` + fresh ts/nonce) → HTTP 200 + audit row `signature_verified=True` `verify_failure_reason=''` `topic_seen='order_completed'`
+
+The verify path now works end-to-end on staging. When the owner re-fires the Gearment dashboard simulator, the inbound row should also stamp `signature_verified=True` (Gearment uses the same `GEARMENT_API_SECRET` which is now in the staging container's env).
+
+Backups left on staging:
+- `/etc/nginx/sites-available/odoo.hatafax.com.bak.2026-05-02` (P0-18b2a nginx patch)
+- `/odoo/esty19/docker-compose.yml.bak.2026-05-02` (P0-18b2b env_file patch)

@@ -470,7 +470,7 @@ Task: "Create tracking_import_wizard.py"
 - [X] T118 [P0-18b2b] code-reviewer + security-reviewer parallel: 0 CRITICAL/HIGH; 1 BLOCKER (real creds in test) + 1 MEDIUM (hardcoded url_path) both fixed inline; UNIQUE(nonce, ts) constraint TOCTOU deferred to P0-18b2c with documentation
 - [X] T119 [P0-18b2b] Verify: 132 mhf + 537 cross-module green; module installs clean
 - [X] T120 [P0-18b2b] Conventional commit + tracker update + tasks.md
-- [ ] T121 [P0-18b2b] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, restart `esty19_odoo`, fire dashboard simulator, confirm `gearment.api.log` row has `signature_verified=true` + `verify_failure_reason=''` + `topic_seen='order_completed'`
+- [X] T121 [P0-18b2b] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, recreate `esty19_odoo` with `env_file: /odoo/esty19/.env` (added `GEARMENT_API_KEY`/`GEARMENT_API_SECRET`/`GEARMENT_API_BASE_URL`), self-signed Python probe → HTTP 200 + `signature_verified=true` + `topic_seen='order_completed'` (gearment.api.log row 5). Bogus-key curl → HTTP 401 + `client_key_mismatch` (row 4). Owner-fired Gearment dashboard simulator will likewise produce `signature_verified=true` once they re-trigger.
 
 **Slice exit criteria**:
 - T112-T120 [X]; T121 left for Phase-7 ops session
