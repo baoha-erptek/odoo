@@ -168,9 +168,22 @@ Hoặc: mở form đơn → cuộn xuống **Chatter** → các thay đổi stat
 
 ---
 
-## 5. Upload file thiết kế (Design Files)
+## 5. Upload file thiết kế (Design Files) + Quy trình Duyệt
 
-Dành cho **đội sản xuất** và **đội thiết kế**.
+Dành cho **BA** (tạo file), **MP/đội sản xuất** (duyệt), và **đội thiết kế**.
+
+### Quy trình tổng quan
+
+Theo D2_production_flow.md, file thiết kế đi qua **4 trạng thái**:
+
+| Trạng thái | Ý nghĩa | Ai chuyển |
+|---|---|---|
+| **Chờ duyệt** (pending) | BA mới tạo, chưa gửi proof | (mặc định khi tạo) |
+| **Đã gửi proof** (proof_sent) | BA đã gửi mẫu thử cho khách hàng để xem trước | BA hoặc MP |
+| **Duyệt** (approved) | MP đã duyệt cuối cùng — có thể đi sản xuất | MP only |
+| **Cần chỉnh lại** (rejected) | MP từ chối — BA phải làm lại | MP only |
+
+Khi đã `Duyệt`, không quay lại được. Nếu muốn chỉnh, MP phải `rejected` trước → BA upload mới.
 
 ### 5.1 Mở đơn cần upload
 
@@ -203,6 +216,39 @@ Khi nhân viên kinh doanh bấm **Confirm** trên đơn:
 1. Hệ thống tự động "đẩy" file thiết kế qua tuyến routing đến đúng đội sản xuất.
 2. Bạn sẽ thấy mục **Design Routes** trên đơn xuất hiện trạng thái routing (pending / routed / failed).
 3. Nếu route bị **failed** quá 2 giờ → huy hiệu cam **Stuck Route** xuất hiện trên Order Dashboard → quản lý kiểm tra ngay.
+
+### 5.5 Gửi Proof cho khách (BA)
+
+Theo D2 §2.1 row 3: với đơn cá nhân hoá phức tạp, BA gửi mẫu thử cho buyer Etsy trước khi MP duyệt cuối.
+
+1. Login BA → Order Dashboard → tìm đơn có file `Chờ duyệt`.
+2. Mở đơn → tab **Design Files** → bấm **Gửi Proof** trên file.
+3. Nhập lời nhắn (ví dụ: "Vui lòng xác nhận thiết kế. OK thì trả lời tin nhắn này.").
+4. Bấm Lưu → state đổi `Đã gửi proof`. Chatter ghi: URL Drive + lời nhắn (đã sanitize chống XSS) + user + thời gian.
+
+**Phím tắt từ Order Dashboard:** chọn 1+ đơn → Action → "Gửi Proof" → fan-out cho mọi file `Chờ duyệt`/`Cần chỉnh lại` của các đơn đó.
+
+### 5.6 MP duyệt thiết kế
+
+Sau khi buyer phản hồi (hoặc đơn không cần proof):
+
+1. Login MP / Production Team → Order Dashboard → mở đơn có file `Đã gửi proof` (hoặc `Chờ duyệt`).
+2. Tab Design Files → bấm **Duyệt** (Approve) trên từng file.
+3. Hoặc Action → "Duyệt thiết kế" → fan-out duyệt mọi file `Đã gửi proof` của đơn.
+
+Reject: MP bấm Reject + bắt buộc nhập lý do → state `Cần chỉnh lại` → BA upload phiên bản mới.
+
+### 5.7 Quy tắc bảo vệ (FR-017)
+
+- BA **không thể** Approve/Reject — nút ẩn + RPC bị chặn AccessError.
+- MP có cả 3 quyền: Gửi Proof, Duyệt, Reject.
+- State machine cứng:
+  - `Chờ duyệt` → {Đã gửi proof, Duyệt, Cần chỉnh lại}
+  - `Đã gửi proof` → {Duyệt, Cần chỉnh lại, Chờ duyệt (rollback)}
+  - `Cần chỉnh lại` → {Chờ duyệt, Đã gửi proof}
+  - `Duyệt` → terminal (không quay lại được).
+- Bất kỳ chuyển state trái quy tắc → ValidationError.
+- Mọi state change ghi audit qua `tracking=True` (xuất hiện trên chatter).
 
 ---
 
@@ -362,6 +408,52 @@ Bấm **Filter** → **Owning Team** → chọn tên đội bạn (ví dụ "Int
 
 - Mở đơn → tab Design Files → xem dòng route nào bị `pending` hoặc `failed`.
 - Nếu `failed`: đọc lý do trong cột "Error Message" → upload lại file (mục 5) hoặc báo lập trình viên.
+
+---
+
+## 8.5 Đẩy đơn Gearment POD tự động
+
+Dành cho **đơn đi tuyến `gearment_pod`** (in tại Gearment Mỹ, drop-ship cho buyer).
+
+### Khi nào tự đẩy
+
+Khi đơn ở tuyến `gearment_pod` chuyển bước `quoted → confirmed` (do MP/sales bấm hành động chuyển bước), hệ thống TỰ ĐỘNG:
+
+1. Lấy file thiết kế ở state `Duyệt` hoặc `Đã gửi proof` của đơn.
+2. Build payload Gearment (địa chỉ buyer, SKU Gearment, số lượng, file URL, lời nhắn).
+3. Gọi Gearment API v3 `push_order` (bất đồng bộ qua queue_job nếu có; đồng bộ trong savepoint nếu không).
+4. Nhận response → lưu Gearment Outbound Ref vào đơn (`x_gearment_outbound_ref`) + status='pending'.
+5. Pipeline state ở `confirmed` đợi webhook từ Gearment báo `shipped`.
+
+### Khi push lỗi
+
+- Pipeline tự rollback về `quoted` (bằng change_type='rollback', không re-fire push).
+- Đơn nhận chatter alert đỏ với lý do lỗi.
+- `x_gearment_status='failed'`.
+- Cron mỗi giờ tự retry các đơn `confirmed/no-ref` >24h tuổi (date_order < NOW-24h).
+
+### Bật/tắt auto-push
+
+Chế độ kill-switch (admin only): Settings → Technical → Parameters → System Parameters → tìm key `multichannel_hub_fulfillment.gearment_auto_push_enabled`. Đổi value=False để tắt tạm khi sự cố Gearment API.
+
+### Cấu hình SKU Gearment cho sản phẩm
+
+Mỗi sản phẩm tuyến `gearment_pod` PHẢI có Gearment SKU:
+
+1. Sales → Products → mở product → tab "General Information" hoặc tab "Sales".
+2. Trường **Gearment SKU** — nhập mã SKU bên Gearment (ví dụ: `T-SHIRT-COTTON-WHITE-M`).
+3. Lưu. Đơn sau này có sản phẩm này khi confirmed sẽ tự đẩy đúng SKU sang Gearment.
+
+Nếu không có Gearment SKU → payload có product_id rỗng → Gearment có thể reject. Phải config trước khi vận hành thật.
+
+### Yêu cầu env vars
+
+Server staging/production phải set 3 biến môi trường:
+- `GEARMENT_API_KEY`
+- `GEARMENT_API_SECRET`
+- `GEARMENT_API_BASE_URL` (mặc định: `https://apiv2.gearment.com/integration-handler`)
+
+Nếu chưa set → push fail nhưng không crash đơn (auto-rollback + alert chatter).
 
 ---
 

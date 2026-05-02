@@ -65,8 +65,13 @@ class SaleOrder(models.Model):
         """Extend mhc helper: after the standard transition, fire the
         Gearment auto-push when entering the gearment_pod 'confirmed'
         state for the first time.
+
+        Skips push for non-operator change_types (migration / rollback /
+        initial) so seed scripts and rollback paths don't double-fire.
         """
         super()._write_pipeline_state(new_state, note=note, change_type=change_type)
+        if change_type not in ('manual', 'automatic'):
+            return
         for order in self:
             if order._gearment_push_should_fire(new_state):
                 order._enqueue_gearment_push()
