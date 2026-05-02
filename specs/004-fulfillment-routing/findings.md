@@ -206,3 +206,60 @@ be wrapped in generic `UserError` to avoid leaking internal slice
 structure to external callers. Current internal-only usage is OK.
 Security review flagged this as MEDIUM future-slice item.
 
+
+---
+
+## P0-18b2a — Gearment webhook discovery probe (2026-05-02)
+
+Real Gearment dashboard simulator hit our staging controller. Captured row id=3 in `gearment.api.log` on `demo_esty`.
+
+### Headers (decoded — these are the auth-relevant ones)
+
+| Header | Value | Note |
+|---|---|---|
+| `X-Connect-Signature` | `nNqkvTj5v9Qg4rwaKYhlAjQS-3N_gMc-whSGp-VypVE=` | 44-char base64-**urlsafe** (uses `-`/`_`); 32 raw bytes → **HMAC-SHA256** |
+| `X-Connect-Client-Key` | `XCxTSAPIT4RMQW` | Matches our `GEARMENT_API_KEY` exactly |
+| `X-Connect-Timestamp` | `1777735761` | Unix epoch seconds |
+| `X-Connect-Nonce` | `j2jXmLHWOJtJuQ==` | base64, ~16 raw bytes |
+| `User-Agent` | `go-resty/2.16.2` | Gearment uses Go HTTP client |
+| Source IP | `18.144.111.250` | AWS us-west-1 — pin in firewall if we add allowlist |
+
+### Payload (matches simulator schema, plus `type`)
+
+```json
+{
+  "order": {"gearment_id": "string", "gearment_name": "string",
+            "reference": "string", "status": "shipped", "vendor_id": "string"},
+  "tracking": {"company": "string", "number": "string", "url": "string"},
+  "type": "order_completed"
+}
+```
+
+**Key surprise:** topic key is `type`, not `event` or `topic` as the V3 docs suggested. Our controller's `_detect_topic` heuristic missed this row's topic. **Action**: fold `type` into the heuristic in P0-18b2b (one-line change to `_detect_topic`).
+
+### HMAC scheme — UNRESOLVED
+
+Tried 50+ candidate signing inputs:
+- Secret tried: `GEARMENT_API_SECRET`, `GEARMENT_API_KEY`, both reversed, both concat orderings, sha256-derived-from-both, base64-decoded API_SECRET
+- Message tried: body alone; ts/nonce/key in every concat order with separators `:`, `|`, `+`, `.`, `\n`, `/`; URL-prefixed; sorted-asc
+- Algos: sha256 / sha1 / sha512
+- Encodings: base64-url / base64-std / hex
+
+None produced `nNqkvTj5v9Qg4rwaKYhlAjQS-3N_gMc-whSGp-VypVE=`. Conclusion: **the HMAC secret is NOT either of our `.env` Gearment credentials**. Gearment must publish a per-webhook signing secret somewhere we have not yet looked.
+
+### Owner action to unblock P0-18b2b
+
+Check Gearment dashboard for:
+1. Account → API Keys / Profile → "Webhook Signing Secret"
+2. Webhook list row → click row to open detail page → "View Secret" / "Reveal Secret" / "Show key"
+3. Top of Webhooks page → "API Documents" link (`developers.gearment.com/api.md`?) → look for HMAC algorithm spec
+
+If still not found: contact Gearment support and ask for the webhook signing secret + signature input format (what gets HMAC'd, exactly).
+
+Once secret is known, the verify code is ~30 LOC: `hmac.compare_digest(base64.urlsafe_b64encode(hmac.new(secret, candidate_msg, sha256).digest()), header_value)` where `candidate_msg` is determined by retrying the variants in `python3 -c` against the captured row.
+
+### Defense to add in P0-18b2b regardless
+
+- Reject if `X-Connect-Timestamp` differs from server time by > 5 minutes (replay window)
+- Cache `X-Connect-Nonce` for 10 minutes; reject duplicates (replay)
+- Verify `X-Connect-Client-Key` matches `GEARMENT_API_KEY` (mis-routed-shop defense)
