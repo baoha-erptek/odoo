@@ -884,3 +884,100 @@ post-hoc with raw SQL.
   baked correct ownership in.
 
 **Bugfix-flow tag:** implementation_drift.
+
+---
+
+## Bug-2026-05-02-gearment-pod-design-flow-missing
+
+**Type:** spec_gap (BA-defined production flow not fully implemented).
+
+**Severity:** MAJOR — Etsy + Gearment POD route is the most-used path
+(7 product families per D2 §3.2); without design approval + auto-push,
+operators must manually copy each order to Gearment portal. Demo to
+end-users surfaces the gap.
+
+**Symptom:** Etsy → Gearment POD pipeline (`gearment_pod` route, 4 states
+draft → quoted → confirmed → shipped) lands an order in `draft`. After
+that:
+- No design-file state reflects the BA-creates / MP-approves /
+  proof-to-buyer cycle described in `D2_production_flow.md` §2.1 row 3
+  ("MP approves design files made by BA") and the
+  `ĐÃ GỬI PROOF` / `CHỜ DUYỆT` Vietnamese sub-states from row 5.
+- No automatic push to Gearment when the order pipeline transitions
+  `quoted → confirmed`. `gearment_adapter.push_order` exists (P0-18b1
+  commit `92cac81ef6d`) but is NEVER called from any sale.order action.
+- BA must therefore copy each order into Gearment's web portal by hand
+  (current manual state per D2 §2.1 row 7), defeating the productivity
+  win.
+
+**Suspected slices (gap, not regression):**
+- P1-02a / P1-02b shipped `design.file` with 3-state approval
+  (pending / approved / rejected) — covers BA-creates + MP-approves
+  but **lacks** the `proof_sent` (ĐÃ GỬI PROOF) buyer-preview state.
+- P1-PIPELINE-FULL shipped the 4-stage Gearment pipeline +
+  `_write_pipeline_state` helper but **did not wire** any state
+  transition to `gearment_adapter.push_order`.
+- P0-18b1 shipped the adapter Protocol with `push_order` implemented
+  but **kept it as a callable nobody calls**.
+
+**Trigger surface:** owner reviewed BA docs + end-user feedback on
+2026-05-02 against shipped code; gap was always there but not exercised
+in any prior demo.
+
+**Root cause:** Slice decomposition. P1-02 owned design files,
+P1-PIPELINE-FULL owned pipeline state, P0-18b1 owned adapter — no slice
+owned the **integration** (sale.order pipeline state change → adapter
+call → side-effect on design.file state). The integration slice was
+deferred to a vague "P4-01" Gearment outbound slice in the tracker.
+
+**Patch:** NOT a hotfix — too much scope. Carve up into proper slices
+under the playbook 9-phase loop. Two new slices proposed:
+
+1. **P1-DESIGN-PROOF** (in `multichannel_hub_core`):
+   Add `proof_sent` state to `design.file` between `pending` and
+   `approved`. Add `action_send_proof_to_buyer(buyer_message=...)` that
+   writes the proof URL + buyer note to chatter, transitions state to
+   `proof_sent`. MP can then `action_approve` (advances to approved) or
+   `action_reject` (back to pending with reason). Wire the `pending →
+   proof_sent` button to the Order Dashboard kanban tile so MP doesn't
+   need to drill into the order to send a proof. Update Order Dashboard
+   filter to show 4 buckets: Chờ File / Chờ Duyệt / Đã Gửi Proof /
+   Duyệt. Tests: state-machine transitions + ACL gates (BA can move
+   pending → proof_sent; only MP can move proof_sent → approved). ETA:
+   ~150 LOC + 8 tests.
+
+2. **P4-01a** (in `multichannel_hub_fulfillment`):
+   On `sale.order._write_pipeline_state` transition into the
+   Gearment-POD `confirmed` state, fire a deferred queue job that
+   builds a `GearmentOrderPayload` from the order + active design files
+   (state in {`approved`, `proof_sent`} after MP final approval) and
+   calls `gearment_api_adapter.push_order(payload)`. On success, log
+   the Gearment-side reference number on the order and transition the
+   pipeline to `shipped` once the Gearment webhook (P0-18b2) confirms.
+   On failure, raise back to `quoted` and post a chatter alert. Tests:
+   happy-path push + idempotency on retry + failure-rollback. Cron
+   reconciler scans `confirmed` orders >24h with no Gearment reference
+   to retry. ETA: ~250 LOC + 12 tests.
+
+3. **P4-01b** (small, optional, follow-up): bulk-action "Send all
+   approved Gearment-POD orders now" on the Order Dashboard for
+   manual re-push when the cron is paused. ETA: ~50 LOC.
+
+**Test added:** None yet (this is a spec_gap captured pre-implementation).
+Tests will land with each slice's RED phase.
+
+**Prevention:**
+- Memory entry **NEW** (#64): "When a slice ships a Protocol/adapter,
+  the **next slice in scope must explicitly own the integration call
+  site**, otherwise the adapter rots as dead code. Reject task
+  decompositions that ship `push_X()` / `send_X()` / `notify_X()` /
+  `register_X()` methods without naming the slice that *calls* them."
+- Tracker entries: P4-01 split into P4-01 (kept as parent), P1-DESIGN-PROOF
+  (carved Phase 1 since it touches the daily-use Order Dashboard) and
+  P4-01a / P4-01b (Phase 4 keep, but P4-01a moves up to "next slice
+  after P0-18b2 webhook" in the prioritization list).
+
+**Bugfix-flow tag:** spec_gap.
+
+**Status:** documented; awaiting owner go/no-go on slice carve-up
+before dispatching planner.
