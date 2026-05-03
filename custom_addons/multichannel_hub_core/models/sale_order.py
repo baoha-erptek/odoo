@@ -418,6 +418,20 @@ class SaleOrder(models.Model):
         return result
 
     # ------------------------------------------------------------------
+    # P1-DASH-MERGE — bulk Mark Shipped on the unified Operations list
+    # ------------------------------------------------------------------
+    def action_bulk_mark_shipped(self):
+        """Wrapper for bulk Mark Shipped on the unified Operations Dashboard.
+
+        The server action ``action_server_bulk_mark_shipped`` is bound to
+        ``sale.order`` (P1-DASH-MERGE) so its ``records`` recordset is
+        sale.order. Delegate to ``sale.order.fulfillment.action_bulk_mark_shipped``
+        which holds the canonical FR-017 silent-skip on
+        has_pending_address_change + production_team RPC gate.
+        """
+        return self.fulfillment_id.action_bulk_mark_shipped()
+
+    # ------------------------------------------------------------------
     # P1-DESIGN+GEARMENT — Order Dashboard kanban actions
     # ------------------------------------------------------------------
     def _all_design_files(self):

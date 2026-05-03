@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P1-DASH-MERGE — Unified Operations Dashboard.
+        CEO directive 2026-05-03: merge P1-01a Order Dashboard + P1-03
+        Tracking Dashboard into ONE sale.order list. Tracking columns
+        come in as related fields from sale.order.fulfillment via the
+        _inherits delegation set up in P1-05 D-23. Saved filters
+        (data/operations_dashboard_saved_filters.xml) provide per-role
+        scoping; bulk Mark Shipped is bound to this list. The original
+        menu_order_dashboard + menu_tracking_dashboard menus and their
+        actions/views are deleted via <delete> records in menu.xml.
+    -->
+
+    <record id="operations_dashboard_list_view" model="ir.ui.view">
+        <field name="name">sale.order.list.operations_dashboard</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Operations Dashboard"
+                  decoration-info="qty_total &gt;= 2"
+                  decoration-bf="is_duplicate_buyer"
+                  decoration-danger="order_priority in ('push','urgent')"
+                  decoration-warning="sales_channel == 'amazon'"
+                  default_order="date_order desc"
+                  multi_edit="1">
+                <!-- Hidden flags drive decorations. -->
+                <field name="qty_total" column_invisible="1"/>
+                <field name="is_duplicate_buyer" column_invisible="1"/>
+                <field name="order_priority" column_invisible="1"/>
+
+                <!-- Order columns (P1-01a heritage). -->
+                <field name="name" string="Reference"/>
+                <field name="sales_channel"/>
+                <field name="date_order"/>
+                <field name="partner_id"/>
+                <field name="amount_total" widget="monetary"/>
+                <field name="mp_note" optional="show"/>
+                <field name="pic_user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="is_overdue_approval" widget="boolean_toggle"
+                       string="Overdue" optional="show"/>
+
+                <!-- Tracking columns (P1-03 heritage; via _inherits delegation). -->
+                <field name="tracking_number" optional="show"/>
+                <field name="shipping_carrier_id" optional="show"/>
+                <field name="tracking_state" widget="badge" optional="show"
+                       decoration-success="tracking_state == 'delivered'"
+                       decoration-info="tracking_state in ('shipped','in_transit')"
+                       decoration-warning="tracking_state == 'returned'"/>
+                <field name="label_status" widget="badge" optional="show"
+                       decoration-success="label_status == 'bought'"
+                       decoration-warning="label_status == 'requested'"
+                       decoration-danger="label_status == 'failed'"/>
+                <field name="shipping_date" optional="hide"/>
+                <field name="warehouse_zone" optional="hide"/>
+                <field name="production_blocked" optional="hide"/>
+                <field name="pd_pic_user_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="operations_dashboard_search_view" model="ir.ui.view">
+        <field name="name">sale.order.search.operations_dashboard</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <search string="Operations Dashboard">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tracking_number"/>
+                <field name="shipping_carrier_id"/>
+                <field name="pic_user_id"/>
+                <separator/>
+                <filter string="Production Blocked" name="filter_blocked"
+                        domain="[('production_blocked', '=', True)]"/>
+                <filter string="Label Bought" name="filter_label_bought"
+                        domain="[('label_status', '=', 'bought')]"/>
+                <filter string="Shipped" name="filter_shipped"
+                        domain="[('tracking_state', '=', 'shipped')]"/>
+                <filter string="Delivered" name="filter_delivered"
+                        domain="[('tracking_state', '=', 'delivered')]"/>
+                <separator/>
+                <filter string="VN Warehouse" name="filter_vn"
+                        domain="[('warehouse_zone', '=', 'vn')]"/>
+                <filter string="US Warehouse" name="filter_us"
+                        domain="[('warehouse_zone', '=', 'us')]"/>
+                <separator/>
+                <filter string="Sales Channel" name="group_channel"
+                        context="{'group_by': 'sales_channel'}"/>
+                <filter string="Carrier" name="group_carrier"
+                        context="{'group_by': 'shipping_carrier_id'}"/>
+                <filter string="Tracking State" name="group_tracking_state"
+                        context="{'group_by': 'tracking_state'}"/>
+                <filter string="Label Status" name="group_label_status"
+                        context="{'group_by': 'label_status'}"/>
+                <filter string="Warehouse" name="group_warehouse"
+                        context="{'group_by': 'warehouse_zone'}"/>
+                <filter string="Priority" name="group_priority"
+                        context="{'group_by': 'order_priority'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_operations_dashboard" model="ir.actions.act_window">
+        <field name="name">Operations Dashboard</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="operations_dashboard_list_view"/>
+        <field name="search_view_id" ref="operations_dashboard_search_view"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No orders yet — orders ingested from any channel land here.
+            </p>
+        </field>
+    </record>
+
+    <!--
+        Bulk Mark Shipped server action — re-bound from
+        sale.order.fulfillment list (P1-03) to the unified sale.order
+        list. The wrapper sale.order.action_bulk_mark_shipped()
+        delegates to fulfillment_id's canonical implementation, which
+        owns the FR-017 silent-skip + production_team RPC gate.
+    -->
+    <record id="action_server_bulk_mark_shipped" model="ir.actions.server">
+        <field name="name">Mark Shipped</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="binding_model_id" ref="model_sale_order"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_mark_shipped()</field>
+    </record>
+
+</odoo>

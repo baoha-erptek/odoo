@@ -176,15 +176,18 @@ class TestOrderDashboardDbShape(TransactionCase):
             "menu_order_dashboard should be deleted after merge to unified Operations Dashboard"
         )
 
-    def test_action_window_order_dashboard_resolvable(self):
-        """Verify action_order_dashboard act_window is resolvable and points to sale.order."""
-        try:
-            action = self.env.ref('multichannel_hub_core.action_order_dashboard')
-            self.assertTrue(action, "action_order_dashboard should be resolvable")
-            self.assertEqual(
-                action.res_model, 'sale.order',
-                "action_order_dashboard should target 'sale.order' model"
-            )
-        except ValueError:
-            self.fail("env.ref('multichannel_hub_core.action_order_dashboard') "
-                     "raised ValueError; action not found")
+    def test_action_window_order_dashboard_deleted_after_merge(self):
+        """Verify action_order_dashboard is deleted post P1-DASH-MERGE.
+
+        The original P1-01a action was superseded by
+        action_operations_dashboard on the unified list. menu.xml
+        explicitly deletes the old action so env.ref returns falsy.
+        """
+        action = self.env.ref(
+            'multichannel_hub_core.action_order_dashboard',
+            raise_if_not_found=False,
+        )
+        self.assertFalse(
+            action,
+            "action_order_dashboard should be deleted after P1-DASH-MERGE"
+        )

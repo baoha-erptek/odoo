@@ -73,7 +73,18 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         })
 
     def _create_order_with_fulfillment(self, **order_kwargs):
-        """Factory method to create order with fulfillment."""
+        """Factory: create sale.order, populate its auto-created fulfillment.
+
+        sale.order has `_inherits = {'sale.order.fulfillment': 'fulfillment_id'}`
+        (P1-05 D-23) so a fulfillment row is auto-created on every order
+        create. We write test values onto THAT row — not a separate one
+        — because the dashboard view, saved filters, and the bulk
+        Mark-Shipped wrapper all read fulfillment data through
+        `order.fulfillment_id`.
+
+        action_confirm() runs unless caller passes state='draft' (some
+        filter tests need orders to remain in draft).
+        """
         defaults = {
             'partner_id': self.partner.id,
             'order_line': [(0, 0, {
@@ -85,11 +96,7 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         defaults.update(order_kwargs)
 
         order = self.env['sale.order'].create(defaults)
-        order.action_confirm()
-
-        # Create fulfillment for the order
-        fulfillment = self.env['sale.order.fulfillment'].create({
-            'order_id': order.id,
+        order.fulfillment_id.write({
             'tracking_number': f'TRK{order.id:010d}',
             'shipping_carrier_id': self.carrier.id,
             'label_status': 'bought',
@@ -98,7 +105,10 @@ class TestOperationsDashboardMergeORM(TransactionCase):
             'production_blocked': False,
         })
 
-        return order, fulfillment
+        if order_kwargs.get('state') != 'draft':
+            order.action_confirm()
+
+        return order, order.fulfillment_id
 
     def test_filter_marketing_user_domain_returns_draft_orders(self):
         """Test filter_operations_marketing_user domain returns draft orders only."""

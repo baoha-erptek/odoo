@@ -116,13 +116,21 @@ class TestTrackingDashboardSchema(TransactionCase):
             "Constraint _check_block_reason_when_blocked should be registered (C-SOF-001)"
         )
 
-    def test_action_window_tracking_dashboard_exists(self):
-        """Verify action_tracking_dashboard action_window record exists."""
-        action = self.env.ref('multichannel_hub_core.action_tracking_dashboard')
+    def test_action_window_tracking_dashboard_deleted_after_merge(self):
+        """Verify action_tracking_dashboard is deleted post P1-DASH-MERGE.
 
-        self.assertIsNotNone(action, "action_tracking_dashboard should be defined in XML")
-        self.assertEqual(action.res_model, 'sale.order.fulfillment')
-        self.assertIn('list', action.view_mode, "Tracking dashboard should support list view")
+        The original P1-03 action was superseded by
+        action_operations_dashboard on the unified sale.order list.
+        menu.xml explicitly deletes it so env.ref returns falsy.
+        """
+        action = self.env.ref(
+            'multichannel_hub_core.action_tracking_dashboard',
+            raise_if_not_found=False,
+        )
+        self.assertFalse(
+            action,
+            "action_tracking_dashboard should be deleted after P1-DASH-MERGE"
+        )
 
     def test_menu_tracking_dashboard_deleted_after_merge(self):
         """Verify menu_tracking_dashboard is deleted post-merge to unified dashboard."""

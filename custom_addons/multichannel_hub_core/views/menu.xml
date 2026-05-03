@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- P1-01a — Operations top-level menu hosting the three dashboards
-         (Order, Tracking, Process) once they all land. -->
+    <!-- P1-01a — Operations top-level menu hosting the unified
+         Operations Dashboard (P1-DASH-MERGE) and the future Process
+         Dashboard (P2-03). -->
     <menuitem id="menu_operations_root"
               name="Operations"
               sequence="20"
               groups="sales_team.group_sale_salesman"/>
+
+    <!-- P1-DASH-MERGE — single Operations Dashboard menu under
+         Operations root. Replaces the original P1-01a menu_order_dashboard
+         and the P1-03 menu_tracking_dashboard which are deleted below
+         per CEO directive 2026-05-03. -->
+    <menuitem id="menu_operations_dashboard"
+              name="Operations Dashboard"
+              parent="menu_operations_root"
+              action="action_operations_dashboard"
+              sequence="10"/>
+
+    <!-- Explicit deletes so env.ref() returns falsy after upgrade —
+         Odoo does not auto-purge ir_model_data rows when XML is
+         removed from a module's data list. -->
+    <delete model="ir.ui.menu" id="menu_order_dashboard"/>
+    <delete model="ir.ui.menu" id="menu_tracking_dashboard"/>
+    <delete model="ir.actions.act_window" id="action_order_dashboard"/>
+    <delete model="ir.actions.act_window" id="action_tracking_dashboard"/>
+    <delete model="ir.ui.view" id="order_dashboard_list_view"/>
+    <delete model="ir.ui.view" id="view_tracking_dashboard_list"/>
+    <delete model="ir.ui.view" id="view_tracking_dashboard_search"/>
 </odoo>
