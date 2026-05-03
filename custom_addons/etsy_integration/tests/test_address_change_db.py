@@ -67,28 +67,28 @@ class TestAddressChangeDbShape(TransactionCase):
     def test_groups_ba_lead_exists(self):
         """Verify group_ba_lead group is resolvable via env.ref()."""
         try:
-            group = self.env.ref('etsy_integration.group_ba_lead')
+            group = self.env.ref('multichannel_hub_core.group_ba_lead')
             self.assertTrue(group, "group_ba_lead should exist and be resolvable")
         except ValueError:
-            self.fail("env.ref('etsy_integration.group_ba_lead') raised ValueError; "
+            self.fail("env.ref('multichannel_hub_core.group_ba_lead') raised ValueError; "
                      "group not found in database")
 
     def test_groups_ba_user_exists(self):
         """Verify group_ba_user group is resolvable via env.ref()."""
         try:
-            group = self.env.ref('etsy_integration.group_ba_user')
+            group = self.env.ref('multichannel_hub_core.group_ba_user')
             self.assertTrue(group, "group_ba_user should exist and be resolvable")
         except ValueError:
-            self.fail("env.ref('etsy_integration.group_ba_user') raised ValueError; "
+            self.fail("env.ref('multichannel_hub_core.group_ba_user') raised ValueError; "
                      "group not found in database")
 
     def test_groups_marketing_user_exists(self):
         """Verify group_marketing_user group is resolvable via env.ref()."""
         try:
-            group = self.env.ref('etsy_integration.group_marketing_user')
+            group = self.env.ref('multichannel_hub_core.group_marketing_user')
             self.assertTrue(group, "group_marketing_user should exist and be resolvable")
         except ValueError:
-            self.fail("env.ref('etsy_integration.group_marketing_user') raised ValueError; "
+            self.fail("env.ref('multichannel_hub_core.group_marketing_user') raised ValueError; "
                      "group not found in database")
 
     def test_sale_order_has_pending_address_change_column(self):

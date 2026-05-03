@@ -7,21 +7,12 @@
         <field name="name">Etsy API Log Reader</field>
     </record>
 
-    <!-- P1-04 (D3 in plan): BA approver groups for the address-change
-         approval workflow. Defined here for now; promote to
-         multichannel_hub_core when channel-agnostic UX needs them. -->
-    <record id="group_marketing_user" model="res.groups">
-        <field name="name">Marketing User</field>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    <record id="group_ba_user" model="res.groups">
-        <field name="name">BA User</field>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    <record id="group_ba_lead" model="res.groups">
-        <field name="name">BA Lead</field>
-        <field name="implied_ids" eval="[(4, ref('etsy_integration.group_ba_user'))]"/>
-    </record>
+    <!-- P1-04 BA-tier groups originally lived here. Promoted to
+         multichannel_hub_core 2026-05-03 per ADR-003 — they're
+         channel-agnostic sales-ops roles that the unified Operations
+         Dashboard (P1-DASH-MERGE) and future Amazon/website channels
+         all need. Pre-migration in mhc 19.0.1.0.11 rewrites the
+         ir.model.data rows so user-group memberships survive. -->
 
     <record id="etsy_email_log_rule_user" model="ir.rule">
         <field name="name">Etsy Email Log: read all</field>

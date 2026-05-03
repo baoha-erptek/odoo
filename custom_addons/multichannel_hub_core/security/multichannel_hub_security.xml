@@ -6,16 +6,35 @@
             Production Team — generic, channel-agnostic.
             Owns design.file approval workflow (P1-02a) and the future
             production dashboards (P2-03 Process Dashboard).
-
-            Distinct from the BA-tier groups in etsy_integration
-            (group_marketing_user / group_ba_user / group_ba_lead, P1-04).
-            BA approves customer-facing changes; Production approves
-            internal manufacturing inputs.
         -->
         <record id="group_production_team" model="res.groups">
             <field name="name">Production Team</field>
             <field name="comment">Members of the production team. Approve / reject design files; will own the Process Dashboard once P2-03 lands.</field>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!--
+            BA-tier groups — channel-agnostic sales-ops roles.
+            Originally landed in etsy_integration under P1-04; promoted
+            to multichannel_hub_core 2026-05-03 per ADR-003 (mhc cannot
+            be referenced by per-channel modules in reverse). Consumed
+            by P1-DASH-MERGE saved filters and P1-04 address-change
+            approval workflow. The pre-migration script in
+            migrations/19.0.1.0.11/pre-rename-ba-groups.py rewrites
+            ir.model.data rows so existing user-group memberships
+            survive the XML-ID rename.
+        -->
+        <record id="group_marketing_user" model="res.groups">
+            <field name="name">Marketing User</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_ba_user" model="res.groups">
+            <field name="name">BA User</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_ba_lead" model="res.groups">
+            <field name="name">BA Lead</field>
+            <field name="implied_ids" eval="[(4, ref('multichannel_hub_core.group_ba_user'))]"/>
         </record>
 
     </data>

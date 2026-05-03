@@ -113,7 +113,7 @@ class EtsyAddressChangeRequest(models.Model):
         """RPC-level gate. Form buttons use ``groups=`` but RPC bypasses
         view-level checks, so action methods must enforce the group too.
         """
-        if not self.env.user.has_group('etsy_integration.group_ba_lead'):
+        if not self.env.user.has_group('multichannel_hub_core.group_ba_lead'):
             raise UserError(_(
                 "Only BA Leads may approve or reject address-change requests."))
 
@@ -197,7 +197,7 @@ class EtsyAddressChangeRequest(models.Model):
         self.ensure_one()
         # Odoo 19 renamed res.groups.users -> user_ids.
         ba_lead = self.env.ref(
-            'etsy_integration.group_ba_lead', raise_if_not_found=False)
+            'multichannel_hub_core.group_ba_lead', raise_if_not_found=False)
         user_id = self.env.user.id
         if ba_lead and ba_lead.user_ids:
             user_id = ba_lead.user_ids[0].id

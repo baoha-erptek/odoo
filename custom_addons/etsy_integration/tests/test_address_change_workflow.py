@@ -29,7 +29,7 @@ class TestAddressChangeWorkflow(TransactionCase):
 
         # Create BA lead group member (R3 mitigation: activity posting requires group member)
         # Odoo 19 renamed res.users.groups_id -> group_ids.
-        cls.ba_lead_group = cls.env.ref('etsy_integration.group_ba_lead')
+        cls.ba_lead_group = cls.env.ref('multichannel_hub_core.group_ba_lead')
         cls.env.user.write({'group_ids': [(4, cls.ba_lead_group.id)]})
 
         # Create test partner for orders
@@ -327,7 +327,7 @@ class TestAddressChangeWorkflow(TransactionCase):
             'name': 'Marketing Only',
             'login': 'marketing_only@example.com',
             'group_ids': [
-                (6, 0, [self.env.ref('etsy_integration.group_marketing_user').id])
+                (6, 0, [self.env.ref('multichannel_hub_core.group_marketing_user').id])
             ],
         })
         request = self._create_address_change_request(state='requested')
