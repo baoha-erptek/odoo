@@ -19,3 +19,4 @@ from . import test_operations_dashboard_db
 from . import test_operations_dashboard_orm
 from . import test_audit_coverage_db
 from . import test_audit_chatter_orm
+from . import test_dropship_dep_db

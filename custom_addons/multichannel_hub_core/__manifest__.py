@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.11',
+    'version': '19.0.1.0.12',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -28,6 +28,7 @@ fulfillment delegation landed:
     'depends': [
         'sale_management',
         'stock',
+        'stock_dropshipping',
         'contacts',
         'mail',
     ],
