@@ -84,12 +84,24 @@ def make_users():
     # would otherwise hide orders created by another user. Production
     # deployment can revisit per-team scoping later.
     sale_mgr = G('sales_team.group_sale_manager')
+    # Email-fallback ingest creates products on first parse; manager/quanly
+    # was previously locked out by missing product.group_product_user.
+    # Surfaced by E2E demo 2026-05-03 §1 (failed admin-elevated workaround).
+    product_create = G('product.group_product_user')
+    # action_approve on etsy.address.change.request is gated to group_ba_lead
+    # at the RPC level (P1-04 security feature). Demo BA Manager needs it
+    # to walk through the address-change branch without bypass shortcuts.
+    ba_lead = G('multichannel_hub_core.group_ba_lead')
     role_groups = {
         'kinhdoanh': [G('sales_team.group_sale_salesman'), sale_mgr],
         'sanxuat': [G('multichannel_hub_core.group_production_team'), sale_mgr],
         'ba_shipping': [G('multichannel_hub_fulfillment.group_ba_shipping'), sale_mgr],
-        'ba_manager': [G('multichannel_hub_fulfillment.group_ba_manager'), sale_mgr],
-        'quanly': [sale_mgr],
+        'ba_manager': [
+            G('multichannel_hub_fulfillment.group_ba_manager'),
+            ba_lead,
+            sale_mgr,
+        ],
+        'quanly': [sale_mgr, product_create],
     }
 
     users = {}
