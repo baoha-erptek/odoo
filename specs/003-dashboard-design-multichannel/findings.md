@@ -981,3 +981,61 @@ Tests will land with each slice's RED phase.
 
 **Status:** documented; awaiting owner go/no-go on slice carve-up
 before dispatching planner.
+
+---
+
+## P1-DASH-MERGE landed 2026-05-03 — surprises captured
+
+### Architectural gap surfaced by view-merge
+
+The slice was supposed to be view-merge-only, but Phase 2 RED tests crashed at
+`setUpClass` with `ValueError: External ID not found: multichannel_hub_core.group_marketing_user`.
+P1-04 had landed the BA-tier groups (`group_marketing_user`, `group_ba_user`,
+`group_ba_lead`) inside `etsy_integration` even though they are channel-agnostic
+sales-ops roles. Saved filters in mhc cannot reference `etsy_integration.group_*`
+without inverting the ADR-003 dependency direction.
+
+**Resolution:** prereq commit `5a1452b3af0` moved the 3 groups to
+`multichannel_hub_core/security/multichannel_hub_security.xml` with a
+pre-migration `migrations/19.0.1.0.11/pre-rename-ba-groups.py` that rewrites
+`ir_model_data.module` so existing user-group memberships survive the
+XML-ID rename. 9 files updated with the new XML IDs (CSV ACL, view button
+groups, `has_group()` calls, env.ref() calls, test refs).
+
+**Pattern:** groups that LOOK channel-specific but are actually channel-agnostic
+should live in mhc. P1-04's own `etsy_security.xml:10-12` comment foreshadowed
+this: *"Defined here for now; promote to multichannel_hub_core when
+channel-agnostic UX needs them."*
+
+### Odoo 19 platform constraints discovered
+
+1. **`ir.filters` has no `group_ids` field.** Only `user_ids` (M2M res.users).
+   Role-level gating must be naming-based + menu-level gating, OR via a
+   `post_init` hook that expands group → users at install time (brittle —
+   stale when users join the group later).
+2. **`ir.filters.model_id` is a Selection (Char), not Many2one.** Tests
+   that do `filter_rec.model_id.model` will AttributeError. Use
+   `filter_rec.model_id` direct string compare.
+3. **`_inherits` delegation auto-creates the child row at parent create()
+   time.** Test factories that *also* create a child row produce two rows;
+   the dashboard view reads the auto-created one (via `fulfillment_id`),
+   the test writes to the separate one — silent test bug. Always write to
+   `order.fulfillment_id` not a fresh `create({...})`.
+4. **`<delete>` records in module XML are required to purge `ir_model_data`
+   when removing menu/action/view records.** Removing the XML file from
+   manifest's `data` list does NOT auto-purge — env.ref() still resolves
+   the orphan rows.
+
+### FR-017 8th confirmation
+`sale.order.action_bulk_mark_shipped` thin wrapper delegating to
+`fulfillment_id.action_bulk_mark_shipped` preserves the canonical
+production_team RPC gate + has_pending_address_change silent-skip.
+No double-gating. Memory pattern unchanged.
+
+### CEO directive vote weighting
+The CEO directive (single unified dashboard, role-based saved filters)
+overrode the original Spec 003 split-dashboard topology that came from
+department feedback. Naming-based filter scoping was the platform-imposed
+fallback — the CEO's role-segmentation INTENT survives via filter NAMES
+plus the menu-level group gate; the strong group-by-filter ACL gate the
+CEO might have wanted is not Odoo-native.
