@@ -244,7 +244,7 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 **Goal**: Every tracked field produces chatter; 100% i18n coverage; UTF-8 round-trip.
 **Independent test**: 5 tracked-field edits → 5 chatter rows; Vietnamese language renders all labels with diacritics; CI enforces 100%.
 
-- [ ] T082 [P] [US7] Audit all spec-introduced models — confirm `mail.thread` + `mail.activity.mixin` inheritance; `tracking=True` on all user-visible scalar fields per FR-031
+- [X] T082 [P] [US7] Audit all spec-introduced models — confirm `mail.thread` + `mail.activity.mixin` inheritance; `tracking=True` on all user-visible scalar fields per FR-031 (P1-08 2026-05-03; schema-level satisfied; runtime tracking-value persistence deferred per Bug-2026-05-03-mail-tracking-not-firing)
 - [ ] T083 [US7] Create `i18n/vi_VN.po` skeleton with translations for all string literals introduced by this spec (labels, help, errors, kanban column titles, selection values)
 - [ ] T084 [P] [US7] Implement `tests/test_i18n_coverage.py` parsing `.py` and `.xml` for `_()` calls, parsing `.po` for translations, asserting equality (FR-032 CI gate)
 - [ ] T085 [P] [US7] Implement `tests/test_utf8_roundtrip.py` with diacritic fixture ("Đĩa tim mới") for Excel import → product creation → Excel export round-trip (FR-033)
