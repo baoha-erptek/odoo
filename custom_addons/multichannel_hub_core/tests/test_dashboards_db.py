@@ -165,14 +165,16 @@ class TestOrderDashboardDbShape(TransactionCase):
         self.assertEqual(nulls, 0,
                          "No sale.order should have NULL sales_channel post-install")
 
-    def test_menu_order_dashboard_resolvable(self):
-        """Verify menu entry multichannel_hub_core.menu_order_dashboard is resolvable."""
-        try:
-            menu = self.env.ref('multichannel_hub_core.menu_order_dashboard')
-            self.assertTrue(menu, "menu_order_dashboard should be resolvable")
-        except ValueError:
-            self.fail("env.ref('multichannel_hub_core.menu_order_dashboard') "
-                     "raised ValueError; menu not found")
+    def test_menu_order_dashboard_deleted_after_merge(self):
+        """Verify menu entry menu_order_dashboard is deleted post-merge to unified dashboard."""
+        menu = self.env.ref(
+            'multichannel_hub_core.menu_order_dashboard',
+            raise_if_not_found=False
+        )
+        self.assertFalse(
+            menu,
+            "menu_order_dashboard should be deleted after merge to unified Operations Dashboard"
+        )
 
     def test_action_window_order_dashboard_resolvable(self):
         """Verify action_order_dashboard act_window is resolvable and points to sale.order."""

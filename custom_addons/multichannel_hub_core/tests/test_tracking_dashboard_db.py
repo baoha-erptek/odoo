@@ -124,17 +124,13 @@ class TestTrackingDashboardSchema(TransactionCase):
         self.assertEqual(action.res_model, 'sale.order.fulfillment')
         self.assertIn('list', action.view_mode, "Tracking dashboard should support list view")
 
-    def test_menu_tracking_dashboard_exists(self):
-        """Verify menu_tracking_dashboard menu entry exists under Operations."""
-        menu = self.env.ref('multichannel_hub_core.menu_tracking_dashboard')
-
-        self.assertIsNotNone(menu, "menu_tracking_dashboard should be defined in XML")
-        self.assertIsNotNone(menu.parent_id, "Menu should have a parent (Operations)")
-
-        # Verify parent is the Operations menu (created in P1-01a)
-        operations_menu = self.env.ref('multichannel_hub_core.menu_operations_root')
-        self.assertEqual(
-            menu.parent_id,
-            operations_menu,
-            "Tracking Dashboard menu should be under Operations menu"
+    def test_menu_tracking_dashboard_deleted_after_merge(self):
+        """Verify menu_tracking_dashboard is deleted post-merge to unified dashboard."""
+        menu = self.env.ref(
+            'multichannel_hub_core.menu_tracking_dashboard',
+            raise_if_not_found=False
+        )
+        self.assertFalse(
+            menu,
+            "menu_tracking_dashboard should be deleted after merge to unified Operations Dashboard"
         )
