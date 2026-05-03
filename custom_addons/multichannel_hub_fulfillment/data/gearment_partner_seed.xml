@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- P1-DROP-SEED: Gearment dropship vendor.
+         supplier_rank=1 marks this as a procurement source for Dropship route.
+         noupdate=1 keeps subsequent installs from clobbering operator edits
+         (name change, contact additions, etc.). -->
+    <record id="partner_gearment_vendor" model="res.partner">
+        <field name="name">Gearment</field>
+        <field name="company_type">company</field>
+        <field name="supplier_rank">1</field>
+        <field name="customer_rank">0</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

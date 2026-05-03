@@ -15,6 +15,8 @@ from . import test_webhook_discovery_orm
 from . import test_webhook_verify_orm
 from . import test_webhook_dispatcher_db
 from . import test_webhook_dispatcher_orm
+from . import test_p1_drop_seed_db
+from . import test_p1_drop_seed_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -32,4 +34,6 @@ __all__ = [
     'test_webhook_verify_orm',
     'test_webhook_dispatcher_db',
     'test_webhook_dispatcher_orm',
+    'test_p1_drop_seed_db',
+    'test_p1_drop_seed_orm',
 ]

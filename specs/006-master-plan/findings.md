@@ -56,3 +56,30 @@ For routine slice notes, use the tracker (`.claude/plans/006-master-plan-trackin
 - Phase 0 dispatch is the right place to catch this. Don't paper over the contradiction by adding both `purchase` and `stock_dropshipping`; pick the one that owns the route and let transitive deps do the rest.
 
 **Cost paid:** ~3 minutes of doc patching + 1 owner question. No code rework.
+
+## P1-DROP-SEED — privilege-escalation false positive 2026-05-03
+
+**Context:** During Phase 4 review of P1-DROP-SEED, the security-reviewer agent flagged HIGH-priority privilege escalation: any user with `product.template` write permission can indirectly add a vendor to `seller_ids` and a route to `route_ids` via setting `x_gearment_sku`, with no group gate on the override.
+
+**Triage (orchestrator):** **False positive.** The `write()` override does on the user's behalf what the user can already do directly:
+
+- Anyone with write permission on `product.template` already has write permission on `seller_ids` and `route_ids` (both are inherited from `product` / `stock` / `purchase` standard ACLs — no separate field-level group restriction in Odoo CE).
+- The override is a *convenience* / *consistency* mechanism, not a privilege grant. There is no escalation possible: a malicious operator who could set `x_gearment_sku` could equally set `seller_ids = [Command.create({'partner_id': any_partner_id})]` directly via RPC.
+- Group-gating `x_gearment_sku` to `sale_team.group_sale_manager` (the agent's recommendation) would *break the operator workflow* described in ADR-010 amendment — product setup is an inventory/operations task, not a sales-management one.
+
+**Resolution:** No code change. Documented here so future security reviewers don't re-flag.
+
+**Pattern for future similar false positives:** "X is privilege escalation" is only true when X grants the user the ability to write a field they couldn't otherwise write. CRUD-override slices that compose existing fields based on a single trigger field rarely qualify — but the agent's reflex is to flag them regardless. Triage by checking whether the trigger field grants new write capability vs. orchestrating existing capabilities.
+
+**Cost paid:** ~5 minutes orchestrator triage + this finding. Tracker note + commit body cite this finding by section.
+
+## P1-DROP-SEED — Odoo 19 test-API drift 2026-05-03
+
+Two Odoo 19 API gotchas surfaced while landing tests for this slice. Both pre-known (memory `feedback_odoo19_test_gotchas.md`) but worth re-confirming because they bit on the first run:
+
+1. **`product.template.type='product'` rejected.** The `type` Selection no longer accepts `'product'` — only `'consu'`, `'service'`, etc. Replacement: set `is_storable=True` on the template. Test factory used both `type='product'` AND `is_storable=True`; removing `type` was sufficient (Odoo derived `type='consu'` from the bool).
+
+2. **`recordset.refresh()` is gone.** Replacement: `invalidate_recordset()`. Test-helper trickle: a Form-save round-trip test used `product.refresh()`; trivial fix.
+
+Both gotchas are already in the memory file. No new entry needed; this is just the 5th and 6th confirmation that the rules are real and bite during RED→GREEN. Cost: 2 extra docker test runs (~30s each).
+
