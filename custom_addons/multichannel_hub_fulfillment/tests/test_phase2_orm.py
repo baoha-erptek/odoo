@@ -238,6 +238,48 @@ class TestTrackingImportLineORM(TransactionCase):
                     source_row_hash='unique_hash_001'
                 )
 
+    def test_apply_to_fulfillment_writes_state_and_error_atomically(self):
+        """Regression — Bug-2026-05-03 surfaced by E2E demo.
+
+        When apply_to_fulfillment's per-row savepoint catches an upstream
+        ValidationError, it must set state='error' AND error_message in a
+        single ORM write so C-TIL-004 sees both fields together. Two
+        separate field writes flush at different times and trip the
+        constraint with "Line on row N is 'error' but has no error_message"
+        even though the caller intends to set both.
+        """
+        from odoo.addons.multichannel_hub_fulfillment.services import tracking_importer
+
+        # Match a line so apply_to_fulfillment will try to write it.
+        line = self._create_line(
+            state='matched',
+            sale_order_id=self.sample_order.id,
+            raw_tracking_number='9400111202555560000001',
+        )
+        # Stamp a fulfillment so the apply path proceeds; then patch its
+        # write to raise — simulating any FR-017-style upstream guard.
+        fulfillment = self.env['sale.order.fulfillment'].create({})
+        line.fulfillment_id = fulfillment.id
+
+        original_write = type(fulfillment).write
+
+        def boom(self_, vals):  # noqa: ANN001
+            raise ValidationError("simulated upstream guard")
+
+        type(fulfillment).write = boom
+        try:
+            counts = tracking_importer.apply_to_fulfillment(self.env, line)
+        finally:
+            type(fulfillment).write = original_write
+
+        # The line MUST land in error state with a populated error_message.
+        # Pre-fix this raised ValidationError("...has no error_message") and
+        # rolled the line back to its prior state.
+        self.assertEqual(counts['error'], 1)
+        line.invalidate_recordset()
+        self.assertEqual(line.state, 'error')
+        self.assertIn('simulated upstream guard', line.error_message or '')
+
 
 @tagged('post_install', '-at_install')
 class TestSchemaFingerprintORM(TransactionCase):

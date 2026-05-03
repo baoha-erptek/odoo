@@ -179,8 +179,11 @@ def apply_to_fulfillment(env, lines):
                 line.state = 'imported'
                 counts['imported'] += 1
         except Exception as exc:  # noqa: BLE001 — per-row isolation is the contract
-            line.state = 'error'
-            line.error_message = _scrub(str(exc))
+            # Single write so C-TIL-004 sees state + error_message together;
+            # two field-writes flush separately and trip the constraint
+            # mid-update (surfaced by E2E demo 2026-05-03 when an upstream
+            # ValidationError fired inside the savepoint).
+            line.write({'state': 'error', 'error_message': _scrub(str(exc))})
             counts['error'] += 1
     return counts
 
