@@ -1,8 +1,8 @@
 # ADR-007: `sale.order.fulfillment` Delegation Mixin
 
-- **Status**: Accepted (inheritance-direction amended 2026-04-27 — see banner)
+- **Status**: Accepted (inheritance-direction amended 2026-04-27 — see banner; re-confirmed 2026-05-03 alongside ADR-010 amendment — see footer)
 - **Date**: 2026-04-10
-- **Sign-off**: 2026-04-13 (owner); inheritance direction re-signed 2026-04-27 (D-23)
+- **Sign-off**: 2026-04-13 (owner); inheritance direction re-signed 2026-04-27 (D-23); re-confirmed 2026-05-03 (Path B hybrid)
 - **Deciders**: Owner, architect
 - **Affects**: Spec 003 (dashboard + channel fields), Spec 004 (fulfillment routing + partner + tracking)
 - **Related**: [tech-architect.md §1 "Is sale.order becoming a god object?"](../agent-reports/tech-architect.md), [decision-log.md D-23](../decision-log.md)
@@ -182,3 +182,27 @@ The `_inherits` mechanism means:
 - Write a unit test that creates a `sale.order`, asserts the fulfillment sibling exists, writes to a fulfillment field, reads it back through both the sale.order and the sibling, and deletes the order (asserting cascade).
 - Document the pattern in `specs/003-dashboard-design-multichannel/data-model.md` so future contributors understand why there's a sibling.
 - If the team later decides to roll back this decision, the migration path is well-defined: ALTER TABLE sale_order ADD COLUMN for each field, copy from sibling, drop sibling. Known escape hatch.
+
+## Re-confirmation 2026-05-03 — alongside ADR-010 amendment
+
+The ADR-010 amendment 2026-05-03 (Hybrid dropship + MTO) added `purchase` + `mrp` to the `multichannel_hub_core` depends and routes Gearment-POD orders through standard `purchase.order` + `stock.picking` (Dropship type). This raised the question: does the `sale.order.fulfillment` sibling become redundant — can `stock.picking.carrier_tracking_ref` and `purchase.order.state` cover the same ground?
+
+**Decision: keep the sibling. ADR-007 remains canonical.**
+
+Reasons:
+
+- The sibling carries fields that have no equivalent on `stock.picking` or `purchase.order` — `fulfillment_status` (the 7-stage operational state machine), `fulfillment_note`, `pic_user_id`, `order_priority`, `partner_sync_status`, `gearment_price_quote`, `label_url`, `qrcode_url`, `gke_shipping_cost_vnd`, `tracking_import_date`, `original_order_id`, `is_replacement_order`, `production_blocked`, `production_block_reason`. None of these belong on a stock picking.
+- Internal-production orders (no Gearment, no dropship) still need a fulfillment-tracking surface — `mrp.production` does not carry tracking number or carrier.
+- The hybrid layer makes `tracking_number` + `shipping_carrier_id` a **mirror** of `stock.picking.carrier_tracking_ref` + `stock.picking.carrier_id` for dropship orders, not the source of truth. Sync hooks land in the P1-DROP-CALLSITE slice.
+- Spec 003 dashboards (P1-01 → P1-DASH-MERGE) read fulfillment fields transparently through `_inherits` delegation. The dashboards are unaffected by where the underlying tracking record physically lives.
+
+What changes operationally for dropship orders only:
+- `sale.order.fulfillment.tracking_number` is now sourced from the auto-created dropship `stock.picking.carrier_tracking_ref` (sync hook in P1-DROP-CALLSITE).
+- `sale.order.fulfillment.shipping_carrier_id` mirrors `stock.picking.carrier_id`.
+- `sale.order.fulfillment.shipping_date` is set when the dropship picking is validated.
+- `x_gearment_outbound_ref` (Gearment-side ID returned by the REST API) stays on `sale.order` as before — it is not the same as `purchase.order.id`.
+
+What does NOT change:
+- The `_inherits` direction (corrected 2026-04-27) and the auto-create-on-`sale.order.create` semantics.
+- ACLs, the `fulfillment_id` Many2one, the post_init_hook backfill.
+- The 7-stage `fulfillment_status` Selection — still the canonical operational state machine; PO/picking states are inputs to it, not replacements for it.
