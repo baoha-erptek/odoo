@@ -12,6 +12,8 @@ _build/
 !.claude/
 # per-machine permissions — keep out of version control
 .claude/settings.local.json
+# runtime lock for /loop scheduled tasks
+.claude/scheduled_tasks.lock
 # compiled python files
 *.py[co]
 __pycache__/
