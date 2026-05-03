@@ -8,12 +8,14 @@ class ShippingCarrier(models.Model):
     _name = 'shipping.carrier'
     _description = 'Carrier identity for tracking + Etsy/Gearment push'
     _order = 'sequence, name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string='Name', required=True)
+    name = fields.Char(string='Name', required=True, tracking=True)
     code = fields.Char(
         string='Code',
         required=True,
         index=True,
+        tracking=True,
         help='Stable machine identifier (lowercase, e.g. "usps"). Unique across active rows.',
     )
     sequence = fields.Integer(string='Sequence', default=10)
@@ -43,10 +45,12 @@ class ShippingCarrier(models.Model):
             ('other', 'Other'),
         ],
         string='Etsy Carrier Name',
+        tracking=True,
         help='Maps to the Etsy v3 API carrier enum used for tracking push.',
     )
     gearment_carrier_name = fields.Char(
         string='Gearment Carrier Name',
+        tracking=True,
         help='Mapping for Gearment partner sync (Spec 004b).',
     )
     notes = fields.Text(string='Notes')

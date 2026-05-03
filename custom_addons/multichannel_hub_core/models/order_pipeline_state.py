@@ -18,6 +18,7 @@ class OrderPipelineState(models.Model):
     _name = 'order.pipeline.state'
     _description = 'Order pipeline stage'
     _order = 'pipeline_id, sequence, name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     pipeline_id = fields.Many2one(
         'order.pipeline',
@@ -26,16 +27,18 @@ class OrderPipelineState(models.Model):
         ondelete='cascade',
         index=True,
     )
-    name = fields.Char(string='Name', required=True, translate=True)
+    name = fields.Char(string='Name', required=True, translate=True, tracking=True)
     code = fields.Char(
         string='Code',
         required=True,
+        tracking=True,
         help="Stable per-pipeline machine code (e.g., 'pending_file').",
     )
     sequence = fields.Integer(string='Sequence', default=10)
     is_initial = fields.Boolean(
         string='Initial State',
         default=False,
+        tracking=True,
         help="The state assigned to a new order on this pipeline. "
              "Exactly one per pipeline.",
     )
@@ -47,6 +50,7 @@ class OrderPipelineState(models.Model):
     color = fields.Integer(
         string='Color Index',
         default=0,
+        tracking=True,
         help="Kanban color (0-11) for badge rendering on dashboards.",
     )
     next_state_ids = fields.Many2many(

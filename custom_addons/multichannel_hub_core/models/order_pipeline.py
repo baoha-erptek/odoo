@@ -15,11 +15,13 @@ class OrderPipeline(models.Model):
     _description = 'Order fulfillment pipeline (master data)'
     _order = 'sequence, name'
     _rec_name = 'name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string='Name', required=True, translate=True)
+    name = fields.Char(string='Name', required=True, translate=True, tracking=True)
     code = fields.Char(
         string='Code',
         required=True,
+        tracking=True,
         help="Stable machine code (e.g., 'vn_internal_production'). "
              "Used by ICP fallback + Gearment routing.",
     )

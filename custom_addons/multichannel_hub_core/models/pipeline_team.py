@@ -12,9 +12,10 @@ class PipelineTeam(models.Model):
     _name = 'pipeline.team'
     _description = 'Pipeline ownership team'
     _order = 'sequence, name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string='Name', required=True, translate=True)
-    code = fields.Char(string='Code', required=True)
+    name = fields.Char(string='Name', required=True, translate=True, tracking=True)
+    code = fields.Char(string='Code', required=True, tracking=True)
     sequence = fields.Integer(string='Sequence', default=10)
     is_active = fields.Boolean(string='Active', default=True)
     member_ids = fields.Many2many(

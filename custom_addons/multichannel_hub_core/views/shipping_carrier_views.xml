@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- shipping.carrier list + form views. -->
+  <record id="view_shipping_carrier_list" model="ir.ui.view">
+    <field name="name">shipping.carrier.list</field>
+    <field name="model">shipping.carrier</field>
+    <field name="arch" type="xml">
+      <list string="Shipping Carriers" editable="bottom">
+        <field name="sequence" widget="handle"/>
+        <field name="name"/>
+        <field name="code"/>
+        <field name="etsy_carrier_name"/>
+        <field name="gearment_carrier_name"/>
+        <field name="is_active" widget="boolean_toggle"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_shipping_carrier_form" model="ir.ui.view">
+    <field name="name">shipping.carrier.form</field>
+    <field name="model">shipping.carrier</field>
+    <field name="arch" type="xml">
+      <form string="Shipping Carrier">
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="code"/>
+              <field name="sequence"/>
+            </group>
+            <group>
+              <field name="is_active"/>
+              <field name="etsy_carrier_name"/>
+              <field name="gearment_carrier_name"/>
+            </group>
+          </group>
+          <group string="Tracking">
+            <field name="tracking_url_template" nolabel="1"/>
+            <field name="tracking_prefix_regex" nolabel="1"/>
+          </group>
+          <group string="Notes">
+            <field name="notes" nolabel="1"/>
+          </group>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_shipping_carrier" model="ir.actions.act_window">
+    <field name="name">Shipping Carriers</field>
+    <field name="res_model">shipping.carrier</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_shipping_carrier"
+            name="Shipping Carriers"
+            parent="menu_operations_root"
+            action="action_shipping_carrier"
+            sequence="45"
+            groups="sales_team.group_sale_manager"/>
+</odoo>

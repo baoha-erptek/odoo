@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 class DesignFileRoute(models.Model):
     _name = 'design.file.route'
     _description = 'Design File Route'
-    _inherit = ['mail.thread']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date DESC, id DESC'
 
     # Relationships

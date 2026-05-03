@@ -32,7 +32,7 @@ _ADDRESS_LOCK_FIELDS = frozenset({
 class SaleOrderFulfillment(models.Model):
     _name = 'sale.order.fulfillment'
     _description = 'Fulfillment lifecycle for a sale order'
-    _inherit = ['mail.thread']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     # Reverse pointer for the dashboard view + bulk-action parent lookup.
