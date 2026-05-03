@@ -18,6 +18,46 @@ This file is the operating manual every session should follow when picking up ma
 6. **Capture surprises immediately.** Every slice exits with `/learn` and (if anything was non-obvious) an entry in `specs/<spec>/findings.md`.
 7. **Code first, E2E later.** Finish the coding tasks for ALL active specs (002 + 005 + 003 + 004a) before moving to end-to-end testing. E2E is its own phase, not interleaved per slice. Per-slice tests stay at Phase 1 (DB) + Phase 2 (ORM unit) — those are mandatory.
 
+## Owner voice — E2 v1.2 red-feedback alignment (2026-05-03)
+
+Source: `.0temp/E2_Quy_trinh_san_xuat_edit.pdf` (Owner red+green markup on
+the v1.2 production-process guide). Companion artifact sent back to Owner:
+`.0temp/E2_Quy_trinh_san_xuat-v2.docx` (verbatim red+green excerpt + gap
+table). Re-read this section at slice dispatch when the slice touches one
+of the themes below; cite the row in the commit body.
+
+| Red theme | Slice | State | Action |
+|---|---|---|---|
+| File handover loss / re-upload (B7, B14) | P1-02a, P1-02b | done | — |
+| **PD A4 print batch — download all + auto-layout (B8)** | **P1-02d** | **TODO** | **Re-prioritize: Owner explicitly red-flagged. Move from "not on E2E critical path" into W4 polish.** |
+| **Auto status transitions on workorder finish (B9)** | **(none yet — propose `P1-AUTO-TX`)** | **uncovered** | **Spawn slice: server action on `mrp.workorder.button_finish` advances `sale.order.x_pipeline_state_id`. Spec lives in `D2_production_flow.md`; no P-task today.** |
+| Auto-push order to partner (B10) | P0-18, P0-18b2c | done | — |
+| Tracking dashboard / state visibility (B12) | P1-03 | done | — |
+| Tracking import from carrier Excel (B11) | P2-01..05 | TODO (planned W6) | — |
+| **Customer Message Hub — 19-shop aggregator (B13)** | **§8 Q16 + ADR-008a §1 — no slice ID** | **architectural-only** | **Owner-decision needed: scope (export-only vs full inbox) before spawning slice. Treat as W3-extension once Owner answers.** |
+| Per-role ACL on `sale.order` — 1-sheet collision (A6, B1) | P1-07, P1-08 | TODO | — |
+| **Unified Operations Dashboard — merge Order + Tracking into one (CEO directive 2026-05-03)** | **P1-DASH-MERGE (rework of P1-01 + P1-03)** | **TODO — slice scoped, ready to dispatch** | **CEO-confirmed view-merge-only scope: single sale.order list with tracking columns inlined from `sale.order.fulfillment` (related fields, model preserved); saved filters per role replace split menus; bulk Mark Shipped + Confirm + Push to Gearment on unified list; delete `menu_order_dashboard` + `menu_tracking_dashboard`. Land **before W7 E2E** so the sprint exercises final topology. Memory: `feedback_ceo_unified_dashboard.md`.** |
+| AI analytics over orders / messages / defects (B15) | deferred Phase 3+ | uncovered | Acknowledge to Owner; no action this wave unless Owner pulls it forward |
+| Sub-state runtime config — CHỜ FILE … VN-Packed 1 (A9) | ADR-010 default seed | architectural | Code slice for admin UI not yet IDed |
+| 8 MB Discord limit (B6) | P1-02a (10 MB cap + GDrive route) | done | — |
+| Auto-feed from email (B2) | ADR-008a v2 + Spec 005 (P0-14..17) | done plumbing | Email parser stays as permanent failover |
+
+**Doc-drift rule reminder**: if a slice touches one of these themes, the
+slice's commit body must cite the row above ("Owner red theme B8") so the
+audit trail is preserved.
+
+**Open gaps Owner is waiting on**:
+1. **B8 / P1-02d** — re-prioritize call.
+2. **B9 / propose P1-AUTO-TX** — slice-spawn approval.
+3. **B13 / Customer Message Hub** — scope decision (export-only vs full inbox).
+
+**Closed 2026-05-03**:
+- **CEO Unified Dashboard / P1-DASH-MERGE** — scope confirmed view-merge-only; timing before W7. Ready to dispatch as a slice.
+
+**Vote-weighting rule (CEO 2026-05-03)**: when departmental requests (BA / PD / RD) conflict with CEO product-vision on **topology** (one dashboard vs many, one model vs split, one menu vs nested), CEO wins. Departments still own field-level ergonomics inside the chosen topology. Memory: `feedback_ceo_unified_dashboard.md`.
+
+---
+
 ### Worktree usage (revised 2026-04-26)
 
 Worktrees are now created **only** for:
@@ -281,3 +321,4 @@ This flow is **inline** — no external tooling, no `/speckit.bugfix.*` commands
 - **2026-04-26 (revision 1)**: Workflow pivot — from "worktree per slice" to **single-workspace-on-main**. All forward coding now lands directly on `main` in the primary workspace. Worktrees reserved for rework / bugfix only. Wave 1 (RED tests) and Wave 2 (planning + findings + tasks.md) consolidated to `main` via rebase; wave worktrees and branches pruned. Wave plan rewritten as sequential. Added Phase 7 principle: "Code first, E2E later" — finish ALL spec coding before E2E sprint (W7 gate).
 - **2026-04-27 (revision 2)**: Branching pivot — forward work moves from `main` to long-lived feature branch `feature/006-master-plan-coding` (cut from `main` 2026-04-27). `main` becomes the merge target, not the working branch, so it stays green during the multi-slice E2E coding push. Single-workspace pattern unchanged — we're still in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`, just on a different branch. Merge back to `main` (fast-forward or rebase) after W7 E2E sprint passes. Memory `feedback_use_worktree_for_new_work.md` revised to match. P0-20 (`multichannel_hub_core` skeleton) was the first slice landed under this revision.
 - **2026-04-29 (revision 3)**: Operating-model additions in response to owner's parallel-execution + Telegram-dispatch + persistent-PM questions. (1) Codified "Parallelism modes" subsection (Mode 1 in-slice agents / Mode 2 disjoint-module worktrees / Mode 3 hotfix). (2) Phase 0 references new `/dispatch-slice` skill (Telegram-trigger compatible). (3) Phase 6 adds explicit WIP-commit rule for mid-slice exits. (4) New "Why no persistent PM agent" section locks in the stateless-PM design (bloat / drift / concurrency / ROI). No code changed; doc-only revision.
+- **2026-05-03 (revision 4)**: Aligned playbook to E2 v1.2 Owner red-feedback (`.0temp/E2_Quy_trinh_san_xuat_edit.pdf`). Added "Owner voice" traceability section with 12-row red-theme → slice mapping. Three uncovered surfaces surfaced for Owner: (1) **P1-02d (PD A4 batch)** re-prioritize from "not critical" to W4; (2) **propose new slice P1-11** for auto status transitions on `mrp.workorder.button_finish` (currently no P-task ID despite living in `D2_production_flow.md` design notes); (3) **Customer Message Hub (B13)** still architectural-only — needs Owner scope decision (export-only vs full inbox) before slice spawn. No code changed; doc-only revision. Companion deliverable: `.0temp/E2_Quy_trinh_san_xuat-v2.docx` sent to Owner for red-feedback re-confirmation. Tracker NOT mutated this revision — tracker edits wait for Owner answers on B8/B9/B13.
