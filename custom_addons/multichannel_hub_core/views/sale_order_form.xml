@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P1-OPS-DESIGN-LINK — surface design files on the sale.order form.
+
+        Adds a smart button (count badge → action_open_design_files) to the
+        button-box and a "Design Files" notebook tab listing the One2many
+        design_file_ids inline. The tab header has an "Upload Design File"
+        button that opens the existing design.file.upload.wizard pre-bound
+        to this order via context.
+    -->
+    <record id="view_order_form_design_link" model="ir.ui.view">
+        <field name="name">sale.order.form.design_link</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart button in the order's button-box. -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_design_files"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-paint-brush">
+                    <field name="design_files_count"
+                           widget="statinfo"
+                           string="Design Files"/>
+                </button>
+            </xpath>
+
+            <!-- Notebook tab listing the One2many inline + Upload button. -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Design Files" name="design_files">
+                    <header>
+                        <button name="action_open_design_file_upload_wizard"
+                                type="object"
+                                string="Upload Design File"
+                                class="btn-primary"
+                                groups="multichannel_hub_core.group_production_team,base.group_system"/>
+                    </header>
+                    <field name="design_file_ids"
+                           context="{'default_order_id': id}">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="storage_mode"/>
+                            <field name="state"
+                                   decoration-success="state == 'approved'"
+                                   decoration-warning="state == 'proof_sent'"
+                                   decoration-danger="state == 'rejected'"/>
+                            <field name="file_url" widget="url"
+                                   optional="show"/>
+                            <field name="version" optional="hide"/>
+                            <field name="create_uid" optional="hide"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

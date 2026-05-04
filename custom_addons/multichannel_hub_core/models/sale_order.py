@@ -89,6 +89,13 @@ class SaleOrder(models.Model):
         help='True if any design.file.route on this order is pending/failed '
              'and >2h old. Shows the stuck-route alert badge on Order Dashboard.')
 
+    # P1-OPS-DESIGN-LINK — smart-button count for header + line design files.
+    design_files_count = fields.Integer(
+        string='Design Files Count',
+        compute='_compute_design_files_count',
+        help='Total number of design.file records attached to this order '
+             '(header + line). Drives the smart button on the order form.')
+
     # P1-PIPELINE-MIN — fulfillment route resolved from product/category master data.
     x_pipeline_id = fields.Many2one(
         'order.pipeline',
@@ -495,3 +502,48 @@ class SaleOrder(models.Model):
                 'sticky': False,
             },
         }
+
+    # ------------------------------------------------------------------
+    # P1-OPS-DESIGN-LINK — sale.order form hooks (smart button + tab)
+    # ------------------------------------------------------------------
+    @api.depends('design_file_ids', 'order_line.design_file_ids')
+    def _compute_design_files_count(self):
+        for order in self:
+            order.design_files_count = len(order._all_design_files())
+
+    def action_open_design_files(self):
+        """Open the design.file list scoped to this order's files.
+
+        Used by the smart button on the sale.order form (Slice 1).
+        """
+        self.ensure_one()
+        files = self._all_design_files()
+        return {
+            'name': _("Design Files"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'design.file',
+            'view_mode': 'kanban,list,form',
+            'domain': [('id', 'in', files.ids)],
+            'context': {'default_order_id': self.id},
+        }
+
+    def action_open_design_file_upload_wizard(self):
+        """Open the design-file upload wizard pre-bound to this order.
+
+        FR-017 RPC gate (10th confirmation): only Production Team or
+        system may trigger uploads. The wizard itself enforces the same
+        gate, but defending here surfaces AccessError before the wizard
+        view loads — better UX than a half-rendered modal.
+        """
+        self.ensure_one()
+        u = self.env.user
+        if not (u.has_group('multichannel_hub_core.group_production_team')
+                or u.has_group('base.group_system')):
+            raise AccessError(_(
+                "Only Production Team members may upload design files."))
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'multichannel_hub_core.design_file_upload_wizard_action')
+        action['context'] = {
+            'default_order_id': self.id,
+        }
+        return action
