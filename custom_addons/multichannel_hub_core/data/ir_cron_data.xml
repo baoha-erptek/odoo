@@ -35,4 +35,19 @@
         <field name="interval_type">days</field>
         <field name="active" eval="True"/>
     </record>
+
+    <!-- P1-DESIGN-AUTO-GDRIVE — promote approved storage_mode='small'
+         design files to GDrive every 5 minutes. Killswitch via ICP
+         multichannel_hub.design_gdrive_auto_sync_enabled (default True).
+         No-op when ICP design_file_default_gdrive_folder_id is unset. -->
+    <record id="cron_design_file_gdrive_sync" model="ir.cron">
+        <field name="name">Multichannel Hub: sync approved design files to GDrive</field>
+        <field name="model_id" ref="model_design_file"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_approved_to_gdrive()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
 </odoo>

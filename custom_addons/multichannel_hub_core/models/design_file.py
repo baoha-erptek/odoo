@@ -17,6 +17,7 @@ References: ADR-006 §3, ADR-009 §1, data-model.md §6, FR-018..023.
 """
 import base64
 import logging
+import re
 from html import escape
 
 from markupsafe import Markup
@@ -118,6 +119,13 @@ class DesignFile(models.Model):
     proof_sent_by = fields.Many2one(
         'res.users', string='Proof Sent By',
         readonly=True, ondelete='set null', tracking=True)
+    # P1-DESIGN-AUTO-GDRIVE — stamped when the cron promotes
+    # storage_mode small → gdrive. Drives the local-blob retention
+    # cleanup pass (deferred to a later slice).
+    synced_to_gdrive_at = fields.Datetime(
+        string='Synced to GDrive At',
+        readonly=True,
+        help="Stamped when cron promoted storage_mode 'small' to 'gdrive'.")
 
     is_seed = fields.Boolean(
         string='Historical Seed',
@@ -486,3 +494,101 @@ class DesignFile(models.Model):
             created, len(candidates),
         )
         return created
+
+    # ------------------------------------------------------------------
+    # P1-DESIGN-AUTO-GDRIVE — cron-driven approved → GDrive promotion
+    # ------------------------------------------------------------------
+    @api.model
+    def _cron_sync_approved_to_gdrive(self):
+        """Promote approved storage_mode='small' design files to GDrive.
+
+        Picks design.file rows with state='approved' AND storage_mode='small'
+        AND design_file (blob) IS NOT NULL AND gdrive_file_id IS NULL.
+        Uploads each to the configured default folder via GdriveUploader,
+        then writes storage_mode='gdrive' + gdrive_file_id + gdrive_folder_id
+        + synced_to_gdrive_at.
+
+        ICPs:
+          - multichannel_hub.design_gdrive_auto_sync_enabled (default True)
+          - multichannel_hub.design_file_default_gdrive_folder_id
+            (cron no-ops silently when unset; demo prereq)
+
+        Failures are logged at WARNING and the record is left untouched —
+        the next cron pass retries. Per-record exceptions cannot abort
+        the batch (savepoint per record).
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        if ICP.get_param(
+            'multichannel_hub.design_gdrive_auto_sync_enabled', 'True',
+        ) != 'True':
+            _logger.debug("auto-gdrive: killswitch off; skipping cron run")
+            return 0
+        folder_id = ICP.get_param(
+            'multichannel_hub.design_file_default_gdrive_folder_id', '',
+        ).strip()
+        if not folder_id:
+            _logger.debug(
+                "auto-gdrive: ICP design_file_default_gdrive_folder_id "
+                "unset; cron is a no-op until operator configures it.")
+            return 0
+        # Defense-in-depth: GDrive file/folder IDs are URL-safe base64
+        # alphabets (28-44 chars). An admin-misconfigured ICP shouldn't
+        # leak arbitrary strings into Drive API calls.
+        if not re.match(r'^[A-Za-z0-9_-]{20,80}$', folder_id):
+            _logger.warning(
+                "auto-gdrive: ICP design_file_default_gdrive_folder_id "
+                "has invalid format; refusing to use it.")
+            return 0
+
+        candidates = self.search([
+            ('state', '=', 'approved'),
+            ('storage_mode', '=', 'small'),
+            ('design_file', '!=', False),
+            ('gdrive_file_id', '=', False),
+        ])
+        if not candidates:
+            return 0
+
+        # Lazy import to keep mhc importable without google-api-python-client
+        # in environments where the cron never fires. Use the odoo.addons
+        # prefix so test mocks at the same path land on the same symbol.
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import (
+            GdriveUploader,
+        )
+
+        uploader = GdriveUploader()
+        promoted = 0
+        for rec in candidates:
+            try:
+                with self.env.cr.savepoint():
+                    blob = base64.b64decode(rec.design_file)
+                    file_name = rec.file_name or f'{rec.name or "design"}.bin'
+                    result = uploader.upload_file(
+                        file_blob=blob,
+                        file_name=file_name,
+                        folder_id=folder_id,
+                    )
+                    if result.get('error') or not result.get('file_id'):
+                        _logger.warning(
+                            "auto-gdrive: upload failed for design.file id=%s "
+                            "(%s)", rec.id, result.get('error'))
+                        continue
+                    rec.write({
+                        'storage_mode': 'gdrive',
+                        'gdrive_file_id': result['file_id'],
+                        'gdrive_folder_id': folder_id,
+                        'synced_to_gdrive_at': fields.Datetime.now(),
+                    })
+                    promoted += 1
+            except Exception as e:
+                # Savepoint already rolled back this record; continue with
+                # the rest of the batch — the next cron pass will retry.
+                _logger.warning(
+                    "auto-gdrive: unexpected error promoting "
+                    "design.file id=%s: %s", rec.id, e)
+        if promoted:
+            _logger.info(
+                "auto-gdrive: promoted %s/%s approved design files to GDrive.",
+                promoted, len(candidates),
+            )
+        return promoted
