@@ -44,3 +44,35 @@ python3 scripts/e2e_demo_drop_ship_ordertest2.py --section all --base-url https:
 - §1 depends on Gmail OAuth + label setup on the target DB. If §1 fails with 'no successful etsy.email.log row', verify ICPs `etsy_integration.gmail_client_id|secret|refresh_token` and the label `ordertest2` is applied to inbox messages.
 - §5 depends on ICP `multichannel_hub.design_file_default_gdrive_folder_id` being set to a valid Drive folder ID.
 - §3 attaches Etsy product images as design files via a runner-only helper. There is intentionally NO sale.order button to do this in production — operators upload via the wizard added by P1-OPS-DESIGN-LINK.
+
+## 2026-05-05 — staging GDrive provisioning state (paused mid-flight)
+
+Session paused before §5 turned green. Resume here next time.
+
+**Target folder**: `https://drive.google.com/drive/folders/1AZRhXHHtN4rLRkT7Bt6hU-CDl7j1fwLT`
+**SA in use** (path A): `hongkhanh-bot@regal-cursor-369422.iam.gserviceaccount.com` (Editor on folder ✓).
+
+Done on staging `129.150.63.207` / `esty19_odoo` / `demo_esty`:
+
+- [x] SA JSON copied to container at `/app/secrets/gdrive-service-account.json` (mode 600, owner odoo:odoo). **Note: writable layer, NOT a bind mount — wiped on `docker compose --force-recreate`.**
+- [x] ICP `multichannel_hub.design_file_default_gdrive_folder_id` = `1AZRhXHHtN4rLRkT7Bt6hU-CDl7j1fwLT`
+- [x] ICP `multichannel_hub.design_gdrive_auto_sync_enabled` = `'True'` (literal string, strict-equality killswitch)
+- [x] `pip3 install --break-system-packages 'google-api-python-client>=2.80.0' 'google-auth>=2.16.0'` in container
+- [x] `docker restart esty19_odoo` (required — `gdrive_uploader` caches `google = None` on first ImportError; shell re-run alone won't pick up new libs)
+- [x] Smoke test reaches Drive API (auth load OK, request hits `googleapis.com/upload/drive/v3/files`)
+
+Pending — owner action:
+
+- [ ] **Enable Google Drive API on GCP project `regal-cursor-369422` (project number `942282278132`)** — one click at `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=942282278132`, ~1 min propagation.
+
+Pending — orchestrator action after the above:
+
+- [ ] Re-run smoke test: `sudo docker exec esty19_odoo bash -c 'echo "exec(open(\"/tmp/gdrive_smoke.py\").read())" | odoo shell -d demo_esty --no-http --stop-after-init 2>&1 | grep UPLOAD_RESULT'` — expect `file_id: '...'` and `web_view_link: '...'`. (`/tmp/gdrive_smoke.py` content: see tracker change-log entry 2026-05-05 or recreate from `gdrive_uploader.upload_file(blob, name, folder_id)`.)
+- [ ] Re-run §5: `python3 scripts/e2e_demo_drop_ship_ordertest2.py --section 5 --base-url https://odoo.hatafax.com --db demo_esty`
+- [ ] Re-run full runner: `python3 scripts/e2e_demo_drop_ship_ordertest2.py --section all --base-url https://odoo.hatafax.com --db demo_esty` — expect 12/12.
+
+Long-term hardening (not blocking the demo):
+
+- [ ] Add bind mount for `/app/secrets/` in docker-compose so SA file survives `--force-recreate`.
+- [ ] Add `google-api-python-client` + `google-auth` to the staging Dockerfile / requirements installed at image-build time, not via runtime `pip`.
+- [ ] Provision Gmail OAuth ICPs (`etsy_integration.gmail_client_id|secret|refresh_token`) + apply label `ordertest2` to real inbox messages so §1 stops falling back to an existing demo order.
