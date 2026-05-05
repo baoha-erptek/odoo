@@ -83,3 +83,70 @@ Two Odoo 19 API gotchas surfaced while landing tests for this slice. Both pre-kn
 
 Both gotchas are already in the memory file. No new entry needed; this is just the 5th and 6th confirmation that the rules are real and bite during RED→GREEN. Cost: 2 extra docker test runs (~30s each).
 
+---
+
+## P1-DROP-CALLSITE pre-implementation reconciliation 2026-05-04
+
+**Trigger:** Phase 0 dispatch for P1-DROP-CALLSITE surfaced three contradictions between ADR-010 amendment, the actual seed, the existing code, and the slice description in the tracker. Per playbook §"When the playbook breaks", STOP and escalate before any code touches the tree.
+
+**Contradictions found:**
+
+1. **Stage codes drift between ADR §9 (original 2026-04-26) and the actual `gearment_pod` seed.** ADR-010 §9 named the four stages "Awaiting Push → Pushed → Awaiting Tracking → Fulfilled"; the seed shipped `draft → quoted → confirmed → shipped`. Amendment §1 then re-cited "Pushed" and "Fulfilled" without noticing the seed had drifted. Net effect: the slice description references state codes that do not exist.
+
+2. **Push-failure semantics ambiguous under PO `action_confirm`.** Existing pre-amendment code rolled the SO pipeline back to `quoted` inside a savepoint and let cron retry. Under PO confirm, two paths are defensible: raise `UserError` (clean transactional story; PO stays `draft`) vs catch-and-log (PO confirm proceeds; cron retries). ADR-010 amendment §"Cost we are accepting" mentions two-state-machine drift as a risk but does not pick a path.
+
+3. **Legacy cleanup scope undefined.** Tracker row says only "Relocate the push call." After relocation, four helpers and one cron become orphans (`_write_pipeline_state` override, `_gearment_push_should_fire`, `_enqueue_gearment_push`, `_cron_retry_stalled_gearment_pushes` + its XML row). Slice could leave them for a later refactor (strict relocation) or remove them in-slice (honest diff).
+
+**Resolution (Owner directive 2026-05-04 — "update related documents first"; orchestrator-recommended triplet 1A / 2A / 3B accepted by absence of pushback):**
+
+1. **1A — Semantic alias, no seed change.** P1-DROP-CALLSITE treats `confirmed` ≡ ADR's "Pushed" and `shipped` ≡ ADR's "Fulfilled". Tests and code reference the existing seed codes. A future `P1-DROP-PIPELINE-RENAME` slice can rename the stages via the standard pipeline UI (auto-versioning per ADR-010 §5) — not in scope here.
+
+2. **2A — Raise `UserError` on push failure.** PO `action_confirm` aborts; the transaction rolls back; PO stays `draft`; SO pipeline does not advance to `confirmed`. Operator re-clicks Confirm on the PO to retry. Chatter messages on the SO are posted via `self.env.cr.savepoint(flush=False)` so the failure is auditable even though the outer transaction rolls back.
+
+3. **3B — Remove orphans in this slice.** Same conventional commit as the relocation: strip `_write_pipeline_state` gearment branch (likely entire override), delete `_gearment_push_should_fire` + `_enqueue_gearment_push`, delete `_cron_retry_stalled_gearment_pushes` + the corresponding XML cron row in `data/ir_cron_gearment_retry.xml`. Keep `action_push_to_gearment` — its body is the actual push and gets called from the new `purchase.order.action_confirm`.
+
+**Why this matters for the next contributor:**
+
+- ADR text aspires to terminology that may have already drifted from the seed. When a slice references a stage code from an ADR, **always grep the seed XML first** — don't trust the ADR alone.
+- "Relocation" slices nearly always have orphan-cleanup tails. Phase 0 should grep for callsites of the relocated method and surface dead-code candidates as part of the slice scope, not as a separate slice. Strict relocation that leaves orphans is technical debt by another name.
+- Push-failure semantics under a real Odoo state machine (PO confirm) is materially different from a custom hook (where you control the transaction boundary). The hook could swallow + rollback partially; PO confirm can only succeed-or-raise. This is a recurring shape — note for future similar slices.
+
+**Documents updated this turn (no code yet):**
+
+- `specs/006-master-plan/adrs/ADR-010-configurable-order-pipeline.md` — appended §"Clarifications 2026-05-04 (P1-DROP-CALLSITE pre-implementation)" + revision-history entry.
+- This file — section above.
+- `.claude/plans/006-master-plan-tracking.md` — P1-DROP-CALLSITE row description expanded with the three resolutions in the Notes column.
+
+**Cost paid:** ~10 minutes orchestrator analysis + ~5 minutes doc edits. Zero code rework. Phase 1 (Plan / RED) blocked behind these reconciliations is now unblocked.
+
+
+---
+
+## 2026-05-04 — drop-ship E2E demo run on staging (gotchas + ops blockers)
+
+Discovered while building `scripts/e2e_demo_drop_ship_ordertest2.py` and running it against `https://odoo.hatafax.com` / DB `demo_esty`. First run after deploying P1-OPS-DESIGN-LINK + P1-DESIGN-AUTO-GDRIVE: **11/12 sections PASS**.
+
+### Gotchas (each is now load-bearing in the runner script)
+
+1. **`tracking.import.line` field name**: it's `sale_order_id` (Many2one), not `matched_order_id`. The earlier email-fallback runner used the right name — I copy-pasted the wrong one. Caught by `KeyError: 'matched_order_id'` from `_determine_fields_to_fetch`. Fixup: `["state", "sale_order_id", "raw_tracking_number"]` in the `search_read` call.
+
+2. **`gearment.api.log.direction` is NULL on outbound rows.** Only the inbound webhook controller (`controllers/gearment_webhook.py`) sets `direction='inbound'` explicitly; the outbound adapter (`gearment_adapter.push_order`) leaves it NULL. Filter by `endpoint LIKE 'POST /api/%'` to find outbound push attempts. (Could also be argued the adapter should set `direction='outbound'` — small follow-up worth a 5-line fix.)
+
+3. **Direct `write({'x_pipeline_state_id': ...})` with `bypass_pipeline_state_guard` skips the auto-push hook.** The Gearment auto-push lives inside `multichannel_hub_fulfillment/models/sale_order.py:_write_pipeline_state` (post-super hook). When an external script bypasses the FR-017 guard via direct write + ctx, it ALSO bypasses this hook. Symptoms: pipeline state correctly moves to `gearment_pod/confirmed`, but `x_gearment_outbound_ref` stays empty and no `gearment.api.log` row is created. Fix in the runner: explicitly call `sale.order.action_push_to_gearment` after the pipeline write. **Tracker note**: this isn't a bug per se — `_write_pipeline_state` is the canonical entry point — but it's a non-obvious side effect of the bypass-context pattern from the previous email-fallback runner. Worth a docstring on the bypass context behavior.
+
+4. **`_gearment_push_should_fire` gates on `product.template.x_gearment_sku`.** Even when `_write_pipeline_state` IS reached (i.e., not via bypass), the auto-push won't fire if no line's product template has `x_gearment_sku` set (P1-DROP-SEED defaults it via `@api.onchange`/`create`/`write`, but pre-existing demo products may lack it). For demo seeding: either backfill `x_gearment_sku` on the line products before §6, or call `action_push_to_gearment` explicitly to bypass the gate.
+
+5. **Live Gearment endpoint returns HTTP 0/404 for synthetic SKUs.** Expected. The runner now treats "outbound api.log row exists OR x_gearment_outbound_ref set" as evidence the wiring fired — http_status=0 is a valid signal for "the request reached the network and got rejected upstream", and the chatter chain (`Gearment push failed: 404 ... Pipeline rolled back to Quoted; please review and retry.`) is the human-readable trail.
+
+### Ops blockers (operator-side, not code)
+
+These are pre-existing config gaps on `demo_esty` that block §1 and §5 of the runner:
+
+- **Gmail OAuth ICPs on `demo_esty`** are empty: `etsy_integration.gmail_client_id`, `gmail_client_secret`, `gmail_refresh_token`. Without them, the `cron_fetch_etsy_emails` cron silently no-ops (no exception). The runner's §1 falls back to picking the most recent `sales_channel='etsy'` `sale.order` so downstream sections can still demonstrate the pipeline against a known-good order. To get fresh `ordertest2` ingestion: run the OAuth dance once, populate the three ICPs, label 2-3 inbox messages with `ordertest2`, fire the cron via XML-RPC.
+- **GDrive folder ICP** `multichannel_hub.design_file_default_gdrive_folder_id` is empty. Slice 2's cron silently no-ops when unset (intentional — see code path in `design.file._cron_sync_approved_to_gdrive`). To enable §5 promotion: set the ICP to a Drive folder ID matching `^[A-Za-z0-9_-]{20,80}$`.
+
+### Suggested follow-ups (not done this session)
+
+- **`gearment_adapter.push_order` should write `direction='outbound'`** on the `gearment.api.log` row it creates (one-line fix; matches the inbound controller's behavior; saves runners and dashboards from filtering by endpoint pattern).
+- **Optional `action_push_to_gearment_now()` wrapper** that runs the bypass-friendly pipeline write + explicit push in one call, so the runner doesn't have to know about both hooks. Could deprecate the bypass-context altogether once P1-DROP-CALLSITE relocates the trigger to PO `action_confirm`.
+- **Slice 3 (local-blob retention cleanup) was deferred** from P1-DESIGN-AUTO-GDRIVE per the original plan. The `synced_to_gdrive_at` field is in place; a future cron can find rows older than `multichannel_hub.design_file_local_retention_days` (default 7) and clear `design_file` (the blob), preserving the record + `gdrive_file_id` link.

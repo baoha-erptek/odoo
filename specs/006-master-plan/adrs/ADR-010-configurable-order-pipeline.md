@@ -368,8 +368,34 @@ The 6 code slices (`P1-DROP-DEPS` → `P1-DROP-SEED` → `P1-DROP-CALLSITE` → 
 
 Verbatim 2026-05-03 owner prompt: *"About current Fulfillment pipelines, let check for current implemented approaches and these documents: for gearment_pod — [dropshipping.rst]; For internal_production — [mto.rst]. Seem we need to follow this already supported by Odoo instead of create something new. Recheck for these."* — captured in [`specs/006-master-plan/findings.md`](../findings.md) §Re-evaluation 2026-05-03.
 
+### Clarifications 2026-05-04 (P1-DROP-CALLSITE pre-implementation)
+
+Three contradictions surfaced during P1-DROP-CALLSITE Phase 0 dispatch. Resolved without superseding the amendment.
+
+**1. Stage-code alias for `gearment_pod` pipeline.** §1 above prescribes advancing pipeline to `Pushed` (after PO confirm) and `Fulfilled` (after dropship picking done). The actual seed (`multichannel_hub_core/data/order_pipeline_state_seed.xml:67-99`) ships `draft → quoted → confirmed → shipped`; no `pushed`/`fulfilled` codes exist. ADR-010 §9 (line 207, original) had named them `Awaiting Push → Pushed → Awaiting Tracking → Fulfilled` but the seed drifted before this slice.
+
+   - **Resolution:** treat `confirmed` ≡ ADR's `Pushed`, `shipped` ≡ ADR's `Fulfilled` for P1-DROP-CALLSITE. No seed change in this slice. The configurable-pipeline machinery remains canonical — admins can rename the stages later via the standard pipeline UI (which auto-versions per §5).
+   - **Future cleanup:** if/when the team wants the ADR-prescribed labels, file a separate `P1-DROP-PIPELINE-RENAME` slice. Code that hardcodes the codes (`models/sale_order.py` cron domain; `gearment_payload_builder` if it switches on state) is the migration surface.
+
+**2. Push-failure semantics under PO `action_confirm`.** Existing pre-amendment code (`models/sale_order.py:149-165`) caught the exception inside a savepoint, set `x_gearment_status='failed'`, rolled the SO pipeline back to `quoted`, and let the cron retry. Under PO confirm, the call site is now an `action_confirm` override.
+
+   - **Resolution:** raise `UserError` on push failure. PO confirm aborts; the entire transaction rolls back, including any SO pipeline writes in the same `action_confirm` call. PO stays in `draft`; SO stays in `confirmed` (one stage before Pushed). Operator re-clicks Confirm on the PO to retry. Chatter messages must be posted on the SO via a savepoint that commits even on the outer-transaction rollback (use `self.env.cr.savepoint(flush=False)` then `message_post`, then re-raise) so the failure is auditable.
+   - **Why not silent-catch + advance:** silent catch creates two-state-machine drift — PO would be `purchase` but SO Gearment-state would be `failed`. The amendment §"Cost we are accepting" already calls out this drift risk; UserError keeps the two state machines aligned at every commit boundary.
+   - **Cron retry replaced.** The existing `_cron_retry_stalled_gearment_pushes` is retired in this slice (see §3 below).
+
+**3. Legacy cleanup scope.** The slice description in `.claude/plans/006-master-plan-tracking.md` row `P1-DROP-CALLSITE` says only "Relocate `gearment_adapter.push_order` from `_write_pipeline_state` hook." After relocation these become orphans:
+
+   - `_write_pipeline_state` override (`models/sale_order.py:63-78`) — gearment-only logic. Strip the gearment branch; the override itself can be removed if no other branch remains.
+   - `_gearment_push_should_fire` (`:79-93`) — only callsite was the override above.
+   - `_enqueue_gearment_push` (`:95-115`) — only callsite was the override above.
+   - `action_push_to_gearment` (`:120-165`) — kept and called from the new `purchase.order.action_confirm` override (the actual push logic does not change; only the trigger does).
+   - `_cron_retry_stalled_gearment_pushes` (`:170-190`) — domain filters on SO pipeline state `confirmed` + missing ref; no SO ever sits in that combination after relocation. Cron XML row in `data/ir_cron_gearment_retry.xml` also removed.
+
+   - **Resolution:** P1-DROP-CALLSITE removes all five orphans in the same commit. Slice scope unchanged from the tracker row (still relocation-driven); cleanup is a strict consequence of the relocation, not a separate refactor. Single conventional commit, ~600-700 LOC including tests + deletions.
+
 ## Revision history
 
 - **2026-04-26**: Initial authoring. Accepted same day. Combines former state-machine ADR-010 + WC-reassignment ADR-011 per Owner direction "WC reassignment should follow the same approach." Recommended answers from `state-machine-questions.md` v2 Q1-Q9 and `wc-reassign-governance-questions.md` v2 Q1-Q5 are baked in (Owner accepted recommendations: "Go with your recommendation first, we'll comeback if thing changed or have issues").
 - **2026-05-03**: Amendment "Hybrid with standard Odoo dropship + MTO routes" appended. Accepted same day via `AskUserQuestion`. Adds `stock_dropshipping` (transitively `purchase`) + `mrp` to mhc deps; layers standard PO/MO/Dropship plumbing under the configurable pipeline as a lifecycle anchor; pipeline machinery, 17 VN seed stages, versioning, and FR-017 write-defense remain canonical. Authorizes P1-DROP-* and P1-MTO-* slice family.
 - **2026-05-03 (clarification)**: Section "What we are now layering on top of the configurable pipeline" §1 updated to name `stock_dropshipping` explicitly as the dep instead of `purchase`. Caught during P1-DROP-DEPS dispatch when the slice exit criterion ("Dropship route exists") could not be satisfied by `purchase` alone — the route lives in `stock_dropshipping/data/stock_data.xml`. No semantic change to the amendment; the actual install-time effect is identical (dependency closure includes purchase + sale + stock + stock_dropshipping). See `findings.md` §"P1-DROP-DEPS dep clarification".
+- **2026-05-04 (clarifications)**: Appended §"Clarifications 2026-05-04 (P1-DROP-CALLSITE pre-implementation)" with three resolutions: (1) stage-code alias `confirmed` ≡ Pushed and `shipped` ≡ Fulfilled — no seed change in this slice; future rename is a separate `P1-DROP-PIPELINE-RENAME`; (2) push-failure raises `UserError` under `purchase.order.action_confirm` (PO stays `draft`, txn rolls back, chatter posted via flush=False savepoint); (3) legacy cleanup scope — `_write_pipeline_state` override / `_gearment_push_should_fire` / `_enqueue_gearment_push` / `_cron_retry_stalled_gearment_pushes` + cron XML are all removed in P1-DROP-CALLSITE same commit. Caught during Phase 0 dispatch; no semantic change to the amendment. See `findings.md` §"P1-DROP-CALLSITE pre-implementation reconciliation".
