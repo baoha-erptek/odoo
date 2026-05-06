@@ -20,5 +20,6 @@ from . import test_operations_dashboard_orm
 from . import test_audit_coverage_db
 from . import test_audit_chatter_orm
 from . import test_dropship_dep_db
+from . import test_mto_dep_db
 from . import test_p1_ops_design_link
 from . import test_p1_design_auto_gdrive
