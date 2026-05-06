@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="product_mto_bom_wizard_form" model="ir.ui.view">
+    <field name="name">product.mto.bom.wizard.form</field>
+    <field name="model">product.mto.bom.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Enable MTO Route + Create Pass-through BOM">
+        <sheet>
+          <group>
+            <field name="product_id"/>
+          </group>
+          <p>
+            Enables the standard Odoo MTO route on the selected product and
+            auto-creates a minimal pass-through BOM (1 finished good <span>&lt;-</span> 1 phantom component).
+            Only valid for products on the Vietnam Internal Production pipeline.
+            Idempotent: a second run on the same product does nothing.
+          </p>
+        </sheet>
+        <footer>
+          <button name="action_create_bom" string="Enable MTO + Create BOM" type="object" class="btn-primary"/>
+          <button string="Cancel" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_product_mto_bom_wizard" model="ir.actions.act_window">
+    <field name="name">Enable MTO + Auto-BOM</field>
+    <field name="res_model">product.mto.bom.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+    <field name="binding_model_id" ref="product.model_product_template"/>
+    <field name="binding_view_types">form</field>
+  </record>
+</odoo>
