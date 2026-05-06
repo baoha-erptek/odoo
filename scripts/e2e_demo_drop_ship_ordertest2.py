@@ -457,6 +457,38 @@ def section_5_gdrive_promote(ctx: Context) -> StepResult:
     if not ctx.design_file_ids:
         return StepResult("5", False, "skipped — no design files from §3")
 
+    # Killswitch — temp-on-server mode. When the operator has explicitly
+    # disabled GDrive auto-sync (e.g. waiting on Drive API enablement at the
+    # GCP console), §5's contract switches: files must remain on filestore
+    # at storage_mode='small' until the killswitch flips back to 'True'.
+    icp_killswitch = rpc(
+        ctx, "admin", "ir.config_parameter", "get_param",
+        ["multichannel_hub.design_gdrive_auto_sync_enabled", "True"],
+    )
+    if icp_killswitch != "True":
+        rows = rpc(
+            ctx, "admin", "design.file", "read",
+            [ctx.design_file_ids, ["state", "storage_mode"]],
+        )
+        held_on_server = [
+            r for r in rows
+            if r["storage_mode"] == "small" and r["state"] == "approved"
+        ]
+        if len(held_on_server) == len(rows):
+            return StepResult(
+                "5", True,
+                f"GDrive sync deferred (killswitch={icp_killswitch!r}); "
+                f"all {len(rows)} approved design.file rows held on server "
+                f"at storage_mode='small'. Will resume on flip to 'True'.",
+            )
+        return StepResult(
+            "5", False,
+            f"killswitch={icp_killswitch!r} but {len(rows) - len(held_on_server)}"
+            f"/{len(rows)} rows are not in temp-on-server contract "
+            f"(modes={[r['storage_mode'] for r in rows]}, "
+            f"states={[r['state'] for r in rows]})",
+        )
+
     cron_id = _xmlid_to_res_id(
         ctx, "multichannel_hub_core", "cron_design_file_gdrive_sync",
     )
