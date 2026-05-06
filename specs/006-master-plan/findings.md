@@ -169,3 +169,41 @@ While running the full `multichannel_hub_core` test suite (271 tests) at slice c
 - Clean up demo data that introduces the empty-url row.
 
 **ruff not in container**: Phase 5 ruff verification was skipped because `ruff` is not installed in `namco_odoo19` and not on the host. Recommend adding `ruff` to `Dockerfile.base` so future slices can run lint inside the container.
+
+## 2026-05-06 — P1-MTO-SEED surprises (4 reusable patterns)
+
+Encountered while landing P1-MTO-SEED. All four are likely to recur in future slices that touch standard Odoo flags or write Many2many fields to inactive records — capture so we don't re-discover them.
+
+### 1. Cross-module XML overrides on `noupdate=1` records silently skip
+`<record id="stock.route_warehouse0_mto" model="stock.route">` inside a fresh `<data>` block (no `noupdate`) in our seed XML did NOT update `active=True`, even on the upgrade path. Root cause: the original record's `ir_model_data` row was created by the `stock` module with `noupdate=1`, and Odoo's loader honors that flag on the *target record's* data row regardless of what `<data noupdate=...>` we wrap our override in. Verified via `psql` showing `active=f` post-`-u`.
+
+**Fix pattern**: route configuration / cross-module flag flips must be done **programmatically** in `post_init_hook` (for `-i`) and a matching `migrations/<version>/post-*.py` (for `-u`). Mirror logic in both. Idempotent guards (`if not route.active:`) keep re-runs safe.
+
+Reusable for: any future slice that needs to flip an `active`, `product_selectable`, `auto_apply`, `is_published`, or similar flag on a standard Odoo seed record.
+
+### 2. Migration version-bump timing trap
+If `__manifest__.py` version is bumped BEFORE the corresponding `migrations/<version>/post-*.py` exists, the first `-u` will:
+1. See the version change
+2. Update database tables
+3. Update `ir_module_module.latest_version` to the new version
+4. **NOT run the (non-existent) migration**
+
+Subsequent `-u` runs with the migration in place will NOT re-run it because the DB is already at target version. Result: silently broken upgrade path for everyone who already updated.
+
+**Two recovery paths**:
+- (a) Bump version AGAIN to the next slot (e.g., `.16` → `.17`) and put the migration there. This is what we did for P1-MTO-SEED — we burned `.16` permanently and shipped under `.17`. Tracker row documents the gap.
+- (b) Manually `UPDATE ir_module_module SET latest_version='<prev>' WHERE name='<module>';` then re-run `-u` with the migration in place. Hacky; only works if no users are running production environments yet.
+
+**Preventive habit**: **author the migration script BEFORE bumping the manifest version**. Stage them in the same commit. Verify with `ls migrations/<new-version>/` before any `-u`.
+
+### 3. Many2many `_active_test` filter hides linked-but-inactive records
+`product.template.route_ids` (and any Many2many with `_active_test=True` semantics) returns ONLY active records on read. Writing `(4, inactive_route_id)` succeeds — the relation row is created — but `assertIn(inactive_route, product.route_ids)` will fail because the read filters it out.
+
+**Symptom**: test errors like `stock.route(1,) not found in stock.route(614,)` where the missing route is the one with `active=False`. Misleading because it looks like the write didn't happen.
+
+**Fix pattern**: ensure the standard route is **active** (Pattern #1 above) before any wizard / setup code writes it onto a product. The wizard's tests then implicitly verify activation worked.
+
+### 4. `route_ids` domain enforced UI-side only — writes to non-product-selectable routes succeed
+The field def `route_ids = fields.Many2many('stock.route', ..., domain=[('product_selectable', '=', True)])` blocks the route from showing in the UI dropdown but does NOT block ORM writes. Standard mrp tests confirm this (`mrp/tests/test_bom.py:836` writes Manufacture even when `product_selectable=False`).
+
+**Implication**: in our wizard we still flip `Manufacture.product_selectable=True` (so admins can manually attach the route via the product form), but if we *only* needed programmatic linking, we wouldn't have to. Knowing this lets future slices skip the flag flip if there's no admin-UI requirement.
