@@ -150,3 +150,22 @@ These are pre-existing config gaps on `demo_esty` that block §1 and §5 of the 
 - **`gearment_adapter.push_order` should write `direction='outbound'`** on the `gearment.api.log` row it creates (one-line fix; matches the inbound controller's behavior; saves runners and dashboards from filtering by endpoint pattern).
 - **Optional `action_push_to_gearment_now()` wrapper** that runs the bypass-friendly pipeline write + explicit push in one call, so the runner doesn't have to know about both hooks. Could deprecate the bypass-context altogether once P1-DROP-CALLSITE relocates the trigger to PO `action_confirm`.
 - **Slice 3 (local-blob retention cleanup) was deferred** from P1-DESIGN-AUTO-GDRIVE per the original plan. The `synced_to_gdrive_at` field is in place; a future cron can find rows older than `multichannel_hub.design_file_local_retention_days` (default 7) and clear `design_file` (the blob), preserving the record + `gdrive_file_id` link.
+
+---
+
+## 2026-05-06 — Pre-existing test failure surfaced during P1-MTO-DEPS verification
+
+While running the full `multichannel_hub_core` test suite (271 tests) at slice close, one pre-existing failure showed up: `TestHistoricalSeedT078.test_seed_skips_empty_urls` in `test_design_file_lifecycle.py` — `AssertionError: 1 != 0 : No design.file should be created with empty file_url`.
+
+**Confirmed pre-existing**, not caused by P1-MTO-DEPS:
+
+- Failure reproduces deterministically with the MTO manifest change reverted (manifest at version 19.0.1.0.14, no `mrp` dep, MTO test file removed) — same `1 != 0` against the same test.
+- The seed method (`design.file._seed_from_historical_lines` in `models/design_file.py:430`) explicitly guards via `url = (getattr(line, field_name) or '').strip()` then `if not url: continue` — yet a row with `file_url=False` slips through.
+- Likely demo / fixture drift: a pre-existing `design.file` with empty `file_url` is being counted by the `('file_url', '=', False)` search domain, regardless of seed behavior. Test asserts post-condition, not delta from the seed call.
+
+**Not blocking** P1-MTO-DEPS (manifest-only slice; my new `TestMtoDep` class passes 2/2). Logged here so the next session touching `design.file` lifecycle picks this up — likely a 1-line fix to either:
+- Filter the test's search by `is_seed=True` (only assert about seeded rows), or
+- Tighten the seed method to also skip lines whose URL is `False` (not just empty string after `.strip()`), or
+- Clean up demo data that introduces the empty-url row.
+
+**ruff not in container**: Phase 5 ruff verification was skipped because `ruff` is not installed in `namco_odoo19` and not on the host. Recommend adding `ruff` to `Dockerfile.base` so future slices can run lint inside the container.
