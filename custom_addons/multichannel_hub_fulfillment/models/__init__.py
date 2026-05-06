@@ -4,3 +4,5 @@ from . import tracking_import_log
 from . import tracking_import_line
 from . import product_template
 from . import sale_order
+from . import purchase_order
+from . import stock_picking

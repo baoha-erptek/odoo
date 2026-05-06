@@ -1,26 +1,17 @@
-"""sale.order extension — wire Gearment-POD pipeline transitions to the
-`gearment_adapter.push_order` call site (memory #64: every adapter
-must have a named caller).
+"""sale.order extension — Gearment outbound bookkeeping fields and helpers.
 
-Per ADR-003, this extension lives in mhf because Gearment is a
-fulfillment partner and must not pollute mhc.
+Per ADR-010 Amendment 2026-05-03 + Clarifications 2026-05-04, the auto-push
+trigger is the standard `purchase.order.button_confirm` boundary (see
+`purchase_order.py`), not a private pipeline-state hook. This module owns:
 
-Behavior:
-- When `_write_pipeline_state` flips a sale.order to `gearment_pod /
-  confirmed` AND `x_gearment_outbound_ref` is empty AND the kill-switch
-  ICP is on → enqueue (or run synchronously inside a savepoint) a push
-  call to Gearment.
-- Success: stamp `x_gearment_outbound_ref` + `x_gearment_pushed_at` +
-  `x_gearment_status='pending'`. Pipeline stays at `confirmed` waiting
-  for the P0-18b2 webhook to advance to `shipped`.
-- Failure: roll the pipeline back to `quoted` via _write_pipeline_state
-  (change_type='rollback'); chatter the error; status='failed'.
-
-Cron `_cron_retry_stalled_gearment_pushes` re-enqueues confirmed
-orders that lost their push attempt for >24h.
+- The Gearment outbound stamp fields (`x_gearment_outbound_ref`, etc.)
+- `action_push_to_gearment` — the actual REST call wrapper, called by the
+  PO override on success and by the manual button on the SO form. Raises
+  on failure so the caller (PO override) can roll back the transaction.
+- `_advance_pipeline_to(code)` — public helper to move the SO pipeline to
+  a target state code. Idempotent: no-op if already at-or-after target.
 """
 import logging
-from datetime import timedelta
 
 from odoo import _, api, fields, models
 
@@ -28,7 +19,6 @@ from ..services import gearment_adapter, gearment_payload_builder
 
 _logger = logging.getLogger(__name__)
 
-_ICP_KILLSWITCH = 'multichannel_hub_fulfillment.gearment_auto_push_enabled'
 _ACCEPTABLE_DESIGN_STATES = ('approved', 'proof_sent')
 
 
@@ -58,74 +48,60 @@ class SaleOrder(models.Model):
     )
 
     # ------------------------------------------------------------------
-    # Pipeline transition hook
+    # Pipeline transition helper
     # ------------------------------------------------------------------
-    def _write_pipeline_state(self, new_state, note=None,
-                              change_type='manual'):
-        """Extend mhc helper: after the standard transition, fire the
-        Gearment auto-push when entering the gearment_pod 'confirmed'
-        state for the first time.
+    def _advance_pipeline_to(self, target_code: str) -> None:
+        """Move the SO pipeline to the state with the given code.
 
-        Skips push for non-operator change_types (migration / rollback /
-        initial) so seed scripts and rollback paths don't double-fire.
+        Idempotent: no-op if the SO is already at-or-after the target state
+        (compared by `sequence`). Always uses the audited `_write_pipeline_state`
+        path with `change_type='automatic'`.
+
+        Caller is responsible for transactional context (this method does not
+        catch its own ValidationError — let the surrounding savepoint or
+        UserError propagation handle it).
+
+        TODO: `_write_pipeline_state` is private to mhc; callers across module
+        boundaries currently rely on it. Promote a public `action_advance_pipeline`
+        wrapper to mhc and switch this helper over (tracker: P1-PIPELINE-PUBLIC-ADVANCE).
         """
-        super()._write_pipeline_state(new_state, note=note, change_type=change_type)
-        if change_type not in ('manual', 'automatic'):
+        self.ensure_one()
+        if not self.x_pipeline_id:
             return
-        for order in self:
-            if order._gearment_push_should_fire(new_state):
-                order._enqueue_gearment_push()
-
-    def _gearment_push_should_fire(self, new_state) -> bool:
-        self.ensure_one()
-        if not new_state:
-            return False
-        if new_state.code != 'confirmed':
-            return False
-        if not new_state.pipeline_id or new_state.pipeline_id.code != 'gearment_pod':
-            return False
-        if self.x_gearment_outbound_ref:
-            return False  # idempotent — already pushed.
-        flag = self.env['ir.config_parameter'].sudo().get_param(
-            _ICP_KILLSWITCH, 'True')
-        if str(flag).strip().lower() in ('false', '0', ''):
-            return False
-        return True
-
-    def _enqueue_gearment_push(self):
-        """Run the push asynchronously if queue_job is installed,
-        else inside a savepoint so a failure does not abort the
-        caller's transaction.
-        """
-        self.ensure_one()
-        if hasattr(self, 'with_delay'):
-            try:
-                self.with_delay(
-                    description=f"Gearment push {self.name}",
-                ).action_push_to_gearment()
-                return
-            except Exception:  # noqa: BLE001
-                _logger.warning(
-                    "with_delay failed; falling back to synchronous push",
-                    exc_info=True)
-        try:
-            with self.env.cr.savepoint():
-                self.action_push_to_gearment()
-        except Exception:  # noqa: BLE001 — must not abort the outer txn
-            _logger.exception("Gearment auto-push synchronous fallback failed")
+        target = self.x_pipeline_id.state_ids.filtered(
+            lambda s: s.code == target_code)[:1]
+        if not target:
+            _logger.warning(
+                "Pipeline '%s' has no state with code='%s'; skipping advance",
+                self.x_pipeline_id.code, target_code)
+            return
+        current = self.x_pipeline_state_id
+        if current and current.sequence >= target.sequence:
+            return
+        self._write_pipeline_state(target, change_type='automatic')
 
     # ------------------------------------------------------------------
-    # Push action (called by hook + cron + manual)
+    # Push action (called by PO override + manual button)
     # ------------------------------------------------------------------
     def action_push_to_gearment(self):
         """Push the order to Gearment via the P0-18b1 adapter.
 
-        Idempotent: skips orders that already carry an outbound ref.
+        On success: stamps `x_gearment_outbound_ref` + `x_gearment_pushed_at`
+        + `x_gearment_status='pending'`, then advances the pipeline to
+        'confirmed'.
+
+        On failure: raises a `UserError` with the underlying error so the
+        caller (PO `button_confirm`) can roll the outer transaction back.
+        Audit chatter is posted via `savepoint(flush=False)` *by the caller*
+        so the message survives the rollback.
+
+        Idempotent at the per-record level: skips records that already carry
+        `x_gearment_outbound_ref`.
         """
         adapter_cls = gearment_adapter.GearmentApiAdapter
         for order in self:
             if order.x_gearment_outbound_ref:
-                _logger.info(
+                _logger.debug(
                     "Skipping Gearment push for %s — already pushed (%s)",
                     order.name, order.x_gearment_outbound_ref)
                 continue
@@ -135,56 +111,20 @@ class SaleOrder(models.Model):
             try:
                 adapter = adapter_cls(env=order.env)
                 response = adapter.push_order(payload)
-                ref = (response or {}).get('id') or (response or {}).get('order_id')
-                if not ref:
-                    raise ValueError(_(
-                        "Gearment response has no id field: %s", response))
-                order.write({
-                    'x_gearment_outbound_ref': str(ref),
-                    'x_gearment_pushed_at': fields.Datetime.now(),
-                    'x_gearment_status': 'pending',
-                })
-                order.message_post(body=_(
-                    "Order pushed to Gearment (ref %s).", ref))
-            except Exception as exc:  # noqa: BLE001 — boundary
+            except Exception as exc:
                 _logger.warning(
                     "Gearment push failed for order %s: %s",
                     order.name, exc, exc_info=True)
-                order.write({'x_gearment_status': 'failed'})
-                order.message_post(body=_(
-                    "Gearment push failed: %s. Pipeline rolled back to "
-                    "Quoted; please review and retry.",
-                    str(exc)[:512]))
-                quoted = order.x_pipeline_id.state_ids.filtered(
-                    lambda s: s.code == 'quoted')[:1]
-                if quoted:
-                    super(SaleOrder, order)._write_pipeline_state(
-                        quoted,
-                        note=f"auto-push failed: {str(exc)[:240]}",
-                        change_type='rollback',
-                    )
-
-    # ------------------------------------------------------------------
-    # Cron: retry stalled
-    # ------------------------------------------------------------------
-    @api.model
-    def _cron_retry_stalled_gearment_pushes(self):
-        """Find gearment_pod orders stuck at confirmed without a ref
-        for >24h and retry the push."""
-        cutoff = fields.Datetime.now() - timedelta(hours=24)
-        # Use date_order (operator-set) rather than write_date (bumped by
-        # any field write incl. our own state move) so a confirmed order
-        # gets retried even if some other field was touched recently.
-        domain = [
-            ('x_pipeline_id.code', '=', 'gearment_pod'),
-            ('x_pipeline_state_id.code', '=', 'confirmed'),
-            ('x_gearment_outbound_ref', '=', False),
-            ('date_order', '<', cutoff),
-        ]
-        stalled = self.search(domain, limit=100)
-        if not stalled:
-            return
-        _logger.warning(
-            "Retrying %s stalled Gearment pushes", len(stalled))
-        for order in stalled:
-            order._enqueue_gearment_push()
+                raise
+            ref = (response or {}).get('id') or (response or {}).get('order_id')
+            if not ref:
+                raise ValueError(_(
+                    "Gearment response has no id field: %s", response))
+            order.write({
+                'x_gearment_outbound_ref': str(ref),
+                'x_gearment_pushed_at': fields.Datetime.now(),
+                'x_gearment_status': 'pending',
+            })
+            order.message_post(body=_(
+                "Order pushed to Gearment (ref %s).", ref))
+            order._advance_pipeline_to('confirmed')
