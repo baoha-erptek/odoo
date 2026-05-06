@@ -70,3 +70,13 @@ secrets/
 # claude-mem auto-generated activity trackers
 custom_addons/**/CLAUDE.md
 specs/**/CLAUDE.md
+
+# Host-specific TFV parallel-deployment configs (separate Odoo instance, not part of esty repo)
+deployment/*.tfv.*
+deployment/scripts/deploy-tfv.sh
+deployment/docker-compose.tfv.yml
+deployment/nginx-tfv.*.conf
+
+# Vendor module zips (download fresh from upstream, do not commit)
+*.zip
+!enterprise.zip
