@@ -216,6 +216,29 @@ class SaleOrder(models.Model):
             # treated as "any forward move allowed". Strict enforcement lands
             # in P1-PIPELINE-FULL+ once the seed graph is complete.
             pass
+        # P1-MTO-SYNC: terminal-stage guard. Manual writes to a terminal
+        # pipeline state require all linked mrp.production records to be in
+        # a terminal MO state ('done' or 'cancel'). Automatic writes (sync
+        # hooks, ADR-007 callsites) bypass this guard. Non-MTO orders (no
+        # MOs) skip naturally because the search returns empty.
+        # Note: callers passing change_type='automatic' bypass the guard by
+        # design — this is the FR-017 9th-confirmation dismissable flavor
+        # (composing already-writable fields via documented internal callers,
+        # audited via the transition log's change_type column).
+        if change_type == 'manual' and new_state.is_terminal:
+            productions = self.env['mrp.production'].search(
+                [('origin', '=', self.name)])
+            unfinished = productions.filtered(
+                lambda mo: mo.state not in ('done', 'cancel'))
+            if unfinished:
+                raise ValidationError(_(
+                    "Cannot move order '%(order)s' to terminal stage "
+                    "'%(state)s' while linked manufacturing order(s) "
+                    "%(mos)s are not yet done. Mark the MO(s) as done first.",
+                    order=self.name,
+                    state=new_state.name,
+                    mos=', '.join(unfinished.mapped('name')),
+                ))
         from_state = self.x_pipeline_state_id
         # Bypass the write() guard — this helper IS the audited path.
         self.with_context(

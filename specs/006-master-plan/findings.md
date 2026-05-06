@@ -207,3 +207,32 @@ Subsequent `-u` runs with the migration in place will NOT re-run it because the 
 The field def `route_ids = fields.Many2many('stock.route', ..., domain=[('product_selectable', '=', True)])` blocks the route from showing in the UI dropdown but does NOT block ORM writes. Standard mrp tests confirm this (`mrp/tests/test_bom.py:836` writes Manufacture even when `product_selectable=False`).
 
 **Implication**: in our wizard we still flip `Manufacture.product_selectable=True` (so admins can manually attach the route via the product form), but if we *only* needed programmatic linking, we wouldn't have to. Knowing this lets future slices skip the flag flip if there's no admin-UI requirement.
+
+## 2026-05-06 — P1-MTO-SYNC: Odoo 19 `mrp.production` lacks `procurement_group_id`
+
+**Discovered while landing P1-MTO-SYNC**. The planner (and a few past tracker entries) assumed Odoo 19 `mrp.production` exposes a `procurement_group_id` Many2one we could walk to `procurement_group_id.sale_ids` for MO→SO linkage. **It does not.**
+
+What `mrp.production` actually has in Odoo 19:
+- `production_group_id` → `mrp.production.group` (MRP-internal sibling grouping; backorders, etc.)
+- `origin` (Char) — populated by the MTO procurement to the SO name (e.g. `S00042`)
+- `move_finished_ids` / `move_dest_ids` — stock-move chain (works but multi-hop)
+
+**Canonical walk for MO → SO in this codebase**:
+
+```python
+def _linked_sale_order(self):
+    self.ensure_one()
+    if not self.origin:
+        return self.env['sale.order']
+    return self.env['sale.order'].search(
+        [('name', '=', self.origin)], limit=1)
+```
+
+Sibling MOs on the same SO share the same `origin`, so `search([('origin', '=', so.name)])` enumerates them all.
+
+**Caveats / future hardening**:
+- `mrp.production.origin` is unindexed — fine for current MO volumes, may want btree if MO count per database scales.
+- `sale.order.name` is unique per Odoo sequence; multi-company isolation comes from sequence-per-company, but if cross-company SOs ever share names the search needs `('company_id', '=', self.company_id.id)` added. Not adding now (YAGNI).
+- If we ever need the inverse (SO → MOs) more efficiently, look at `sale.order.procurement_group_id.stock_move_ids.production_id` — that path *does* exist (MO has `move_dest_ids` reverse).
+
+**Implication for future slices**: any code documentation referring to `mrp.production.procurement_group_id` is wrong for Odoo 19. Update the planner default and any ADR that mentions it.

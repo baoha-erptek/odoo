@@ -13,3 +13,4 @@ from . import design_file_upload_wizard
 from . import product_mto_bom_wizard
 from . import sale_order_line
 from . import ir_attachment
+from . import mrp_production
