@@ -50,7 +50,7 @@ description: "Task list for Spec 007 — Customer Conversations (Pre-Sale & Post
 
 ### Foundational tests (RED)
 
-- [ ] T002 Add `specs/006-master-plan/adrs/ADR-011-multichannel-enquiry-vs-crm.md` documenting the lightweight-model decision per research.md §R1; cite this spec; commit doc-only on `feature/006-master-plan-coding` (`docs(MP006): ADR-011 multichannel.enquiry over crm dep`). Mark `P3-LEAD-DEPS` slice `done` in tracker.
+- [X] T002 Add `specs/006-master-plan/adrs/ADR-011-multichannel-enquiry-vs-crm.md` documenting the lightweight-model decision per research.md §R1; cite this spec; commit doc-only on `feature/006-master-plan-coding` (`docs(MP006): ADR-011 multichannel.enquiry over crm dep`). Mark `P3-LEAD-DEPS` slice `done` in tracker.
 - [ ] T003 [P] Phase 1 DB tests for `etsy.message.dedupe` in `custom_addons/etsy_integration/tests/test_phase1_db_message_dedupe.py`: assert table exists; UNIQUE constraint on `(etsy_shop_id, etsy_message_id)` enforced at PG level via direct INSERT; partial index `idx_emd_pending` exists with predicate `state='buffered'`; columns + types per data-model.md §2.
 - [ ] T004 [P] Phase 2 ORM tests for `etsy.message.dedupe` in `custom_addons/etsy_integration/tests/test_phase2_orm_message_dedupe.py`: C-EMD-001 XOR constraint between `target_sale_order_id` / `target_enquiry_id` / `pending_target_receipt_id`; ACL — `base.group_system` full, `etsy_integration.group_etsy_api_log_reader` read-only; `payload_excerpt` hard-truncated to 256 chars on create.
 
