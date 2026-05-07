@@ -93,8 +93,12 @@ class ImageDownloader:
 
         Finds product.template records where:
         - is_etsy_product = True
-        - etsy_image_url is set (not False/empty)
         - image_1920 is not set
+
+        The predicate intentionally does NOT filter on etsy_image_url so
+        legacy orders ingested before image-URL extraction was implemented
+        are also swept (P1-IMG-BACKFILL). download_and_store() rejects
+        empty/non-allowlisted URLs at line 47-56, so no work is wasted.
 
         Downloads each image with a 1-second delay between requests to
         avoid hammering the server.
@@ -102,7 +106,6 @@ class ImageDownloader:
         ProductTemplate = self._env['product.template']
         pending = ProductTemplate.search([
             ('is_etsy_product', '=', True),
-            ('etsy_image_url', '!=', False),
             ('image_1920', '=', False),
         ])
 

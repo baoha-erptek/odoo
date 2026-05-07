@@ -1090,3 +1090,27 @@ The `tdd-guide` agent dispatched for Phase 2 RED **violated the scope contract**
 The orchestrator fixed the 4 surface bugs surgically (3 commits worth of fixes folded into a follow-up commit on top of the agent's). The deeper tracking bug got documented and the slice closed pragmatically.
 
 **Memory entry**: `feedback_odoo19_test_gotchas.md` updated with self-deception incident #4 + 3 new Odoo 19 ORM gotchas (`env.context` is read-only, `mail_message.model` is varchar not FK, design.file default `storage_mode='url'` requires `file_url`).
+
+
+---
+
+## P1-IMG-BACKFILL — out-of-scope security-reviewer findings (2026-05-07)
+
+The slice landed cleanly (predicate widening + 11 tests + manifest bump). Security review flagged two MEDIUM concerns that pre-date this slice and are explicitly out of scope:
+
+### Pre-existing gap: `cron_download_pending_images` is not registered as an `ir.cron`
+
+`grep -rn cron_download_pending_images custom_addons/etsy_integration/` shows the method is defined on the `ImageDownloader` service class but has no `<record model="ir.cron">` in `data/ir_cron_data.xml` and no model-method wrapper that an external scheduler could invoke. The job is currently call-only (operator must instantiate `ImageDownloader(env).cron_download_pending_images()` from a shell or a different cron). This was true before P1-IMG-BACKFILL — the slice did not introduce or worsen the gap.
+
+**Action**: file as a follow-up slice (call it `P1-IMG-CRON-WIRE`) — add an `ir.cron` record + model wrapper, ~10 LOC + 1 test. Not a blocker for this slice; backfill predicate is correct and tested independently.
+
+### Pre-existing gap: no max-attempt / backoff for persistently failing image URLs
+
+A product with a stale or unreachable `etsy_image_url` will be retried on every cron tick forever. The 1-sec inter-request delay and 20-sec request timeout cap the blast radius (no DoS), but the operational noise grows linearly with backlog. Pre-existing.
+
+**Action**: out of scope. Consider a `last_image_download_attempt` + `image_download_attempts` field pair on `product.template` if/when the noise becomes operationally annoying. Not filed as a slice — premature optimization until we see real failures.
+
+### Approvals
+
+- code-reviewer: APPROVED (1 LOW: unused `unittest.mock.call` import — fixed inline before commit)
+- security-reviewer: APPROVE WITH CONDITION (both conditions are pre-existing gaps; documented above; not blocking)
