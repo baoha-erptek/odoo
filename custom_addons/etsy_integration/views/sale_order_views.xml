@@ -78,6 +78,15 @@
                 <field name="etsy_option" optional="hide" column_invisible="not parent.is_etsy_order"/>
             </xpath>
 
+            <!-- P1-IMG-LINE-WIDGET: product image thumbnail column on order-line list.
+                 Channel-agnostic; visible for all order lines on this form.
+                 Placed BEFORE product_id (deliberate deviation from plan's "after")
+                 so the image is the leftmost visual anchor — matches Odoo's stock
+                 product-list convention where the image column leads the row. -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_id']" position="before">
+                <field name="product_image_thumb" widget="image" readonly="1" optional="show" string="Image"/>
+            </xpath>
+
         </field>
     </record>
 

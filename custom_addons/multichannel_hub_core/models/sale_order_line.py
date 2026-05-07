@@ -8,6 +8,12 @@ heavy joins.
 T074 (P1-02b): Extended to be route-aware. If all files are approved but
 any route is pending/failed, design_status='approved-pending-route' instead
 of 'approved' to show routing is in progress.
+
+P1-IMG-LINE-WIDGET: product_image_thumb non-stored Binary computed from
+product_id.product_tmpl_id.image_128. Async-only fallback — the existing
+image_downloader cron populates upstream image_1920 from etsy_image_url;
+Odoo's stock image-resize pipeline auto-derives image_128. P1-IMG-BACKFILL
+amends the cron predicate for any uncovered cases.
 """
 from odoo import api, fields, models
 
@@ -20,6 +26,18 @@ class SaleOrderLine(models.Model):
         'order_line_id',
         string='Design Files',
     )
+
+    product_image_thumb = fields.Binary(
+        string='Image',
+        compute='_compute_product_image_thumb',
+        store=False,
+        attachment=False,
+    )
+
+    @api.depends('product_id.product_tmpl_id.image_128')
+    def _compute_product_image_thumb(self):
+        for line in self:
+            line.product_image_thumb = line.product_id.product_tmpl_id.image_128 or False
 
     design_status = fields.Selection(
         [
