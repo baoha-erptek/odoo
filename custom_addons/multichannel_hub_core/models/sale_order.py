@@ -96,6 +96,17 @@ class SaleOrder(models.Model):
         help='Total number of design.file records attached to this order '
              '(header + line). Drives the smart button on the order form.')
 
+    # P1-IMG-DASH-COL — product image aggregate for dashboard rendering.
+    order_image_128 = fields.Binary(
+        string='Product Image',
+        compute='_compute_order_image_128',
+        store=False,
+        attachment=False,
+        readonly=True,
+        help='First non-empty product_image_thumb from order_line_ids. '
+             'Fallback to subsequent lines if earlier are empty. '
+             'P1-IMG-DASH-COL; depends on P1-IMG-LINE-WIDGET.')
+
     # P1-PIPELINE-MIN — fulfillment route resolved from product/category master data.
     x_pipeline_id = fields.Many2one(
         'order.pipeline',
@@ -533,6 +544,16 @@ class SaleOrder(models.Model):
     def _compute_design_files_count(self):
         for order in self:
             order.design_files_count = len(order._all_design_files())
+
+    @api.depends('order_line.product_image_thumb')
+    def _compute_order_image_128(self):
+        for order in self:
+            thumb = False
+            for line in order.order_line:
+                if line.product_image_thumb:
+                    thumb = line.product_image_thumb
+                    break
+            order.order_image_128 = thumb
 
     def action_open_design_files(self):
         """Open the design.file list scoped to this order's files.

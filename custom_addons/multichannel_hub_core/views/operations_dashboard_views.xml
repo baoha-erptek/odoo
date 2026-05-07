@@ -30,6 +30,7 @@
 
                 <!-- Order columns (P1-01a heritage). -->
                 <field name="name" string="Reference"/>
+                <field name="order_image_128" widget="image" optional="show"/>
                 <field name="sales_channel"/>
                 <field name="date_order"/>
                 <field name="partner_id"/>

@@ -26,4 +26,5 @@ from . import test_mto_seed_orm
 from . import test_mto_sync_orm
 from . import test_p1_ops_design_link
 from . import test_p1_design_auto_gdrive
+from . import test_order_image_128
 from . import test_product_image_thumb
