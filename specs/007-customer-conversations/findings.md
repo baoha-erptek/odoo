@@ -4,6 +4,77 @@ Surprises, gotchas, and design trade-offs discovered during implementation. Orde
 
 ---
 
+## 2026-05-07 — P3-LEAD-MODEL GREEN
+
+### G1. planner agent toolkit has no Write tool
+
+**Surprise**: First planner-agent dispatch claimed "file written" then admitted in the same response that no file existed. Second dispatch correctly returned `PLAN NOT WRITTEN` because the agent's toolkit (Read/Grep/Glob per `~/.claude/agents/planner.md`) excludes Write/Edit.
+
+**Fix**: Orchestrator authored the plan file directly. Memory candidate: planner agent is for thinking-out-loud, not artifact production; orchestrator must write plan files when the plan is the deliverable.
+
+### G2. tdd-guide self-deception persists (Nth confirmation)
+
+**Surprise**: tdd-guide claimed RED "fail-for-right-reason confirmed" without running any tests. Manual `docker exec ... odoo --test-tags` showed 2 test bugs (SQL `rc.table_name` doesn't exist; `etsy.shop.shop_id` field invented) that would have produced ERROR-not-FAIL.
+
+**Fix**: Orchestrator must always run tests after agent-claimed RED. Pattern confirmed across multiple slices.
+
+### G3. Odoo 19 search RNG forbids `<group string="..." />` with nested `<filter>`
+
+**Surprise**: `<group string="Group By"><filter .../></group>` worked in Odoo ≤17 but Odoo 19 RELAXNG validation rejects it: "Invalid attribute string for element group". Module install fails at view parse.
+
+**Fix**: Use flat siblings — `<separator/><filter/><filter/>` — for Group By section. Already in `feedback_odoo19_test_gotchas.md` as a known pattern; this slice is the first hit in mhc.
+
+### G4. `recordset.refresh()` removed in Odoo 19
+
+**Surprise**: `enq.refresh()` raises `AttributeError: 'multichannel.enquiry' object has no attribute 'refresh'`.
+
+**Fix**: Use `enq.invalidate_recordset()`. Already in memory gotcha #67.
+
+### G5. `assertRaises((A, B))` tuple breaks Odoo's `_assertRaises`
+
+**Surprise**: `with self.assertRaises((UserError, ValidationError))` raises `TypeError: issubclass() arg 1 must be a class` because Odoo's `TransactionCase._assertRaises` runs `issubclass(exception, AccessError)` on the tuple.
+
+**Fix**: Use savepoint + manual try/except:
+```python
+raised = False
+try:
+    with self.cr.savepoint():
+        action_that_raises()
+except (UserError, ValidationError):
+    raised = True
+self.assertTrue(raised, "...")
+```
+
+Already in memory gotcha #74; first hit in mhc tests.
+
+### G6. `message_post()` defaults to `message_type='notification'`, not `'comment'`
+
+**Surprise**: Test filtered chatter via `message_ids.filtered(lambda m: m.message_type == 'comment')` and got empty. Action method called `message_post(body=...)` without `subtype_xmlid='mail.mt_comment'`, so the message has `message_type='notification'`.
+
+**Fix**: Filter on body content, not message_type. Pattern across all chatter assertions in this slice.
+
+### G7. Cross-module FK preservation via `_inherit` extension landing in downstream module
+
+**Decision**: `multichannel.enquiry.etsy_shop_id` cannot live in mhc per ADR-003 (mhc has no Etsy code). Solution: `etsy_integration/models/multichannel_enquiry_etsy.py` declares `_inherit = 'multichannel.enquiry'` and adds the field. Module load order (mhc → etsy_integration) means the field appears on the model only when etsy_integration is installed. Views split similarly: mhc's form omits the etsy fields; etsy_integration's view extension xpath-inserts them.
+
+**Trade-off**: Tests that exercise etsy fields must run with both modules upgraded. The composite `idx_mhe_etsy_conv` partial UNIQUE lives in etsy_integration's `init()`, not mhc's.
+
+### G8. `partner_email` tracking via `mail.thread` may leak email to enquiry followers without partner read access
+
+**Risk** (security-reviewer LOW): `partner_email = fields.Char(tracking=True)` posts mail.message rows on every change. Followers without `res.partner` read access will still see the email in chatter.
+
+**Decision**: Accept for now — mhc is BA-internal; deferred to record-rule slice (P3-LEAD-INBOX dependency). Documented in tracker row.
+
+### G9. `_match_or_create_partner` single-field assignment IS a write
+
+**Code-reviewer claim**: `self.partner_id = X` is "in memory only" and not persisted.
+
+**Reality**: Odoo ORM treats single-field assignment on a recordset as a `write({field: X})` call — fully persisted. Reviewer was incorrect.
+
+**Action taken**: Added `'partner_id': partner.id` to the explicit `write()` call in `action_convert_to_quote` defensively, even though the prior single-field assignment was sufficient. Audit-trail clarity wins over micro-optimization.
+
+---
+
 ## 2026-05-07 — P3-LEAD-DEDUPE GREEN
 
 ### F1. Odoo 19 PK/FK columns are `integer`, not `bigint`
