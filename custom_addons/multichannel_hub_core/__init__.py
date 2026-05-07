@@ -3,6 +3,7 @@ import logging
 from . import models
 from . import services
 from . import tests
+from . import wizards
 
 _logger = logging.getLogger(__name__)
 
