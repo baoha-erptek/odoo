@@ -198,14 +198,14 @@ This sub-section extends `EtsyConversationPoller._route_message()` (T026) — sa
 
 #### Tests for US2 §D (RED)
 
-- [ ] T063 [P] [US2] Phase 2 ORM test in `custom_addons/multichannel_hub_core/tests/test_phase2_orm_enquiry.py` (extend T036): `action_convert_to_quote()` from `state='new'` creates `sale.order` with `state='draft'`, `partner_id=enquiry.partner_id`, `origin=enquiry.name`; enquiry flips to `state='converted'`, `converted_order_id` set, `converted_at` stamped; chatter posted on both records.
-- [ ] T064 [P] [US2] Idempotency test: `action_convert_to_quote()` re-invocation when `state='converted'` returns the existing order's `act_window` action without creating a duplicate `sale.order`.
-- [ ] T065 [P] [US2] Pre-condition test: `action_convert_to_quote()` from `state='closed'` raises `UserError`.
+- [X] T063 [P] [US2] Phase 2 ORM test in `custom_addons/multichannel_hub_core/tests/test_phase2_orm_enquiry.py` (extend T036): `action_convert_to_quote()` from `state='new'` creates `sale.order` with `state='draft'`, `partner_id=enquiry.partner_id`, `origin=enquiry.name`; enquiry flips to `state='converted'`, `converted_order_id` set, `converted_at` stamped; chatter posted on both records.
+- [X] T064 [P] [US2] Idempotency test: `action_convert_to_quote()` re-invocation when `state='converted'` returns the existing order's `act_window` action without creating a duplicate `sale.order`.
+- [X] T065 [P] [US2] Pre-condition test: `action_convert_to_quote()` from `state='closed'` raises `UserError`.
 
 #### Implementation for US2 §D (GREEN)
 
-- [ ] T066 [US2] Implement `action_convert_to_quote()` in `custom_addons/multichannel_hub_core/models/multichannel_enquiry.py` per `contracts/enquiry_actions.md`. State guard at method entry. `_match_or_create_partner()` if `partner_id` empty. Create `sale.order` via `self.env['sale.order'].create({...})`. Stamp back-pointer + state in a single `write()`. Chatter on both records via `markupsafe.Markup % escape(...)` per memory `feedback_fr017_write_defense_in_depth.md` — defends against XSS on operator-supplied subject/notes (not paranoid, just consistent with P1-04's pattern).
-- [ ] T067 [US2] Run `odoo -d <db> -u multichannel_hub_core --stop-after-init`; run `--test-tags /multichannel_hub_core:TestEnquiryConvert`. Mark slice `P3-LEAD-CONVERT` `done` in tracker.
+- [X] T066 [US2] Implement `action_convert_to_quote()` in `custom_addons/multichannel_hub_core/models/multichannel_enquiry.py` per `contracts/enquiry_actions.md`. State guard at method entry. `_match_or_create_partner()` if `partner_id` empty. Create `sale.order` via `self.env['sale.order'].create({...})`. Stamp back-pointer + state in a single `write()`. Chatter on both records via `markupsafe.Markup % escape(...)` per memory `feedback_fr017_write_defense_in_depth.md` — defends against XSS on operator-supplied subject/notes (not paranoid, just consistent with P1-04's pattern).
+- [X] T067 [US2] Run `odoo -d <db> -u multichannel_hub_core --stop-after-init`; run `--test-tags /multichannel_hub_core:TestEnquiryConvert`. Mark slice `P3-LEAD-CONVERT` `done` in tracker.
 
 **Checkpoint US2**: All pre-sale paths live. SC-003 (convert in ≤3 clicks), FR-008, FR-009, FR-010 met.
 

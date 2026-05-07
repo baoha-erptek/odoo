@@ -257,6 +257,194 @@ class TestEnquiryPhase2(TransactionCase):
         with self.assertRaises(ValidationError):
             conv_enq.write({'state': 'qualified'})
 
+    def test_convert_from_qualified_state_creates_order(self):
+        """Test action_convert_to_quote() from 'qualified' state also works."""
+        enq = self._create_enquiry(
+            state='qualified',
+            partner_id=self.partner.id,
+        )
+        original_name = enq.name
+
+        action_result = enq.action_convert_to_quote()
+
+        # Check return is an action
+        self.assertIsNotNone(action_result)
+        self.assertEqual(action_result.get('type'), 'ir.actions.act_window')
+
+        # Check enquiry state updated
+        self.assertEqual(
+            enq.state, 'converted',
+            "Enquiry state must transition to 'converted' from 'qualified'"
+        )
+        self.assertTrue(
+            enq.converted_at,
+            "converted_at must be set"
+        )
+        self.assertIsNotNone(
+            enq.converted_order_id,
+            "converted_order_id must be set"
+        )
+
+        # Check order created
+        order = enq.converted_order_id
+        self.assertEqual(order.state, 'draft')
+        self.assertEqual(order.partner_id, self.partner)
+        self.assertEqual(order.origin, original_name)
+
+    def test_convert_idempotent_on_reinvoke(self):
+        """Test re-invocation when state='converted' returns existing order.
+
+        Idempotency (T064): call action twice on same enquiry; second call
+        returns the existing order's act_window action with res_id == first_order.id;
+        assert exactly one sale.order exists with origin=enq.name AND
+        partner_id=enq.partner_id; assert no second chatter message added.
+        """
+        # Setup: create enquiry and convert once
+        enq = self._create_enquiry(
+            state='new',
+            partner_id=self.partner.id,
+        )
+        first_action = enq.action_convert_to_quote()
+        first_order_id = enq.converted_order_id.id
+
+        # Count chatter messages after first convert
+        first_msg_count = len(enq.message_ids)
+
+        # Re-invoke action (idempotency test)
+        second_action = enq.action_convert_to_quote()
+
+        # Verify same order is returned
+        self.assertEqual(
+            second_action['res_id'], first_order_id,
+            "Second invocation should return same order"
+        )
+        self.assertEqual(
+            enq.converted_order_id.id, first_order_id,
+            "converted_order_id should not change"
+        )
+
+        # Verify no duplicate sale.order created
+        all_orders = self.env['sale.order'].search([
+            ('origin', '=', enq.name),
+            ('partner_id', '=', self.partner.id),
+        ])
+        self.assertEqual(
+            len(all_orders), 1,
+            "Only one sale.order should exist with same origin and partner"
+        )
+
+        # Verify no new chatter message posted on second invocation
+        second_msg_count = len(enq.message_ids)
+        self.assertEqual(
+            first_msg_count, second_msg_count,
+            "No new chatter message should be posted on idempotent re-call"
+        )
+
+    def test_convert_from_closed_raises_user_error(self):
+        """Test action_convert_to_quote() from 'closed' state raises UserError.
+
+        Pre-condition (T065): calling on state='closed' enquiry raises UserError.
+        Verify converted_order_id stays empty and no sale.order created.
+        """
+        enq = self._create_enquiry(
+            state='closed',
+            closed_reason='spam',
+        )
+
+        with self.assertRaises(UserError):
+            enq.action_convert_to_quote()
+
+        # Verify no order created
+        self.assertFalse(
+            enq.converted_order_id,
+            "converted_order_id should remain empty after error"
+        )
+        self.assertFalse(
+            enq.converted_at,
+            "converted_at should remain empty after error"
+        )
+
+        # Verify no sale.order created with enquiry name as origin
+        all_orders = self.env['sale.order'].search([
+            ('origin', '=', enq.name),
+        ])
+        self.assertEqual(
+            len(all_orders), 0,
+            "No sale.order should be created when conversion fails"
+        )
+
+    def test_convert_calls_match_or_create_partner_when_partner_id_empty(self):
+        """Test action_convert_to_quote() calls _match_or_create_partner.
+
+        When enquiry has no partner_id but has partner_email, the action
+        should call _match_or_create_partner() which creates/matches a partner,
+        then creates the order with that partner.
+        """
+        enq = self._create_enquiry(
+            state='new',
+            partner_id=False,
+            partner_email='newbuyer-p3convert@example.com',
+        )
+
+        action = enq.action_convert_to_quote()
+
+        # Verify partner was created/matched
+        self.assertIsNotNone(
+            enq.partner_id,
+            "partner_id should be populated by _match_or_create_partner()"
+        )
+        self.assertEqual(
+            enq.partner_id.email_normalized,
+            'newbuyer-p3convert@example.com',
+            "Partner email should match enquiry email"
+        )
+
+        # Verify order was created with the matched/created partner
+        order = enq.converted_order_id
+        self.assertIsNotNone(order)
+        self.assertEqual(
+            order.partner_id.id, enq.partner_id.id,
+            "Order partner must match enquiry partner"
+        )
+
+    def test_convert_chatter_xss_escaped_for_partner_email_with_html(self):
+        """Test chatter is safe when partner_email contains HTML.
+
+        Even if partner_email is updated elsewhere with HTML, the convert
+        action's chatter messages should not render raw script tags.
+        """
+        enq = self._create_enquiry(
+            state='new',
+            partner_id=self.partner.id,
+            partner_email='<script>alert("xss")</script>@example.com',
+        )
+
+        # Convert the enquiry
+        action = enq.action_convert_to_quote()
+
+        # Verify chatter body on the enquiry is safe
+        enq_messages = enq.message_ids.filtered(
+            lambda m: m.body and m.body.strip()
+        )
+        for msg in enq_messages:
+            self.assertNotIn(
+                '<script>',
+                msg.body,
+                "Enquiry chatter body must escape HTML"
+            )
+
+        # Verify chatter body on the order is safe
+        order = enq.converted_order_id
+        order_messages = order.message_ids.filtered(
+            lambda m: m.body and m.body.strip()
+        )
+        for msg in order_messages:
+            self.assertNotIn(
+                '<script>',
+                msg.body,
+                "Order chatter body must escape HTML"
+            )
+
     def test_match_partner_existing(self):
         """Test _match_or_create_partner() finds existing partner by email."""
         # Create existing partner
@@ -356,6 +544,23 @@ class TestEnquiryPhase2(TransactionCase):
         # User without group_sale_salesman cannot call action
         with self.assertRaises(UserError):
             enq.with_user(self.no_access_user).action_qualify()
+
+    def test_action_convert_to_quote_rpc_gated_for_no_group(self):
+        """Test action_convert_to_quote() RPC is gated by _check_sale_user_or_raise().
+
+        FR-017 12th confirmation: action-level RPC gate must reject users
+        without group_sale_salesman even when ACL would otherwise allow read.
+        """
+        enq = self._create_enquiry(state='new', partner_id=self.partner.id)
+
+        # User without group_sale_salesman cannot call action via RPC
+        with self.assertRaises(UserError):
+            enq.with_user(self.no_access_user).action_convert_to_quote()
+
+        # State and converted_order_id remain unchanged
+        enq.invalidate_recordset()
+        self.assertEqual(enq.state, 'new')
+        self.assertFalse(enq.converted_order_id)
 
     def test_partial_unique_enforced(self):
         """Test partial UNIQUE(etsy_shop_id, etsy_conversation_id) constraint.

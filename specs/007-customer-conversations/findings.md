@@ -140,3 +140,32 @@ Picked (2) so the Phase 1 FK assertion runs the strict branch (foreign-table = `
 **Trade-off**: 256-char excerpt may include buyer name/email/address fragments. Read access restricted to `etsy_integration.group_etsy_api_log_reader` (diagnostic group, narrow). Full message body lives in `mail.message` chatter (same sensitivity, same ACL stratum). If compliance audit later requires PII scrubbing, add a sanitization filter in `create()`. Out of scope for this slice.
 
 ---
+
+## P3-LEAD-CONVERT findings (2026-05-07)
+
+### Surprise 1: Spec-drift check at Phase 1 is load-bearing for "test-coverage" slices
+
+When a slice is scoped tightly (e.g., "polish action X") but a prior slice already bundled the implementation with its own scaffold, the planner must run a hard spec-drift check before scoping the work. P3-LEAD-CONVERT was billed as ~80 LOC + tests, but the impl had landed in P3-LEAD-MODEL (commit `31aa4b3f01d` lines 248-289). Wasted effort would have happened if the tdd-guide had been told "write failing tests, then implement" without the planner first reading `multichannel_enquiry.py:248`. Generalize: every Phase 1 plan must include a §"Spec drift check" that quotes existing field/method names verbatim and verifies they match the contract.
+
+### Surprise 2: Security review value-add on tests-only diffs is real
+
+The security-reviewer caught a missing RPC-gate test (`test_action_convert_to_quote_rpc_gated_for_no_group`) that the planner had flagged as the 12th FR-017 confirmation candidate but not added to the test list. Code-reviewer ran in parallel and did not catch it (different review lens). Conclusion: parallel reviewer redundancy is NOT redundant; it is targeted at orthogonal failure modes. Keep both passes mandatory even on tests-only diffs.
+
+### Surprise 3: Canonical "no-state-change after rejection" pattern
+
+```python
+with self.assertRaises(UserError):
+    enq.with_user(self.no_access_user).action_convert_to_quote()
+
+enq.invalidate_recordset()
+self.assertEqual(enq.state, "new")
+self.assertFalse(enq.converted_order_id)
+```
+
+`enq.refresh()` is removed in Odoo 19 (memory `feedback_odoo19_test_gotchas.md`). `invalidate_recordset()` is the replacement and is the right hook to verify a rejected RPC did not leave partial state behind. This pattern should propagate to all FR-017 RPC-gate tests in the project.
+
+### Surprise 4: Phase 2 + Phase 3 collapse is acceptable when impl already exists
+
+Playbook §"Acceptable shortcuts" allows skipping Phases 1, 2, 4, 8 only for trivial scaffolds (~50 LOC, no business logic). For a coverage slice where impl exists, Phases 2 (RED) and 3 (GREEN) collapse: tests are written and pass on first run against the existing implementation. This is NOT a shortcut; it is the natural shape of the work. The "RED-then-GREEN" cadence is satisfied at the *suite* level (the test set was missing → now it passes), not at each individual test invocation. Document this in the commit body so the cadence pattern is auditable.
+
+---
