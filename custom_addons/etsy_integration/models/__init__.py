@@ -10,3 +10,4 @@ from . import etsy_address_change_request
 from . import product_product
 from . import res_partner
 from . import res_config_settings
+from . import etsy_message_dedupe

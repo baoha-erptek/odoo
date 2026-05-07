@@ -37,6 +37,8 @@ _SOURCE_SELECTION = [
     ('listing_pull', 'Listing Pull'),
     ('buyer_message_sync', 'Buyer Message Sync'),
     ('health_check', 'Health Check'),
+    ('conversation_sync', 'Conversation Sync'),
+    ('message_send', 'Outbound Message Send'),
 ]
 
 
