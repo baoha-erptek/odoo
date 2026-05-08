@@ -17,6 +17,7 @@ This file is the operating manual every session should follow when picking up ma
 5. **Document drift is a defect.** If `tasks.md`, the tracker, an ADR, USER_GUIDE, or memory contradicts what was just implemented, fix the doc in the same commit (or the next one if it would balloon the diff).
 6. **Capture surprises immediately.** Every slice exits with `/learn` and (if anything was non-obvious) an entry in `specs/<spec>/findings.md`.
 7. **Code first, E2E later.** Finish the coding tasks for ALL active specs (002 + 005 + 003 + 004a) before moving to end-to-end testing. E2E is its own phase, not interleaved per slice. Per-slice tests stay at Phase 1 (DB) + Phase 2 (ORM unit) — those are mandatory.
+8. **Dispatch runs to completion without intermediate questions** (added 2026-05-08, owner directive). Once `/dispatch-slice` is invoked, run the full 9-phase loop end-to-end. Pick the recommended option for every in-slice choice (the one that would have been listed first in an `AskUserQuestion`); record the choice + rejected alternatives in `findings.md` and the commit body. Out-of-scope issues found mid-slice get a tracker `todo` row, not a pause. STOP-and-escalate is preserved (see "When the playbook breaks") for *contradicting* ADRs / *missing* preconditions / data-destroying ambiguity — pause-and-ask on minor UX or scope-trim choices is forbidden during dispatch. See memory `feedback_dispatch_run_to_completion.md`.
 
 ## Owner voice — E2 v1.2 red-feedback alignment (2026-05-03)
 
