@@ -1159,3 +1159,51 @@ Security-reviewer flagged: `attachment_ids = Many2many('ir.attachment')` accepts
 
 mhc `19.0.1.0.25 → 19.0.1.0.26`.
 
+
+
+---
+
+## P1-DESIGN-MULTI-DOC — sibling-archive vs design.file.route interaction (2026-05-08)
+
+Doc-only prep slice for P1-DESIGN-AUTO-ARCHIVE. Lands the ADR-009 "Amendment" line + this finding. No code, no tests.
+
+### The interaction question
+
+P1-DESIGN-AUTO-ARCHIVE will sweep `active=False` onto non-approved sibling `design.file` rows when one peer is approved. Does that strand any `design.file.route` records? **Answer: no.** Verified by reading the route dispatch filter in `sale_order.py:_after_confirm_routing`:
+
+```python
+approved_files = order.order_line.design_file_ids.filtered(
+    lambda f: f.state == 'approved'
+)
+for design_file in approved_files:
+    Router.dispatch(design_file.id)
+```
+
+Routes are created only for `state='approved'` files. Non-approved siblings (the ones that will get `active=False`) have empty `route_ids` to begin with — there's nothing to strand. The approved file keeps `active=True` so its `route_ids` traversal continues to work. `design.file.route._check_recipient_xor` and the `design_file_route_design_file_id_state_idx` index are unaffected because no route records change ownership.
+
+### Why a separate `active` flag rather than re-introducing `state='archived'`
+
+The 5-state machine in ADR-009 §2 (`draft / awaiting_approval / approved / needs_revision / archived`) was simplified to 3 states (`pending / approved / rejected`) during P1-02a MVP. Adding a new state for "auto-archived sibling" would either:
+
+- conflict with the existing 3-state contract (and break every place that pattern-matches on the literal state values), or
+- require a 6th state which adds operator confusion ("is this rejected, or auto-archived?").
+
+`active=False` is the standard Odoo idiom for "still in the table for audit, not in the default view". Kanban, list, and search views auto-filter `[('active','=',True)]`. ZERO view changes needed. The `state` field stays untouched on swept siblings — operator can still see why each sibling was non-approved (still `pending` waiting for review, or `rejected` with a reason).
+
+### Migration / one-time backfill
+
+Existing `state='rejected'` rows pre-dating this rule stay `active=True` (no retroactive archival). The rule fires only on FUTURE `state='approved'` writes. This preserves operator visibility into past rejections in the kanban. Phase 2 ORM test will codify: a fixture rejected row created before any approval stays `active=True`; the moment a sibling is approved, the rejected row flips because `rejected != approved`.
+
+### Sibling scope
+
+Line-level vs order-level files have different sibling sets:
+
+- `order_line_id IS NOT NULL` → siblings = `design.file.search([('order_line_id', '=', self.order_line_id.id), ('id', '!=', self.id)])`
+- `order_line_id IS NULL` (order-level mockup) → siblings = `design.file.search([('order_id', '=', self.order_id.id), ('order_line_id', '=', False), ('id', '!=', self.id)])`
+
+A line-level approval should NOT archive an order-level mockup, and vice versa — they're conceptually different (order-level mockup is the proof for the whole order; line-level is per-product).
+
+### Approvals
+
+- Doc-only slice; no code reviews required (playbook trivial-slice shortcut).
+
