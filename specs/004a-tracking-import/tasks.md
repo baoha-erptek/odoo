@@ -147,3 +147,79 @@ Legend: `[ ]` open, `[X]` done, `[~]` partial.
 - [X] **T2-02-22** Server action + button in views: list-view bulk action calls `action_re_detect_carriers()`.
 
 ## Phase 4-8 — Review/Verify/Commit/Document/Learn (orchestrator inline; no separate task IDs).
+
+---
+
+# Tasks — Spec 004a Slice P2-03
+
+**Slice**: P2-03 Process Dashboard "Đã sản xuất" stock-move hook (US3, FR-016..FR-020)
+**Module**: `multichannel_hub_fulfillment` (extension of `sale.order.fulfillment` mixin from `multichannel_hub_core`; new `stock.move` field in mhf)
+**Branch**: `feature/006-master-plan-coding`
+**Spec drift note**: see `findings.md` P2-03 entry — code uses `fulfillment_status='produced'` (not `production_stage='da_san_xuat'`), `warehouse_zone` Selection (not `warehouse_id` M2O), final states `shipped`/`delivered`/`cancelled` (not `shipped`/`done`/`cancel`).
+
+## Phase 2 — RED (tdd-guide agent)
+
+### Phase 1 — DB schema tests
+- [X] **T2-03-01** `test_phase1_db.py::test_stock_move_purpose_column_exists` — query `information_schema.columns` for `stock_move.purpose` (Char/Varchar).
+- [X] **T2-03-02** `test_phase1_db.py::test_stock_move_purpose_unique_constraint` — query `pg_constraint` for `stock_move_order_purpose_uniq` UNIQUE on `(sale_order_id_or_origin_ref, purpose)` (exact column name TBD by Phase 3 design — confirm during GREEN; test asserts the constraint exists by name).
+- [X] **T2-03-03** `test_phase1_db.py::test_production_locations_icp_optional` — ICP `multichannel_hub_fulfillment.production_locations` may be empty after install (fail-open path); presence is not required.
+
+### Phase 2 — ORM behavior tests
+- [X] **T2-03-04** `test_phase2_orm.py::test_hook_fires_on_transition_to_produced` — write `fulfillment_status='produced'` from `'in_progress'`; assert exactly one `stock.move` exists with `purpose='production_completion'` linked to the order.
+- [X] **T2-03-05** `test_phase2_orm.py::test_hook_idempotent_on_repeat_write` — call `write({'fulfillment_status': 'produced'})` a second time on a record already at `'produced'`; assert no duplicate move (still exactly one).
+- [X] **T2-03-06** `test_phase2_orm.py::test_hook_idempotent_via_savepoint_rollback` — simulate concurrent transition (two records, manual `psycopg2.IntegrityError` re-raise path); assert second create is caught, no UserError leaks.
+- [X] **T2-03-07** `test_phase2_orm.py::test_hook_resolves_locations_from_warehouse_zone_vn` — set ICP map for `vn` zone; assert move's `location_id` + `location_dest_id` resolve to mapped xmlids.
+- [X] **T2-03-08** `test_phase2_orm.py::test_hook_resolves_locations_from_warehouse_zone_us` — same for `us` zone.
+- [X] **T2-03-09** `test_phase2_orm.py::test_hook_fail_open_on_missing_icp` — empty ICP; transition succeeds (no UserError); `fulfillment_status` does become `'produced'`; sync.health record `name='production_completion'`, `kind='warning'`, message names the missing zone; **no** stock.move created.
+- [X] **T2-03-10** `test_phase2_orm.py::test_hook_fail_open_on_unresolved_xmlid` — ICP has zone but xmlid points at deleted/missing record; same fail-open behavior as T2-03-09.
+- [X] **T2-03-11** `test_phase2_orm.py::test_hook_qty_from_storable_lines` — order with 3 storable lines (qty 2, 5, 1) and 1 service line; assert move quantity = 8 (sum of storable only).
+- [X] **T2-03-12** `test_phase2_orm.py::test_hook_skips_zero_storable_lines` — order with all-service lines; transition succeeds; sync.health logs info `'No stock move: no storable products on order X'`; no move created; `fulfillment_status` does become `'produced'`.
+- [X] **T2-03-13** `test_phase2_orm.py::test_hook_blocks_final_state_transition` — order at `'shipped'`; attempt `write({'fulfillment_status': 'produced'})`; raises `UserError` per FR-020.
+- [X] **T2-03-14** `test_phase2_orm.py::test_hook_blocks_delivered_state` — same for `'delivered'`.
+- [X] **T2-03-15** `test_phase2_orm.py::test_hook_blocks_cancelled_state` — same for `'cancelled'`.
+- [X] **T2-03-16** `test_phase2_orm.py::test_hook_no_move_on_non_produced_transition` — `pending → in_progress`; assert zero stock.moves with `purpose='production_completion'` for the order.
+- [X] **T2-03-17** `test_phase2_orm.py::test_hook_records_sync_health_on_success` — successful transition → `etsy.sync.health` event `kind='production_completion'` with `ok=1`.
+- [X] **T2-03-18** `test_phase2_orm.py::test_hook_respects_address_change_lock` — order with `has_pending_address_change=True`; `fulfillment_status` is NOT in `_ADDRESS_LOCK_FIELDS` (verify); transition still works (FR-017 governs ship-fields, not production stage). If verification reveals `fulfillment_status` IS in lock-fields, then test the inverse: transition is blocked. Document outcome in findings.md.
+
+## Phase 3 — GREEN
+
+- [X] **T2-03-19** Add `purpose` Char field to `stock.move` via new file `models/stock_move.py` in `multichannel_hub_fulfillment`. Field is indexed; `_sql_constraints` declares `(stock_move_order_purpose_uniq, UNIQUE(<order-link-column>, purpose))`. Use the actual stock.move column that links to the order — `sale_line_id` chains to `sale.order.line.order_id`; OR add a direct `sale_order_id` Many2one on stock.move (cleaner — recommend this). Document choice in commit body.
+- [X] **T2-03-20** Mirror the UNIQUE constraint via `init()` raw SQL with `pg_constraint IF NOT EXISTS` pre-check (drift template per memory `project_sql_constraints_drift.md` — 7th use). Add inline comment citing why (sql_constraints not deployed across multi-addon installs).
+- [X] **T2-03-21** Implement hook method `_action_complete_production()` on `sale.order.fulfillment` (extension file in `multichannel_hub_fulfillment/models/sale_order_fulfillment.py` — new file or extend if exists). Method: resolves `(src, dst)` xmlids from ICP `multichannel_hub_fulfillment.production_locations` keyed by `self.warehouse_zone`; computes qty from `self.order_id.order_line.filtered(lambda l: l.product_id.type in ('product', 'consu'))`; creates one `stock.move` with `purpose='production_completion'` and `sale_order_id=self.order_id.id`; catches `psycopg2.IntegrityError` for race-idempotency; catches `ValueError`/missing-xmlid for fail-open; writes to `etsy.sync.health` via the optional-discovery pattern (mirror `services/tracking_importer.py:198 record_sync_health`).
+- [X] **T2-03-22** Override `write()` on the fulfillment extension to detect `fulfillment_status` transition from non-final state to `'produced'` and call `_action_complete_production()`. Block writes from final states (`'shipped'`/`'delivered'`/`'cancelled'`) → `'produced'` with `UserError`. Detection must batch-aware (handle `len(self) > 1` correctly).
+- [X] **T2-03-23** Add ICP default in `data/production_locations_data.xml` (or migration script) — set `multichannel_hub_fulfillment.production_locations` to `'{}'` on install. Operator populates per warehouse via Settings.
+- [X] **T2-03-24** Add migration `migrations/19.0.1.0.X/post-init-production-icp.py` initializing the ICP if not set.
+- [X] **T2-03-25** Update `__manifest__.py` — register `models/stock_move.py` import + new data file; bump version. Add `stock` to `depends` if not already present.
+- [X] **T2-03-26** Add `etsy.sync.health` `kind='production_completion'` to the value list (if model uses Selection on `kind`) — coordinate with etsy_integration. If `kind` is free-text Char, no change needed.
+- [X] **T2-03-27** Vietnamese strings: any new user-visible message (UserError, sync.health labels) declared in `_(…)` for i18n.
+
+## Phase 4 — Review (parallel: code-reviewer + security-reviewer)
+
+- [X] **T2-03-28** Code-reviewer focus: N+1 in qty calc loop, idempotency race-condition correctness (`IntegrityError` catch scope), savepoint discipline around the `create()`, no `_logger.info` for routine events, function length ≤50 LOC, batch-aware `write()` override.
+- [X] **T2-03-29** Security-reviewer focus: fail-open path doesn't swallow real DB errors (only `IntegrityError` on the unique constraint + missing-xmlid `ValueError`); `sudo()` on cross-module sync.health write is commented; `UserError` message doesn't leak internal record IDs; no raw SQL in hook (only in `init()` mirror with rationale).
+- [X] **T2-03-30** Resolve all CRITICAL/HIGH inline; document trade-offs in commit body.
+
+## Phase 5 — Verify
+
+- [X] **T2-03-31** `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_fulfillment --stop-after-init` exit 0.
+- [X] **T2-03-32** `--test-tags /multichannel_hub_fulfillment` exit 0.
+- [X] **T2-03-33** Full regression: `--test-tags /multichannel_hub_core,/multichannel_hub_fulfillment,/etsy_integration` exit 0.
+- [X] **T2-03-34** `ruff check custom_addons/multichannel_hub_fulfillment/` exit 0.
+- [X] **T2-03-35** `grep -rn "_logger.info\|print(" custom_addons/multichannel_hub_fulfillment/models/ custom_addons/multichannel_hub_fulfillment/services/` returns empty.
+
+## Phase 6 — Commit
+
+- [X] **T2-03-36** RED commit: `[multichannel_hub_fulfillment] test(P2-03): RED stock-move hook on production transition` citing T2-03-01..T2-03-18.
+- [X] **T2-03-37** GREEN commit: `[multichannel_hub_fulfillment] feat(P2-03): GREEN production stock-move hook with idempotency + fail-open` citing T2-03-19..T2-03-27.
+
+## Phase 7 — Document
+
+- [X] **T2-03-38** Mark all T2-03-* `[X]` in this file.
+- [X] **T2-03-39** Tracker change-log: `2026-05-XX: P2-03 GREEN landed on feature/006-master-plan-coding ...`.
+- [X] **T2-03-40** Tracker P2-03 row → `state=done` with commit hashes + counts.
+- [X] **T2-03-41** Update `findings.md` with: Odoo 19 stock.move auto-confirm behavior outcome, address-change-lock interaction with `fulfillment_status`, any race-condition surprises observed during tests.
+
+## Phase 8 — Learn
+
+- [X] **T2-03-42** `/learn` to capture: stock.move purpose-based idempotency template, fail-open ICP-resolution pattern, race-condition handling via `IntegrityError` catch, batch-aware `write()` override for stage transitions.
+
