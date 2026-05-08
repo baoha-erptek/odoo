@@ -104,11 +104,15 @@
                 <field name="version"/>
                 <field name="storage_mode"/>
                 <field name="approved_by"/>
+                <field name="preview_file"/>
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click">
                             <div class="o_kanban_record_top">
                                 <strong><field name="name"/></strong>
+                            </div>
+                            <div class="o_kanban_image text-center">
+                                <field name="preview_file" widget="image" class="o_image_64_cover"/>
                             </div>
                             <div class="o_kanban_record_body">
                                 <field name="order_id"/>

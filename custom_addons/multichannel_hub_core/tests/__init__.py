@@ -8,6 +8,7 @@ from . import test_rate_limiter
 from . import test_dashboards_db
 from . import test_order_dashboard
 from . import test_design_file_db
+from . import test_design_file_kanban_thumb
 from . import test_design_file_lifecycle
 from . import test_design_file_lifecycle_p1_02b
 from . import test_tracking_dashboard_db

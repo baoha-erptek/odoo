@@ -329,6 +329,62 @@ class DesignFile(models.Model):
     # @api.constrains can't see the OLD state once the write has applied
     # (Odoo's _origin == self for stored writes).
 
+    @staticmethod
+    def _generate_preview_blob(design_blob):
+        """Return raw JPEG thumbnail bytes for `design_blob` or None.
+
+        Lazy-import keeps the test mock target stable
+        (`...services.design_thumbnail_generator.ThumbnailGenerator`) and
+        avoids loading PIL at registry-build time. Best-effort: any
+        exception is swallowed and a WARNING is logged so a corrupt
+        upload never blocks design.file creation.
+        """
+        if not design_blob:
+            return None
+        try:
+            raw = base64.b64decode(design_blob) if isinstance(design_blob, (bytes, str)) else None
+        except (TypeError, ValueError, base64.binascii.Error):
+            raw = design_blob if isinstance(design_blob, bytes) else None
+        if not raw:
+            return None
+        try:
+            from odoo.addons.multichannel_hub_core.services.design_thumbnail_generator import (
+                ThumbnailGenerator,
+            )
+            preview = ThumbnailGenerator().generate_thumbnail(raw)
+        except Exception:  # noqa: BLE001 — best-effort
+            _logger.warning(
+                "design.file: preview thumbnail generation raised; record will be saved without preview_file.",
+                exc_info=True,
+            )
+            return None
+        if not preview:
+            _logger.warning(
+                "design.file: preview thumbnail generator returned no data "
+                "(unsupported MIME, RGBA-only mode, or corrupt blob); "
+                "record will be saved without preview_file."
+            )
+        return preview
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Auto-populate preview_file from design_file blob (best-effort).
+
+        Skipped when `preview_file` is already set in vals (caller-supplied
+        thumbnail wins) or when there is no `design_file` blob (URL/GDrive
+        modes). Failures are non-fatal — the record is created without
+        a preview rather than blocking the upload.
+        """
+        for vals in vals_list:
+            blob = vals.get('design_file')
+            if blob and not vals.get('preview_file'):
+                preview = self._generate_preview_blob(blob)
+                if preview:
+                    # ir.attachment.create assumes Binary values are
+                    # base64-encoded — raw bytes break with "Incorrect padding".
+                    vals['preview_file'] = base64.b64encode(preview)
+        return super().create(vals_list)
+
     def write(self, vals):
         """Gate state writes by destination + enforce state machine.
 
