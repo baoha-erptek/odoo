@@ -305,3 +305,109 @@ class TestTrackingImportWizardDB(TransactionCase):
             "At least 2 ACL rows should be defined for tracking.import.wizard "
             "(group_ba_shipping, group_ba_manager)"
         )
+
+
+@tagged('post_install', '-at_install')
+class TestP204Views(TransactionCase):
+    """Phase 1: Database verification for P2-04 tracking import log visibility + replay.
+
+    Tests verify:
+    - schema_hash field is visible in list view (not hidden)
+    - Smart-button action for today's imports exists
+    - action_replay_line method exists on tracking.import.line
+    - action_resolve_conflict method exists on tracking.import.line
+    - _recount_summary method exists on tracking.import.log
+    """
+
+    def test_tracking_import_log_schema_hash_visible(self):
+        """T2-04-01: schema_hash field is not hidden in list view.
+
+        Assert that the list view XML for tracking.import.log has schema_hash
+        without optional="hide" attribute (or optional is not set).
+        """
+        list_view = self.env.ref(
+            'multichannel_hub_fulfillment.view_tracking_import_log_list',
+            raise_if_not_found=False
+        )
+
+        self.assertIsNotNone(
+            list_view,
+            "List view view_tracking_import_log_list should exist"
+        )
+
+        # Parse XML arch and check for schema_hash field
+        arch_str = list_view.arch
+
+        self.assertIn(
+            'schema_hash',
+            arch_str,
+            "schema_hash field should be present in list view"
+        )
+
+        # Verify schema_hash is not hidden
+        # If optional="hide" is present, the test should fail
+        import re
+        schema_hash_pattern = r'<field\s+name="schema_hash"[^>]*/?>'
+        match = re.search(schema_hash_pattern, arch_str)
+
+        self.assertIsNotNone(
+            match,
+            "schema_hash field should be defined in list view XML"
+        )
+
+        # Check that optional="hide" is NOT present on schema_hash
+        field_xml = match.group(0)
+        self.assertNotIn(
+            'optional="hide"',
+            field_xml,
+            "schema_hash should not have optional='hide' attribute"
+        )
+
+    def test_smart_button_action_today_imports_exists(self):
+        """T2-04-02: Smart-button action for today's imports is registered.
+
+        Assert that ir.actions.act_window with xmlid
+        action_tracking_import_log_today exists and is accessible.
+        """
+        action = self.env.ref(
+            'multichannel_hub_fulfillment.action_tracking_import_log_today',
+            raise_if_not_found=False
+        )
+
+        self.assertIsNotNone(
+            action,
+            "Smart-button action_tracking_import_log_today should be registered"
+        )
+
+    def test_action_replay_line_method_exists(self):
+        """T2-04-03: action_replay_line method exists on tracking.import.line.
+
+        Assert that the tracking.import.line model has the action_replay_line
+        method defined.
+        """
+        self.assertTrue(
+            hasattr(self.env['tracking.import.line'], 'action_replay_line'),
+            "tracking.import.line should have action_replay_line method"
+        )
+
+    def test_action_resolve_conflict_method_exists(self):
+        """T2-04-04: action_resolve_conflict method exists on tracking.import.line.
+
+        Assert that the tracking.import.line model has the action_resolve_conflict
+        method defined.
+        """
+        self.assertTrue(
+            hasattr(self.env['tracking.import.line'], 'action_resolve_conflict'),
+            "tracking.import.line should have action_resolve_conflict method"
+        )
+
+    def test_recount_summary_method_exists(self):
+        """T2-04-05: _recount_summary method exists on tracking.import.log.
+
+        Assert that the tracking.import.log model has the _recount_summary
+        method defined.
+        """
+        self.assertTrue(
+            hasattr(self.env['tracking.import.log'], '_recount_summary'),
+            "tracking.import.log should have _recount_summary method"
+        )

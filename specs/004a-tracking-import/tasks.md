@@ -223,3 +223,82 @@ Legend: `[ ]` open, `[X]` done, `[~]` partial.
 
 - [X] **T2-03-42** `/learn` to capture: stock.move purpose-based idempotency template, fail-open ICP-resolution pattern, race-condition handling via `IntegrityError` catch, batch-aware `write()` override for stage transitions.
 
+---
+
+# Tasks — Spec 004a Slice P2-04
+
+**Slice**: P2-04 Tracking import log visibility + replay (US4)
+**Module**: `multichannel_hub_fulfillment`
+**Branch**: `feature/006-master-plan-coding`
+**Plan archive**: [_archive/p2-04-plan.md](_archive/p2-04-plan.md)
+
+Depends on: P2-01 ✓, P2-02 ✓
+
+## Phase 2 — RED (tdd-guide agent)
+
+### Phase 1 — DB schema/view tests (`tests/test_phase1_db.py` — append)
+
+- [ ] **T2-04-01** `test_tracking_import_log_schema_hash_visible` — assert list view XML has no `optional="hide"` on `schema_hash`.
+- [ ] **T2-04-02** `test_smart_button_action_exists` — assert today-filter `ir.actions.act_window` registered for `tracking.import.log`.
+- [ ] **T2-04-03** `test_tracking_import_line_action_replay_line_exists` — assert `action_replay_line` method on `tracking.import.line`.
+- [ ] **T2-04-04** `test_tracking_import_line_action_resolve_conflict_exists` — assert `action_resolve_conflict` method on `tracking.import.line`.
+- [ ] **T2-04-05** `test_tracking_import_log_recount_summary_exists` — assert `_recount_summary` method on `tracking.import.log`.
+
+### Phase 2 — ORM behavior tests (`tests/test_phase2_orm_p2_04.py` — new file)
+
+- [ ] **T2-04-06** `test_action_replay_line_reruns_resolve_orders` — error line for an order_number that becomes valid after fix; replay; assert state transitions to `matched` with `sale_order_id` set.
+- [ ] **T2-04-07** `test_action_replay_line_reruns_carrier_detection` — matched line; replay; assert `applied_carrier_id` populated via P2-02 detector.
+- [ ] **T2-04-08** `test_action_replay_line_reruns_fulfillment_write` — error line; underlying issue resolved; replay; assert `tracking_number` written on fulfillment + line state `imported`.
+- [ ] **T2-04-09** `test_action_replay_line_savepoint_rollback_on_error` — replay where fulfillment write raises `ValidationError`; assert state remains `error`, no partial writes.
+- [ ] **T2-04-10** `test_action_replay_line_updates_parent_summary` — log with 3 lines (1 matched, 1 unmatched, 1 error); replay error line successfully; assert parent counts recomputed (`error_count -1`, `imported_count +1`).
+- [ ] **T2-04-11** `test_conflict_line_operator_selects_candidate_order` — conflict line with 2 candidates; call `action_resolve_conflict(selected_order_id)`; assert `sale_order_id` set, state `matched`, parent log chatter has audit message.
+- [ ] **T2-04-12** `test_action_replay_line_gated_to_ba_shipping` — non-BA user calls; assert `AccessError` raised (FR-017 13th confirmation).
+- [ ] **T2-04-13** `test_action_resolve_conflict_gated_to_ba_shipping` — non-BA user calls; assert `AccessError`.
+- [ ] **T2-04-14** `test_action_resolve_conflict_rejects_non_conflict_state` — line with `state='matched'`; call resolve; assert `ValidationError`.
+- [ ] **T2-04-15** `test_smart_button_action_filters_by_today` — call `action_view_today_imports` from log; assert returned domain includes `('create_date', '>=', today)`.
+- [ ] **T2-04-16** `test_replay_idempotent_on_duplicate_call` — replay imported line twice; assert no duplicate stock.move (UNIQUE purpose marker holds from P2-03).
+
+## Phase 3 — GREEN
+
+- [ ] **T2-04-17** `views/tracking_import_views.xml` — remove `optional="hide"` on `schema_hash` field in list view.
+- [ ] **T2-04-18** `views/tracking_import_views.xml` — add inline `Re-process` button on `line_ids` one2many embedded list, invisible when `state == 'imported'`.
+- [ ] **T2-04-19** `views/tracking_import_views.xml` — add candidate-domain on `sale_order_id` widget for conflict lines: `domain="[('channel_order_ref', '=', raw_order_number)]"` when `state == 'conflict'`.
+- [ ] **T2-04-20** `views/tracking_import_views.xml` — add `oe_stat_button` linking to `action_view_today_imports` on log form.
+- [ ] **T2-04-21** `models/tracking_import_line.py` — implement `action_replay_line()` (FR-017 gate, savepoint per record, calls `tracking_importer.resolve_orders` → `carrier_detector.detect_carrier` → `apply_to_fulfillment`, on success calls `log._recount_summary()`).
+- [ ] **T2-04-22** `models/tracking_import_line.py` — implement `action_resolve_conflict(selected_order_id)` (FR-017 gate, ensure_one, candidate validation, write `sale_order_id` + state, post audit message to parent log chatter).
+- [ ] **T2-04-23** `models/tracking_import_log.py` — implement `_recount_summary()` using `read_group` on child line states.
+- [ ] **T2-04-24** `models/tracking_import_log.py` — implement `action_view_today_imports()` returning `ir.actions.act_window` with Python-computed today domain (avoids XML `timedelta` serialization).
+- [ ] **T2-04-25** `views/etsy_sync_health_smartbutton.xml` — new file extending `etsy.sync.health` form with conditional smart-button (`invisible="name != 'gke_tracking_import'"`).
+- [ ] **T2-04-26** Add Python helper `etsy.sync.health.action_view_gke_today` (in mhf `models/etsy_sync_health.py` extension or as `_inherit`) returning the same `act_window`. Verify dependency chain (mhf → etsy_integration must be transitive via mhc; if not, use `getattr` probe per `feedback_odoo19_test_gotchas.md`).
+- [ ] **T2-04-27** `__manifest__.py` — bump version `19.0.1.0.14` → `19.0.1.0.15`; register `views/etsy_sync_health_smartbutton.xml`.
+
+## Phase 4 — Review (parallel: code-reviewer + security-reviewer)
+
+- [ ] **T2-04-28** Code-reviewer: function length ≤50 LOC, savepoint scope correctness, `read_group` perf, no N+1 in bulk replay loop, no premature abstractions.
+- [ ] **T2-04-29** Security-reviewer: FR-017 gate present on both action methods, chatter message escaped/safe (use `markupsafe.escape` if injecting raw user input), no `sudo()` without inline rationale, no raw SQL.
+- [ ] **T2-04-30** Resolve all CRITICAL/HIGH inline; document trade-offs in commit body.
+
+## Phase 5 — Verify
+
+- [ ] **T2-04-31** `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_fulfillment --stop-after-init` exit 0.
+- [ ] **T2-04-32** `docker exec namco_odoo19 odoo -d namco_odoo19 --test-tags /multichannel_hub_fulfillment --stop-after-init` exit 0.
+- [ ] **T2-04-33** Cross-module regression: `--test-tags /multichannel_hub_core,/multichannel_hub_fulfillment,/etsy_integration` exit 0.
+- [ ] **T2-04-34** `ruff check custom_addons/multichannel_hub_fulfillment/` exit 0 (if available).
+- [ ] **T2-04-35** `grep -rn "_logger.info\|print(" custom_addons/multichannel_hub_fulfillment/{models,views,services} ` returns no debugging artifacts.
+
+## Phase 6 — Commit
+
+- [ ] **T2-04-36** RED commit: `[multichannel_hub_fulfillment] test(P2-04): RED replay + conflict resolver tests` citing T2-04-01..T2-04-16.
+- [ ] **T2-04-37** GREEN commit: `[multichannel_hub_fulfillment] feat(P2-04): GREEN tracking-import log visibility + per-line replay + conflict resolver` citing T2-04-17..T2-04-27.
+
+## Phase 7 — Document
+
+- [ ] **T2-04-38** Mark all T2-04-* `[X]` in this file.
+- [ ] **T2-04-39** Tracker change-log entry for 2026-05-XX P2-04 landing.
+- [ ] **T2-04-40** Tracker P2-04 row → `state=done` with commit hashes.
+- [ ] **T2-04-41** Update `findings.md` with: conflict-chatter location decision (parent log), replay idempotency notes, FR-017 13th confirmation, smart-button layering decision.
+
+## Phase 8 — Learn
+
+- [ ] **T2-04-42** `/learn` to capture: per-line replay savepoint pattern (reusable for other row-level undo flows), `_recount_summary` via `read_group`, smart-button Python-domain pattern (avoids XML timedelta), chatter audit on parent when child has no `mail.thread`.
+

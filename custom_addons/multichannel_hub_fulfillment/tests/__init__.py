@@ -20,6 +20,7 @@ from . import test_p1_drop_callsite
 from . import test_p1_drop_callsite_phase1
 from . import test_p2_03_production_hook_db
 from . import test_p2_03_production_hook_orm
+from . import test_phase2_orm_p2_04
 
 __all__ = [
     'test_gearment_api_client',
@@ -42,4 +43,5 @@ __all__ = [
     'test_p1_drop_callsite_phase1',
     'test_p2_03_production_hook_db',
     'test_p2_03_production_hook_orm',
+    'test_phase2_orm_p2_04',
 ]
