@@ -163,3 +163,120 @@ class TrackingImportLine(models.Model):
                 'needs_review': needs_review,
             })
         return True
+
+    # ------------------------------------------------------------------
+    # P2-04 — replay + conflict resolution actions.
+    # ------------------------------------------------------------------
+    def action_replay_line(self):
+        """Re-run the import pipeline (resolve → detect → apply) per line.
+
+        Each line is processed in its own savepoint so a failure on one
+        line does not abort the others. After all lines are processed,
+        the parent log's summary counts are recomputed via
+        `_recount_summary`. Skips lines already in `'imported'` terminal
+        state.
+
+        FR-017 (13th confirmation): RPC-gated to BA Shipping operators.
+
+        sudo: replay touches sale.order + sale.order.fulfillment for
+        data reconciliation; BA Shipping group does not grant Sales/User
+        directly. Bypass is bounded — caller is already gated by
+        `_check_ba_shipping_or_raise`, and writes are restricted to the
+        same fields the original wizard import touches.
+        """
+        self._check_ba_shipping_or_raise()
+        from ..services import (
+            tracking_importer, carrier_detector,
+        )
+        sudo_env = self.env(su=True)
+        compiled = carrier_detector._compiled_cache_for(sudo_env)
+        other = carrier_detector._other_carrier(sudo_env)
+
+        # Batch resolve the whole recordset first — `resolve_orders` does
+        # two bulk searches regardless of input size, so calling it once
+        # on N lines is O(2 queries), vs N×2 queries when called per line.
+        replayable = self.sudo().filtered(lambda l: l.state != 'imported')
+        if replayable:
+            tracking_importer.resolve_orders(sudo_env, replayable)
+
+        for line in replayable:
+            try:
+                with self.env.cr.savepoint():
+                    if line.state == 'matched' and line.raw_tracking_number:
+                        carrier, needs_review = carrier_detector.detect_carrier(
+                            sudo_env, line.raw_tracking_number,
+                            compiled=compiled, other=other)
+                        line.write({
+                            'detected_carrier_id': (
+                                carrier.id if carrier else False),
+                            'needs_review': needs_review,
+                        })
+                    if line.state == 'matched':
+                        tracking_importer.apply_to_fulfillment(
+                            sudo_env, line)
+            except Exception as exc:  # noqa: BLE001 — per-row isolation
+                # Post-savepoint write: cursor is still valid after rollback;
+                # only the DB state inside the `with` block was discarded, so
+                # this `line.write` reaches the parent transaction safely.
+                line.write({
+                    'state': 'error',
+                    'error_message': tracking_importer._scrub(str(exc)),
+                })
+
+        self.mapped('log_id').sudo()._recount_summary()
+        return True
+
+    def action_resolve_conflict(self, selected_order_id):
+        """Operator picks one of N candidate orders for a conflict line.
+
+        Writes `sale_order_id` + flips state to `'matched'`. Posts an
+        audit message to the **parent log's** chatter (line itself has
+        no `mail.thread` by design — high volume).
+
+        FR-017 (13th confirmation): RPC-gated to BA Shipping operators.
+
+        sudo: candidate enumeration reads sale.order; BA Shipping does
+        not grant Sales/User. Bypass is bounded — caller is already
+        gated by `_check_ba_shipping_or_raise`, only the M2O link is
+        written, and the chatter post records the choice for audit.
+        """
+        self._check_ba_shipping_or_raise()
+        self.ensure_one()
+        if self.state != 'conflict':
+            raise ValidationError(_(
+                "Line on row %(row)s is not in 'conflict' state.",
+                row=self.row_number,
+            ))
+        SaleOrder = self.env['sale.order'].sudo()
+        selected = SaleOrder.browse(selected_order_id)
+        if not selected.exists():
+            raise ValidationError(_(
+                "Selected order %(id)s does not exist.",
+                id=selected_order_id,
+            ))
+        candidates = SaleOrder.search([
+            ('channel_order_ref', '=', self.raw_order_number)
+        ])
+        candidate_names = ', '.join(candidates.mapped('display_name')) or '—'
+
+        fulfillment = (
+            selected.fulfillment_id
+            if 'fulfillment_id' in selected._fields
+            else False
+        )
+        vals = {
+            'sale_order_id': selected.id,
+            'state': 'matched',
+        }
+        if fulfillment:
+            vals['fulfillment_id'] = fulfillment.id
+        self.sudo().write(vals)
+
+        self.log_id.sudo().message_post(body=_(
+            "Row %(row)s: conflict resolved → %(sel)s "
+            "(candidates were: %(c)s)",
+            row=self.row_number,
+            sel=selected.display_name,
+            c=candidate_names,
+        ))
+        return True

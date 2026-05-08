@@ -155,3 +155,43 @@ class TrackingImportLog(models.Model):
                         "finish_at must be >= start_at on %(name)s.",
                         name=log.name,
                     ))
+
+    # ------------------------------------------------------------------
+    # P2-04 — replay support + smart-button.
+    # ------------------------------------------------------------------
+    def _recount_summary(self):
+        """Recompute summary counts from child line state distribution.
+
+        Called after `action_replay_line` mutates a line's state. Uses
+        `read_group` for DB-side aggregation (acceptable up to ~5K lines).
+        """
+        Line = self.env['tracking.import.line']
+        for log in self:
+            groups = Line.read_group(
+                [('log_id', '=', log.id)],
+                ['state'],
+                ['state'],
+            )
+            counts = {g['state']: g['state_count'] for g in groups}
+            log.write({
+                'matched_count': counts.get('matched', 0),
+                'unmatched_count': counts.get('unmatched', 0),
+                'conflict_count': counts.get('conflict', 0),
+                'error_count': counts.get('error', 0),
+                'imported_count': counts.get('imported', 0),
+            })
+
+    def action_view_today_imports(self):
+        """Smart-button: open Imports list filtered to today's create_date.
+
+        Domain is built in Python to avoid XML serialization of `timedelta`.
+        Returns an `ir.actions.act_window` dict.
+        """
+        today_str = fields.Datetime.now().strftime('%Y-%m-%d 00:00:00')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Today's GKE Imports"),
+            'res_model': 'tracking.import.log',
+            'view_mode': 'list,form',
+            'domain': [('create_date', '>=', today_str)],
+        }
