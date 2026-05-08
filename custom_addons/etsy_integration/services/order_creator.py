@@ -261,6 +261,11 @@ class OrderCreator:
             'etsy_discount_code': getattr(parse_result, 'discount_code', '') or '',
             'etsy_subtotal': parse_result.subtotal or 0.0,
             'etsy_email_log_id': email_log_id,
+            # Multichannel foundation (mhc FR-024). Without these, Operations
+            # Dashboard etsy filters skip the order and Gearment auto-push
+            # never fires. Surfaced 2026-05-08 staging E2E run.
+            'sales_channel': 'etsy',
+            'channel_order_ref': parse_result.order_id,
             'order_line': [],
         }
         if currency:
@@ -526,6 +531,10 @@ class OrderCreator:
             'etsy_raw_source_id': payload.raw_source_id,
             'payment_status': payload.payment_status or False,
             'etsy_last_modified': payload.last_modified or False,
+            # Multichannel foundation (mhc FR-024) — see process_parse_result
+            # for rationale. Both ingest paths must stamp these consistently.
+            'sales_channel': 'etsy',
+            'channel_order_ref': payload.etsy_order_id,
             'order_line': [],
         }
         if currency:

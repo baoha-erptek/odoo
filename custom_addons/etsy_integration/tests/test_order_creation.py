@@ -143,3 +143,30 @@ class TestOrderCreation(TransactionCase):
         parse_result = self._make_parse_result()
         order = creator.process_parse_result(parse_result, email_log.id)
         self.assertTrue(order.partner_id.is_etsy_customer)
+
+    def test_email_path_stamps_sales_channel_etsy(self):
+        """Regression: email-parser must set sales_channel='etsy' (not 'other').
+
+        Surfaced 2026-05-08 staging E2E run — orders S00040–S00043 from the
+        live Gmail ingest path defaulted to 'other' and required manual
+        fixup before Operations Dashboard etsy filters and Gearment
+        auto-push could reach them. Same expectation for channel_order_ref:
+        must mirror etsy_order_id so the GKE tracking-import wizard can
+        match by Etsy order number without a manual JOIN.
+        """
+        from ..services.order_creator import OrderCreator
+        creator = OrderCreator(self.env)
+        email_log = self.env['etsy.email.log'].create({
+            'gmail_message_id': 'test_msg_004',
+            'parse_status': 'failed',
+        })
+        parse_result = self._make_parse_result(order_id='ETSY-CHN-001')
+        order = creator.process_parse_result(parse_result, email_log.id)
+        self.assertEqual(
+            order.sales_channel, 'etsy',
+            "email-parser path must set sales_channel='etsy'.",
+        )
+        self.assertEqual(
+            order.channel_order_ref, 'ETSY-CHN-001',
+            "email-parser path must mirror etsy_order_id into channel_order_ref.",
+        )

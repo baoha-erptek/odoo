@@ -191,6 +191,23 @@ class TestOrderCreatorProcessEtsyPayload(TransactionCase):
         order = self.creator.process_etsy_payload(payload, self.shop)
         self.assertEqual(order.sync_source, "api")
 
+    def test_api_path_stamps_sales_channel_etsy(self):
+        """Regression: API ingest path must also stamp sales_channel='etsy'
+        + channel_order_ref. Same reason as the email-path regression — the
+        Operations Dashboard, Gearment auto-push gate, and tracking import
+        wizard all filter / match on these fields.
+        """
+        payload = _build_payload(etsy_order_id="ORD-CHANNEL-API")
+        order = self.creator.process_etsy_payload(payload, self.shop)
+        self.assertEqual(
+            order.sales_channel, 'etsy',
+            "API ingest path must set sales_channel='etsy'.",
+        )
+        self.assertEqual(
+            order.channel_order_ref, 'ORD-CHANNEL-API',
+            "API ingest path must mirror etsy_order_id into channel_order_ref.",
+        )
+
 
 @tagged('post_install', '-at_install')
 class TestEtsyOrderIngestor(TransactionCase):
