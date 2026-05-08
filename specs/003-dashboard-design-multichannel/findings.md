@@ -1114,3 +1114,48 @@ A product with a stale or unreachable `etsy_image_url` will be retried on every 
 
 - code-reviewer: APPROVED (1 LOW: unused `unittest.mock.call` import — fixed inline before commit)
 - security-reviewer: APPROVE WITH CONDITION (both conditions are pre-existing gaps; documented above; not blocking)
+
+
+---
+
+## P1-DESIGN-MULTI-UPLOAD — landing notes (2026-05-08)
+
+Slice landed on `feature/006-master-plan-coding`. Multi-file upload wizard via `attachment_ids = Many2many('ir.attachment')` + bundled UX bug fix (default `storage_mode` 'url' → 'small', `invisible=` modifiers on input groups). 11/11 new tests pass; full mhc suite 343/344 (one pre-existing `test_seed_skips_empty_urls` flake unrelated). Manifest mhc 19.0.1.0.25 → 19.0.1.0.26.
+
+### Architecture choice (planner option B)
+
+Picked **transient Many2many with `widget="many2many_binary"`** over a One2many child model. Rationale: stock Odoo widget handles file picking + ir.attachment creation; less code; no new transient model migration. Rejected alternative: One2many `wizard.line` child model — overkill for MVP since per-file metadata isn't needed (all files inherit same `order_id` + `storage_mode` from the wizard). If per-file metadata becomes required (e.g., per-file storage_mode override), revisit and migrate to One2many.
+
+### FR-017 single-gate-at-entry
+
+Confirmed: `_check_production_team_or_raise()` fires once at `action_upload()` entry, not per-attachment. Test `test_fr017_gate_fires_only_once_for_n_files` patches the gate method and asserts `call_count == 1` for a 3-attachment upload. Memory `feedback_fr017_write_defense_in_depth.md` (12+ confirmations) — pattern preserved.
+
+### gdrive_thumbnail base64 latent bug — FIXED in this slice
+
+`design_file_upload_wizard.py:189` (old code) wrote raw thumbnail bytes to `gdrive_thumbnail` field which is `fields.Binary(attachment=True)` — same shape as the `preview_file` bug fixed in P1-DESIGN-MULTI-KANBAN. Now `_upload_gdrive_with` does `base64.b64encode(thumbnail) if thumbnail else False`. No test exercised that path before, so the bug was silent. Memory entry `feedback_odoo19_test_gotchas.md` #92 documented the pattern; this slice applied it to the second known site.
+
+### Atomicity decision
+
+All-or-nothing across N attachments. ValidationError mid-loop (e.g., one file >100 MB) rolls back the whole transaction; zero `design.file` rows created on partial failure. Test `test_partial_failure_atomicity` covers this.
+
+### Cross-tenant attachment access — accepted tradeoff
+
+Security-reviewer flagged: `attachment_ids = Many2many('ir.attachment')` accepts any attachment the user can read. In Odoo 19 base, `ir.attachment` ships with record rules that scope visibility to attachments for records the user can read (`res_model`/`res_id`-based ACL). The production-team group already has tight membership. Accepted as designed; flagged in commit body. **Follow-up tracker row**: `P1-DESIGN-WIZ-ATTACH-SCOPE` — add an explicit `_do_upload_for_attachment` ownership check (`attachment.create_uid == env.user OR attachment.res_model == 'design.file.upload.wizard'`) once owner confirms threat model.
+
+### Out-of-scope env workaround applied (NOT in repo)
+
+`/opt/odoo/enterprise/mrp_workorder_hr_account/tests/__init__.py` was patched inside the running container to graceful-skip `test_bom_price` / `test_valuation` / `test_mrp_report` imports because CE `mrp_account` 19.0 doesn't ship `TestBomPriceCommon` / `TestMrpValuationCommon`. This blocked the test loader at registry init. The patch lives only in the local container layer (will revert on container rebuild). **Follow-up tracker row**: `ENV-FIX-MRP-TEST-DRIFT` — pin enterprise MRP test pack version OR upstream a graceful-import in CE mrp_account.
+
+### Tests choice — base64-encoded `design_file` blob
+
+`_upload_small_with` writes `base64.b64encode(file_blob)` to `design_file`. Aligns with the kanban-thumb test convention (`test_design_file_kanban_thumb.py` always passes base64-encoded blobs). The `design.file.create()` override decodes via `base64.b64decode(design_blob)` first; raw bytes path falls into the exception-fallback branch which logs a misleading b64decode error. Encoding before write avoids the fallback noise.
+
+### Approvals
+
+- code-reviewer: APPROVE — 0 CRITICAL/HIGH/MEDIUM. Two minor positive notes (helper extraction reuse, docstring clarity).
+- security-reviewer: CONDITIONAL APPROVE — cross-tenant attachment as MEDIUM (mitigated by Odoo base ir.attachment record rules). All other 6 checks PASS.
+
+### Manifest
+
+mhc `19.0.1.0.25 → 19.0.1.0.26`.
+

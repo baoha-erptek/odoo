@@ -13,15 +13,19 @@
                         <field name="file_name" />
                     </group>
 
-                    <group string="File Content">
+                    <group string="Files" invisible="storage_mode == 'url'">
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+
+                    <group string="File Content" invisible="storage_mode != 'small' or attachment_ids">
                         <field name="file_blob" filename="file_name" />
                     </group>
 
-                    <group string="URL Mode">
+                    <group string="URL Mode" invisible="storage_mode != 'url'">
                         <field name="file_url" />
                     </group>
 
-                    <group string="GDrive Mode">
+                    <group string="GDrive Mode" invisible="storage_mode != 'gdrive'">
                         <field name="gdrive_folder_id" />
                     </group>
                 </sheet>

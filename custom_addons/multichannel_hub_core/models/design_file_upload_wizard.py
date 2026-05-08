@@ -1,11 +1,15 @@
-"""design.file.upload.wizard — Transient wizard for uploading design files to GDrive.
+"""design.file.upload.wizard — Transient wizard for uploading design files.
 
 Handles multiple storage modes (url, small, gdrive) with:
-- File validation (size caps, sanitization)
-- GDrive uploader service integration
-- Thumbnail generation
-- FR-017 production-team RPC gate
-- No-fallback behavior (ADR-012 §3)
+- Single-file legacy path via ``file_blob``/``file_url``/``gdrive_folder_id``.
+- Multi-file path via ``attachment_ids`` (many2many_binary widget). One
+  ``design.file`` row is created per attachment under the current
+  ``storage_mode`` (URL mode stays single-valued).
+- File validation (size caps, sanitization).
+- GDrive uploader service integration.
+- Thumbnail generation (auto via ``design.file.create()`` override for ``small``).
+- FR-017 production-team RPC gate (fires once at action entry across N files).
+- No-fallback behavior (ADR-012 §3).
 """
 import base64
 import logging
@@ -40,7 +44,9 @@ class DesignFileUploadWizard(models.TransientModel):
     file_name = fields.Char(string='File Name', default='design')
     file_url = fields.Char(string='File URL', help='Used for storage_mode=url')
 
-    # Storage mode
+    # Storage mode — default 'small' so the natural drag-and-drop flow works
+    # without forcing the operator to switch modes (UX bug fix landed in
+    # P1-DESIGN-MULTI-UPLOAD; previously defaulted to 'url').
     storage_mode = fields.Selection(
         [
             ('small', 'Small (filestore)'),
@@ -49,13 +55,25 @@ class DesignFileUploadWizard(models.TransientModel):
         ],
         string='Storage Mode',
         required=True,
-        default='url',
+        default='small',
     )
 
     # GDrive-specific fields
     gdrive_folder_id = fields.Char(
         string='GDrive Folder ID',
         help='Folder ID for upload (from etsy.shop cache or caller)',
+    )
+
+    # Multi-file picker (P1-DESIGN-MULTI-UPLOAD). When non-empty, one
+    # design.file row is created per attachment in the current storage_mode.
+    # URL mode ignores this and falls back to file_url (single-valued).
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'design_file_upload_wizard_attachment_rel',
+        'wizard_id',
+        'attachment_id',
+        string='Files',
+        help='Drop or pick multiple files. Each becomes a separate design.file row.',
     )
 
     @api.constrains('storage_mode', 'gdrive_folder_id')
@@ -81,18 +99,46 @@ class DesignFileUploadWizard(models.TransientModel):
     def action_upload(self):
         """Execute upload: validate, store, post chatter.
 
+        FR-017 production-team RPC gate fires once at action entry, never
+        per-file — N attachments share one access decision.
+
         Raises:
             ValidationError: On validation failure (file too large, etc)
             AccessError: If non-production-team user calls (FR-017)
         """
-        # FR-017 RPC gate
+        # FR-017 RPC gate — fires once at entry across N attachments
         self._check_production_team_or_raise()
 
         for wizard in self:
-            wizard._do_upload_for_mode()
+            wizard._do_upload()
+
+    def _do_upload(self):
+        """Multi- or single-file dispatch.
+
+        - ``attachment_ids`` non-empty (and mode != 'url'): loop, one design.file
+          per attachment.
+        - Otherwise: legacy single-file path using ``file_blob`` / ``file_url`` /
+          ``gdrive_folder_id``.
+        """
+        if self.attachment_ids and self.storage_mode != 'url':
+            for attachment in self.attachment_ids:
+                self._do_upload_for_attachment(attachment)
+        else:
+            self._do_upload_for_mode()
+
+    def _do_upload_for_attachment(self, attachment):
+        """Per-attachment dispatch reusing the storage_mode-specific helpers."""
+        blob = (
+            base64.b64decode(attachment.datas) if attachment.datas else b''
+        )
+        file_name = attachment.name or 'design'
+        if self.storage_mode == 'gdrive':
+            self._upload_gdrive_with(file_blob=blob, file_name=file_name)
+        elif self.storage_mode == 'small':
+            self._upload_small_with(file_blob=blob, file_name=file_name)
 
     def _do_upload_for_mode(self):
-        """Dispatch to upload handler based on storage_mode."""
+        """Dispatch to upload handler based on storage_mode (legacy single-file)."""
         if self.storage_mode == 'gdrive':
             self._upload_gdrive()
         elif self.storage_mode == 'url':
@@ -124,7 +170,12 @@ class DesignFileUploadWizard(models.TransientModel):
         return blob
 
     def _validate_file_name(self) -> str:
-        """Validate and sanitize file name.
+        """Validate and sanitize ``self.file_name`` (legacy single-file path)."""
+        return self._validate_file_name_value(self.file_name or 'design')
+
+    @staticmethod
+    def _validate_file_name_value(name: str) -> str:
+        """Validate and sanitize an arbitrary file name (multi-file path).
 
         Returns:
             Sanitized filename
@@ -132,7 +183,7 @@ class DesignFileUploadWizard(models.TransientModel):
         Raises:
             ValidationError: On invalid characters
         """
-        name = self.file_name or 'design'
+        name = name or 'design'
         if not _SAFE_FILENAME_RE.match(name):
             raise ValidationError(
                 _(
@@ -143,14 +194,31 @@ class DesignFileUploadWizard(models.TransientModel):
         return name
 
     def _upload_gdrive(self):
-        """Upload to GDrive via GdriveUploader service."""
+        """Legacy single-file GDrive upload (uses self.file_blob/file_name)."""
+        self._upload_gdrive_with(
+            file_blob=self._validate_file_blob(),
+            file_name=self._validate_file_name(),
+        )
+
+    def _upload_gdrive_with(self, file_blob: bytes, file_name: str):
+        """Upload one file to GDrive via GdriveUploader service.
+
+        Used by both the legacy single-file path and the multi-file
+        ``attachment_ids`` loop.
+        """
         from multichannel_hub_core.services.gdrive_uploader import GdriveUploader
         from multichannel_hub_core.services.design_thumbnail_generator import (
             ThumbnailGenerator,
         )
 
-        file_blob = self._validate_file_blob()
-        file_name = self._validate_file_name()
+        if len(file_blob) > _MAX_UPLOAD_BYTES:
+            raise ValidationError(
+                _(
+                    "File too large (%(size)s MB). Maximum is 100 MB.",
+                    size=len(file_blob) // 1_048_576,
+                )
+            )
+        safe_name = self._validate_file_name_value(file_name)
 
         # Ensure folder exists and get folder_id (cached or created)
         shop = self.order_id.shop_id if hasattr(self.order_id, 'shop_id') else None
@@ -162,9 +230,8 @@ class DesignFileUploadWizard(models.TransientModel):
         uploader = GdriveUploader()
         folder_id = self.gdrive_folder_id or uploader.ensure_shop_folder(shop)
 
-        # Upload file
         result = uploader.upload_file(
-            file_blob=file_blob, file_name=file_name, folder_id=folder_id
+            file_blob=file_blob, file_name=safe_name, folder_id=folder_id
         )
 
         if result.get('error'):
@@ -175,19 +242,21 @@ class DesignFileUploadWizard(models.TransientModel):
 
         file_id = result['file_id']
 
-        # Generate thumbnail (non-fatal on failure)
+        # Generate thumbnail (non-fatal on failure). Encode to base64 for
+        # attachment=True Binary fields (memory: feedback_odoo19_test_gotchas
+        # entry 92 — same shape as preview_file).
         thumbnail_gen = ThumbnailGenerator()
         thumbnail = thumbnail_gen.generate_thumbnail(file_blob)
+        gdrive_thumbnail = base64.b64encode(thumbnail) if thumbnail else False
 
-        # Create design.file record
         self.env['design.file'].create({
-            'name': file_name,
+            'name': safe_name,
             'order_id': self.order_id.id,
             'storage_mode': 'gdrive',
             'gdrive_file_id': file_id,
             'gdrive_folder_id': folder_id,
-            'gdrive_thumbnail': thumbnail,
-            'file_name': file_name,
+            'gdrive_thumbnail': gdrive_thumbnail,
+            'file_name': safe_name,
             'state': 'pending',
         })
 
@@ -208,15 +277,38 @@ class DesignFileUploadWizard(models.TransientModel):
         })
 
     def _upload_small(self):
-        """Store small mode design file (filestore)."""
-        file_blob = self._validate_file_blob()
-        file_name = self._validate_file_name()
+        """Legacy single-file small mode (uses self.file_blob/file_name)."""
+        self._upload_small_with(
+            file_blob=self._validate_file_blob(),
+            file_name=self._validate_file_name(),
+        )
 
+    def _upload_small_with(self, file_blob: bytes, file_name: str):
+        """Store one filestore design.file from explicit blob + name.
+
+        Used by both the legacy single-file path and the multi-file
+        ``attachment_ids`` loop. preview_file is auto-generated by the
+        ``design.file.create()`` override (P1-DESIGN-MULTI-KANBAN).
+        """
+        if len(file_blob) > _MAX_UPLOAD_BYTES:
+            raise ValidationError(
+                _(
+                    "File too large (%(size)s MB). Maximum is 100 MB.",
+                    size=len(file_blob) // 1_048_576,
+                )
+            )
+        safe_name = self._validate_file_name_value(file_name)
+
+        # Pass base64-encoded blob to match the kanban-thumb convention so the
+        # design.file.create() override can decode and feed
+        # ThumbnailGenerator on the first try (raw-bytes path takes the
+        # exception-fallback branch which still works but logs a misleading
+        # b64decode error).
         self.env['design.file'].create({
-            'name': file_name,
+            'name': safe_name,
             'order_id': self.order_id.id,
             'storage_mode': 'small',
-            'design_file': file_blob,
-            'file_name': file_name,
+            'design_file': base64.b64encode(file_blob),
+            'file_name': safe_name,
             'state': 'pending',
         })

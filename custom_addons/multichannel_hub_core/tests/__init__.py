@@ -32,3 +32,4 @@ from . import test_p1_design_auto_gdrive
 from . import test_order_image_128
 from . import test_product_image_thumb
 from . import test_gdrive_shared_drive
+from . import test_design_file_upload_wizard_multi
