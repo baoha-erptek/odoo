@@ -88,7 +88,12 @@ class GdriveUploader:
             )
             file_obj = (
                 service.files()
-                .create(body=file_metadata, media_body=media_body, fields='id,webViewLink')
+                .create(
+                    body=file_metadata,
+                    media_body=media_body,
+                    fields='id,webViewLink',
+                    supportsAllDrives=True,
+                )
                 .execute()
             )
             return {
@@ -136,7 +141,13 @@ class GdriveUploader:
                 f"mimeType='application/vnd.google-apps.folder' "
                 f"and name='{safe_name}' and trashed=false"
             )
-            results = service.files().list(q=q, spaces='drive', pageSize=1).execute()
+            results = service.files().list(
+                q=q,
+                spaces='drive',
+                pageSize=1,
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+            ).execute()
             files = results.get('files', [])
 
             if files:
@@ -149,7 +160,11 @@ class GdriveUploader:
                 }
                 folder_obj = (
                     service.files()
-                    .create(body=folder_metadata, fields='id')
+                    .create(
+                        body=folder_metadata,
+                        fields='id',
+                        supportsAllDrives=True,
+                    )
                     .execute()
                 )
                 folder_id = folder_obj.get('id')
