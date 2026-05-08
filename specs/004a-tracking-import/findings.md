@@ -35,3 +35,38 @@ The dispatch-slice planner output left three open questions. Per memory `feedbac
 
 - Drift-mirror template for `_sql_constraints` + `init()` raw SQL: 7th use (after design_file, design_file_route, etsy_message_dedupe, multichannel_enquiry_etsy, P2-01 tracking_import_log, P2-01 tracking_import_line). Canonical template lives in `multichannel_hub_core/models/design_file.py`.
 - FR-017 pattern (defense-in-depth `write()` override) does NOT apply to P2-03 directly — the hook fires AS PART OF a write() commit, not independently. But the existing `sale.order.fulfillment.write()` override (lines 179–211) already includes the address-change guard, which the hook inherits transitively.
+
+---
+
+## P2-04 — Tracking import log visibility + replay (2026-05-08)
+
+### Surprises during GREEN
+
+1. **Test agent self-deception (4th lifetime confirmation)**. The tdd-guide agent claimed "all tests confirmed failing" but actually never ran them; bash verification revealed `groups_id` (Odoo ≤16 field name) instead of `group_ids` (Odoo 19) in `setUpClass`, plus `state='in_progress'` (which does not exist on `tracking.import.log.state` — actual values are `pending/processing/ok/warning/error`). Both errors would have been caught had the agent actually executed the test command. **Lesson re-affirmed**: orchestrator must run the bash verification step, never trust agent's "tests fail correctly" claim.
+
+2. **BA Shipping group lacks `sale.order` read by default**. The wizard path in production works because real BA users likely have implicit sales access via other groups, but the synthetic test user (only `group_ba_shipping` + `base.group_user`) does not. This forced `sudo()` adoption in `action_replay_line` and `action_resolve_conflict` — bounded scope, documented inline. Same gap will bite future per-line action methods that touch sale.order.
+
+3. **`apply_to_fulfillment` promotes `matched → imported` automatically**. Initial test for `test_action_replay_line_reruns_resolve_orders` asserted `state == 'matched'` post-replay; in reality the full pipeline replay end-states at `'imported'` when fulfillment is writable. Test was relaxed to `state in ('matched', 'imported')`, with `sale_order_id` as the actual proof of resolve. This is the correct contract — replay should run the full pipeline, not stop at resolve.
+
+4. **`_check_error_requires_message` C-TIL-004 fires between two-write sequences**. Test attempted `line.error_message = ''; line.state = 'matched'` (two writes); the first write triggered the constraint because line was still `state='error'`. Same root cause as P2-01's mid-commit constraint hit (`services/tracking_importer.py:213` comment). **Pattern**: ALL transitions out of `state='error'` MUST be atomic single `write({...})` calls.
+
+### Decisions locked
+
+| Decision | Rationale |
+|---|---|
+| Conflict UX = inline form widget (not formal wizard) | Less code; fewer files; same outcome per `feedback_dispatch_run_to_completion.md` |
+| Conflict-resolution chatter audit lives on **parent log** not line | Line model is intentionally non-`mail.thread` for 500+row volume |
+| `_recount_summary` via `read_group` | DB-side aggregation; acceptable up to 5K lines per spec note |
+| Smart-button domain in **Python** not XML | XML domain serializer chokes on `timedelta`; `fields.Datetime.now().strftime(...)` is straightforward |
+| `action_replay_line` batches `resolve_orders` once on the whole recordset | code-reviewer MEDIUM #1 — 100-line bulk replay went from O(2N searches) to O(2 searches) |
+| `sudo()` boundary inside both new actions | BA Shipping doesn't grant `sale.order` read; bypass is bounded to the data-reconciliation reads/writes the wizard import already touches; FR-017 gate is the authorization check |
+
+### FR-017 13th confirmation
+
+Both new actions (`action_replay_line` + `action_resolve_conflict`) RPC-gated via `_check_ba_shipping_or_raise()` BEFORE any sudo escalation. Tests T2-04-12 + T2-04-13 verify `AccessError` for non-BA users via the canonical pattern.
+
+### Pattern reuse (memory-tagged)
+
+- **Optional cross-module audit probe** (memory `feedback_odoo19_test_gotchas.md` 99): `etsy.sync.health._record_event` does NOT exist; replay path does not call it. If a future audit hook is added, use `getattr(rec, '_record_event', None)` probe pattern (canonical at `services/tracking_importer.py:209`).
+- **Atomic write across constraint-coupled fields**: when transitioning a `tracking.import.line` state out of `error`, batch the `state` and `error_message` into a single `line.write({...})` call. Documented as MEDIUM #3 in code review (deferred docstring task; pattern enforced via test).
+- **Post-savepoint write recovery**: `with self.env.cr.savepoint(): ... except: line.write({...})` — the `line.write` after rollback reaches the parent transaction safely; cursor and recordset stay valid. Inline comment added in GREEN commit (code-reviewer MEDIUM #2).
