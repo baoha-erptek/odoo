@@ -1207,3 +1207,55 @@ A line-level approval should NOT archive an order-level mockup, and vice versa �
 
 - Doc-only slice; no code reviews required (playbook trivial-slice shortcut).
 
+
+---
+
+## P1-IMG-CRON-WIRE (2026-05-09) — orphan cron closure
+
+`ImageDownloader.cron_download_pending_images` had no `ir.cron` record (flagged in P1-IMG-BACKFILL findings as "(i) cron-not-wired" deferred MEDIUM). Closed via thin Odoo-Model wrapper + cron XML.
+
+### Pattern: wiring a service-class method to ir.cron
+
+Service classes (anything not inheriting `models.Model` / `models.AbstractModel`) cannot be referenced by `ir.cron.model_id`. The minimal-blast-radius wrap is:
+
+```python
+# in some Model that already has a clear "owner" of the work
+@api.model
+def _cron_<descriptive_name>(self):
+    """ir.cron entry point — delegates to the existing service class.
+    Runs as base.user_root per ir.cron user_id; document privilege scope.
+    """
+    from ..services.<module> import <ServiceClass>
+    <ServiceClass>(self.env).<existing_method>()
+```
+
+Then:
+
+```xml
+<record id="ir_cron_<name>" model="ir.cron">
+    <field name="model_id" ref="<module>.model_<table_name>"/>
+    <field name="user_id" ref="base.user_root"/>
+    <field name="state">code</field>
+    <field name="code">model._cron_<descriptive_name>()</field>
+    <field name="interval_number">N</field>
+    <field name="interval_type">minutes|hours|days</field>
+    <field name="numbercall">-1</field>
+    <field name="active" eval="True"/>
+</record>
+```
+
+### Surprises captured for memory
+
+- **Code-reviewer hallucinated baseline**: agent reported 4 "CRITICAL" findings (3 fictitious cron records added, version-bump scope creep, manifest reordering) — none of which appear in the actual `git diff --stat HEAD`. Confirmed false positives by reading the diff directly. **Lesson**: when a reviewer reports "CRITICAL diff bloat", verify with `git diff --stat HEAD` before applying any reviewer "fix" — the reviewer may be reading file contents rather than diff hunks.
+- **Cron user_id default is `__system__` not user_root** when the field is unset. Setting it explicitly (`base.user_root`) is documentation-grade safer than relying on the default and matches what security-reviewer asks for as "intent disclosure."
+- **`numbercall=-1` is the framework default** ("run forever"); declaring it explicitly is documentation-grade. Odoo 19's cron worker already serializes runs of the same record via `FOR UPDATE NOWAIT`, so overlap-prevention concerns flagged in review are mitigated by the framework — but explicit declaration is harmless.
+
+### Test verification
+
+6/6 P1-IMG-CRON-WIRE tests pass; full etsy_integration suite 450/450 / 0 failures (was 309 at P1-IMG-BACKFILL — growth is intervening slices).
+
+### Approvals
+
+- code-reviewer: 4 false-positive CRITICALs **rejected** after diff verification.
+- security-reviewer: APPROVE WITH CONDITIONS — HIGH 1 + MEDIUM 1 applied inline; LOWs declined (already covered or deferred).
+

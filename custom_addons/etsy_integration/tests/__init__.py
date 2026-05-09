@@ -32,3 +32,4 @@ from . import test_address_change_workflow
 from . import test_etsy_ship_notified_at
 from . import test_phase1_db_message_dedupe
 from . import test_phase2_orm_message_dedupe
+from . import test_image_cron_wired

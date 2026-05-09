@@ -30,6 +30,18 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="ir_cron_download_pending_etsy_images" model="ir.cron">
+        <field name="name">Etsy: Download Pending Product Images</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_download_etsy_images()</field>
+        <field name="interval_number">30</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="cron_etsy_message_dedupe_retention" model="ir.cron">
         <field name="name">Etsy: Message Dedupe Retention Sweep</field>
         <field name="model_id" ref="model_etsy_message_dedupe"/>
