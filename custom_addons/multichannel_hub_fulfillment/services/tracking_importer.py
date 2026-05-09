@@ -195,6 +195,70 @@ def _scrub(text: str) -> str:
     return text[:4096]
 
 
+def import_log_from_bytes(env, file_bytes: bytes, filename: str,
+                           source: str = 'manual',
+                           source_gdrive_file_id: str | None = None):
+    """Programmatic entry into the tracking-import pipeline (P2-06 FR-032).
+
+    Used by both the manual wizard (source='manual') and the GDrive poller
+    (source='gdrive'). Returns the fully-processed `tracking.import.log`
+    record (state in {ok, warning, error}).
+
+    Args:
+        env: Odoo environment.
+        file_bytes: GKE-format Excel file content.
+        filename: filename for log audit.
+        source: 'manual' or 'gdrive'.
+        source_gdrive_file_id: Drive file_id when source='gdrive'.
+
+    Returns:
+        tracking.import.log record (state set; counts populated).
+    """
+    parsed = gke_excel_parser.parse(file_bytes)
+    # sudo: programmatic helper invoked from both wizard (BA-shipping) and cron
+    # (system); writes are bounded to log + lines on the same import session.
+    # ACL still authorizes the caller — this bypass only lets the helper write
+    # log fields the caller's group might not directly own (e.g. cron's system
+    # context vs BA-shipping's create-only ACL).
+    log = env['tracking.import.log'].sudo().create({
+        'filename': filename,
+        'file_size_bytes': len(file_bytes),
+        'schema_hash': parsed.schema_hash,
+        'header_columns': json.dumps(list(parsed.headers)),
+        'source': source,
+        'source_gdrive_file_id': source_gdrive_file_id or False,
+        'state': 'processing',
+        'start_at': datetime.now(),
+        'total_rows': len(parsed.rows),
+    })
+    payloads = build_lines_payload(parsed, log.id)
+    if payloads:
+        env['tracking.import.line'].sudo().create(payloads)
+    line_recs = log.sudo().line_ids
+    resolve_counts = resolve_orders(env, line_recs)
+    apply_counts = apply_to_fulfillment(env, line_recs)
+    error_count = apply_counts.get('error', 0)
+    imported = apply_counts.get('imported', 0)
+    unmatched = resolve_counts.get('unmatched', 0)
+    conflict = resolve_counts.get('conflict', 0)
+    if error_count:
+        terminal_state = 'error'
+    elif unmatched or conflict:
+        terminal_state = 'warning'
+    else:
+        terminal_state = 'ok'
+    log.sudo().write({
+        'state': terminal_state,
+        'finish_at': datetime.now(),
+        'matched_count': resolve_counts.get('matched', 0),
+        'unmatched_count': unmatched,
+        'conflict_count': conflict,
+        'error_count': error_count,
+        'imported_count': imported,
+    })
+    return log
+
+
 def record_sync_health(env, kind: str, ok: int, warning: int, error: int,
                        notes: str = ''):
     """Best-effort cross-module audit event.

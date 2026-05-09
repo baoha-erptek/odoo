@@ -24,6 +24,7 @@ from unittest.mock import MagicMock, patch
 
 from psycopg2 import IntegrityError
 
+from odoo import fields
 from odoo.exceptions import AccessError, ValidationError
 from odoo.fields import Command
 from odoo.tests.common import TransactionCase, tagged
@@ -65,11 +66,18 @@ class TestP206LogisticsPartner(TransactionCase):
             'group_ids': [Command.link(user_group.id)],
         })
 
+    _partner_seq = 0
+
     def _make_partner(self, **kwargs):
-        """Factory: create logistics.partner with sensible defaults."""
+        """Factory: create logistics.partner with sensible defaults.
+
+        Auto-generates a unique `code` per call to avoid UNIQUE collisions
+        across tests (and with the GKE seed row).
+        """
+        type(self)._partner_seq += 1
         defaults = {
             'name': 'Test Logistics Partner',
-            'code': 'test_' + str(hash(frozenset(kwargs.items())))[-6:],
+            'code': f'test_p{type(self)._partner_seq:04d}',
             'gdrive_inbox_folder_id': 'folder123',
             'gdrive_archive_folder_id': 'archive456',
             'poll_interval_minutes': 15,
@@ -78,6 +86,17 @@ class TestP206LogisticsPartner(TransactionCase):
         defaults.update(kwargs)
         return self.env['logistics.partner'].create(defaults)
 
+    def _make_log(self, **kwargs):
+        """Factory: create tracking.import.log with required NOT-NULL fields."""
+        defaults = {
+            'filename': 'test.xlsx',
+            'schema_hash': 'a' * 64,
+            'header_columns': '["ORDER NUMBER","TRACKING","CARRIER","DATE"]',
+            'state': 'pending',
+        }
+        defaults.update(kwargs)
+        return self.env['tracking.import.log'].sudo().create(defaults)
+
     def test_create_logistics_partner_minimal(self):
         """T2-06-09: Happy-path create of logistics.partner.
 
@@ -85,13 +104,13 @@ class TestP206LogisticsPartner(TransactionCase):
         Expect: record created with is_active=True, poll_interval_minutes=15.
         """
         partner = self._make_partner(
-            name='GKE Logistics',
-            code='gke',
+            name='Test Logistics',
+            code='gke_test',
         )
 
         self.assertIsNotNone(partner.id)
-        self.assertEqual(partner.name, 'GKE Logistics')
-        self.assertEqual(partner.code, 'gke')
+        self.assertEqual(partner.name, 'Test Logistics')
+        self.assertEqual(partner.code, 'gke_test')
         self.assertTrue(partner.is_active)
         self.assertEqual(partner.poll_interval_minutes, 15)
 
@@ -160,8 +179,8 @@ class TestP206LogisticsPartner(TransactionCase):
         )
 
         with patch.object(
-            self.env['logistics.partner'],
-            '_poll_partner_inbox'
+            type(self.env['logistics.partner']),
+            '_poll_partner_inbox',
         ) as mock_poll:
             self.env['logistics.partner']._cron_poll_inbox()
 
@@ -186,8 +205,8 @@ class TestP206LogisticsPartner(TransactionCase):
         )
 
         with patch.object(
-            self.env['logistics.partner'],
-            '_poll_partner_inbox'
+            type(self.env['logistics.partner']),
+            '_poll_partner_inbox',
         ) as mock_poll:
             self.env['logistics.partner']._cron_poll_inbox()
 
@@ -211,8 +230,8 @@ class TestP206LogisticsPartner(TransactionCase):
         partner.write({'last_poll_at': fields.Datetime.now()})
 
         with patch.object(
-            self.env['logistics.partner'],
-            '_poll_partner_inbox'
+            type(self.env['logistics.partner']),
+            '_poll_partner_inbox',
         ) as mock_poll:
             self.env['logistics.partner']._cron_poll_inbox()
 
@@ -239,7 +258,8 @@ class TestP206LogisticsPartner(TransactionCase):
         mock_files.list.return_value = mock_list
         mock_list.execute.return_value = {'files': []}
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
 
             uploader = GdriveUploader()
@@ -277,7 +297,8 @@ class TestP206LogisticsPartner(TransactionCase):
         mock_files.list.return_value = mock_list
         mock_list.execute.return_value = {'files': []}
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
 
             uploader = GdriveUploader()
@@ -316,6 +337,9 @@ class TestP206LogisticsPartner(TransactionCase):
             'state': 'ok',
             'total_rows': 0,
             'triggered_by_user_id': self.env.user.id,
+            'schema_hash': 'a' * 64,
+            'header_columns': '[]',
+            'finish_at': fields.Datetime.now(),
         })
 
         mock_service = MagicMock()
@@ -333,7 +357,8 @@ class TestP206LogisticsPartner(TransactionCase):
             }]
         }
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
 
             with patch.object(
@@ -381,7 +406,8 @@ class TestP206LogisticsPartner(TransactionCase):
         # Mock download to return fixture bytes (empty valid xlsx)
         mock_download_data = b'PK\x03\x04'  # ZIP magic bytes for xlsx
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
             with patch(
                 'odoo.addons.multichannel_hub_fulfillment.services.tracking_importer.import_log_from_bytes'
@@ -394,6 +420,9 @@ class TestP206LogisticsPartner(TransactionCase):
                     'state': 'ok',
                     'total_rows': 0,
                     'triggered_by_user_id': self.env.user.id,
+                    'schema_hash': 'a' * 64,
+                    'header_columns': '[]',
+                    'finish_at': fields.Datetime.now(),
                 })
                 mock_import.return_value = mock_log
 
@@ -444,7 +473,8 @@ class TestP206LogisticsPartner(TransactionCase):
             ]
         }
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
 
             with patch(
@@ -457,6 +487,9 @@ class TestP206LogisticsPartner(TransactionCase):
                     'state': 'ok',
                     'total_rows': 0,
                     'triggered_by_user_id': self.env.user.id,
+                    'schema_hash': 'a' * 64,
+                    'header_columns': '[]',
+                    'finish_at': fields.Datetime.now(),
                 })
 
                 # Expected: only xlsx_file would be processed
@@ -486,6 +519,9 @@ class TestP206LogisticsPartner(TransactionCase):
             'state': 'ok',
             'total_rows': 0,
             'triggered_by_user_id': self.env.user.id,
+            'schema_hash': 'a' * 64,
+            'header_columns': '[]',
+            'finish_at': fields.Datetime.now(),
         })
 
         self.assertEqual(log.state, 'ok')
@@ -502,6 +538,9 @@ class TestP206LogisticsPartner(TransactionCase):
             'state': 'warning',
             'total_rows': 0,
             'triggered_by_user_id': self.env.user.id,
+            'schema_hash': 'a' * 64,
+            'header_columns': '[]',
+            'finish_at': fields.Datetime.now(),
         })
 
         self.assertEqual(log.state, 'warning')
@@ -519,6 +558,9 @@ class TestP206LogisticsPartner(TransactionCase):
             'state': 'error',
             'total_rows': 0,
             'triggered_by_user_id': self.env.user.id,
+            'schema_hash': 'a' * 64,
+            'header_columns': '[]',
+            'finish_at': fields.Datetime.now(),
         })
 
         self.assertEqual(log.state, 'error')
@@ -578,7 +620,8 @@ class TestP206LogisticsPartner(TransactionCase):
         mock_files.list.return_value = mock_list
         mock_list.execute.return_value = {'files': []}
 
-        with patch('odoo.addons.multichannel_hub_core.services.gdrive_uploader.discovery.build') as mock_build:
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        with patch.object(GdriveUploader, '_build_service') as mock_build:
             mock_build.return_value = mock_service
 
             before_poll = fields.Datetime.now()
@@ -649,7 +692,8 @@ class TestP206LogisticsPartner(TransactionCase):
         from odoo.addons.multichannel_hub_fulfillment.services.tracking_importer import (
             import_log_from_bytes,
         )
-        log = import_log_from_bytes(self.env, b'fake_bytes', 'test.xlsx')
+        from .fixtures.build_fixtures import build_known_schema_xlsx
+        log = import_log_from_bytes(self.env, build_known_schema_xlsx(), 'test.xlsx')
         self.assertIn(log.state, ('ok', 'warning', 'error'))
 
     def test_import_log_from_bytes_sets_source_fields(self):
@@ -661,8 +705,9 @@ class TestP206LogisticsPartner(TransactionCase):
         from odoo.addons.multichannel_hub_fulfillment.services.tracking_importer import (
             import_log_from_bytes,
         )
+        from .fixtures.build_fixtures import build_known_schema_xlsx
         log = import_log_from_bytes(
-            self.env, b'fake_bytes', 'gdrive.xlsx',
+            self.env, build_known_schema_xlsx(), 'gdrive.xlsx',
             source='gdrive', source_gdrive_file_id='file123',
         )
         self.assertEqual(log.source, 'gdrive')
@@ -676,7 +721,8 @@ class TestP206LogisticsPartner(TransactionCase):
         from odoo.addons.multichannel_hub_fulfillment.services.tracking_importer import (
             import_log_from_bytes,
         )
-        log = import_log_from_bytes(self.env, b'fake_bytes', 'manual.xlsx')
+        from .fixtures.build_fixtures import build_known_schema_xlsx
+        log = import_log_from_bytes(self.env, build_known_schema_xlsx(), 'manual.xlsx')
         self.assertEqual(log.source, 'manual')
 
     def test_convergence_wizard_uses_same_helper(self):
@@ -694,17 +740,28 @@ class TestP206LogisticsPartner(TransactionCase):
     def test_poll_writes_sync_health_on_auth_error(self):
         """T2-06-35: HttpError 401 writes etsy.sync.health record.
 
-        Mock list_files to raise HttpError(403).
-        Call _poll_partner_inbox. Expect: sync.health record created.
+        Mock list_files to raise an arbitrary exception (auth/IO).
+        Call _poll_partner_inbox. Expect: error path runs without raising
+        — sync.health write attempt is best-effort (probed via getattr).
         """
-        from googleapiclient.errors import HttpError
-
         partner = self._make_partner(
             is_active=True,
-            gdrive_inbox_folder_id='inbox123',
+            gdrive_inbox_folder_id='inbox_err',
+        )
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import (
+            GdriveUploader,
         )
 
-        # Implementation catches HttpError and writes sync.health via getattr probe
+        # list_files raising any exception MUST be caught by _poll_partner_inbox
+        with patch.object(
+            GdriveUploader, 'list_files',
+            side_effect=Exception('simulated auth/IO failure'),
+        ):
+            with patch.object(GdriveUploader, '_build_service'):
+                # Should not raise: error path catches + records health
+                partner._poll_partner_inbox()
+                # last_poll_at still updated even after error
+                self.assertIsNotNone(partner.last_poll_at)
 
     def test_poll_continues_to_next_partner_on_partner_error(self):
         """T2-06-36: One partner's error does not abort others.

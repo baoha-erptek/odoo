@@ -7,7 +7,7 @@ try:
     import google.auth.exceptions
     from google.oauth2 import service_account
     from googleapiclient import discovery
-    from googleapiclient.http import MediaIoBaseUpload
+    from googleapiclient.http import MediaInMemoryUpload, MediaIoBaseDownload, MediaIoBaseUpload
 except ImportError:
     google = None
 
@@ -182,3 +182,116 @@ class GdriveUploader:
                 "Failed to ensure shop folder for %s: %s", shop.name, e
             )
             raise
+
+    # ------------------------------------------------------------------
+    # P2-06 — logistics inbox polling surface
+    # ------------------------------------------------------------------
+
+    def list_files(self, folder_id: str, modified_after=None) -> list[dict]:
+        """List non-trashed files in a Drive folder, optionally newer than a timestamp.
+
+        Args:
+            folder_id: GDrive folder ID to list.
+            modified_after: datetime (or RFC3339 string) — only files with
+                modifiedTime > this value are returned. None = no filter.
+
+        Returns:
+            list of {'id', 'name', 'mimeType', 'modifiedTime'} dicts.
+            Returns [] on auth/IO errors (caller handles via sync.health).
+
+        Drive query escaping: folder_id is supplied by trusted admin via
+        logistics.partner record (FR-035 system-only); no untrusted input
+        reaches the q= clause.
+        """
+        service = self._build_service()
+        # Escape single quotes in folder_id defensively even though source is admin-only.
+        # Order matters: backslash first (to avoid re-escaping the escapes we add),
+        # then single quote. Drive query syntax: single-quoted strings need \' for literals.
+        safe_folder = folder_id.replace('\\', '\\\\').replace("'", "\\'")
+        q_parts = [f"'{safe_folder}' in parents", "trashed=false"]
+        if modified_after is not None:
+            if hasattr(modified_after, 'isoformat'):
+                ts = modified_after.isoformat()
+                if not ts.endswith('Z') and '+' not in ts:
+                    ts += 'Z'
+            else:
+                ts = str(modified_after)
+            ts_escaped = ts.replace("'", "\\'")
+            q_parts.append(f"modifiedTime > '{ts_escaped}'")
+        q = ' and '.join(q_parts)
+
+        results = service.files().list(
+            q=q,
+            spaces='drive',
+            fields='files(id,name,mimeType,modifiedTime)',
+            pageSize=100,
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+        ).execute()
+        return list(results.get('files', []))
+
+    def download_file(self, file_id: str) -> bytes:
+        """Download file content from Drive.
+
+        Args:
+            file_id: GDrive file ID.
+
+        Returns:
+            File bytes.
+
+        Raises:
+            googleapiclient.errors.HttpError on API failure (caller handles).
+        """
+        service = self._build_service()
+        request = service.files().get_media(
+            fileId=file_id, supportsAllDrives=True)
+        buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(buffer, request)
+        done = False
+        while not done:
+            _status, done = downloader.next_chunk()
+        return buffer.getvalue()
+
+    def move_file(self, file_id: str, new_parent_folder_id: str) -> dict:
+        """Move file to a different parent folder (archive flow).
+
+        Args:
+            file_id: GDrive file ID to move.
+            new_parent_folder_id: target parent folder ID.
+
+        Returns:
+            updated file metadata dict.
+        """
+        service = self._build_service()
+        # Read current parents to remove them
+        current = service.files().get(
+            fileId=file_id, fields='parents', supportsAllDrives=True).execute()
+        previous_parents = ','.join(current.get('parents', []))
+        return service.files().update(
+            fileId=file_id,
+            addParents=new_parent_folder_id,
+            removeParents=previous_parents,
+            fields='id,parents',
+            supportsAllDrives=True,
+        ).execute()
+
+    def upload_text(self, folder_id: str, filename: str, body: str) -> dict:
+        """Upload a small text/plain blob (used for .error.txt sidecar markers).
+
+        Args:
+            folder_id: GDrive parent folder ID.
+            filename: name (e.g., 'tracking.xlsx.error.txt').
+            body: text content.
+
+        Returns:
+            file metadata dict.
+        """
+        service = self._build_service()
+        media = MediaInMemoryUpload(
+            body.encode('utf-8'), mimetype='text/plain')
+        return service.files().create(
+            body={'name': filename, 'parents': [folder_id]},
+            media_body=media,
+            fields='id',
+            supportsAllDrives=True,
+        ).execute()

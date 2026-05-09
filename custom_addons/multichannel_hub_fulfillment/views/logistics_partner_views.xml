@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_logistics_partner_tree" model="ir.ui.view">
+        <field name="name">logistics.partner.tree</field>
+        <field name="model">logistics.partner</field>
+        <field name="arch" type="xml">
+            <list string="Logistics Partners">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="poll_interval_minutes"/>
+                <field name="is_active" widget="boolean_toggle"/>
+                <field name="last_poll_at"/>
+                <field name="last_success_poll_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_logistics_partner_form" model="ir.ui.view">
+        <field name="name">logistics.partner.form</field>
+        <field name="model">logistics.partner</field>
+        <field name="arch" type="xml">
+            <form string="Logistics Partner">
+                <header>
+                    <button name="action_toggle_is_active" type="object"
+                            string="Toggle Active"
+                            groups="multichannel_hub_fulfillment.group_ba_manager,base.group_system"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Partner name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="poll_interval_minutes"/>
+                            <field name="is_active" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="last_poll_at"/>
+                            <field name="last_success_poll_at"/>
+                        </group>
+                    </group>
+                    <group string="Google Drive Folders">
+                        <field name="gdrive_inbox_folder_id"/>
+                        <field name="gdrive_archive_folder_id"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_logistics_partner_search" model="ir.ui.view">
+        <field name="name">logistics.partner.search</field>
+        <field name="model">logistics.partner</field>
+        <field name="arch" type="xml">
+            <search string="Logistics Partners">
+                <field name="code"/>
+                <field name="name"/>
+                <filter name="active" string="Active"
+                        domain="[('is_active', '=', True)]"/>
+                <filter name="inactive" string="Inactive"
+                        domain="[('is_active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_logistics_partner" model="ir.actions.act_window">
+        <field name="name">Logistics Partners</field>
+        <field name="res_model">logistics.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_logistics_partner_search"/>
+    </record>
+
+    <menuitem id="menu_logistics_partner"
+              name="Logistics Partners"
+              parent="multichannel_hub_fulfillment.menu_tracking_import_root"
+              action="action_logistics_partner"
+              sequence="50"
+              groups="multichannel_hub_fulfillment.group_ba_shipping,multichannel_hub_fulfillment.group_ba_manager,base.group_system"/>
+</odoo>

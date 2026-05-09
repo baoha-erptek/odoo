@@ -9,3 +9,6 @@ access_tracking_import_line_ba_manager,tracking.import.line ba manager,model_tra
 access_tracking_import_line_system,tracking.import.line system,model_tracking_import_line,base.group_system,1,1,1,1
 access_tracking_import_wizard_ba_shipping,tracking.import.wizard ba shipping,model_tracking_import_wizard,multichannel_hub_fulfillment.group_ba_shipping,1,1,1,0
 access_tracking_import_wizard_ba_manager,tracking.import.wizard ba manager,model_tracking_import_wizard,multichannel_hub_fulfillment.group_ba_manager,1,1,1,0
+access_logistics_partner_ba_shipping,logistics.partner ba shipping read,model_logistics_partner,multichannel_hub_fulfillment.group_ba_shipping,1,0,0,0
+access_logistics_partner_ba_manager,logistics.partner ba manager read,model_logistics_partner,multichannel_hub_fulfillment.group_ba_manager,1,0,0,0
+access_logistics_partner_system,logistics.partner system,model_logistics_partner,base.group_system,1,1,1,1

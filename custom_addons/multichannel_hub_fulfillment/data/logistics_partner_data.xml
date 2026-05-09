@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- P2-06 — GKE seed; folder IDs left empty so admin can populate per
+         tenant. Cron skips partners with empty gdrive_inbox_folder_id. -->
+    <record id="logistics_partner_gke" model="logistics.partner">
+        <field name="name">GKE Logistics</field>
+        <field name="code">gke</field>
+        <field name="poll_interval_minutes">15</field>
+        <field name="is_active" eval="True"/>
+        <field name="gdrive_inbox_folder_id"></field>
+        <field name="gdrive_archive_folder_id"></field>
+    </record>
+
+    <!-- P2-06 — single dispatcher cron iterating active partners -->
+    <record id="cron_logistics_inbox_poller" model="ir.cron">
+        <field name="name">Logistics: Poll GDrive inboxes</field>
+        <field name="model_id" ref="model_logistics_partner"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_poll_inbox()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>
