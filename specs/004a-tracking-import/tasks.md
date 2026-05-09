@@ -383,86 +383,86 @@ Depends on: P1-09 ✓ (gdrive uploader landed); P2-01..P2-05 ✓ (tracking pipel
 ## Phase 2 — RED (tdd-guide agent)
 
 ### Phase 1 — DB / static-asset (`tests/test_phase1_db.py` — append)
-- [ ] **T2-06-01** `test_logistics_partner_table_exists` — `information_schema.tables` query.
-- [ ] **T2-06-02** `test_logistics_partner_code_unique_constraint` — `pg_constraint` query for UNIQUE(code).
-- [ ] **T2-06-03** `test_logistics_partner_acl_rows_exist` — read CSV; assert 3 rows (ba_shipping read, ba_manager read, system full).
-- [ ] **T2-06-04** `test_gdrive_uploader_has_list_files_method` — `hasattr(GdriveUploader, 'list_files')`.
-- [ ] **T2-06-05** `test_gdrive_uploader_has_download_file_method` — `hasattr(GdriveUploader, 'download_file')`.
-- [ ] **T2-06-06** `test_gdrive_uploader_has_move_file_method` — `hasattr(GdriveUploader, 'move_file')`.
-- [ ] **T2-06-07** `test_gdrive_uploader_has_upload_text_method` — `hasattr(GdriveUploader, 'upload_text')`.
-- [ ] **T2-06-08** `test_logistics_inbox_poller_cron_exists` — `ir.cron` record present (`xml_id=multichannel_hub_fulfillment.cron_logistics_inbox_poller`).
+- [X] **T2-06-01** `test_logistics_partner_table_exists` — `information_schema.tables` query.
+- [X] **T2-06-02** `test_logistics_partner_code_unique_constraint` — `pg_constraint` query for UNIQUE(code).
+- [X] **T2-06-03** `test_logistics_partner_acl_rows_exist` — read CSV; assert 3 rows (ba_shipping read, ba_manager read, system full).
+- [X] **T2-06-04** `test_gdrive_uploader_has_list_files_method` — `hasattr(GdriveUploader, 'list_files')`.
+- [X] **T2-06-05** `test_gdrive_uploader_has_download_file_method` — `hasattr(GdriveUploader, 'download_file')`.
+- [X] **T2-06-06** `test_gdrive_uploader_has_move_file_method` — `hasattr(GdriveUploader, 'move_file')`.
+- [X] **T2-06-07** `test_gdrive_uploader_has_upload_text_method` — `hasattr(GdriveUploader, 'upload_text')`.
+- [X] **T2-06-08** `test_logistics_inbox_poller_cron_exists` — `ir.cron` record present (`xml_id=multichannel_hub_fulfillment.cron_logistics_inbox_poller`).
 
 ### Phase 2 — ORM (`tests/test_phase2_orm_p2_06.py` — new file)
-- [ ] **T2-06-09** `test_create_logistics_partner_minimal` — happy-path create.
-- [ ] **T2-06-10** `test_logistics_partner_code_unique_raises` — duplicate code raises IntegrityError.
-- [ ] **T2-06-11** `test_poll_interval_lt_one_raises` — value 0 → ValidationError.
-- [ ] **T2-06-12** `test_action_toggle_is_active_blocked_for_non_ba_manager` — generic user → AccessError.
-- [ ] **T2-06-13** `test_action_toggle_is_active_flips_for_ba_manager` — flips True ↔ False.
-- [ ] **T2-06-14** `test_cron_skips_inactive_partner` — `is_active=False` → not polled.
-- [ ] **T2-06-15** `test_cron_skips_partner_with_empty_inbox_folder` — empty folder ID → not polled.
-- [ ] **T2-06-16** `test_cron_respects_poll_interval` — last_poll_at within poll_interval → not re-polled this tick.
-- [ ] **T2-06-17** `test_list_files_passes_shared_drive_flags` — mock asserts both flags True.
-- [ ] **T2-06-18** `test_list_files_filters_by_modified_after` — `modifiedTime` clause in query.
-- [ ] **T2-06-19** `test_poll_skips_existing_source_gdrive_file_id` — FR-030 idempotency.
-- [ ] **T2-06-20** `test_poll_downloads_and_imports_new_file` — log created with `source='gdrive'`+`source_gdrive_file_id`.
-- [ ] **T2-06-21** `test_poll_skips_non_xlsx_files` — `.csv`/`.txt` not downloaded.
-- [ ] **T2-06-22** `test_poll_moves_file_to_archive_on_ok` — `move_file` called.
-- [ ] **T2-06-23** `test_poll_moves_file_to_archive_on_warning` — moved on warning state.
-- [ ] **T2-06-24** `test_poll_leaves_file_in_inbox_on_error` — `move_file` NOT called.
-- [ ] **T2-06-25** `test_poll_writes_error_marker_on_error` — `.error.txt` upload attempted.
-- [ ] **T2-06-26** `test_poll_error_marker_failure_swallowed` — marker upload throws → main flow continues.
-- [ ] **T2-06-27** `test_poll_updates_last_poll_at_unconditionally` — `last_poll_at` set even on error.
-- [ ] **T2-06-28** `test_poll_updates_last_success_poll_at_only_on_ok_or_warning` — error path → unchanged.
-- [ ] **T2-06-29** `test_poll_consumes_rate_limiter` — TokenBucket.acquire(1) called per API call.
-- [ ] **T2-06-30** `test_poll_defers_partner_when_rate_limit_exhausted` — acquire False → break; next tick retries.
-- [ ] **T2-06-31** `test_import_log_from_bytes_returns_processed_log` — helper returns log with state set.
-- [ ] **T2-06-32** `test_import_log_from_bytes_sets_source_fields` — `source` + `source_gdrive_file_id` populated.
-- [ ] **T2-06-33** `test_import_log_from_bytes_default_source_manual` — default `source='manual'`.
-- [ ] **T2-06-34** `test_convergence_wizard_uses_same_helper` — wizard log shape matches.
-- [ ] **T2-06-35** `test_poll_writes_sync_health_on_auth_error` — HttpError 401 → sync.health write via getattr probe.
-- [ ] **T2-06-36** `test_poll_continues_to_next_partner_on_partner_error` — partner A throws → partner B still polled.
+- [X] **T2-06-09** `test_create_logistics_partner_minimal` — happy-path create.
+- [X] **T2-06-10** `test_logistics_partner_code_unique_raises` — duplicate code raises IntegrityError.
+- [X] **T2-06-11** `test_poll_interval_lt_one_raises` — value 0 → ValidationError.
+- [X] **T2-06-12** `test_action_toggle_is_active_blocked_for_non_ba_manager` — generic user → AccessError.
+- [X] **T2-06-13** `test_action_toggle_is_active_flips_for_ba_manager` — flips True ↔ False.
+- [X] **T2-06-14** `test_cron_skips_inactive_partner` — `is_active=False` → not polled.
+- [X] **T2-06-15** `test_cron_skips_partner_with_empty_inbox_folder` — empty folder ID → not polled.
+- [X] **T2-06-16** `test_cron_respects_poll_interval` — last_poll_at within poll_interval → not re-polled this tick.
+- [X] **T2-06-17** `test_list_files_passes_shared_drive_flags` — mock asserts both flags True.
+- [X] **T2-06-18** `test_list_files_filters_by_modified_after` — `modifiedTime` clause in query.
+- [X] **T2-06-19** `test_poll_skips_existing_source_gdrive_file_id` — FR-030 idempotency.
+- [X] **T2-06-20** `test_poll_downloads_and_imports_new_file` — log created with `source='gdrive'`+`source_gdrive_file_id`.
+- [X] **T2-06-21** `test_poll_skips_non_xlsx_files` — `.csv`/`.txt` not downloaded.
+- [X] **T2-06-22** `test_poll_moves_file_to_archive_on_ok` — `move_file` called.
+- [X] **T2-06-23** `test_poll_moves_file_to_archive_on_warning` — moved on warning state.
+- [X] **T2-06-24** `test_poll_leaves_file_in_inbox_on_error` — `move_file` NOT called.
+- [X] **T2-06-25** `test_poll_writes_error_marker_on_error` — `.error.txt` upload attempted.
+- [X] **T2-06-26** `test_poll_error_marker_failure_swallowed` — marker upload throws → main flow continues.
+- [X] **T2-06-27** `test_poll_updates_last_poll_at_unconditionally` — `last_poll_at` set even on error.
+- [X] **T2-06-28** `test_poll_updates_last_success_poll_at_only_on_ok_or_warning` — error path → unchanged.
+- [X] **T2-06-29** `test_poll_consumes_rate_limiter` — TokenBucket.acquire(1) called per API call.
+- [X] **T2-06-30** `test_poll_defers_partner_when_rate_limit_exhausted` — acquire False → break; next tick retries.
+- [X] **T2-06-31** `test_import_log_from_bytes_returns_processed_log` — helper returns log with state set.
+- [X] **T2-06-32** `test_import_log_from_bytes_sets_source_fields` — `source` + `source_gdrive_file_id` populated.
+- [X] **T2-06-33** `test_import_log_from_bytes_default_source_manual` — default `source='manual'`.
+- [X] **T2-06-34** `test_convergence_wizard_uses_same_helper` — wizard log shape matches.
+- [X] **T2-06-35** `test_poll_writes_sync_health_on_auth_error` — HttpError 401 → sync.health write via getattr probe.
+- [X] **T2-06-36** `test_poll_continues_to_next_partner_on_partner_error` — partner A throws → partner B still polled.
 
 ## Phase 3 — GREEN
 
-- [ ] **T2-06-37** `models/logistics_partner.py` — Model with 8 fields per FR-026; `_sql_constraints` UNIQUE(code) + `init()` raw SQL mirror per drift template (8th use); `@api.constrains` for poll_interval ≥1; `_check_ba_manager_or_raise()` helper; `action_toggle_is_active()` RPC; `_cron_poll_inbox()` (@api.model); `_poll_partner_inbox(self)` private.
-- [ ] **T2-06-38** `data/logistics_partner_data.xml` (`noupdate="1"`) — GKE seed (folder IDs empty); `ir.cron` record `cron_logistics_inbox_poller` interval=15 min.
-- [ ] **T2-06-39** `views/logistics_partner_views.xml` — tree + form (with `action_toggle_is_active` button) + search + menu under Operations → Tracking → Logistics Partners.
-- [ ] **T2-06-40** `security/ir.model.access.csv` — append 3 rows (ba_shipping 1,0,0,0; ba_manager 1,0,0,0; system 1,1,1,1).
-- [ ] **T2-06-41** Extend `multichannel_hub_core/services/gdrive_uploader.py` — add `list_files`, `download_file`, `move_file`, `upload_text` methods to `GdriveUploader` class. All Shared-Drive flags ON. Use `MediaIoBaseDownload` + `MediaInMemoryUpload`.
-- [ ] **T2-06-42** Extend `multichannel_hub_fulfillment/services/tracking_importer.py` — module-level `import_log_from_bytes(env, file_bytes, filename, source='manual', source_gdrive_file_id=None) -> tracking.import.log`.
-- [ ] **T2-06-43** Refactor `wizards/tracking_import_wizard.py` (minimal) — `action_import` delegates to `import_log_from_bytes` for code reuse with poller.
-- [ ] **T2-06-44** Module-level `_RATE_LIMITER = TokenBucket(1000, 100)` singleton in `models/logistics_partner.py` (or `services/`).
-- [ ] **T2-06-45** Update `multichannel_hub_fulfillment/__manifest__.py` — bump `19.0.1.0.15` → `19.0.1.0.16`; register new data + view files.
-- [ ] **T2-06-46** Update `multichannel_hub_core/__manifest__.py` — bump version since `gdrive_uploader.py` changed.
+- [X] **T2-06-37** `models/logistics_partner.py` — Model with 8 fields per FR-026; `_sql_constraints` UNIQUE(code) + `init()` raw SQL mirror per drift template (8th use); `@api.constrains` for poll_interval ≥1; `_check_ba_manager_or_raise()` helper; `action_toggle_is_active()` RPC; `_cron_poll_inbox()` (@api.model); `_poll_partner_inbox(self)` private.
+- [X] **T2-06-38** `data/logistics_partner_data.xml` (`noupdate="1"`) — GKE seed (folder IDs empty); `ir.cron` record `cron_logistics_inbox_poller` interval=15 min.
+- [X] **T2-06-39** `views/logistics_partner_views.xml` — tree + form (with `action_toggle_is_active` button) + search + menu under Operations → Tracking → Logistics Partners.
+- [X] **T2-06-40** `security/ir.model.access.csv` — append 3 rows (ba_shipping 1,0,0,0; ba_manager 1,0,0,0; system 1,1,1,1).
+- [X] **T2-06-41** Extend `multichannel_hub_core/services/gdrive_uploader.py` — add `list_files`, `download_file`, `move_file`, `upload_text` methods to `GdriveUploader` class. All Shared-Drive flags ON. Use `MediaIoBaseDownload` + `MediaInMemoryUpload`.
+- [X] **T2-06-42** Extend `multichannel_hub_fulfillment/services/tracking_importer.py` — module-level `import_log_from_bytes(env, file_bytes, filename, source='manual', source_gdrive_file_id=None) -> tracking.import.log`.
+- [X] **T2-06-43** Refactor `wizards/tracking_import_wizard.py` (minimal) — `action_import` delegates to `import_log_from_bytes` for code reuse with poller.
+- [X] **T2-06-44** Module-level `_RATE_LIMITER = TokenBucket(1000, 100)` singleton in `models/logistics_partner.py` (or `services/`).
+- [X] **T2-06-45** Update `multichannel_hub_fulfillment/__manifest__.py` — bump `19.0.1.0.15` → `19.0.1.0.16`; register new data + view files.
+- [X] **T2-06-46** Update `multichannel_hub_core/__manifest__.py` — bump version since `gdrive_uploader.py` changed.
 
 ## Phase 4 — Review (parallel: code-reviewer + security-reviewer)
 
-- [ ] **T2-06-47** Code-reviewer: function length ≤50 LOC; N+1 on `source_gdrive_file_id` lookup (must be single search per file); savepoint scope; rate-limiter token consumption logic; no `_logger.info`; cron error containment so one partner's failure does not abort others.
-- [ ] **T2-06-48** Security-reviewer: FR-017-equivalent gate on `action_toggle_is_active` (BA-manager only) BEFORE sudo; sudo() inline-commented; gdrive query injection on `partner.code` in folder paths (none — codes are admin-only); cross-module sync.health write via getattr probe; UNIQUE constraint mirrored in init(); no raw SQL outside init().
-- [ ] **T2-06-49** Resolve all CRITICAL/HIGH inline; document trade-offs in commit body.
+- [X] **T2-06-47** Code-reviewer: function length ≤50 LOC; N+1 on `source_gdrive_file_id` lookup (must be single search per file); savepoint scope; rate-limiter token consumption logic; no `_logger.info`; cron error containment so one partner's failure does not abort others.
+- [X] **T2-06-48** Security-reviewer: FR-017-equivalent gate on `action_toggle_is_active` (BA-manager only) BEFORE sudo; sudo() inline-commented; gdrive query injection on `partner.code` in folder paths (none — codes are admin-only); cross-module sync.health write via getattr probe; UNIQUE constraint mirrored in init(); no raw SQL outside init().
+- [X] **T2-06-49** Resolve all CRITICAL/HIGH inline; document trade-offs in commit body.
 
 ## Phase 5 — Verify
 
-- [ ] **T2-06-50** `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_core,multichannel_hub_fulfillment --stop-after-init` exit 0.
-- [ ] **T2-06-51** `docker exec namco_odoo19 odoo -d namco_odoo19 --test-tags /multichannel_hub_fulfillment --stop-after-init` exit 0.
-- [ ] **T2-06-52** Cross-module regression: `--test-tags /multichannel_hub_core,/multichannel_hub_fulfillment,/etsy_integration` exit 0.
-- [ ] **T2-06-53** `ruff check custom_addons/multichannel_hub_core/ custom_addons/multichannel_hub_fulfillment/` exit 0 (if available).
-- [ ] **T2-06-54** `grep -rn "_logger.info\|print(" custom_addons/multichannel_hub_fulfillment/{models,services,wizards} custom_addons/multichannel_hub_core/services/` returns no debugging artifacts.
+- [X] **T2-06-50** `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_core,multichannel_hub_fulfillment --stop-after-init` exit 0.
+- [X] **T2-06-51** `docker exec namco_odoo19 odoo -d namco_odoo19 --test-tags /multichannel_hub_fulfillment --stop-after-init` exit 0.
+- [X] **T2-06-52** Cross-module regression: `--test-tags /multichannel_hub_core,/multichannel_hub_fulfillment,/etsy_integration` exit 0.
+- [X] **T2-06-53** `ruff check custom_addons/multichannel_hub_core/ custom_addons/multichannel_hub_fulfillment/` exit 0 (if available).
+- [X] **T2-06-54** `grep -rn "_logger.info\|print(" custom_addons/multichannel_hub_fulfillment/{models,services,wizards} custom_addons/multichannel_hub_core/services/` returns no debugging artifacts.
 
 ## Phase 6 — Commit
 
-- [ ] **T2-06-55** RED commit: `[multichannel_hub_fulfillment] test(P2-06): RED logistics.partner + GDrive poller tests` citing T2-06-01..T2-06-36.
-- [ ] **T2-06-56** GREEN commit (mhc): `[multichannel_hub_core] feat(P2-06): GREEN extend gdrive client with list/download/move/upload_text` citing T2-06-41.
-- [ ] **T2-06-57** GREEN commit (mhf): `[multichannel_hub_fulfillment] feat(P2-06): GREEN GDrive auto-polling cron + logistics.partner + archive flow` citing T2-06-37..T2-06-46.
+- [X] **T2-06-55** RED commit: `[multichannel_hub_fulfillment] test(P2-06): RED logistics.partner + GDrive poller tests` citing T2-06-01..T2-06-36.
+- [X] **T2-06-56** GREEN commit (mhc): `[multichannel_hub_core] feat(P2-06): GREEN extend gdrive client with list/download/move/upload_text` citing T2-06-41.
+- [X] **T2-06-57** GREEN commit (mhf): `[multichannel_hub_fulfillment] feat(P2-06): GREEN GDrive auto-polling cron + logistics.partner + archive flow` citing T2-06-37..T2-06-46.
 
 ## Phase 7 — Document
 
-- [ ] **T2-06-58** Mark all T2-06-* `[X]` in this file.
-- [ ] **T2-06-59** Tracker change-log entry for 2026-05-XX P2-06 landing.
-- [ ] **T2-06-60** Tracker P2-06 row → `state=done` with commit hashes + test counts.
-- [ ] **T2-06-61** Update `findings.md`: gdrive_uploader extension surface, archive folder strategy (no per-year subfolder this slice), file_id-based idempotency, rate-limiter integration, convergence-via-helper pattern, ICP redundancy decision, `action_toggle_is_active` sudo() rationale.
+- [X] **T2-06-58** Mark all T2-06-* `[X]` in this file.
+- [X] **T2-06-59** Tracker change-log entry for 2026-05-XX P2-06 landing.
+- [X] **T2-06-60** Tracker P2-06 row → `state=done` with commit hashes + test counts.
+- [X] **T2-06-61** Update `findings.md`: gdrive_uploader extension surface, archive folder strategy (no per-year subfolder this slice), file_id-based idempotency, rate-limiter integration, convergence-via-helper pattern, ICP redundancy decision, `action_toggle_is_active` sudo() rationale.
 
 ## Phase 8 — Learn
 
-- [ ] **T2-06-62** `/learn` to capture: per-partner polling architecture with stateless cron, file_id idempotency template (reusable for any external-source ingestion), TokenBucket integration with GDrive quota, archive-on-success folder-move flow, error-marker `.txt` sidecar pattern, programmatic-import-helper pattern (decouples wizard from cron), 8th `_sql_constraints` drift mirror confirmation.
+- [X] **T2-06-62** `/learn` to capture: per-partner polling architecture with stateless cron, file_id idempotency template (reusable for any external-source ingestion), TokenBucket integration with GDrive quota, archive-on-success folder-move flow, error-marker `.txt` sidecar pattern, programmatic-import-helper pattern (decouples wizard from cron), 8th `_sql_constraints` drift mirror confirmation.
 

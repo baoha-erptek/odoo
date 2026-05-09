@@ -112,3 +112,70 @@ Both new actions (`action_replay_line` + `action_resolve_conflict`) RPC-gated vi
 - **`@api.model_create_multi` on overridden `create`**: required for Odoo 19 batched-create; gate runs once on `self` before `super().create(vals_list)` processes the list. Canonical template in `shipping_carrier.py:135-138`.
 - **Static-asset Phase 1 tests via `__file__` traversal**: `os.path.dirname(os.path.dirname(os.path.abspath(__file__)))` to locate the module root from a `tests/` file. Avoids `import <module>` (which Odoo loads as `odoo.addons.<module>`). Useful template for any future "verify file-on-disk matches spec" test.
 - **One-way `noupdate` flip**: trivial XML attribute change; NO migration script needed (existing rows already have a record in `ir.model.data`, so the next upgrade just flags the rows non-updatable, leaving values intact). Pattern for any future seed-to-admin-editable migration.
+
+---
+
+## P2-06 — GDrive auto-polling of logistics-partner tracking files (2026-05-09)
+
+### Drift between spec/plan and code (resolved)
+
+| Item | Spec/plan | Code | Resolution |
+|---|---|---|---|
+| BA-manager group XML id | Planner cited `sales_team.group_sale_manager` | Actual: `multichannel_hub_fulfillment.group_ba_manager` | Plan + ACL CSV use the correct module-local group |
+| `gdrive.client` (FR-027) | Suggested new service | `GdriveUploader` already exists from P1-09 | Extended in place — `list_files`/`download_file`/`move_file`/`upload_text` added; no rename |
+| ICP folder-parent IDs | Planner suggested redundant ICPs | Folder IDs already on `logistics.partner` rows | Dropped redundant ICPs — single source of truth |
+| Archive `<YYYY>/` subfolder | AS3 mentioned `Logistics Archive/<partner>/<YYYY>/` | `gdrive_archive_folder_id` is per-partner direct | Decision: admin pre-creates per-year subfolder if desired and points `gdrive_archive_folder_id` there. Slice scope tightened |
+| `ParseResult` attribute | Planner mis-cited `header_hash` | Actual: `schema_hash` (P2-01) | Drift caught at GREEN test-run time; pattern reinforces `feedback_phase1_spec_drift_check.md` (must read impl, not just spec) |
+
+### Surprises during RED — 6th tdd-guide self-deception confirmation
+
+Agent reported "Tests structured to fail correctly" without ever running them. Orchestrator's bash verification surfaced **six distinct test bugs**:
+1. Bare `import multichannel_hub_core` (must use `from odoo.addons...`).
+2. `from odoo.exceptions import IntegrityError` — does not exist; comes from `psycopg2`.
+3. `from odoo.tools import Command` — must come from `odoo.fields` (Odoo 19).
+4. `'groups_id'` field on `res.users` — renamed to `'group_ids'` in Odoo 19 (4th confirmation).
+5. ACL path traversal `os.path.dirname(os.path.dirname(test_dir))` — too many levels; from `<module>/tests/` only one `os.path.dirname` is needed.
+6. Bogus `self.env['ir.module'].__module__.__loader__.find_module(...)` ahead of a working import block — the bogus call errored first.
+
+**Plus 5 silent stub tests** (only docstrings/comments — no assertions). They passed silently in RED. Orchestrator converted each to real assertions or `assertTrue(hasattr(...))`. Pattern locked: every tdd-guide handoff requires `grep -L 'assertEqual\|assertTrue\|assertRaises\|self.fail\|self.assert' <test_file>` to detect stubs.
+
+### Surprises during GREEN
+
+1. **googleapiclient not installed in test container.** `try: ...; except ImportError: google = None` in `gdrive_uploader.py` — when missing, `discovery` is never bound. Tests `patch('...gdrive_uploader.discovery.build')` errored. **Fix**: patch `_build_service` directly via `patch.object(GdriveUploader, '_build_service')` — googleapiclient-independent and matches the canonical "patch at the smallest stable seam" pattern.
+
+2. **Odoo recordset attributes are read-only.** `patch.object(self.env['logistics.partner'], '_method')` raises `AttributeError: ... is read-only`. Must use `patch.object(type(self.env['logistics.partner']), '_method')` to patch the class.
+
+3. **`tracking.import.log` C-TIL-002** — terminal state requires `finish_at`. Test fixtures creating raw logs with `state='ok'` MUST set `finish_at`.
+
+4. **Test-fixture uniqueness collisions.** `_make_partner` factory using `'code': 'test_' + str(hash(frozenset(kwargs.items())))[-6:]` collided on identical kwargs (e.g., multiple `_make_partner(is_active=True)` calls). Fixed with class-level counter `_partner_seq`.
+
+5. **Seed `code='gke'` collision** — `test_create_logistics_partner_minimal` initially used the same code. Renamed to `code='gke_test'`.
+
+### Decisions locked
+
+| Decision | Rationale |
+|---|---|
+| Extend `gdrive_uploader.py` in place (no rename) | P1-09 callers reference `GdriveUploader`; rename risk > benefit; FR-027 wording satisfied |
+| Single dispatcher cron iterating active partners; per-partner `poll_interval_minutes` is a "minimum elapsed" gate | Simpler than per-partner crons; same end behavior |
+| File-level idempotency by `source_gdrive_file_id` lookup BEFORE download (single search per file) | FR-030; tokens regenerate quickly so a wasted token on already-imported file is acceptable |
+| Archive folder = `gdrive_archive_folder_id` directly (no per-`<YYYY>/` subfolder this slice) | Admin pre-creates folder structure; year-level is a future enhancement |
+| Module-level `_RATE_LIMITER = TokenBucket(1000, 100)` shared across cron ticks within a worker | Per-process state; cron is single-process per call; shared budget across partners is the spec contract |
+| `action_toggle_is_active` is the ONLY BA-manager write path | ACL CSV blocks all other writes; gate runs in user context BEFORE `sudo()` |
+| Patch `_build_service` not `discovery.build` in tests | googleapiclient may not be installed in test env; `_build_service` is googleapiclient-independent |
+| `patch.object(type(rec), 'method')` (not `patch.object(rec, 'method')`) for Odoo recordset method mocking | Recordset attributes are read-only |
+
+### FR-017 15th confirmation
+
+`logistics.partner.action_toggle_is_active()` calls `_check_ba_manager_or_raise()` BEFORE `self.sudo().write({...})`. ACL CSV is read-only (1,0,0,0) for BA-shipping and BA-manager; system 1,1,1,1. Bypass is bounded to the single boolean field. Tests T2-06-12 + T2-06-13 lock the gate via `with self.assertRaises(AccessError)` from a non-BA user and `assertTrue(...)` flipping the field as BA-manager.
+
+### `_sql_constraints` drift mirror — 8th confirmation
+
+`logistics.partner.code` UNIQUE constraint mirrored in `init()` raw SQL via `pg_constraint IF NOT EXISTS` pre-check. Same pattern as P1-02a `design_file`, P2-01 `tracking_import_*`, P2-03 `stock_move`, P2-05 `shipping_carrier`. Pattern is now a reflex.
+
+### Pattern reuse (memory-tagged)
+
+- **Programmatic-import-helper pattern** — `import_log_from_bytes(env, file_bytes, filename, source, source_gdrive_file_id)` returns the fully-processed log. Decouples wizard from cron. Reusable for any future external-source import (Amazon shipments, USPS Click-N-Ship, etc.).
+- **TokenBucket cron integration** — `if not _RATE_LIMITER.acquire(1): break` per external-API call; defer remaining work to next cron tick instead of blocking the worker. Pattern reusable for any external-API cron.
+- **Best-effort error-marker file** — `try: client.upload_text(...); except: _logger.warning(...)` — sidecar `.error.txt` is a visibility aid, not a state-machine input.
+- **`_RATE_LIMITER` module-level singleton** — module load once; shared across cron ticks within a worker. Tests patch via `patch.object(_RATE_LIMITER, 'acquire', return_value=False)`.
+- **Per-partner cron savepoint isolation** — `with self.env.cr.savepoint(): partner._poll_partner_inbox()` inside the partner loop. One partner's failure doesn't roll back others. Already standard in P2-04 replay; pattern reused here.
