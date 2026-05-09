@@ -46,7 +46,7 @@ print(f'  multichannel_hub.design_gdrive_auto_sync_enabled       = '
 
 # 3. Logistics partner (P2-06 GKE polling)
 print('\n[3] logistics.partner (GKE)')
-gke = env['logistics.partner'].search([('code', '=', 'GKE')], limit=1)
+gke = env['logistics.partner'].search([('code', '=', 'gke')], limit=1)
 if not gke:
     print('  GKE row missing — seed XML may not have run; '
           'try -u multichannel_hub_fulfillment')
