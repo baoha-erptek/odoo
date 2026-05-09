@@ -70,3 +70,45 @@ Both new actions (`action_replay_line` + `action_resolve_conflict`) RPC-gated vi
 - **Optional cross-module audit probe** (memory `feedback_odoo19_test_gotchas.md` 99): `etsy.sync.health._record_event` does NOT exist; replay path does not call it. If a future audit hook is added, use `getattr(rec, '_record_event', None)` probe pattern (canonical at `services/tracking_importer.py:209`).
 - **Atomic write across constraint-coupled fields**: when transitioning a `tracking.import.line` state out of `error`, batch the `state` and `error_message` into a single `line.write({...})` call. Documented as MEDIUM #3 in code review (deferred docstring task; pattern enforced via test).
 - **Post-savepoint write recovery**: `with self.env.cr.savepoint(): ... except: line.write({...})` — the `line.write` after rollback reaches the parent transaction safely; cursor and recordset stay valid. Inline comment added in GREEN commit (code-reviewer MEDIUM #2).
+
+---
+
+## P2-05 — `shipping.carrier` admin UX + extended seed (2026-05-09)
+
+### Drift between spec and code (resolved)
+
+| AS | What spec asked | What code had | What we did |
+|---|---|---|---|
+| AS1 | "minimum one of (regex, etsy_carrier_name)" | No constraint | Added `_check_at_least_one_mapping(@api.constrains)` |
+| AS2 | "non-`group_system` user blocked on write/create/unlink" | ACL gave sales-manager full 1,1,1,1; no system row | Tightened ACL (manager → 1,0,0,0; new system row 1,1,1,1) + added model `_check_group_system_or_raise()` gate on create/write/unlink |
+| AS3 | "seed `noupdate=1` so admin edits persist across upgrades" | `<odoo noupdate="0">` — every upgrade re-wrote all 8 rows | Flipped to `noupdate="1"` |
+| AS4 | "`is_active=False` skips detector; existing references render" | Already-correct (`carrier_detector._compiled_cache_for` filters `is_active=True` since P2-02) | Test-only — locked behavior in T2-05-13/14 |
+
+### Surprises during RED
+
+1. **5th tdd-guide self-deception confirmation** (memory `feedback_odoo19_test_gotchas.md` updated to 5 captures). Agent reported "All 15 tests will correctly fail because the implementation has not yet been done" — without ever running them. Orchestrator's bash verification revealed three actual bugs: (a) bare `import multichannel_hub_core` instead of `from odoo.addons.multichannel_hub_core` (caused module load failure of test file, kept entire module from loading), (b) `fulfillment.invalidate_cache()` (Odoo ≤16) instead of `invalidate_recordset()` (Odoo 19), (c) `'sale_order_id'` field name on `sale.order.fulfillment` (actual field is `order_id`). All three would have been caught by a real test run; none were caught by the agent's "test will fail" mental simulation. **Mitigation**: orchestrator continues to run bash verification on every tdd-guide handoff; `feedback_dispatch_run_to_completion.md` directive stands.
+
+### Surprises during GREEN
+
+1. **None**. Implementation matched the GREEN skeleton in `_archive/p2-05-plan.md` line-for-line. Constraint ordering test (T2-05-15) passed first try.
+
+2. **ACL tightening blast radius was zero**. Grep across `custom_addons/` found exactly one `.sudo()` write to shipping.carrier — none. All `.sudo()` calls are `.search()` reads from `carrier_detector.py`, unaffected by the new write gate. Existing tests (test_audit_chatter_orm, test_carrier_detector_orm, test_phase2_shipping_carrier_orm) all pass after ACL tightening because they run as admin (default test user is `base.group_system`).
+
+### Decisions locked
+
+| Decision | Rationale |
+|---|---|
+| Defense-in-depth (ACL + model gate), not ACL-only | Matches FR-017 14-confirmation pattern; sudo() in custom code can bypass ACL — model gate runs in user context regardless |
+| Helper `_check_group_system_or_raise()` over inline `if not has_group(...): raise` | Reusable across create/write/unlink; testable in isolation; matches existing `_check_ba_shipping_or_raise()` style from P2-04 |
+| `noupdate="1"` is one-way (no rollback path) | Per spec AS3: admins WANT their edits to persist; once flipped, future upgrades respect admin state. Documented in commit body. |
+| Field-level `help` text deferred (no view edits) | Spec AS1 enforcement comes from the Python constraint, not the form layout. View edits would be cosmetic; not in slice scope. |
+
+### FR-017 14th confirmation
+
+`shipping.carrier.create/write/unlink` overrides call `_check_group_system_or_raise()` BEFORE `super()`. AccessError raises in user context (no sudo). Tests T2-05-08/09/10 lock the gate via `with self.assertRaises(AccessError)` from a non-system sales-manager user.
+
+### Pattern reuse (memory-tagged)
+
+- **`@api.model_create_multi` on overridden `create`**: required for Odoo 19 batched-create; gate runs once on `self` before `super().create(vals_list)` processes the list. Canonical template in `shipping_carrier.py:135-138`.
+- **Static-asset Phase 1 tests via `__file__` traversal**: `os.path.dirname(os.path.dirname(os.path.abspath(__file__)))` to locate the module root from a `tests/` file. Avoids `import <module>` (which Odoo loads as `odoo.addons.<module>`). Useful template for any future "verify file-on-disk matches spec" test.
+- **One-way `noupdate` flip**: trivial XML attribute change; NO migration script needed (existing rows already have a record in `ir.model.data`, so the next upgrade just flags the rows non-updatable, leaving values intact). Pattern for any future seed-to-admin-editable migration.
