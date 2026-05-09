@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -159,20 +160,51 @@ def _emit_xlsx(rows: tuple[TrackingRow, ...], out_path: Path) -> bytes:
     return out_path.read_bytes()
 
 
-def _upload_to_drive(out_path: Path, folder_id: str) -> str:
+def _resolve_service_account_path(explicit: str | None) -> Path:
+    """Return the SA JSON path, with fallback discovery.
+
+    Order of resolution:
+      1. ``--service-account`` CLI override
+      2. ``$GDRIVE_SERVICE_ACCOUNT_JSON``
+      3. ``secrets/service-account.json`` (canonical name)
+      4. Any ``secrets/*.json`` whose ``type`` field is ``service_account``
+         (catches the legacy ``regal-cursor-369422-*.json`` filename
+         currently checked into the repo)
+    """
+    if explicit:
+        return Path(explicit).resolve()
+    env_override = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON")
+    if env_override:
+        return Path(env_override).resolve()
+    canonical = REPO_ROOT / "secrets" / "service-account.json"
+    if canonical.exists():
+        return canonical
+    secrets_dir = REPO_ROOT / "secrets"
+    if secrets_dir.is_dir():
+        import json as _json
+        for cand in sorted(secrets_dir.glob("*.json")):
+            try:
+                data = _json.loads(cand.read_text())
+            except Exception:
+                continue
+            if data.get("type") == "service_account":
+                return cand.resolve()
+    raise FileNotFoundError(
+        "Drive service-account JSON not found. Set "
+        "$GDRIVE_SERVICE_ACCOUNT_JSON, pass --service-account, or place "
+        "the SA JSON at secrets/service-account.json."
+    )
+
+
+def _upload_to_drive(out_path: Path, folder_id: str, sa_path: Path) -> str:
     """Upload xlsx to the GDrive folder via service-account JSON.
 
-    Reads ``secrets/service-account.json`` from the repo root. Uses
-    ``supportsAllDrives=True`` because the staging Drive folder lives
-    on a Shared Drive (per memory feedback_staging_gdrive_provisioning).
+    Uses ``supportsAllDrives=True`` because the staging Drive folder
+    lives on a Shared Drive (per memory feedback_staging_gdrive_provisioning).
     Returns the new file id.
     """
-    creds_path = REPO_ROOT / "secrets" / "service-account.json"
-    if not creds_path.exists():
-        raise FileNotFoundError(
-            f"Drive service-account JSON not found at {creds_path}; "
-            "place the staging-account JSON there or skip --upload-to-drive."
-        )
+    if not sa_path.exists():
+        raise FileNotFoundError(f"SA JSON not found at {sa_path}")
     try:
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
@@ -184,7 +216,7 @@ def _upload_to_drive(out_path: Path, folder_id: str) -> str:
         ) from exc
 
     creds = service_account.Credentials.from_service_account_file(
-        str(creds_path),
+        str(sa_path),
         scopes=["https://www.googleapis.com/auth/drive"],
     )
     service = build("drive", "v3", credentials=creds, cache_discovery=False)
@@ -227,6 +259,11 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_DRIVE_FOLDER_ID,
         help=f"GDrive folder ID to drop file into (default: {DEFAULT_DRIVE_FOLDER_ID})",
     )
+    p.add_argument(
+        "--service-account", default="",
+        help="Path to service-account JSON (default: autodiscover under "
+             "secrets/ — picks the first file with type=='service_account').",
+    )
     return p.parse_args()
 
 
@@ -251,7 +288,9 @@ def main() -> int:
 
     if args.upload_to_drive:
         try:
-            file_id = _upload_to_drive(out_path, args.drive_folder_id)
+            sa_path = _resolve_service_account_path(args.service_account or None)
+            _log.info("using SA JSON: %s", sa_path)
+            file_id = _upload_to_drive(out_path, args.drive_folder_id, sa_path)
         except Exception as exc:
             _log.error("Drive upload failed: %s", exc)
             return 3
