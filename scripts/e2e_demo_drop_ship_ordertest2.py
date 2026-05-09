@@ -57,7 +57,15 @@ from playwright.sync_api import Page, sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TODAY = date.today().isoformat()
-SHOTS_DIR = REPO_ROOT / "docs" / "screenshots" / TODAY
+_SHOTS_BASE = REPO_ROOT / "docs" / "screenshots" / TODAY
+# If a prior root-owned run created today's screenshot dir read-only,
+# fall back to a HHMMSS-suffixed sibling so screenshot writes don't
+# blow up §0.
+if _SHOTS_BASE.exists() and not os.access(_SHOTS_BASE, os.W_OK):
+    SHOTS_DIR = _SHOTS_BASE.with_name(
+        f"{TODAY}_{datetime.now().strftime('%H%M%S')}")
+else:
+    SHOTS_DIR = _SHOTS_BASE
 SHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_BASE_URL = "https://odoo.hatafax.com"
@@ -138,8 +146,16 @@ def _shot(page: Page, name: str) -> str:
 
 def login(page: Page, role: str, base: str, db: str) -> None:
     user, pw = USERS[role]
+    # Clear cookies between logins so a stale session from the previous
+    # iteration doesn't redirect /web/login away from the form (which
+    # would leave the input hidden).
+    try:
+        page.context.clear_cookies()
+    except Exception:
+        pass
     page.goto(f"{base}/web/login?db={db}")
-    page.wait_for_selector('input[name="login"]', timeout=10_000)
+    page.wait_for_load_state("networkidle")
+    page.wait_for_selector('input[name="login"]', state="visible", timeout=15_000)
     page.fill('input[name="login"]', user)
     page.fill('input[name="password"]', pw)
     page.click('button[type="submit"]')
@@ -970,22 +986,45 @@ def section_8b_gdrive_poll(ctx: Context) -> StepResult:
     a fresh xlsx from the configured Drive folder.
 
     Pre-req: the runner (or D2's build script with --upload-to-drive) has
-    placed an xlsx into the GKE partner's gdrive_folder_id. The poller
-    cron flips state on the file (download → archive) and creates a
-    second tracking.import.log row with source='gdrive_poller'.
+    placed an xlsx into the GKE partner's gdrive_inbox_folder_id. We call
+    ``_poll_partner_inbox`` directly on the GKE row to bypass the cron
+    layer's ``_is_due()`` gate (15 min default), so re-runs in the same
+    window still exercise the polling path.
     """
+    pre_count = rpc(
+        ctx, "admin", "tracking.import.log", "search_count", [[]],
+    )
+    partners = rpc(
+        ctx, "admin", "logistics.partner", "search_read",
+        [[("code", "=", "gke")], ["id", "is_active",
+                                  "gdrive_inbox_folder_id"]],
+    )
+    if not partners:
+        return StepResult("8b", False, "logistics.partner gke row missing")
+    partner = partners[0]
+    if not partner.get("is_active") or not partner.get("gdrive_inbox_folder_id"):
+        return StepResult(
+            "8b", False,
+            f"gke partner inactive or no inbox folder "
+            f"(active={partner.get('is_active')}, "
+            f"folder={partner.get('gdrive_inbox_folder_id')!r})",
+        )
+    # Reset last_poll_at so the cron's _is_due() returns True; then fire
+    # the cron via method_direct_trigger (private-method gate is bypassed
+    # by the cron-runner path). Direct RPC to _poll_partner_inbox is
+    # blocked by Odoo's "no underscore-prefix" rule.
+    rpc_void(
+        ctx, "admin", "logistics.partner", "write",
+        [[partner["id"]], {"last_poll_at": False}],
+    )
     cron_id = _xmlid_to_res_id(
         ctx, "multichannel_hub_fulfillment", "cron_logistics_inbox_poller",
     )
     if not cron_id:
         return StepResult(
             "8b", False,
-            "logistics inbox poller cron xmlid missing "
-            "(P2-06 not deployed?)",
+            "logistics inbox poller cron xmlid missing (P2-06 not deployed?)",
         )
-    pre_count = rpc(
-        ctx, "admin", "tracking.import.log", "search_count", [[]],
-    )
     try:
         rpc_void(ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]])
     except xmlrpc.client.Fault as exc:
@@ -996,7 +1035,7 @@ def section_8b_gdrive_poll(ctx: Context) -> StepResult:
                 "8b", False,
                 f"cannot fire poller cron: {exc2.faultString[:120]}",
             )
-    time.sleep(5)
+    time.sleep(3)
     post_count = rpc(
         ctx, "admin", "tracking.import.log", "search_count", [[]],
     )
@@ -1133,7 +1172,16 @@ def _git_head() -> str:
 
 
 def write_report(results: list[StepResult], ctx: Context) -> Path:
-    report_path = REPO_ROOT / "docs" / f"E2E_DEMO_DROP_SHIP_ORDERTEST2_{TODAY}.md"
+    # If today's canonical filename is owned by another user (e.g. the
+    # morning run was kicked off by root), fall back to a HHMMSS-suffixed
+    # variant so we don't crash on PermissionError.
+    canonical = REPO_ROOT / "docs" / f"E2E_DEMO_DROP_SHIP_ORDERTEST2_{TODAY}.md"
+    if canonical.exists() and not os.access(canonical, os.W_OK):
+        suffix = datetime.now().strftime("%H%M%S")
+        report_path = canonical.with_name(
+            f"E2E_DEMO_DROP_SHIP_ORDERTEST2_{TODAY}_{suffix}.md")
+    else:
+        report_path = canonical
     passed = sum(1 for r in results if r.ok)
     total = len(results)
     lines = [

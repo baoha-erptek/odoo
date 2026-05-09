@@ -313,14 +313,25 @@ class SaleOrder(models.Model):
                     raw_email.message_id)
 
         if processed_ids:
-            try:
-                gmail.remove_label(processed_ids, label)
+            strip_label = ICP.get_param(
+                'etsy_integration.gmail_strip_label_after_process',
+                'True') == 'True'
+            if strip_label:
+                try:
+                    gmail.remove_label(processed_ids, label)
+                    _logger.info(
+                        'Etsy Integration: Removed label from %d emails.',
+                        len(processed_ids))
+                except Exception:
+                    _logger.exception(
+                        'Etsy Integration: Failed to remove label from emails.')
+            else:
                 _logger.info(
-                    'Etsy Integration: Removed label from %d emails.',
+                    "Etsy Integration: %d emails processed; label strip "
+                    "DISABLED (ICP "
+                    "'etsy_integration.gmail_strip_label_after_process'"
+                    "='False'). Set ICP back to 'True' for production.",
                     len(processed_ids))
-            except Exception:
-                _logger.exception(
-                    'Etsy Integration: Failed to remove label from emails.')
 
         _logger.info(
             'Etsy Integration: Cycle complete. %d/%d emails processed.',
