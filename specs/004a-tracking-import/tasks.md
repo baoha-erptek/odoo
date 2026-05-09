@@ -302,3 +302,70 @@ Depends on: P2-01 ✓, P2-02 ✓
 
 - [X] **T2-04-42** `/learn` to capture: per-line replay savepoint pattern (reusable for other row-level undo flows), `_recount_summary` via `read_group`, smart-button Python-domain pattern (avoids XML timedelta), chatter audit on parent when child has no `mail.thread`.
 
+---
+
+# Tasks — Spec 004a Slice P2-05
+
+**Slice**: P2-05 Spec 004a US5 `shipping.carrier` admin UX + extended seed
+**Module**: `multichannel_hub_core` (model + ACL + view + seed XML); `multichannel_hub_fulfillment` only for detector regression coverage
+**Branch**: `feature/006-master-plan-coding`
+**Plan**: `specs/004a-tracking-import/_archive/p2-05-plan.md`
+
+## Phase 2 — RED (tdd-guide agent)
+
+### Phase 1 — DB / static-asset checks (`tests/test_phase1_shipping_carrier_p2_05.py`)
+- [ ] **T2-05-01** `test_seed_xml_is_noupdate_one` — read `multichannel_hub_core/data/shipping_carrier_data.xml` (raw file via `tools` import), assert root `<odoo>` element has `noupdate="1"`.
+- [ ] **T2-05-02** `test_acl_csv_has_system_row_for_shipping_carrier` — read `security/ir.model.access.csv`, assert a row matches `(model_id=model_shipping_carrier, group_id=base.group_system, perm_read=1, perm_write=1, perm_create=1, perm_unlink=1)`.
+- [ ] **T2-05-03** `test_acl_csv_manager_row_is_read_only` — same file: assert the `sales_team.group_sale_manager` row for `model_shipping_carrier` has `perm_read=1, perm_write=0, perm_create=0, perm_unlink=0`.
+
+### Phase 2 — ORM behavior (`tests/test_phase2_shipping_carrier_p2_05.py`)
+- [ ] **T2-05-04** `test_create_requires_at_least_regex_or_etsy` — create with both `tracking_prefix_regex=False` and `etsy_carrier_name=False` raises `ValidationError` mentioning "at least one".
+- [ ] **T2-05-05** `test_create_accepts_regex_only` — create with regex set + `etsy_carrier_name=False` succeeds.
+- [ ] **T2-05-06** `test_create_accepts_etsy_only` — create with `etsy_carrier_name='other'` + no regex succeeds.
+- [ ] **T2-05-07** `test_write_to_clear_both_mappings_raises` — existing carrier; `write({'tracking_prefix_regex': False, 'etsy_carrier_name': False})` raises `ValidationError`.
+- [ ] **T2-05-08** `test_create_blocked_for_non_system_user` — sales-manager user (no `group_system`) attempting `create({...})` raises `AccessError` (canonical `assertRaises(AccessError)` per memory).
+- [ ] **T2-05-09** `test_write_blocked_for_non_system_user` — sales-manager user `write({'name': 'X'})` raises `AccessError`.
+- [ ] **T2-05-10** `test_unlink_blocked_for_non_system_user` — sales-manager user `unlink()` raises `AccessError`.
+- [ ] **T2-05-11** `test_create_succeeds_for_system_user` — admin user (default `group_system`) creates carrier with regex, succeeds.
+- [ ] **T2-05-12** `test_write_succeeds_for_system_user` — admin user `write({'name': 'USPS Priority'})` on existing seed row succeeds.
+- [ ] **T2-05-13** `test_inactive_carrier_skipped_by_detector` — create carrier with prefix `^ZZZ`, set `is_active=False`, call `carrier_detector.detect_carrier(env, 'ZZZ123456')` → returns fallback `'other'` not the inactive row. (mhf test file).
+- [ ] **T2-05-14** `test_inactive_carrier_name_still_renders` — fulfillment record references inactive carrier; `fulfillment.shipping_carrier_id.name` reads correctly (no blanking on `is_active=False`).
+- [ ] **T2-05-15** `test_at_least_one_constraint_runs_after_regex_safe` — empty regex `''` + no etsy_name should surface AS1 error (not regex-safe error). Establishes constraint-ordering contract for review.
+
+## Phase 3 — GREEN
+
+- [ ] **T2-05-16** Add `_check_at_least_one_mapping()` `@api.constrains('tracking_prefix_regex', 'etsy_carrier_name')` to `models/shipping_carrier.py` (per plan §"Phase 3 GREEN Skeleton").
+- [ ] **T2-05-17** Add `_check_group_system_or_raise()` helper + `create()` (model_create_multi) / `write()` / `unlink()` overrides on `models/shipping_carrier.py`. Inline docstring cites FR-017 14th confirmation.
+- [ ] **T2-05-18** Update `security/ir.model.access.csv`: downgrade `access_shipping_carrier_manager` to `1,0,0,0`; add `access_shipping_carrier_system` row for `base.group_system` `1,1,1,1`.
+- [ ] **T2-05-19** Flip `data/shipping_carrier_data.xml` line 2: `noupdate="0"` → `noupdate="1"`.
+- [ ] **T2-05-20** Bump `__manifest__.py` version (e.g., `19.0.1.0.16` → `19.0.1.0.17`).
+
+## Phase 4 — Review (parallel)
+
+- [ ] **T2-05-21** `code-reviewer` agent: constraint ordering, naming, helper-function placement, defense-in-depth justification, no `_logger.info`, function length ≤50 LOC.
+- [ ] **T2-05-22** `security-reviewer` agent: ACL tightening blast radius (existing tests / runtime users), `sudo()` not used in P2-05 path (gate must run in user context), `AccessError` wording (no internal-id leakage), confirms CSV diff is correct.
+
+## Phase 5 — Verify
+
+- [ ] **T2-05-23** `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_core --stop-after-init` exit 0.
+- [ ] **T2-05-24** `docker exec namco_odoo19 odoo -d namco_odoo19 --test-tags /multichannel_hub_core,/multichannel_hub_fulfillment --stop-after-init` exit 0 (P2-05 + cross-module regression).
+- [ ] **T2-05-25** `docker exec namco_odoo19 odoo -d namco_odoo19 --test-tags /etsy_integration --stop-after-init` exit 0 (no etsy regression).
+- [ ] **T2-05-26** `ruff check custom_addons/multichannel_hub_core/` exit 0 (if available).
+- [ ] **T2-05-27** `grep -rn "_logger.info\|print(" custom_addons/multichannel_hub_core/{models,views,services}` returns no debugging artifacts.
+
+## Phase 6 — Commit
+
+- [ ] **T2-05-28** RED commit: `[multichannel_hub_core] test(P2-05): RED carrier admin UX + ACL + seed-noupdate tests` citing T2-05-01..T2-05-15.
+- [ ] **T2-05-29** GREEN commit: `[multichannel_hub_core] feat(P2-05): GREEN carrier at-least-one constraint + system-only write gate + noupdate seed` citing T2-05-16..T2-05-20.
+
+## Phase 7 — Document
+
+- [ ] **T2-05-30** Mark all T2-05-* `[X]` in this file.
+- [ ] **T2-05-31** Tracker change-log entry for 2026-05-09 P2-05 landing.
+- [ ] **T2-05-32** Tracker P2-05 row → `state=done` with commit hashes + test counts.
+- [ ] **T2-05-33** Update `findings.md`: noupdate flip rationale (one-way migration), constraint-ordering finding, FR-017 14th confirmation, ACL-tightening blast radius (which tests touched).
+
+## Phase 8 — Learn
+
+- [ ] **T2-05-34** `/learn` to capture: at-least-one-of constrains template (reusable for any "at least one mapping required" model), system-only write/create/unlink gate as canonical pattern for master-data models, `noupdate` flip semantics + when admin-edit-preservation matters.
+
