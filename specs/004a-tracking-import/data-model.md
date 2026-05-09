@@ -245,3 +245,70 @@ Transitions:
 | `tracking_import_line` | `source_row_hash` | dedup lookup |
 
 All declared via field `index=True` where simple; composite + UNIQUE mirrored in `init()` raw SQL per drift template.
+
+---
+
+## 12. `logistics.partner` (Model, persistent — added by P2-06)
+
+Per-supplier configuration for the GDrive polling cron.
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `name` | Char | yes | — | Display name (e.g., "GKE Logistics") |
+| `code` | Char | yes | — | Folder-path-friendly code; UNIQUE; index=True |
+| `gdrive_inbox_folder_id` | Char | no | False | GDrive folder ID where partner drops `.xlsx` |
+| `gdrive_archive_folder_id` | Char | no | False | GDrive folder where successful files are moved |
+| `poll_interval_minutes` | Integer | yes | 15 | Min minutes between polls; ≥1 (constraint) |
+| `is_active` | Boolean | yes | True | tracking=True; soft-disable without deletion |
+| `last_poll_at` | Datetime | no | False | Set by cron after every poll attempt (success or fail) |
+| `last_success_poll_at` | Datetime | no | False | Set by cron only on log.state in (`ok`,`warning`) |
+
+**Inherits**: `mail.thread` (audit chatter on `is_active` toggle).
+
+**Constraints**:
+- `_sql_constraints`: `logistics_partner_code_uniq UNIQUE(code)` — mirrored in `init()` raw SQL per drift template (8th use).
+- `@api.constrains('poll_interval_minutes')` — value < 1 raises ValidationError.
+
+**Methods**:
+- `_check_ba_manager_or_raise()` — gate helper.
+- `action_toggle_is_active()` — RPC for BA-manager. Calls gate, then `sudo().write({'is_active': not self.is_active})` (sudo bypasses BA-manager's read-only ACL after explicit auth check).
+- `_cron_poll_inbox()` (@api.model) — cron entry; iterates active partners, savepoint per partner.
+- `_poll_partner_inbox(self)` — per-partner: list_files → idempotency check by `source_gdrive_file_id` → download → `import_log_from_bytes` → archive on success / `.error.txt` marker on failure.
+
+**ACL** (`security/ir.model.access.csv`):
+| Group | R | W | C | U |
+|---|---|---|---|---|
+| `multichannel_hub_fulfillment.group_ba_shipping` | 1 | 0 | 0 | 0 |
+| `multichannel_hub_fulfillment.group_ba_manager` | 1 | 0 | 0 | 0 |
+| `base.group_system` | 1 | 1 | 1 | 1 |
+
+**Idempotency contract**: file-level by `tracking.import.log.source_gdrive_file_id`; row-level by `tracking.import.line` UNIQUE `(log_id, source_row_hash)` (forwarded from P2-01).
+
+**Seed** (`data/logistics_partner_data.xml`, `noupdate="1"`):
+- GKE row with `code='gke'`, folder IDs left empty (admin populates after install per `feedback_staging_gdrive_provisioning.md`).
+- `ir.cron` row `cron_logistics_inbox_poller` calling `model._cron_poll_inbox()` every 15 minutes.
+
+---
+
+## 13. `GdriveUploader` extension (services/gdrive_uploader.py — modified by P2-06)
+
+Existing class (P1-09) is extended in place; new methods consume the same service-account auth path:
+
+| Method | Signature | Notes |
+|---|---|---|
+| `list_files` | `(folder_id: str, modified_after: datetime|None=None) -> list[dict]` | Lists `.xlsx` candidates; `q="'<folder>' in parents and trashed=false"`; both Shared-Drive flags ON; optional `modifiedTime > '<rfc3339>'` clause. |
+| `download_file` | `(file_id: str) -> bytes` | `MediaIoBaseDownload`; returns content. |
+| `move_file` | `(file_id: str, new_parent_folder_id: str) -> dict` | `files().update(addParents=..., removeParents=<old>, supportsAllDrives=True)`. |
+| `upload_text` | `(folder_id: str, filename: str, body: str) -> dict` | Small text/plain via `MediaInMemoryUpload`; used for `.error.txt` marker. |
+
+---
+
+## 14. `tracking_importer.import_log_from_bytes` (module-level helper — added by P2-06)
+
+```
+import_log_from_bytes(env, file_bytes: bytes, filename: str,
+                      source: str = 'manual',
+                      source_gdrive_file_id: str | None = None) -> tracking.import.log
+```
+
+Programmatic entry to the same import pipeline used by the wizard. Returns the fully-processed log (state in {`ok`, `warning`, `error`}). Wizard's `action_import` is refactored to delegate to this helper — both manual and GDrive paths converge on a single code path (FR-032).

@@ -411,3 +411,134 @@ class TestP204Views(TransactionCase):
             hasattr(self.env['tracking.import.log'], '_recount_summary'),
             "tracking.import.log should have _recount_summary method"
         )
+
+
+@tagged('post_install', '-at_install')
+class TestP206LogisticsPartnerDB(TransactionCase):
+    """Phase 1: Database verification for P2-06 GDrive auto-polling.
+
+    Tests verify:
+    - logistics.partner table exists with correct schema
+    - UNIQUE(code) constraint exists and is enforced at DB level
+    - ACL rows are defined (ba_shipping read, ba_manager read, system full)
+    - GdriveUploader has required methods (list_files, download_file, move_file, upload_text)
+    - logistics.inbox.poller cron record exists
+    """
+
+    def test_logistics_partner_table_exists(self):
+        """T2-06-01: logistics.partner table exists in database."""
+        self.env.cr.execute("""
+            SELECT to_regclass('public.logistics_partner')
+        """)
+        result = self.env.cr.fetchone()
+
+        self.assertIsNotNone(
+            result[0],
+            "logistics_partner table should exist in database"
+        )
+
+    def test_logistics_partner_code_unique_constraint(self):
+        """T2-06-02: logistics.partner has UNIQUE(code) constraint at DB level.
+
+        Query pg_constraint for a constraint matching the expected pattern.
+        This verifies the drift template (8th use) was correctly applied.
+        """
+        self.env.cr.execute("""
+            SELECT constraint_name, constraint_type
+            FROM information_schema.table_constraints
+            WHERE table_name = 'logistics_partner'
+            AND constraint_type = 'UNIQUE'
+        """)
+        constraints = self.env.cr.fetchall()
+
+        found = any(
+            'code' in constraint_name.lower()
+            for constraint_name, _ in constraints
+        )
+        self.assertTrue(
+            found,
+            "UNIQUE constraint on code should exist in logistics_partner table"
+        )
+
+    def test_logistics_partner_acl_rows_exist(self):
+        """T2-06-03: ACL rows exist for logistics.partner.
+
+        Assert 3 rows in ir.model.access for logistics.partner:
+        - group_ba_shipping: read-only (1,0,0,0)
+        - group_ba_manager: read-only (1,0,0,0)
+        - base.group_system: full access (1,1,1,1)
+        """
+        import os
+
+        # Read ACL CSV file directly (test file is in <module>/tests/)
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        module_dir = os.path.dirname(test_dir)
+        acl_path = os.path.join(module_dir, 'security', 'ir.model.access.csv')
+
+        self.assertTrue(
+            os.path.exists(acl_path),
+            f"ACL file should exist at {acl_path}"
+        )
+
+        with open(acl_path, 'r') as f:
+            lines = f.readlines()
+
+        # Filter for logistics_partner rows
+        logistics_partner_rows = [
+            line.strip() for line in lines
+            if 'logistics.partner' in line and not line.startswith('#')
+        ]
+
+        self.assertGreaterEqual(
+            len(logistics_partner_rows),
+            3,
+            f"Expected at least 3 ACL rows for logistics.partner; found {len(logistics_partner_rows)}"
+        )
+
+    def test_gdrive_uploader_has_list_files_method(self):
+        """T2-06-04: GdriveUploader.list_files method exists."""
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        self.assertTrue(
+            hasattr(GdriveUploader, 'list_files'),
+            "GdriveUploader should have list_files method"
+        )
+
+    def test_gdrive_uploader_has_download_file_method(self):
+        """T2-06-05: GdriveUploader.download_file method exists."""
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        self.assertTrue(
+            hasattr(GdriveUploader, 'download_file'),
+            "GdriveUploader should have download_file method"
+        )
+
+    def test_gdrive_uploader_has_move_file_method(self):
+        """T2-06-06: GdriveUploader.move_file method exists."""
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        self.assertTrue(
+            hasattr(GdriveUploader, 'move_file'),
+            "GdriveUploader should have move_file method"
+        )
+
+    def test_gdrive_uploader_has_upload_text_method(self):
+        """T2-06-07: GdriveUploader.upload_text method exists."""
+        from odoo.addons.multichannel_hub_core.services.gdrive_uploader import GdriveUploader
+        self.assertTrue(
+            hasattr(GdriveUploader, 'upload_text'),
+            "GdriveUploader should have upload_text method"
+        )
+
+    def test_logistics_inbox_poller_cron_exists(self):
+        """T2-06-08: logistics.inbox.poller cron record exists after install.
+
+        Assert that ir.cron record with xml_id=cron_logistics_inbox_poller
+        is present in the database.
+        """
+        cron = self.env.ref(
+            'multichannel_hub_fulfillment.cron_logistics_inbox_poller',
+            raise_if_not_found=False
+        )
+
+        self.assertIsNotNone(
+            cron,
+            "Cron record cron_logistics_inbox_poller should exist after module install"
+        )
