@@ -97,16 +97,34 @@ class StepResult:
 
 
 @dataclass
+class OrderSpec:
+    """Per-order state populated by §1 and threaded through the per-order loop."""
+    id: int
+    name: str
+    etsy_order_id: str = ""
+    design_file_ids: list[int] = field(default_factory=list)
+
+
+@dataclass
 class Context:
     base_url: str
     db: str
     common: xmlrpc.client.ServerProxy
     models: xmlrpc.client.ServerProxy
     uids: dict[str, int] = field(default_factory=dict)
+    # `current` cursor — main() rebinds these before each per-order section
+    # call so existing §2..§7/§10/§11 bodies don't need refactoring.
     sale_order_id: int | None = None
     order_name: str | None = None
     etsy_order_id: str | None = None
     design_file_ids: list[int] = field(default_factory=list)
+    # Multi-order set built by §1 (1 entry in legacy mode, 1..N when
+    # --etsy-receipt-ids is given).
+    orders: list[OrderSpec] = field(default_factory=list)
+    # Optional CLI overrides
+    target_receipt_ids: tuple[str, ...] = ()
+    gke_xlsx_path: Path | None = None
+    gdrive_poll: bool = False
 
 
 # ─── Playwright + XML-RPC helpers ──────────────────────────────────────────────
@@ -218,40 +236,114 @@ def section_0_preflight(ctx: Context, page: Page) -> StepResult:
 # ─── §1 fire Gmail cron, find newest ordertest2 order ──────────────────────────
 
 
-def section_1_email_fetch(ctx: Context) -> StepResult:
+def _fire_gmail_cron(ctx: Context) -> tuple[bool, str]:
     cron_id = _xmlid_to_res_id(ctx, *GMAIL_CRON_XMLID)
     if not cron_id:
-        return StepResult(
-            "1", False,
+        return False, (
             f"Gmail cron xmlid {GMAIL_CRON_XMLID} not found "
-            "(etsy_integration not installed?)",
+            "(etsy_integration not installed?)"
         )
-
-    fired_ok = True
-    fire_note = ""
     try:
-        rpc_void(
-            ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]],
-        )
+        rpc_void(ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]])
+        return True, ""
     except xmlrpc.client.Fault as exc:
-        # Some Odoo deploys gate method_direct_trigger; still try
-        # _trigger as a fallback (also public in 19).
-        fire_note = f"method_direct_trigger failed: {exc.faultString[:100]}; "
+        note = f"method_direct_trigger failed: {exc.faultString[:100]}; "
         try:
             rpc_void(ctx, "admin", "ir.cron", "_trigger", [[cron_id]])
+            return True, note
         except xmlrpc.client.Fault as exc2:
-            fired_ok = False
-            fire_note += f"_trigger failed: {exc2.faultString[:100]}"
-    if not fired_ok:
+            return False, note + f"_trigger failed: {exc2.faultString[:100]}"
+
+
+def _bind_order(ctx: Context, spec: OrderSpec) -> None:
+    ctx.sale_order_id = spec.id
+    ctx.order_name = spec.name
+    ctx.etsy_order_id = spec.etsy_order_id
+    ctx.design_file_ids = spec.design_file_ids
+
+
+def _save_order(ctx: Context, spec: OrderSpec) -> None:
+    """Mirror current cursor state back onto the OrderSpec.
+
+    §3 mutates ``ctx.design_file_ids``; this preserves the per-order
+    list across the multi-order loop.
+    """
+    spec.design_file_ids = list(ctx.design_file_ids)
+
+
+def _wait_for_orders_by_receipt(
+    ctx: Context, receipt_ids: tuple[str, ...], timeout_s: int = 60,
+) -> list[OrderSpec]:
+    """Poll until every receipt has either an etsy.email.log row or an
+    already-existing sale.order; return one OrderSpec per resolved receipt.
+
+    Re-fires the Gmail cron between polls so a slow Gmail API still
+    surfaces eventually. Receipts that never resolve are reported via
+    the StepResult note (caller decides pass/fail).
+    """
+    deadline = time.time() + timeout_s
+    resolved: dict[str, OrderSpec] = {}
+    while time.time() < deadline and len(resolved) < len(receipt_ids):
+        missing = [r for r in receipt_ids if r not in resolved]
+        rows = rpc(
+            ctx, "admin", "sale.order", "search_read",
+            [[("etsy_order_id", "in", list(missing))],
+             ["id", "name", "etsy_order_id"]],
+        )
+        for row in rows:
+            ext = str(row.get("etsy_order_id") or "")
+            if ext in missing:
+                resolved[ext] = OrderSpec(
+                    id=row["id"], name=row["name"], etsy_order_id=ext,
+                )
+        if len(resolved) == len(receipt_ids):
+            break
+        # Re-fire cron between polls. Ignore failures — we'll surface
+        # missing receipts in the StepResult.
+        _fire_gmail_cron(ctx)
+        time.sleep(5)
+    # Preserve caller's order.
+    return [resolved[r] for r in receipt_ids if r in resolved]
+
+
+def section_1_email_fetch(ctx: Context) -> StepResult:
+    fired, fire_note = _fire_gmail_cron(ctx)
+    if not fired:
         return StepResult(
             "1", False,
             "Cannot fire Gmail cron via RPC; check OAuth creds + cron ACL. "
             f"({fire_note})",
         )
-
     # Wait briefly for the cron to settle (it makes outbound HTTPS calls).
     time.sleep(3)
 
+    # Mode A: explicit receipt IDs. Poll until each has an order row,
+    # populate ctx.orders, fall back to single-order mode only on
+    # complete miss (unprovisioned OAuth).
+    if ctx.target_receipt_ids:
+        specs = _wait_for_orders_by_receipt(ctx, ctx.target_receipt_ids)
+        if specs:
+            ctx.orders = specs
+            first = specs[0]
+            _bind_order(ctx, first)
+            missing = [
+                r for r in ctx.target_receipt_ids
+                if r not in {s.etsy_order_id for s in specs}
+            ]
+            note = (
+                f"resolved {len(specs)}/{len(ctx.target_receipt_ids)} "
+                f"receipt(s): {[s.name for s in specs]}"
+            )
+            if missing:
+                note += f" — MISSING: {missing} (Gmail label or OAuth gap)"
+            return StepResult("1", not missing, note)
+        # All receipts missed — fall through to legacy fallback.
+        fire_note += (
+            f" no orders found for receipts {list(ctx.target_receipt_ids)};"
+            " falling back to most recent etsy order."
+        )
+
+    # Mode B (legacy): newest etsy.email.log within 2h.
     cutoff = (datetime.utcnow() - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
     log_rows = rpc(
         ctx, "admin", "etsy.email.log", "search_read",
@@ -283,9 +375,12 @@ def section_1_email_fetch(ctx: Context) -> StepResult:
                 f"Provision Gmail OAuth on demo_esty first. {fire_note}",
             )
         order = existing[0]
-        ctx.sale_order_id = order["id"]
-        ctx.order_name = order["name"]
-        ctx.etsy_order_id = order.get("etsy_order_id") or ""
+        spec = OrderSpec(
+            id=order["id"], name=order["name"],
+            etsy_order_id=str(order.get("etsy_order_id") or ""),
+        )
+        ctx.orders = [spec]
+        _bind_order(ctx, spec)
         return StepResult(
             "1", True,
             f"FALLBACK to existing demo order {order['name']} "
@@ -294,13 +389,17 @@ def section_1_email_fetch(ctx: Context) -> StepResult:
         )
 
     chosen = log_rows[0]
-    ctx.sale_order_id = chosen["sale_order_id"][0]
-    ctx.order_name = chosen["sale_order_id"][1]
+    sale_order_id = chosen["sale_order_id"][0]
     order = rpc(
         ctx, "admin", "sale.order", "read",
-        [[ctx.sale_order_id], ["name", "etsy_order_id", "amount_total", "partner_id"]],
+        [[sale_order_id], ["name", "etsy_order_id", "amount_total", "partner_id"]],
     )[0]
-    ctx.etsy_order_id = order.get("etsy_order_id") or ""
+    spec = OrderSpec(
+        id=sale_order_id, name=order["name"],
+        etsy_order_id=str(order.get("etsy_order_id") or ""),
+    )
+    ctx.orders = [spec]
+    _bind_order(ctx, spec)
     return StepResult(
         "1", True,
         f"newest ordertest2 ingest: {order['name']} "
@@ -308,6 +407,33 @@ def section_1_email_fetch(ctx: Context) -> StepResult:
         f"partner={order['partner_id'][1] if order.get('partner_id') else '?'} "
         f"({len(log_rows)} candidate(s) in last 2h)",
     )
+
+
+def _prewarm_image_cron(ctx: Context, timeout_s: int = 60) -> str:
+    """Fire P1-IMG-CRON-WIRE so product.template.image_1920 is populated
+    before §3's design.file attach. Returns a one-line status note for
+    the caller to fold into its StepResult.
+
+    No-op if the cron xmlid isn't deployed yet; that path keeps §3
+    falling through to the placeholder PNG (existing behavior).
+    """
+    cron_id = _xmlid_to_res_id(
+        ctx, "etsy_integration", "ir_cron_download_pending_etsy_images",
+    )
+    if not cron_id:
+        return "image cron not deployed (P1-IMG-CRON-WIRE missing)"
+    try:
+        rpc_void(ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]])
+    except xmlrpc.client.Fault as exc:
+        try:
+            rpc_void(ctx, "admin", "ir.cron", "_trigger", [[cron_id]])
+        except xmlrpc.client.Fault:
+            return f"image cron fire failed: {exc.faultString[:80]}"
+    # No need to poll — §3 reads image_1920 by line.product_id; if the
+    # cron picked up some images and not others, §3 falls through to
+    # placeholder for missing ones.
+    time.sleep(min(timeout_s, 30))
+    return "image cron fired"
 
 
 # ─── §2 dashboard view ─────────────────────────────────────────────────────────
@@ -745,17 +871,20 @@ def _xls_to_xlsx_bytes(xls_path: Path) -> bytes:
 
 
 def section_8_tracking_import(ctx: Context) -> StepResult:
-    if not GKE_XLS_PATH.exists():
-        return StepResult(
-            "8", False, f"sample file missing: {GKE_XLS_PATH}",
-        )
-    xlsx_bytes = _xls_to_xlsx_bytes(GKE_XLS_PATH)
+    src = ctx.gke_xlsx_path or GKE_XLS_PATH
+    if not src.exists():
+        return StepResult("8", False, f"sample file missing: {src}")
+    if src.suffix.lower() == ".xlsx":
+        xlsx_bytes = src.read_bytes()
+        filename = src.name
+    else:
+        xlsx_bytes = _xls_to_xlsx_bytes(src)
+        filename = src.with_suffix(".xlsx").name
     encoded = base64.b64encode(xlsx_bytes).decode("ascii")
     try:
         wiz_id = rpc(
             ctx, "ba_manager", "tracking.import.wizard", "create",
-            [{"excel_file": encoded,
-              "excel_filename": "sample_bc_don_hang_drop_ship.xlsx"}],
+            [{"excel_file": encoded, "excel_filename": filename}],
         )
     except xmlrpc.client.Fault as exc:
         return StepResult(
@@ -803,22 +932,98 @@ def section_8_tracking_import(ctx: Context) -> StepResult:
     line_rows = rpc(
         ctx, "admin", "tracking.import.line", "search_read",
         [[("log_id", "=", log_id)],
-         ["state", "sale_order_id", "raw_tracking_number"]],
+         ["state", "sale_order_id", "raw_tracking_number", "raw_order_number"]],
     )
     imported = sum(1 for r in line_rows if r["state"] == "imported")
     matched = sum(1 for r in line_rows if r.get("sale_order_id"))
-    # Pass criterion: the wizard ran end-to-end (state='imported' or 'done')
-    # without raising. Whether individual lines matched is data-dependent —
-    # the sample xls was captured 2026-04-08 with order numbers from a
-    # different production tenant and is unlikely to match the synthetic
-    # demo orders on demo_esty.
+    # When --etsy-receipt-ids is used and --gke-xls points at a custom
+    # xls built by build_gke_xls_for_e2e.py, the order numbers in the
+    # file should match our 4 SOs by channel_order_ref (== etsy_order_id).
+    # Tighten the pass criterion to also require ≥1 line per receipt id.
+    target_ids = {s.id for s in ctx.orders}
+    matched_targets = {
+        r["sale_order_id"][0] for r in line_rows
+        if r.get("sale_order_id") and r["sale_order_id"][0] in target_ids
+    }
     wizard_completed = wiz_after.get("state") in ("imported", "done")
+    if ctx.target_receipt_ids:
+        ok = wizard_completed and len(matched_targets) >= 1
+        target_note = (
+            f" matched_targets={len(matched_targets)}/{len(target_ids)}"
+        )
+    else:
+        ok = wizard_completed
+        target_note = ""
     return StepResult(
-        "8", wizard_completed,
+        "8", ok,
         f"wizard.state={wiz_after.get('state')}; "
-        f"{len(line_rows)} line(s); {imported} imported, {matched} matched. "
-        f"(GKE schema from {GKE_XLS_PATH.name}; non-matched lines expected — "
-        "real demo orders are unlikely to share order numbers with this xls)",
+        f"{len(line_rows)} line(s); {imported} imported, {matched} matched."
+        f"{target_note} (GKE schema from {src.name})",
+    )
+
+
+# ─── §8b GDrive inbox polling (P2-06 logistics.partner.gke) ────────────────────
+
+
+def section_8b_gdrive_poll(ctx: Context) -> StepResult:
+    """Trigger the logistics.partner inbox poller and verify it picked up
+    a fresh xlsx from the configured Drive folder.
+
+    Pre-req: the runner (or D2's build script with --upload-to-drive) has
+    placed an xlsx into the GKE partner's gdrive_folder_id. The poller
+    cron flips state on the file (download → archive) and creates a
+    second tracking.import.log row with source='gdrive_poller'.
+    """
+    cron_id = _xmlid_to_res_id(
+        ctx, "multichannel_hub_fulfillment", "cron_logistics_inbox_poller",
+    )
+    if not cron_id:
+        return StepResult(
+            "8b", False,
+            "logistics inbox poller cron xmlid missing "
+            "(P2-06 not deployed?)",
+        )
+    pre_count = rpc(
+        ctx, "admin", "tracking.import.log", "search_count", [[]],
+    )
+    try:
+        rpc_void(ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]])
+    except xmlrpc.client.Fault as exc:
+        try:
+            rpc_void(ctx, "admin", "ir.cron", "_trigger", [[cron_id]])
+        except xmlrpc.client.Fault as exc2:
+            return StepResult(
+                "8b", False,
+                f"cannot fire poller cron: {exc2.faultString[:120]}",
+            )
+    time.sleep(5)
+    post_count = rpc(
+        ctx, "admin", "tracking.import.log", "search_count", [[]],
+    )
+    new_logs = post_count - pre_count
+    if new_logs <= 0:
+        # Look for any failure markers the poller may have written.
+        return StepResult(
+            "8b", False,
+            f"no new tracking.import.log rows after poll "
+            f"(pre={pre_count}, post={post_count}); verify Drive folder "
+            "ICP + service-account sharing",
+        )
+    latest = rpc(
+        ctx, "admin", "tracking.import.log", "search_read",
+        [[], ["id", "state", "source", "filename",
+              "matched_count", "imported_count", "total_rows"]],
+        {"order": "id desc", "limit": 1},
+    )[0]
+    src_ok = latest.get("source") == "gdrive"
+    state_ok = latest.get("state") in ("imported", "done")
+    return StepResult(
+        "8b", src_ok and state_ok,
+        f"+{new_logs} log row(s); latest id={latest['id']} "
+        f"source={latest.get('source')} state={latest.get('state')} "
+        f"filename={latest.get('filename')} "
+        f"rows={latest.get('total_rows')}/imported={latest.get('imported_count')}/"
+        f"matched={latest.get('matched_count')}",
     )
 
 
@@ -826,19 +1031,24 @@ def section_8_tracking_import(ctx: Context) -> StepResult:
 
 
 def section_9_mark_shipped(ctx: Context) -> StepResult:
-    if not ctx.sale_order_id:
-        return StepResult("9", False, "skipped — no order from §1")
-    fulfillment_id = rpc(
+    if not ctx.orders:
+        return StepResult("9", False, "skipped — no orders from §1")
+    order_ids = [s.id for s in ctx.orders]
+    rows = rpc(
         ctx, "admin", "sale.order", "read",
-        [[ctx.sale_order_id], ["fulfillment_id"]],
-    )[0]["fulfillment_id"]
-    if not fulfillment_id:
-        return StepResult("9", False, "no fulfillment row")
+        [order_ids, ["fulfillment_id"]],
+    )
+    fulfillment_ids = [
+        r["fulfillment_id"][0] for r in rows
+        if r.get("fulfillment_id")
+    ]
+    if not fulfillment_ids:
+        return StepResult("9", False, "no fulfillment rows")
 
     try:
         rpc_void(
             ctx, "production", "sale.order", "action_bulk_mark_shipped",
-            [[ctx.sale_order_id]],
+            [order_ids],
         )
     except xmlrpc.client.Fault as exc:
         if "does not exist" not in (exc.faultString or ""):
@@ -849,7 +1059,7 @@ def section_9_mark_shipped(ctx: Context) -> StepResult:
         try:
             rpc_void(
                 ctx, "production", "sale.order.fulfillment",
-                "action_bulk_mark_shipped", [[fulfillment_id[0]]],
+                "action_bulk_mark_shipped", [fulfillment_ids],
             )
         except xmlrpc.client.Fault as exc2:
             return StepResult(
@@ -857,14 +1067,15 @@ def section_9_mark_shipped(ctx: Context) -> StepResult:
                 f"fulfillment fallback failed: "
                 f"{exc2.faultString.splitlines()[-1][:160]}",
             )
-    f_row = rpc(
+    f_rows = rpc(
         ctx, "admin", "sale.order.fulfillment", "read",
-        [[fulfillment_id[0]], ["tracking_state", "shipping_date"]],
-    )[0]
+        [fulfillment_ids, ["tracking_state", "shipping_date"]],
+    )
+    shipped = sum(1 for r in f_rows if r.get("tracking_state") == "shipped")
     return StepResult(
-        "9", f_row.get("tracking_state") == "shipped",
-        f"tracking_state={f_row.get('tracking_state')} "
-        f"shipping_date={f_row.get('shipping_date')}",
+        "9", shipped == len(f_rows),
+        f"shipped {shipped}/{len(f_rows)} fulfillment(s); "
+        f"tracking_states={[r.get('tracking_state') for r in f_rows]}",
     )
 
 
@@ -985,7 +1196,8 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
 # ─── main ──────────────────────────────────────────────────────────────────────
 
 
-SECTIONS = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11")
+SECTIONS = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "8b", "9", "10", "11")
+PER_ORDER_SECTIONS = ("2", "3", "4", "5", "6", "7", "10", "11")
 
 
 def _safe(section: str, fn, *args, **kwargs) -> StepResult:
@@ -1002,12 +1214,48 @@ def _safe(section: str, fn, *args, **kwargs) -> StepResult:
         )
 
 
+def _aggregate(section: str, per_order: list[StepResult]) -> StepResult:
+    """Collapse N per-order results for one section into one row."""
+    if not per_order:
+        return StepResult(section, False, "no orders to run")
+    ok = all(r.ok for r in per_order)
+    notes = "; ".join(f"[{r.note}]" for r in per_order)
+    # Pick the first non-empty screenshot so the report still surfaces a
+    # representative image.
+    screenshot = next((r.screenshot for r in per_order if r.screenshot), None)
+    return StepResult(section, ok, f"{len(per_order)} order(s): {notes}",
+                      screenshot=screenshot)
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--section", default="all", help=f"all or one of {SECTIONS}")
     p.add_argument("--headed", action="store_true")
     p.add_argument("--base-url", default=DEFAULT_BASE_URL)
     p.add_argument("--db", default=DEFAULT_DB)
+    p.add_argument(
+        "--etsy-receipt-ids", default="",
+        help="Comma-separated etsy_order_id values to force in §1 "
+             "(e.g. 3703975562,3711793551,3710809073,3708041263). "
+             "When given, §1 polls until each receipt has a sale.order; "
+             "§2-§7/§10/§11 loop per order; §8/§9 batch all orders.",
+    )
+    p.add_argument(
+        "--gke-xls", default="",
+        help="Override the GKE tracking file path consumed by §8 "
+             "(default: .0temp/sample_bc_don_hang2026_04_08.xls). "
+             "Accepts .xls or .xlsx.",
+    )
+    p.add_argument(
+        "--cleanup-first", action="store_true",
+        help="Run cleanup_demo_esty_orders.py before §0 (Etsy-channel only).",
+    )
+    p.add_argument(
+        "--gdrive-poll", action="store_true",
+        help="After §8, fire the logistics inbox poller cron and assert "
+             "a fresh tracking.import.log row with source='gdrive' lands "
+             "(P2-06 path).",
+    )
     return p.parse_args()
 
 
@@ -1015,16 +1263,38 @@ def _selected(arg: str) -> set[str]:
     return set(SECTIONS) if arg == "all" else {arg}
 
 
+def _maybe_cleanup_first(args: argparse.Namespace) -> None:
+    if not args.cleanup_first:
+        return
+    cleanup_script = REPO_ROOT / "scripts" / "cleanup_demo_esty_orders.py"
+    cmd = [sys.executable, str(cleanup_script),
+           "--base-url", args.base_url, "--db", args.db]
+    _log.info("running pre-cleanup: %s", " ".join(cmd))
+    rc = subprocess.call(cmd)
+    if rc != 0:
+        raise RuntimeError(f"pre-cleanup exited with {rc}")
+
+
 def main() -> int:
     args = parse_args()
     sel = _selected(args.section)
     base = args.base_url.rstrip("/")
+    target_receipts = tuple(
+        r.strip() for r in args.etsy_receipt_ids.split(",") if r.strip()
+    )
+    gke_xlsx = Path(args.gke_xls).resolve() if args.gke_xls else None
+
+    _maybe_cleanup_first(args)
+
     ctx = Context(
         base_url=base, db=args.db,
         common=xmlrpc.client.ServerProxy(
             f"{base}/xmlrpc/2/common", allow_none=True),
         models=xmlrpc.client.ServerProxy(
             f"{base}/xmlrpc/2/object", allow_none=True),
+        target_receipt_ids=target_receipts,
+        gke_xlsx_path=gke_xlsx,
+        gdrive_poll=args.gdrive_poll,
     )
     results: list[StepResult] = []
 
@@ -1037,26 +1307,61 @@ def main() -> int:
                 results.append(_safe("0", section_0_preflight, ctx, page))
             if "1" in sel:
                 results.append(_safe("1", section_1_email_fetch, ctx))
-            if "2" in sel:
-                results.append(_safe("2", section_2_dashboard, ctx, page))
-            if "3" in sel:
-                results.append(_safe("3", section_3_design_from_etsy_images, ctx))
-            if "4" in sel:
-                results.append(_safe("4", section_4_proof_approve, ctx))
-            if "5" in sel:
-                results.append(_safe("5", section_5_gdrive_promote, ctx))
-            if "6" in sel:
-                results.append(_safe("6", section_6_pipeline_to_gearment, ctx))
-            if "7" in sel:
-                results.append(_safe("7", section_7_address_verify, ctx))
+                # Pre-warm image cron once so §3's image_1920 read has data.
+                if ctx.orders:
+                    img_note = _prewarm_image_cron(ctx)
+                    _log.info("prewarm image cron: %s", img_note)
+
+            # Per-order loop: rebind ctx cursor before each section so
+            # the section bodies stay single-order; aggregate results.
+            per_section_results: dict[str, list[StepResult]] = {
+                s: [] for s in PER_ORDER_SECTIONS
+            }
+            order_specs = ctx.orders or []
+            for spec in order_specs:
+                _bind_order(ctx, spec)
+                if "2" in sel:
+                    per_section_results["2"].append(
+                        _safe("2", section_2_dashboard, ctx, page))
+                if "3" in sel:
+                    per_section_results["3"].append(
+                        _safe("3", section_3_design_from_etsy_images, ctx))
+                if "4" in sel:
+                    per_section_results["4"].append(
+                        _safe("4", section_4_proof_approve, ctx))
+                if "5" in sel:
+                    per_section_results["5"].append(
+                        _safe("5", section_5_gdrive_promote, ctx))
+                if "6" in sel:
+                    per_section_results["6"].append(
+                        _safe("6", section_6_pipeline_to_gearment, ctx))
+                if "7" in sel:
+                    per_section_results["7"].append(
+                        _safe("7", section_7_address_verify, ctx))
+                if "10" in sel:
+                    per_section_results["10"].append(
+                        _safe("10", section_10_order_completed, ctx))
+                if "11" in sel:
+                    per_section_results["11"].append(
+                        _safe("11", section_11_audit, ctx))
+                _save_order(ctx, spec)
+
+            for s in ("2", "3", "4", "5", "6", "7"):
+                if s in sel:
+                    results.append(_aggregate(s, per_section_results[s]))
+
+            # Batched (§8/§8b/§9) — once for the whole order set.
             if "8" in sel:
                 results.append(_safe("8", section_8_tracking_import, ctx))
+            if "8b" in sel and ctx.gdrive_poll:
+                results.append(_safe("8b", section_8b_gdrive_poll, ctx))
             if "9" in sel:
                 results.append(_safe("9", section_9_mark_shipped, ctx))
-            if "10" in sel:
-                results.append(_safe("10", section_10_order_completed, ctx))
-            if "11" in sel:
-                results.append(_safe("11", section_11_audit, ctx))
+
+            # Per-order again for §10 / §11.
+            for s in ("10", "11"):
+                if s in sel:
+                    results.append(_aggregate(s, per_section_results[s]))
         finally:
             ctxb.close()
             browser.close()
