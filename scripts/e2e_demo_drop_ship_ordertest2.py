@@ -1009,13 +1009,16 @@ def section_8b_gdrive_poll(ctx: Context) -> StepResult:
             f"(active={partner.get('is_active')}, "
             f"folder={partner.get('gdrive_inbox_folder_id')!r})",
         )
-    # Reset last_poll_at so the cron's _is_due() returns True; then fire
-    # the cron via method_direct_trigger (private-method gate is bypassed
-    # by the cron-runner path). Direct RPC to _poll_partner_inbox is
-    # blocked by Odoo's "no underscore-prefix" rule.
+    # Reset last_poll_at to a far-past timestamp so:
+    #   (a) cron _is_due() returns True
+    #   (b) GdriveUploader.list_files passes a valid ISO8601 string into
+    #       Drive's `modifiedTime > 'X'` filter — passing False/None
+    #       falls through list_files's truthy-but-not-None branch and
+    #       formats as the literal string "False", silently filtering
+    #       out every file in the folder.
     rpc_void(
         ctx, "admin", "logistics.partner", "write",
-        [[partner["id"]], {"last_poll_at": False}],
+        [[partner["id"]], {"last_poll_at": "2000-01-01 00:00:00"}],
     )
     cron_id = _xmlid_to_res_id(
         ctx, "multichannel_hub_fulfillment", "cron_logistics_inbox_poller",
@@ -1055,7 +1058,9 @@ def section_8b_gdrive_poll(ctx: Context) -> StepResult:
         {"order": "id desc", "limit": 1},
     )[0]
     src_ok = latest.get("source") == "gdrive"
-    state_ok = latest.get("state") in ("imported", "done")
+    # Per tracking.import.log Selection: pending/processing/ok/warning/error.
+    # 'ok' or 'warning' both mean "import landed; archive may or may not have run".
+    state_ok = latest.get("state") in ("ok", "warning")
     return StepResult(
         "8b", src_ok and state_ok,
         f"+{new_logs} log row(s); latest id={latest['id']} "
@@ -1245,7 +1250,10 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
 
 
 SECTIONS = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "8b", "9", "10", "11")
-PER_ORDER_SECTIONS = ("2", "3", "4", "5", "6", "7", "10", "11")
+# §2 is a one-shot Playwright screenshot — the form/dashboard view is
+# identical across orders, and Odoo's session-keepalive makes per-order
+# re-login flaky. Run §2 once on the first order only.
+PER_ORDER_SECTIONS = ("3", "4", "5", "6", "7", "10", "11")
 
 
 def _safe(section: str, fn, *args, **kwargs) -> StepResult:
@@ -1360,6 +1368,13 @@ def main() -> int:
                     img_note = _prewarm_image_cron(ctx)
                     _log.info("prewarm image cron: %s", img_note)
 
+            # §2 once on the first order (Playwright form/dashboard
+            # screenshot — re-login per order trips Odoo's session
+            # keepalive and the field goes hidden).
+            if "2" in sel and ctx.orders:
+                _bind_order(ctx, ctx.orders[0])
+                results.append(_safe("2", section_2_dashboard, ctx, page))
+
             # Per-order loop: rebind ctx cursor before each section so
             # the section bodies stay single-order; aggregate results.
             per_section_results: dict[str, list[StepResult]] = {
@@ -1368,9 +1383,6 @@ def main() -> int:
             order_specs = ctx.orders or []
             for spec in order_specs:
                 _bind_order(ctx, spec)
-                if "2" in sel:
-                    per_section_results["2"].append(
-                        _safe("2", section_2_dashboard, ctx, page))
                 if "3" in sel:
                     per_section_results["3"].append(
                         _safe("3", section_3_design_from_etsy_images, ctx))
@@ -1394,7 +1406,7 @@ def main() -> int:
                         _safe("11", section_11_audit, ctx))
                 _save_order(ctx, spec)
 
-            for s in ("2", "3", "4", "5", "6", "7"):
+            for s in ("3", "4", "5", "6", "7"):
                 if s in sel:
                     results.append(_aggregate(s, per_section_results[s]))
 
