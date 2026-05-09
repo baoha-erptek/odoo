@@ -1,7 +1,7 @@
 import re
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 
 class ShippingCarrier(models.Model):
@@ -103,3 +103,44 @@ class ShippingCarrier(models.Model):
                     code=record.code,
                     other=duplicates[0].name,
                 ))
+
+    @api.constrains('tracking_prefix_regex', 'etsy_carrier_name')
+    def _check_at_least_one_mapping(self):
+        """P2-05 US5 AS1: every carrier must declare at least one detection
+        mapping — a tracking-number regex (used by P2-02 detector) or an Etsy
+        carrier name (used by future Spec 005 tracking push). A carrier with
+        neither is unreachable from any auto-routing path and likely a
+        data-entry error.
+        """
+        for record in self:
+            regex = (record.tracking_prefix_regex or '').strip()
+            etsy = record.etsy_carrier_name
+            if not regex and not etsy:
+                raise ValidationError(_(
+                    "Shipping carrier %(name)s must have at least one of: "
+                    "Tracking Prefix Regex or Etsy Carrier Name.",
+                    name=record.name or record.code or '?',
+                ))
+
+    def _check_group_system_or_raise(self):
+        """P2-05 US5 AS2: master-carrier data is admin-only. Sales managers
+        can READ via ACL but cannot mutate — protects the seed-driven detector
+        pipeline from accidental misconfig by non-admin users. Defense-in-depth
+        above the CSV ACL row (FR-017 14th confirmation).
+        """
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError(_(
+                "Only system administrators can edit shipping carriers."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._check_group_system_or_raise()
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._check_group_system_or_raise()
+        return super().write(vals)
+
+    def unlink(self):
+        self._check_group_system_or_raise()
+        return super().unlink()

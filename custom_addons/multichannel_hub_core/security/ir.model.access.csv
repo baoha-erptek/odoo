@@ -3,7 +3,8 @@ access_sale_order_fulfillment_user,sale.order.fulfillment user,model_sale_order_
 access_sale_order_fulfillment_production_team,sale.order.fulfillment production team,model_sale_order_fulfillment,group_production_team,1,1,0,0
 access_sale_order_fulfillment_manager,sale.order.fulfillment manager,model_sale_order_fulfillment,sales_team.group_sale_manager,1,1,1,1
 access_shipping_carrier_user,shipping.carrier user,model_shipping_carrier,sales_team.group_sale_salesman,1,0,0,0
-access_shipping_carrier_manager,shipping.carrier manager,model_shipping_carrier,sales_team.group_sale_manager,1,1,1,1
+access_shipping_carrier_manager,shipping.carrier manager,model_shipping_carrier,sales_team.group_sale_manager,1,0,0,0
+access_shipping_carrier_system,shipping.carrier system,model_shipping_carrier,base.group_system,1,1,1,1
 access_design_file_salesman_read,design.file read for salesman,model_design_file,sales_team.group_sale_salesman,1,0,0,0
 access_design_file_production_team,design.file production team,model_design_file,group_production_team,1,1,1,0
 access_design_file_manager_full,design.file manager full,model_design_file,sales_team.group_sale_manager,1,1,1,1
