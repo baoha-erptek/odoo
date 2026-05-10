@@ -425,3 +425,128 @@ Lessons:
   the demo script effectively reuses it inline. Consider exporting
   it from `controllers/gearment_webhook.py` to a `services/` helper
   in a future cleanup if more probes need self-signing.
+
+---
+
+## 2026-05-09 — P4-01 readiness probe (live API + webhook self-tests)
+
+**Scope**: verify Gearment v3 API contract + webhook HMAC algorithm against live
+sandbox before dispatching P4-01 (`Spec 004b draft/quote/confirm state machine`).
+No code changes; six probes against `apiv2.gearment.com` (production base URL,
+which is what `.env` currently points at — see surprise S1 below).
+
+**Result summary**: 3 PASS, 1 partial PASS, 2 deferred. Two **CRITICAL** contract
+divergences surfaced — current adapter URL + payload schema do NOT match the
+live API. P4-01 dispatch must include adapter rewrite, not just state-machine
+addition.
+
+### Probe results
+
+| # | Probe | Result | Evidence |
+|---|---|---|---|
+| 1 | `GET /api/v3/catalog?limit=1` auth + base URL | **PASS** | HTTP 200 in 1.97s; 50 products returned; `data[]` envelope with `request_id`/`status`/`paging` (`limit=1` ignored — server returns paged batch of 50) |
+| 2 | `POST /api/v3/orders` (current adapter URL) | **CRITICAL FAIL** | HTTP **404 page not found** — current `gearment_adapter.py:push_order` URL does not exist on live API |
+| 2b | `POST /api/v3/orders/draft` (per docs) | **PARTIAL PASS** | HTTP 400 validation error reveals real schema (envelope `{"data":[...]}`, addresses use `first_name/last_name/street_1/zip_code/country_code`, line items use `line_items` not `items`) — endpoint exists and validates. Second probe with reshaped payload returned a different 400 (`unmarshal proto: unexpected token [`), suggesting the `data:[]` array envelope is not accepted on this path — **schema is non-trivial and needs further discovery**. |
+| 3 | `POST /api/v3/orders/price` quote shape | **PASS** | HTTP 200; response is `{"data":{...}, "message":"[API] Order price!", "status":"success"}`. Fields: `order_sub_total`, `order_shipping_fee`, `order_tax`, `order_discount`, `order_handle_fee`, `order_gift_message_fee`, `order_fee`, `order_total`, `fees[]`, `line_items[]`. Each money field is proto-`Money` shape: `{currency_code, units, nanos}`. **Current `get_quote()` assumed keys `price_quote/shipping_estimate/quote_expires_at` — none of these exist in the real response.** |
+| 4 | Rate-limit boundary (200 reqs, 50-parallel xargs) | **INCONCLUSIVE** | 32s elapsed; 12×200, 12×503, 176×curl-timeout. **No HTTP 429 observed.** Production endpoint rejects bursts via 503 (Cloudflare/upstream overload) before triggering Gearment's 429 path. P4-01 should test 429 retry against the documented sandbox URL `https://api.gearmentinc.com/integration-handler` once sandbox creds land in `.env`. |
+| 5 | Webhook HMAC algo round-trip + defenses | **PASS** | `controllers/gearment_webhook.py:_compute_signature` produces byte-identical output to an independent re-derivation against the published spec (`url_path + nonce + timestamp + base64url(body)` → HMAC-SHA256 → base64url). Verified with synthetic payload in shell-running container. Defenses verified: tampered body → `signature_mismatch`; old timestamp → `timestamp_outside_window`. |
+| 5b | Cross-org HMAC parity (real Gearment-signed row) | **DEFERRED** | Captured row `gearment.api.log id=8` lives on **staging** (`129.150.63.207` per memory `reference_staging_server.md`), not local. Algo passed function-level round-trip; cross-org parity of the secret + canonical signing string was already verified by P0-18b2 demo (`signature_verified=t` row id=8) — counted as previously-passing. No re-verification needed for P4-01 dispatch. |
+| 6 | Topic-code parity (5 candidates × self-signed POST) | **DEFERRED** | Staging webhook endpoint is reachable (`HTTP 401 unauthorized` on unsigned POST confirms `controllers/gearment_webhook.py` is mounted at `/gearment/webhook`). Full probe needs DB read on staging to inspect `gearment.api.log.business_handled` per topic, plus ICP-gate discipline (don't pollute staging audit log with unsolicited probes). Defer to next staging window. |
+
+### Critical contract gaps for P4-01 (block dispatch as currently written)
+
+**G1 — Order endpoint URL is wrong** (`services/gearment_adapter.py:133`). Code
+calls `POST /api/v3/orders`; live API returns 404. Docs + Probe 2b confirm the
+canonical path is `POST /api/v3/orders/draft`. P4-01 MUST rewrite this URL.
+
+**G2 — Order payload schema is fundamentally wrong** (`services/gearment_payload.py`).
+Live API rejects `external_order_id`/`buyer_name`/`address_line_1`/
+`shipping_address`/`items` — actual fields are
+`reference_id`/`first_name`+`last_name`/`street_1`/`addresses[]`/`line_items[]`.
+Envelope likely is `{"data":[{order}]}` for some routes. P4-01 MUST regenerate
+the entire payload dataclass from a working draft probe payload.
+
+**G3 — Quote response shape is wrong** (`services/gearment_adapter.py:172-176`).
+`get_quote()` reads `price_quote`/`shipping_estimate`/`quote_expires_at` — none
+exist in the real response. Real fields are nested `Money` proto records:
+`order_total{currency_code, units, nanos}`, etc. The wizard-facing P4-01 quote
+display needs a converter from `Money` proto to a single decimal-with-currency
+string.
+
+**G4 — `confirm()` endpoint unknown**. Docs list `POST /api/v3/orders/draft/labeled`
+("submit labeled draft"). Probe deferred until G1+G2 are resolved (need a
+working draft to confirm against). P4-01 planner agent must run a fresh probe
+against this endpoint as the first phase of GREEN.
+
+### Confirmed-working surfaces (no changes needed)
+
+- Auth headers (`X-Gearment-Client-Key` + `X-Gearment-Client-Secret`) — Probe 1.
+- Base URL prod (`apiv2.gearment.com/integration-handler`) — Probe 1.
+- Webhook HMAC algorithm + replay/window defenses — Probe 5; cross-checked
+  against P0-18b2 demo row id=8 (signature_verified=t, business_handled=t).
+- 429 retry path correctness in code (untestable against prod, but algorithm
+  matches docs).
+
+### Surprises
+
+- **S1 — `.env` is pointed at production, not sandbox**.
+  `GEARMENT_API_BASE_URL=https://apiv2.gearment.com/integration-handler`. Live
+  probes today touched production catalog (read-only — safe), but Probe 2's
+  failed `/orders/draft` POSTs may have created abandoned drafts. Recommend
+  P4-01 PR include a sandbox URL switch + `.env.example` doc note. Also: P4-01
+  needs a sandbox cred set; current single-set creds preclude burst-testing
+  rate limits without affecting prod billing.
+- **S2 — `limit=1` on catalog is ignored**. Server returns 50 products
+  regardless. Not blocking, but `GearmentApiClient.ping()` downloads ~1.4 MB on
+  every health probe. Trivial fix in P4-01: switch `ping()` to a different
+  cheap-to-call endpoint OR accept the cost.
+- **S3 — `proto: unmarshal` errors hint Gearment uses gRPC-gateway-style
+  request serialization** (the `Money` shape `{currency_code, units, nanos}` is
+  proto3 textbook). The schema ambiguity on `data:[]` vs `data:{}` between
+  `/orders/draft` and `/orders/price` may stem from per-route gateway configs;
+  P4-01 must accept that the two routes have different envelopes.
+- **S4 — Production endpoint throttles via 503 + Cloudflare timeouts**, not
+  429. Implies Gearment's documented "100/10s then 1-min block" is enforced at
+  Cloudflare WAF, not the Go server. The 429-retry path in
+  `GearmentApiClient._request` is correct per docs but may rarely fire in
+  practice — the more common failure mode is upstream timeout. Add a `503/504`
+  retry branch in P4-01.
+
+### Decision gate (per plan file `check-for-p4-01-current-staged-meadow.md`)
+
+| Gate | Status |
+|---|---|
+| Probe 1 PASS | ✓ — base URL + creds work |
+| Probe 2 PASS | ✗ — current code is 404, schema gap is large |
+| Probe 5 PASS | ✓ — HMAC algorithm correct |
+
+**Verdict**: ⚠️ **PARTIAL — DO NOT dispatch P4-01 as a pure state-machine slice**.
+The slice must be re-scoped to **rewrite-then-state-machine**:
+
+1. Phase 1 (re-discovery, ~½-day): live-fire `/orders/draft` + `/orders/price`
+   + `/orders/draft/labeled` against sandbox until working request bodies are
+   captured into Spec 004 `quickstart.md`.
+2. Phase 2 (adapter rewrite): regenerate `gearment_payload.py` dataclass +
+   rewrite all three URLs in `gearment_adapter.py`. This will break P0-18b1
+   tests (expected — they mock the old paths).
+3. Phase 3 (state machine): the originally-planned `draft → quote → operator
+   review → confirm` workflow on top of the corrected adapter.
+4. Phase 4 (topic parity): once P4-01 has a confirmed live endpoint, send a
+   real Gearment-signed cancel/track-update event from the Gearment dashboard
+   simulator (the same path used by P0-18b2 demo row id=8) to confirm
+   `tracking_updated` vs `tracking_order_updated` topic-code names, plus
+   `order_on_hold` / `order_cancelled` business_handled.
+
+P4-01b (bulk-action) is unaffected by these gaps and stays scoped to the
+Operations Dashboard.
+
+### Probe artifacts (gitignored)
+
+- `/tmp/p4_01_catalog.json` — Probe 1 response (1.4 MB)
+- `/tmp/p4_01_orders_A.json` — Probe 2 (404) response
+- `/tmp/p4_01_orders_B.json`, `/tmp/p4_01_orders_B2.json` — Probe 2b (400)
+  validation errors revealing schema
+- `/tmp/p4_01_price.json` — Probe 3 (200) quote response
+- `/tmp/p4_01_rate3.log` — Probe 4 status distribution (200×reqs)
+- `/tmp/p4_01_probe_1_headers.txt`, `/tmp/p4_01_orders_*_h.txt` — response
+  headers per probe
