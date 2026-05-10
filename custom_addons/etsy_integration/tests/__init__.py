@@ -33,3 +33,6 @@ from . import test_etsy_ship_notified_at
 from . import test_phase1_db_message_dedupe
 from . import test_phase2_orm_message_dedupe
 from . import test_image_cron_wired
+from . import test_p0_22_db
+from . import test_p0_22_orm
+from . import test_p0_22_parity
