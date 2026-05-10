@@ -45,29 +45,83 @@ random.seed(42)
 # ---------------------------------------------------------------------------
 # 1. Cleanup prior demo entities (idempotency).
 # ---------------------------------------------------------------------------
+def _safe_unlink(records, label: str) -> None:
+    """Best-effort unlink that swallows FK / IntegrityError violations.
+
+    P0-FIX-SEED-FK (2026-05-10): the seed script is idempotent against its
+    OWN state, but cannot guarantee idempotency against arbitrary post-seed
+    activity (E2E runs leave tracking.import.log + gearment.api.log + many
+    audit rows referencing demo users + products). Rather than chase every
+    FK chain, log a warning and let make_*() upsert by xmlid/login/code so
+    pre-existing rows are reused.
+    """
+    if not records:
+        return
+    _logger.info("Cleanup: removing %d %s", len(records), label)
+    try:
+        with env.cr.savepoint():
+            records.unlink()
+    except Exception as exc:  # noqa: BLE001
+        _logger.warning(
+            "Cleanup: skipping %d %s — FK or other error (%s: %s); "
+            "make_*() will upsert by key instead",
+            len(records), label, type(exc).__name__, str(exc)[:120],
+        )
+
+
 def cleanup():
-    """Delete previously-seeded demo orders + products + users + partners."""
+    """Best-effort delete of previously-seeded demo orders/products/users/partners.
+
+    Idempotent in the upsert sense: rows we cannot delete (because they
+    have accumulated FK references from later activity) are LEFT IN PLACE,
+    and the make_*() functions search-then-write rather than create
+    blindly. See `_safe_unlink` rationale.
+    """
     SaleOrder = env['sale.order']
     Order = SaleOrder.search([('client_order_ref', 'like', 'DEMO-%')])
     if Order:
-        _logger.info("Cleanup: removing %d demo orders", len(Order))
-        Order.with_context(force_delete=True).unlink()
+        _safe_unlink(Order.with_context(force_delete=True), 'demo orders')
 
     Product = env['product.product'].search(
         [('default_code', 'like', 'DEMO-%')])
     if Product:
-        _logger.info("Cleanup: removing %d demo products", len(Product))
-        Product.unlink()
+        # P0-FIX-SEED-FK (2026-05-10): cancel + force-delete stock.moves
+        # referencing demo products before unlinking the products themselves.
+        # Without this step, prior-run stock.moves (e.g. from P2-03 production-
+        # completion hook or hand-created moves on demo products) hold an FK
+        # to product.product → ProductProduct.unlink() raises
+        # `psycopg2.errors.ForeignKeyViolation: ... stock_move_product_id_fkey`.
+        # 'done' moves are immutable in ORM (`.unlink()` raises), so we cancel
+        # the cancelable ones, then issue a raw DELETE on all of them. This
+        # is safe because the products are demo-only — no production data
+        # depends on these moves. Justified raw SQL per common/security.md.
+        Move = env['stock.move'].search([('product_id', 'in', Product.ids)])
+        if Move:
+            _logger.info(
+                "Cleanup: cancelling + deleting %d stock.move rows on demo products",
+                len(Move),
+            )
+            cancelable = Move.filtered(lambda m: m.state != 'done')
+            if cancelable:
+                try:
+                    with env.cr.savepoint():
+                        cancelable._action_cancel()
+                except Exception:  # noqa: BLE001
+                    _logger.warning(
+                        "Cleanup: stock.move cancel raised; falling back to raw DELETE",
+                    )
+            move_ids = Move.ids
+            env.cr.execute(
+                "DELETE FROM stock_move WHERE id = ANY(%s)", (move_ids,),
+            )
+            Move.invalidate_recordset()
+        _safe_unlink(Product, 'demo products')
 
     Partner = env['res.partner'].search([('ref', 'like', 'DEMO-PARTNER-%')])
-    if Partner:
-        _logger.info("Cleanup: removing %d demo partners", len(Partner))
-        Partner.unlink()
+    _safe_unlink(Partner, 'demo partners')
 
     Users = env['res.users'].search([('login', 'like', 'demo_%@hatafax.demo')])
-    if Users:
-        _logger.info("Cleanup: removing %d demo users", len(Users))
-        Users.unlink()
+    _safe_unlink(Users, 'demo users')
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +141,19 @@ def make_users():
     # Email-fallback ingest creates products on first parse; manager/quanly
     # was previously locked out by missing product.group_product_user.
     # Surfaced by E2E demo 2026-05-03 §1 (failed admin-elevated workaround).
-    product_create = G('product.group_product_user')
+    # P0-FIX-SEED-FK addendum 2026-05-10: `product.group_product_user`
+    # xmlid does NOT exist in Odoo 19 CE — `env.ref()` raises ValueError.
+    # Standard product create access in Odoo 19 is granted to any user with
+    # `base.group_user` (the default internal-user group); no dedicated
+    # product-user group exists. Use sales_team.group_sale_manager as a
+    # superset since `quanly` already gets it; fall back gracefully if even
+    # that doesn't resolve.
+    try:
+        product_create = G('product.group_product_user')
+    except ValueError:
+        # Safe fallback: sale-manager already implies internal-user, which
+        # in Odoo 19 is sufficient for product CRUD.
+        product_create = sale_mgr
     # action_approve on etsy.address.change.request is gated to group_ba_lead
     # at the RPC level (P1-04 security feature). Demo BA Manager needs it
     # to walk through the address-change branch without bypass shortcuts.
@@ -107,15 +173,23 @@ def make_users():
     users = {}
     for role, groups in role_groups.items():
         login = f'demo_{role}@hatafax.demo'
-        user = Users.create({
+        existing = Users.search([('login', '=', login)], limit=1)
+        vals = {
             'name': f'Demo {role.title()}',
             'login': login,
             'email': login,
             'password': DEMO_PASSWORD,
             'group_ids': [(6, 0, [g.id for g in groups])],
-        })
+        }
+        if existing:
+            existing.write(vals)
+            user = existing
+            _logger.info("User %s id=%s (upserted) pw=%s",
+                         login, user.id, DEMO_PASSWORD)
+        else:
+            user = Users.create(vals)
+            _logger.info("User %s id=%s pw=%s", login, user.id, DEMO_PASSWORD)
         users[role] = user
-        _logger.info("User %s id=%s pw=%s", login, user.id, DEMO_PASSWORD)
     return users
 
 
@@ -158,13 +232,19 @@ def make_products():
         pipeline = pipelines[code]
         prods = []
         for name, sku, price in items:
-            prod = Product.create({
+            existing = Product.search([('default_code', '=', sku)], limit=1)
+            vals = {
                 'name': name,
                 'default_code': sku,
                 'list_price': price,
                 'categ_id': cat_default.id,
                 'is_storable': True,
-            })
+            }
+            if existing:
+                existing.write(vals)
+                prod = existing
+            else:
+                prod = Product.create(vals)
             prod.product_tmpl_id.x_default_pipeline_id = pipeline.id
             prods.append(prod)
         out[code] = prods
@@ -266,7 +346,9 @@ def make_orders(products_by_pipeline, source_rows, kinhdoanh_user):
     for pipeline_code, rows in chunks.items():
         product_cycle = cycle(products_by_pipeline[pipeline_code])
         for j, row in enumerate(rows):
-            partner = Partner.create({
+            partner_ref = f'DEMO-PARTNER-{pipeline_code}-{j:02d}'
+            order_ref = f'DEMO-{pipeline_code}-{j:02d}'
+            partner_vals = {
                 'name': row['buyer'],
                 'street': row['addr1'],
                 'street2': row['addr2'],
@@ -275,15 +357,28 @@ def make_orders(products_by_pipeline, source_rows, kinhdoanh_user):
                 'zip': row['zip'],
                 'country_id': country_id(env, row['country']),
                 'email': row['email'] or False,
-                'ref': f'DEMO-PARTNER-{pipeline_code}-{j:02d}',
-            })
+                'ref': partner_ref,
+            }
+            partner = Partner.search([('ref', '=', partner_ref)], limit=1)
+            if partner:
+                partner.write(partner_vals)
+            else:
+                partner = Partner.create(partner_vals)
             product = next(product_cycle)
+            existing_so = SaleOrder.search(
+                [('client_order_ref', '=', order_ref)], limit=1,
+            )
+            if existing_so:
+                # Order already exists from a prior seed run that survived
+                # cleanup. Skip re-creation; the order is fine as-is.
+                orders.append((pipeline_code, existing_so))
+                continue
             so = SaleOrder.create({
                 'partner_id': partner.id,
                 'user_id': kinhdoanh_user.id,
                 'sales_channel': 'etsy',
                 'channel_order_ref': row['order_ref'],
-                'client_order_ref': f'DEMO-{pipeline_code}-{j:02d}',
+                'client_order_ref': order_ref,
                 'order_line': [(0, 0, {
                     'product_id': product.id,
                     'product_uom_qty': row['qty'],
