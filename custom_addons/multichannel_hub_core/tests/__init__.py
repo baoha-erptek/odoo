@@ -37,3 +37,5 @@ from . import test_gdrive_shared_drive
 from . import test_design_file_upload_wizard_multi
 from . import test_label_status_db
 from . import test_label_status_orm
+from . import test_operations_dashboard_line_db
+from . import test_operations_dashboard_line_orm
