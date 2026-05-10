@@ -23,6 +23,8 @@ from . import test_p2_03_production_hook_orm
 from . import test_phase2_orm_p2_04
 from . import test_phase2_shipping_carrier_p2_05
 from . import test_phase2_orm_p2_06
+from . import test_p4_01_b_payload
+from . import test_p4_01_b_adapter
 
 __all__ = [
     'test_gearment_api_client',
