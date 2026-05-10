@@ -57,8 +57,8 @@ class TestP401BAdapterUrls(TransactionCase):
                 country_code='US', phone=None, email=None,
             ),),
             line_items=(GearmentLineItem(
-                product_id=99, quantity=1, sku='TEST-SKU',
-                design_url_front=None, design_url_back=None,
+                legacy_id=99, quantity=1, sku='TEST-SKU',
+                printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
                 personalisation=None, custom_attributes=None,
             ),),
             shipping_method=None, notes=None, custom_attributes=None,

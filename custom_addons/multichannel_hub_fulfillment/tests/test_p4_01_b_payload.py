@@ -4,6 +4,10 @@ Closes contract gaps G2 (payload shape) and G3 (Money proto in /orders/price
 response) per `specs/004-fulfillment-routing/findings.md` 2026-05-09 readiness
 probe. The legacy schema (external_order_id / address dict / quantity /
 product_id) is fully replaced — see plan §3 Sub-phase B.
+
+P4-01-FIX-PAYLOAD-SCHEMA (2026-05-10): line_items shape further corrected
+after live `/orders/draft` rejected `product_id` + flat `design_url_front/back`.
+Real fields: `legacy_id` + `printing_options[]` (see test_p4_01_fix_payload_schema.py).
 """
 
 from decimal import Decimal
@@ -44,7 +48,7 @@ class TestP401BPayloadSchema(TransactionCase):
         line = _make_line_item()
         payload = _make_payload(line_items=(line,))
         self.assertIsInstance(payload.line_items, tuple)
-        self.assertEqual(payload.line_items[0].product_id, 1234)
+        self.assertEqual(payload.line_items[0].legacy_id, 1234)
         self.assertEqual(payload.line_items[0].quantity, 1)
 
     def test_payload_idempotency_key_is_sha256(self):
@@ -79,13 +83,16 @@ class TestP401BPayloadSchema(TransactionCase):
         self.assertEqual(addr_dict['country_code'], 'US')
 
     def test_payload_serialize_line_items_uses_real_key(self):
-        """Probe G2: line items live under `line_items` not `items`."""
+        """Probe G2: line items live under `line_items` not `items`.
+
+        Schema corrected by P4-01-FIX-PAYLOAD-SCHEMA: `legacy_id` not `product_id`.
+        """
         line = _make_line_item()
         payload = _make_payload(line_items=(line,))
         body = payload.serialize()
         self.assertIn('line_items', body['data'])
         self.assertNotIn('items', body['data'])
-        self.assertEqual(body['data']['line_items'][0]['product_id'], 1234)
+        self.assertEqual(body['data']['line_items'][0]['legacy_id'], 1234)
 
 
 @tagged('post_install', '-at_install', 'p4_01_b')
@@ -149,8 +156,8 @@ def _make_address(**overrides):
 def _make_line_item(**overrides):
     _, GearmentLineItem, _ = _payload_classes()
     defaults = dict(
-        product_id=1234, quantity=1, sku='MUG-001',
-        design_url_front=None, design_url_back=None,
+        legacy_id=1234, quantity=1, sku='MUG-001',
+        printing_options=({'location_code': 'front', 'url': 'https://example/x.png'},),
         personalisation=None, custom_attributes=None,
     )
     defaults.update(overrides)

@@ -5,7 +5,7 @@ Schema regenerated 2026-05-10 from the readiness probe in
 The legacy schema (external_order_id / address dict / quantity / product_id)
 is fully replaced.
 
-Wire shape (`/api/v3/orders/draft` POST body):
+Wire shape (`/api/v3/orders/draft` POST body — schema-corrected 2026-05-10):
 
     {"data": {
         "reference_id": "SO-2026-00123",
@@ -14,7 +14,14 @@ Wire shape (`/api/v3/orders/draft` POST body):
             "street_1": "123 Main St", "zip_code": "02108", "country_code": "US",
             ...
         }],
-        "line_items": [{"product_id": 1234, "quantity": 1, ...}],
+        "line_items": [{
+            "legacy_id": 1234, "quantity": 1, "sku": "MUG-001",
+            "printing_options": [
+                {"location_code": "front", "url": "https://drive.../front.png"},
+                {"location_code": "back", "url": "https://drive.../back.png"},
+            ],
+            ...
+        }],
         ...
     }}
 
@@ -47,13 +54,22 @@ class GearmentAddress:
 
 @dataclass(frozen=True)
 class GearmentLineItem:
-    """One line item on a Gearment order draft."""
+    """One line item on a Gearment order draft.
 
-    product_id: int
+    Schema corrected by P4-01-FIX-PAYLOAD-SCHEMA after live `/api/v3/orders/draft`
+    rejected the previous (`product_id` + flat `design_url_front/back`) shape.
+    Real schema per `specs/004-fulfillment-routing/research.md:43-44`:
+      - `legacy_id` (Gearment catalog int; alternatively `variant_id`)
+      - `printing_options[]` with `{location_code, url}` per design placement.
+
+    `printing_options` is a tuple (not list) so the dataclass remains
+    structurally immutable — same pattern as `GearmentOrderPayload.line_items`.
+    """
+
+    legacy_id: int
     quantity: int
     sku: str | None = None
-    design_url_front: str | None = None
-    design_url_back: str | None = None
+    printing_options: tuple[dict, ...] = ()
     personalisation: str | None = None
     custom_attributes: dict | None = None
 

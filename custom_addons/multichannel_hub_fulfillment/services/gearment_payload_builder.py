@@ -18,6 +18,12 @@ from .gearment_payload import (
     GearmentOrderPayload,
 )
 
+# Default location-code assignment when design.file lacks a per-record code.
+# Gearment's accepted values include front, back, pocket, whole, left_sleeve,
+# right_sleeve. Two-sided print is the dominant Etsy POD pattern; positions
+# beyond `back` are skipped until a per-design override field lands.
+_PRINT_LOCATIONS_DEFAULT = ('front', 'back')
+
 
 def build_payload(order, design_files) -> GearmentOrderPayload:
     """Translate a sale.order into the Gearment outbound DTO (P4-01-B schema).
@@ -68,28 +74,29 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         if not sku:
             continue
         line_designs = designs_by_line.get(line.id, [])
-        url_front = next(
-            (
-                (df.file_url or df.gdrive_preview_url)
-                for df in line_designs
-                if (df.file_url or df.gdrive_preview_url)
-            ),
-            None,
+        # P4-01-FIX-PAYLOAD-SCHEMA: Gearment requires `printing_options[]` with
+        # at least one entry per line. Build deterministically: first design.file
+        # → location_code='front'; second → 'back'. Per-design `location_code`
+        # override is deferred to a future slice once design.file gains the
+        # field. URL preference: file_url (external CDN) → gdrive_preview_url.
+        printing_options = tuple(
+            {
+                'location_code': code,
+                'url': df.file_url or df.gdrive_preview_url,
+            }
+            for code, df in zip(_PRINT_LOCATIONS_DEFAULT, line_designs)
+            if (df.file_url or df.gdrive_preview_url)
         )
-        url_back = next(
-            (
-                (df.file_url or df.gdrive_preview_url)
-                for df in line_designs[1:]
-                if (df.file_url or df.gdrive_preview_url)
-            ),
-            None,
-        )
+        if not printing_options:
+            # Skip line entirely — Gearment rejects orders containing line_items
+            # with empty printing_options. The operator sees the missing-design
+            # gap on the dashboard's design_status indicator instead.
+            continue
         line_items.append(GearmentLineItem(
-            product_id=_safe_int(sku),
+            legacy_id=_safe_int(sku),
             quantity=int(line.product_uom_qty or 0),
             sku=sku,
-            design_url_front=url_front,
-            design_url_back=url_back,
+            printing_options=printing_options,
             personalisation=getattr(line, 'etsy_personalisation', None) or None,
         ))
 
@@ -117,7 +124,7 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
 
 
 def _safe_int(sku: str) -> int:
-    """Gearment's `line_items[].product_id` is an integer (catalog legacy_product_id).
+    """Gearment's `line_items[].legacy_id` is an integer (catalog legacy_product_id).
 
     The merchant's x_gearment_sku is sometimes the raw int, sometimes a stringy
     code. Coerce best-effort; non-numeric SKUs fall back to 0 which Gearment
