@@ -323,7 +323,10 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 
 | Defect ID | Surfaced (run date / §) | Severity | Symptom | Owner spec | Hotfix slice | State | Fixed by |
 |-----------|--------------------------|----------|---------|------------|--------------|-------|----------|
-| _(none yet — populate during 2026-05-10 run; new rows appended as defects are surfaced)_ |
+| Defect-2026-05-10-01 | 2026-05-10 / pre-§1 reseed | HIGH | seed-demo-esty.py FK violation: stock_move references demo product.product that cleanup-then-seed tries to unlink | 006 (deployment scripts) | P0-FIX-SEED-FK (proposed) | surfaced | — |
+| Defect-2026-05-10-02 | 2026-05-10 / §6 | HIGH | Live Gearment API returns 400 Bad Request for `/api/v3/orders/draft` on every push (4/4 orders) — payload schema or demo SKU not registered with Gearment | 004 (P4-01 family) | P4-01-FIX-DEMO-PAYLOAD (proposed) | surfaced | — |
+| Defect-2026-05-10-03 | 2026-05-10 / §6 | MEDIUM | gearment.api.log on failure path does not set sale_order_id, http_status (stays 0), or direction; URL path stored does not match actual requests URL | 004 (P4-01-B) | P4-01-FIX-LOG-LINKAGE (proposed) | surfaced | — |
+| Defect-2026-05-10-04 | 2026-05-10 / §8b | MEDIUM | Inbox folder accumulates files because logistics.partner.gke has empty gdrive_archive_folder_id; processed files never moved to archive | 004 (P2-06) | P2-FIX-ARCHIVE-FOLDER (proposed) | surfaced | — |
 
 **Severity legend**: CRITICAL (data loss / pipeline crash) → stop run, hotfix immediately. HIGH (bug w/ workaround) → finish run, hotfix next session. MEDIUM (cosmetic) → bundle into next slice. LOW (polish) → defer to W7.
 
