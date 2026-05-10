@@ -127,6 +127,98 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 
 ---
 
+## Phase 4c: P1-01b — Operations Dashboard refactor `sale.order` → `sale.order.line` (Owner directive D6, 2026-05-10)
+
+**Source**: tracker row P1-01b (`.claude/plans/006-master-plan-tracking.md` line 136) + Excel fixture `.0temp/Esty main 2 - 15h VN 06 08 2025.xlsx` sheet "Trang tính1" (34 columns, header row enumerated below).
+**Goal**: refactor the unified Operations Dashboard list from `sale.order` to `sale.order.line` so each visible row is a line item (matching the operator's existing daily-ops Excel mental model). Lift the 34-column layout from owner's Excel (column order + headers must match — owner directive D6 forbids editing the Excel). Order-level fields are pulled in via `related='order_id.*'`; address fields via `related='order_id.partner_shipping_id.*'`; line-level fields are native or new on `sale.order.line`. Keep the P1-01a row decorations (qty≥2, duplicate-buyer, push-urgent, amazon) and the P1-DASH-MERGE BA/Marketing/PD tracking columns by hopping through `order_id`.
+**Independent test**: dashboard action `action_operations_dashboard` opens a `sale.order.line` list with all 34 Excel columns visible (or `optional='hide'` per UAT preference), in the exact column order the Excel uses; multi-select + `action_bulk_mark_shipped` server action operates on lines and delegates to `order_id.fulfillment_id.action_bulk_mark_shipped()` preserving FR-017 silent-skip + production_team RPC gate; row decorations fire on the line view via `order_id.qty_total` etc.; saved filters from `data/operations_dashboard_saved_filters.xml` rebind to the line model with domain rewrites; legacy `sale.order` list view is **kept under a separate menu** (`menu_operations_dashboard_legacy_orders`) for one sprint per R-2026-05-10.
+**Out of scope** — deferred follow-ups: (a) per-line bulk Push-to-Gearment action (lands in P4-01 step (b)); (b) Excel-export round-trip of the line view (lands in P2-01 GKE schema work — owner directive); (c) form-view replacement for `sale.order.line` (the dashboard form fallback hops to `sale.view_order_form` via `order_id`); (d) historical `etsy_design_link_front/back` ↔ new `design_link_front/back` reconciliation (defer to P1-LBL-MIGRATE-style mapping slice if owner finds drift on staging UAT).
+
+**Excel column reference (sheet "Trang tính1", row 1, verbatim — column order is contract)**:
+1. `TRANSACTION_ID` → line.`etsy_transaction_id` (etsy_integration extension)
+2. `IMG_URL` → new line.`image_url` (Char, free-text; populated from product or channel ingest where available)
+3. `IMG` → line.`product_image_thumb` (existing, P1-IMG-LINE-WIDGET — Binary widget="image")
+4. `DATE` → related `order_id.date_order`
+5. `NOTE_FROM_BUYER` → related `order_id.note` (existing sale.order field) OR new `order_id.buyer_note` if channel-agnostic split needed (planner decides)
+6. `GIFT_MESSAGE` → new related `order_id.gift_message` (Char on sale.order in mhc; channel-agnostic; etsy ingest writes here)
+7. `PERSONALISATION` → line.`etsy_personalisation`
+8. `SKU` → line.`etsy_sku` (or fallback to `product_id.default_code` when null)
+9. `SHOP` → related `order_id.sales_channel` (Selection, label) OR `order_id.channel_order_ref` for shop-name display — planner reconciles with existing `etsy_shop_id` reference
+10. `ORDER_ID` → related `order_id.channel_order_ref` (FR-024) with fallback to `order_id.name`
+11. `SHIPPING_NAME` → related `order_id.partner_shipping_id.name`
+12. `SHIPPING_ADDRESS1` → related `order_id.partner_shipping_id.street`
+13. `SHIPPING_ADDRESS2` → related `order_id.partner_shipping_id.street2`
+14. `SHIPPING_CITY` → related `order_id.partner_shipping_id.city`
+15. `SHIPPING_STATE` → related `order_id.partner_shipping_id.state_id` (display_name via M2O)
+16. `SHIPPING_ZIPCODE` → related `order_id.partner_shipping_id.zip`
+17. `SHIPPING_COUNTRY` → related `order_id.partner_shipping_id.country_id`
+18. `SHIPPING_PHONE` → related `order_id.partner_shipping_id.phone`
+19. `SHIPPING_EMAIL` → related `order_id.partner_shipping_id.email`
+20. `PRODUCT_NAME` → related `product_id.display_name`
+21. `OPTION` → new line.`option_label` (Char; computed from `product_template_attribute_value_ids` where derivable, else free-text editable)
+22. `COLOR` → new line.`color` (Char; same derivation as OPTION)
+23. `SIZE` → new line.`size` (Char; same derivation)
+24. `SIDE` → new line.`side` (Char; same derivation)
+25. `FACE_MASK_SIZE` → new line.`face_mask_size` (Char; same derivation)
+26. `QUANTITY` → line.`product_uom_qty`
+27. `DESIGN_LINK_FRONT` → new line.`design_link_front` (Char; channel-agnostic; planner decides whether to alias or supersede `etsy_design_link_front`)
+28. `DESIGN_LINK_BACK` → new line.`design_link_back` (Char; same as above)
+29. `SHIPPING_SERVICE` → related `order_id.shipping_carrier_id.name` (existing via P1-05 delegation) OR new `order_id.shipping_service_label` if channel-supplied label diverges from carrier match
+30. `PROCESSING_TIME` → new related `order_id.processing_time` (Char or Integer days; channel-supplied, etsy ingest populates)
+31. `SHIPPING_COST` → related `order_id.amount_delivery` (Monetary; existing on sale.order)
+32. `PRICE` → line.`price_unit`
+33. `DISCOUNT_CODE` → new related `order_id.discount_code` (Char; channel-supplied)
+34. `SUBTOTAL` → line.`price_subtotal` (existing on sale.order.line)
+
+**Keep BA/Marketing/PD columns** (related fields hopping through `order_id` to `sale.order.fulfillment` via P1-05 _inherits delegation):
+- `pic_user_id` (BA owner)
+- `pd_pic_user_id` (PD owner)
+- `mp_note` (Marketing note)
+- `label_status_id` (Many2one widget per P1-LBL — `widget="many2one_tags" options="{'no_create': True, 'no_open': True}"`)
+- `order_priority`
+- `production_blocked`
+- `is_overdue_approval` (boolean toggle)
+
+**Tasks**:
+
+- [ ] T-01b-01 [P] [P1-01b] In `multichannel_hub_core/models/sale_order_line.py`, add the 7 new line-level Char fields per the Excel mapping: `image_url`, `option_label`, `color`, `size`, `side`, `face_mask_size`, `design_link_front`, `design_link_back`. Each is `fields.Char(string=...)` with no `required=True`. For OPTION/COLOR/SIZE/SIDE/FACE_MASK_SIZE: store=False compute `_compute_attribute_label` reading `product_template_attribute_value_ids` (filter by attribute name match — case-insensitive; surface raw value); fallback to manual entry by making the compute non-stored + `inverse=` writing user-supplied value to a sibling `_manual` Char and `_compute` preferring manual when set. Planner refines the compute/inverse split during Phase 1. For `image_url`/`design_link_front`/`design_link_back`: plain stored Char, channel-ingest writes them (no compute).
+- [ ] T-01b-02 [P] [P1-01b] In `multichannel_hub_core/models/sale_order.py`, add the 4 new order-level fields per the Excel mapping that have no current home: `gift_message` (Char), `processing_time` (Char or Integer days — planner decides; default to Char for channel-supplied free-text), `discount_code` (Char), `shipping_service_label` (Char; nullable; falls back to `shipping_carrier_id.name` in the dashboard related field). All `tracking=True` per FR-031 audit-coverage pattern. No `required=True`.
+- [ ] T-01b-03 [P1-01b] **Refactor** `multichannel_hub_core/views/operations_dashboard_views.xml` `operations_dashboard_list_view`: change `<field name="model">` from `sale.order` to `sale.order.line`. Replace all 16 fields in the existing `<list>` with the **34-column Excel order** (TRANSACTION_ID first, SUBTOTAL last). For columns 2-19 + 29-34 use `<field name="order_id"/>` chains via related fields declared in T-01b-04; for columns 1, 7, 8, 20-28 use native or new line fields. Default `optional="hide"` for the long-tail address columns (SHIPPING_ADDRESS2, SHIPPING_PHONE, SHIPPING_EMAIL) and PROCESSING_TIME/DISCOUNT_CODE; default `optional="show"` for the operator-critical ones (TRANSACTION_ID, IMG, DATE, PERSONALISATION, SKU, ORDER_ID, SHIPPING_NAME, PRODUCT_NAME, QUANTITY, SHIPPING_SERVICE, PRICE, SUBTOTAL). Append the 7 BA/Marketing/PD columns at the right edge (`pic_user_id`, `pd_pic_user_id`, `mp_note`, `label_status_id`, `order_priority`, `production_blocked`, `is_overdue_approval`) with `optional="show"`.
+- [ ] T-01b-04 [P1-01b] In `multichannel_hub_core/models/sale_order_line.py`, add **related-field shadows** for every order/address/fulfillment field the dashboard list reads, so the list view can declare them by name without OWL having to traverse dot-paths in templates. Pattern: `field_name_dash = fields.<Type>(related='order_id.<path>', readonly=True, string='<EXCEL_HEADER>')` for: `date_order`, `note`, `gift_message`, `channel_order_ref`, `sales_channel`, `partner_shipping_name` (related='order_id.partner_shipping_id.name'), `partner_shipping_street`, `partner_shipping_street2`, `partner_shipping_city`, `partner_shipping_state_id`, `partner_shipping_zip`, `partner_shipping_country_id`, `partner_shipping_phone`, `partner_shipping_email`, `shipping_carrier_id`, `shipping_service_label`, `processing_time`, `amount_delivery`, `discount_code`, **plus** the BA/PD/MP set: `pic_user_id`, `pd_pic_user_id`, `mp_note`, `label_status_id`, `order_priority`, `production_blocked`, `is_overdue_approval` (these last 7 chain `order_id.fulfillment_id.<field>` via the P1-05 _inherits delegation; planner verifies the related path resolves). **Heritage decoration flags**: also expose `qty_total`, `is_duplicate_buyer` as related from `order_id`. All related fields `readonly=True` (write goes to the canonical owner via the form view), `store=False` unless the dashboard search/filter needs them indexed (planner judges per filter — start with store=False for safety).
+- [ ] T-01b-05 [P1-01b] Refactor `operations_dashboard_search_view` in the same XML file: change `<field name="model">` to `sale.order.line`. Re-anchor existing search fields/filters/group-bys on `order_id.<path>` (or the new related shadow declared in T-01b-04 — planner picks whichever yields the cleaner domain). Preserve all 6 group-by filters (`Sales Channel`, `Carrier`, `Tracking State`, `Label Status`, `Warehouse`, `Priority`) and all 5 boolean filters (`Production Blocked`, `Label Set`, `Shipped`, `Delivered`, `VN Warehouse`, `US Warehouse`).
+- [ ] T-01b-06 [P1-01b] Refactor `action_operations_dashboard` in the same XML file: `res_model` from `sale.order` to `sale.order.line`; `view_mode="list,form"` retained; `view_id` still `operations_dashboard_list_view`. Add a separate `view_ids` ordered list pinning the form fallback to `sale.view_order_form` (Odoo's stock sale.order form), with `view_mode="form"` mapped to a thin OWL form action that opens `order_id` instead of the line — pattern: `view_mode="list,form"` with `views=[(operations_dashboard_list_view, 'list'), (False, 'form')]` letting Odoo auto-pick a sensible form view on `sale.order.line` (which is empty by default). If that fails the operator UAT loop, add an explicit `act_window` redirect on the form action that opens `sale.order` form via `order_id`. Planner finalizes the redirect mechanism in Phase 1.
+- [ ] T-01b-07 [P1-01b] Re-bind the row decorations on the new line list view (in T-01b-03): `decoration-info="qty_total >= 2"` (now reads the related shadow from order), `decoration-bf="is_duplicate_buyer"`, `decoration-danger="order_priority in ('push','urgent')"`, `decoration-warning="sales_channel == 'amazon'"`. All four shadow fields are declared in T-01b-04. Keep them `column_invisible="1"` in the list arch.
+- [ ] T-01b-08 [P1-01b] Re-bind `action_server_bulk_mark_shipped` server action: `model_id` and `binding_model_id` change from `model_sale_order` to `model_sale_order_line`; the `code` field changes from `action = records.action_bulk_mark_shipped()` to `action = records.mapped('order_id').action_bulk_mark_shipped()` (dedupe parent orders before delegating, preserves FR-017 silent-skip on the parent). Add a defensive `mapped('order_id.fulfillment_id')` guard so lines on orders without a fulfillment row are silently skipped.
+- [ ] T-01b-09 [P1-01b] Update `multichannel_hub_core/data/operations_dashboard_saved_filters.xml`: rewrite each `ir.filters` row's `model_id` from `sale.order` to `sale.order.line` and rewrite each `domain` field to traverse through `order_id` (e.g. `[('production_blocked', '=', True)]` → `[('order_id.production_blocked', '=', True)]` or `[('production_blocked', '=', True)]` if T-01b-04 declared the related shadow). Preserve role-marker names per P1-DASH-MERGE owner Q1 deferred decision.
+- [ ] T-01b-10 [P1-01b] Add a **fallback legacy menu** + `ir.actions.act_window` that re-creates the previous `sale.order` list (using `operations_dashboard_list_view`'s previous arch as captured in git pre-P1-01b) under `Operations → Legacy → Order View (P1-01a)`. Group-gated on `multichannel_hub_core.group_ba_lead`. Lifetime: **one sprint** per R-2026-05-10 — append a `<!-- TODO: remove after 2026-05-24 staging UAT sign-off -->` comment to the menu/action records and open a tracker R-2026-05-10-FOLLOWUP row on slice landing.
+- [ ] T-01b-11 [P1-01b] Optional `ir.config_parameter` `multichannel_hub.dashboard_default_columns` (Char; comma-separated list of `optional` field names whose default is `show` regardless of the arch defaults). If unset, T-01b-03's hard-coded defaults apply. No model code reads this in P1-01b — purely a forward-compat marker so a future slice can wire it without a schema bump. Document in `multichannel_hub_core/__manifest__.py` description if convenient.
+- [ ] T-01b-12 [P] [P1-01b] **Phase 1 DB tests** in new `multichannel_hub_core/tests/test_operations_dashboard_line_db.py`:
+  - `test_view_model_is_sale_order_line` — `env.ref('multichannel_hub_core.operations_dashboard_list_view').model == 'sale.order.line'`
+  - `test_action_res_model_is_sale_order_line` — `env.ref('multichannel_hub_core.action_operations_dashboard').res_model == 'sale.order.line'`
+  - `test_search_view_model_is_sale_order_line` — `env.ref('multichannel_hub_core.operations_dashboard_search_view').model == 'sale.order.line'`
+  - `test_bulk_shipped_binding_model_is_sale_order_line` — server action `binding_model_id` resolves to `sale.order.line`
+  - `test_legacy_menu_present` — `menu_operations_dashboard_legacy_orders` exists and resolves to a `sale.order` list action
+  - `test_new_line_fields_columns_exist` — pg_columns on `sale_order_line` table for `image_url`, `option_label`, `color`, `size`, `side`, `face_mask_size`, `design_link_front`, `design_link_back`
+  - `test_new_order_fields_columns_exist` — pg_columns on `sale_order` table for `gift_message`, `processing_time`, `discount_code`, `shipping_service_label`
+  - `test_excel_column_count_matches` — parse `operations_dashboard_list_view` arch via lxml; assert exactly 34 Excel-named columns + ≤7 BA/Marketing/PD columns + ≤3 invisible decoration-driver columns; no extra fields
+  - `test_excel_column_order_matches` — assert the 34 Excel columns appear in the list arch in the exact order from `.0temp/Esty main 2 - 15h VN 06 08 2025.xlsx` row 1 (TRANSACTION_ID first, SUBTOTAL last)
+- [ ] T-01b-13 [P1-01b] **Phase 2 ORM tests** in new `multichannel_hub_core/tests/test_operations_dashboard_line_orm.py`:
+  - `test_attribute_compute_derives_option_label` — create product.template with attribute "Option=Print" + "Color=Red"; assert `line.option_label == 'Print'`, `line.color == 'Red'`
+  - `test_attribute_compute_falls_back_to_manual_entry` — write `line.color = 'Custom'` on a line whose product has no Color attribute; assert read-back returns `'Custom'`
+  - `test_related_address_fields_resolve` — create order with shipping partner; assert `line.partner_shipping_name`, `partner_shipping_street`, `partner_shipping_zip` resolve to the partner's values
+  - `test_related_order_fields_resolve` — assert `line.date_order`, `line.gift_message`, `line.discount_code` reflect order-level writes
+  - `test_related_fulfillment_fields_resolve` — assert `line.label_status_id`, `line.pic_user_id`, `line.production_blocked` reflect `order_id.fulfillment_id.<field>` via _inherits delegation
+  - `test_related_decoration_flags_resolve` — assert `line.qty_total`, `line.is_duplicate_buyer`, `line.order_priority`, `line.sales_channel` resolve from `order_id.*`
+  - `test_bulk_shipped_action_dedupes_orders` — select 5 lines across 2 orders; call `action_server_bulk_mark_shipped`; assert `mapped('order_id')` was called once per order (not per line) — pattern: introspect via `unittest.mock.patch.object(SaleOrder, 'action_bulk_mark_shipped')`
+  - `test_bulk_shipped_action_skips_lines_without_fulfillment` — order with no fulfillment row; bulk action returns silently, no AccessError
+  - `test_bulk_shipped_action_preserves_fr017_gate` — non-production-team user bulk-clicks; FR-017 silent-skip fires (existing parent test re-asserted on the line entry-point) — **9th FR-017 confirmation** (per memory `feedback_fr017_write_defense_in_depth.md`)
+  - `test_saved_filters_rebound_to_line_model` — every row in `data/operations_dashboard_saved_filters.xml` has `model_id == 'sale.order.line'`
+  - `test_legacy_menu_action_targets_sale_order` — legacy menu's act_window opens `sale.order` (so operators have a fallback during UAT)
+- [ ] T-01b-14 [P1-01b] Bump `multichannel_hub_core/__manifest__.py` version (next free patch — likely 19.0.1.0.32). No new XML data file (saved filters edited in-place, no new model means no migration script). If T-01b-02 changes `sale.order` field tracking flags, add an idempotent migration `migrations/19.0.1.0.32/post-stamp-new-sale-order-fields.py` that backfills NULLs to safe defaults (empty string / False) per `_sql_constraints` drift template philosophy. Verify clean install + upgrade: `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_core --stop-after-init` returns 0.
+- [ ] T-01b-15 [P1-01b] Update `multichannel_hub_core/CLAUDE.md` (or `README.md`) "Active" list to mention P1-01b dashboard refactor; update `findings.md` with anything surprising the planner / tdd-guide / code-reviewer cycle finds (Excel column ↔ Odoo field translation gaps are likely candidates).
+
+---
+
 ## Phase 5: US3 — Process Dashboard for Production VN+US (P1, configurable pipeline)
 
 **Goal**: PD's 18 columns, pipeline-state column with colour chips, warehouse-zone filter.
