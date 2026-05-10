@@ -550,3 +550,66 @@ Operations Dashboard.
 - `/tmp/p4_01_rate3.log` — Probe 4 status distribution (200×reqs)
 - `/tmp/p4_01_probe_1_headers.txt`, `/tmp/p4_01_orders_*_h.txt` — response
   headers per probe
+
+---
+
+## 2026-05-10 — P4-01-B landed (Sub-phase B of P4-01)
+
+### Scope split decision
+
+P4-01 was too large for one session — 4 sub-phases (live discovery, payload regen, state machine, topic parity) plus 3 owner directives (D3/D4/D5). Split:
+
+- **P4-01-B** (this slice) — payload + adapter contract regen + 503/504 retry. Closes G1/G2/G3 contract gaps. ~600 LOC delta.
+- **P4-01-C** (follow-up) — state machine `x_gearment_outbound_state` + `gearment.quote.wizard` + form button D5. ~280 LOC.
+- **P4-01-D** (follow-up) — D3 ops-dashboard bulk action + D4 read-only Etsy-tab Shipping subsection. ~150 LOC.
+
+### G1/G2/G3 resolutions
+
+| Gap | Resolution |
+|---|---|
+| G1 URL | `_DRAFT_URL = 'api/v3/orders/draft'`, `_PRICE_URL = 'api/v3/orders/{ref}/price'`, `_LABELED_URL = 'api/v3/orders/draft/labeled'` constants in `gearment_adapter.py`. |
+| G2 Payload | `GearmentOrderPayload` rewritten as frozen dataclass with `reference_id` + tuple-of-`GearmentAddress` + tuple-of-`GearmentLineItem`. `serialize()` emits single-object `{"data": {...}}` envelope (not array — probe S3 confirmed `unmarshal proto: unexpected token [` on array form). |
+| G3 Quote response | New `_money_to_decimal(money)` helper decodes `{currency_code, units, nanos}` → `(Decimal, str)`. `get_quote()` returns dict with 8 decoded `order_*` totals + currency + raw_response. Quantizes to 9 dp for stable comparison. |
+| G4 Confirm endpoint | `confirm(reference_id, options=None)` IMPLEMENTED — POST `/api/v3/orders/draft/labeled` with `{"data": {"reference_id": "..."}}` body + optional `options` entry. Idempotency-Key header set to SHA-256 hex of reference_id. |
+
+### S4 — 503/504 retry branch
+
+`_request()` retry loop now handles two error classes in one for-else:
+- 429 (rate limit) → 1/2/4 sec backoff, honors Retry-After capped at 60s, raises `RateLimitError`
+- 503/504 (Cloudflare/upstream timeout) → 5/15/45 sec backoff, raises `ServiceUnavailableError`
+
+Distinct exception classes so logging/alerting can distinguish "infrastructure transient" from "quota exhausted." If alternating statuses exhaust the retry budget, the LAST status seen decides the exception class.
+
+### Sub-phase A (live verification) skipped
+
+Owner confirmed `.env` Gearment account is owner's dev account — no abandoned-draft pollution risk on production. Captured probe data in `findings.md` 2026-05-09 was sufficient to drive the regen without a fresh live call. If a future verification call is needed, runs against the same dev account.
+
+### CRITICAL caught in review
+
+Both code-reviewer and security-reviewer flagged the same CRITICAL: `confirm()` initially used raw `reference_id` as `Idempotency-Key` header value, while `push_order` uses sha256-hashed value. Two issues:
+1. Inconsistent contract — Gearment may dedupe differently between draft create and confirm.
+2. `reference_id` comes from `sale.order.channel_order_ref` (user-editable in some flows); raw CRLF in the value would inject extra HTTP headers (`requests` library may sanitize, but defense-in-depth says hash first).
+
+Fixed inline before commit with new `_idempotency_key()` helper + regression test (`test_confirm_idempotency_key_is_sha256_of_reference_id`) + non-empty `reference_id` validation.
+
+### Surprises (memory-worthy)
+
+1. **Module-level `from odoo.addons.X.services.gearment_payload import (NewClass)` in test file fails at registry load when GREEN hasn't shipped yet** — propagates as `tests/__init__.py` import failure, cascading to ALL tests including unrelated ones. Workaround: defer the `from … import …` into a helper function called inside test methods/setUp (not module level). Documented in `feedback_odoo19_test_gotchas.md`.
+
+2. **Slimming a 594-LOC test file in the same commit as a contract regen is the cleanest cut** — keeping schema-bound tests around with TODO markers tempts future drift. Removed 11 tests covered by new test files; kept 6 still-valid (protocol, ping, NotImplementedError stubs, catalog, PII).
+
+3. **Gearment's `/orders/draft` response uses `data.order_id` for the partner_ref**; existing tests assumed `data.partner_ref`. Probe row evidence: response shape on draft confirm has `{"data": {"reference_id": "...", "order_id": "..."}}`. Adapter return now picks `data.order_id or data.id` to be future-proof.
+
+### Test results
+
+- 23 P4-01-B tests pass (Phase 1 DB introspection on payload schema + Phase 2 ORM on adapter URL routing + Money proto + 503/504 retry + 429 unchanged)
+- 357 mhf tests pass (no regressions in P0-18b1 / P0-18b2 / P1-DROP / P2-03..06)
+- 1034 cross-module tests, 1 failed = pre-existing `test_seed_skips_empty_urls` baseline since P2-03 (unrelated)
+- Module installs cleanly: `-u multichannel_hub_fulfillment --stop-after-init` exit 0
+- No `_logger.info` / `print(` in modified files
+
+### Commit chain
+
+- `ffc2b7f919e` test(P4-01-B): RED — 23 tests across payload + adapter
+- `3f35e1d4aca` feat(P4-01-B): GREEN — contract regen + Idempotency-Key fix
+- (this commit) docs(P4-01-B): mark sub-phase done in tracker + findings

@@ -500,3 +500,38 @@ Task: "Create tracking_import_wizard.py"
 - Tests green; coverage ≥80% on changed files
 - Tracker P0-18b2c → done; P0-18b2 row marked complete
 
+
+
+## P4-01 — Spec 004b Gearment adapter, full state machine + UI surfaces (added 2026-05-10)
+
+Slice unblocks P4-01b (bulk-action), P4-02 (returns), P5 reporting. Plan: [`p4-01-plan.md`](./p4-01-plan.md). Decisions D1–D5 resolved in plan §1.
+
+**Sub-phase A — Live verification**
+- [ ] T4-01-01 One live POST against `/api/v3/orders/draft` with reshaped payload to confirm field correctness; capture working request body + response in `quickstart.md`
+
+**Sub-phase B — Payload + adapter regen**
+- [ ] T4-01-02 RED Phase 1 DB: new `GearmentOrderPayload` dataclass field-existence
+- [ ] T4-01-03 RED Phase 2 ORM: `GearmentPayloadBuilder.build()` + `_money_to_decimal()` + new URL routing + 503/504 retry
+- [ ] T4-01-04 RED: update P0-18b1 mock tests (≈28) to expect new URLs + payload shape
+- [ ] T4-01-05 GREEN: regen `GearmentOrderPayload` + new `GearmentAddress` + `GearmentLineItem`; new `GearmentPayloadBuilder`
+- [ ] T4-01-06 GREEN: rewrite `gearment_adapter.py` URLs (`/orders/draft`, `/orders/{ref}/price`, `/orders/draft/labeled`) + `_money_to_decimal` + new `GearmentQuote` dataclass + `confirm()` impl
+- [ ] T4-01-07 GREEN: add `ServiceUnavailableError` + 503/504 retry path (5/15/45 sec backoff) to `gearment_api_client.py`
+- [ ] T4-01-08 Verify all P0-18b1 + P4-01-B tests green; module installs clean
+
+**Sub-phase C — State machine + wizard**
+- [ ] T4-01-09 RED Phase 1 DB: `x_gearment_outbound_state` Selection field; default=draft
+- [ ] T4-01-10 RED Phase 2 ORM: state transitions (draft→quoted→operator_review→confirmed; quoted→cancelled); FR-017 wizard gate; expired-quote guard
+- [ ] T4-01-11 GREEN: `x_gearment_outbound_state` + 4 quote fields (`x_gearment_quote_total/currency/expires_at/breakdown_json`) + `_advance_gearment_state` helper + `action_get_gearment_quote`
+- [ ] T4-01-12 GREEN: `gearment.quote.wizard` TransientModel + form view + `action_confirm` (FR-017 11th confirmation) + `action_cancel`
+
+**Sub-phase D — UI surfaces (D3 + D4 + D5)**
+- [ ] T4-01-13 D5: "Sync to Gearment" form button + Gearment notebook tab on mhf `sale_order_views.xml`; group_ba_shipping
+- [ ] T4-01-14 D3: operations dashboard server action `action_server_gearment_bulk_sync` bound to `sale.order.line`; new `sale_order_line.action_gearment_bulk_sync` method (mhf inherit) with savepoint per order
+- [ ] T4-01-15 D4: read-only Shipping subsection in Etsy tab on `etsy_integration/views/sale_order_views.xml` (tracking_number, shipping_carrier_id, tracking_state, shipping_date, tracking_url — all readonly)
+- [ ] T4-01-16 RED+GREEN Phase 2 ORM: bulk-action dedup + savepoint isolation + FR-017 ACL gate + view-arch tests
+
+**Closure**
+- [ ] T4-01-17 code-reviewer + security-reviewer parallel; block on CRITICAL/HIGH
+- [ ] T4-01-18 Verify: `-u multichannel_hub_fulfillment + multichannel_hub_core + etsy_integration --stop-after-init` exit 0; full test tags green; grep `_logger.info`/`print(`
+- [ ] T4-01-19 Update tracker P4-01 row (`todo-rescoped → done`); append findings.md §"P4-01" with G1-G4 resolutions
+- [ ] T4-01-20 `/learn` capture (or "no new patterns" note)
