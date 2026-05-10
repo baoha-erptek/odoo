@@ -535,3 +535,29 @@ Slice unblocks P4-01b (bulk-action), P4-02 (returns), P5 reporting. Plan: [`p4-0
 - [ ] T4-01-18 Verify: `-u multichannel_hub_fulfillment + multichannel_hub_core + etsy_integration --stop-after-init` exit 0; full test tags green; grep `_logger.info`/`print(`
 - [ ] T4-01-19 Update tracker P4-01 row (`todo-rescoped → done`); append findings.md §"P4-01" with G1-G4 resolutions
 - [ ] T4-01-20 `/learn` capture (or "no new patterns" note)
+
+
+## P4-01-C — Gearment state machine + quote wizard + form button D5 (added 2026-05-10)
+
+Plan: [`p4-01-c-plan.md`](./p4-01-c-plan.md). Decisions E1.b/E2.a/E3.a/E4.a/E5.b resolved in plan §1. Sub-phase D (D3 + D4) deferred to follow-up slice P4-01-D.
+
+- [X] T4-01-C-01 RED Phase 1 DB: x_gearment_outbound_state Selection (5 keys, default=draft, tracking=True)
+- [X] T4-01-C-02 RED Phase 1 DB: 4 quote fields exist + readonly contract
+- [X] T4-01-C-03 RED Phase 1 DB: gearment.quote.wizard is TransientModel
+- [X] T4-01-C-04 RED Phase 2 ORM: state transitions (draft→quoted→operator_review→confirmed; quoted→cancelled)
+- [X] T4-01-C-05 RED Phase 2 ORM: _advance_gearment_state idempotency
+- [X] T4-01-C-06 RED Phase 2 ORM: action_get_gearment_quote calls adapter, writes quote fields, transitions to 'quoted'
+- [X] T4-01-C-07 RED Phase 2 ORM: action_get_gearment_quote raises if no Gearment-eligible lines (E5.b)
+- [X] T4-01-C-08 RED Phase 2 ORM: wizard.action_confirm requires state=='operator_review' (E3)
+- [X] T4-01-C-09 RED Phase 2 ORM: wizard.action_confirm `_check_ba_shipping_or_raise` BEFORE sudo write (FR-017 11th)
+- [X] T4-01-C-10 RED Phase 2 ORM: wizard.action_confirm raises on expired quote (E4)
+- [X] T4-01-C-11 RED Phase 2 ORM: double-click race → second action_confirm raises
+- [X] T4-01-C-12 RED Phase 2 ORM: wizard.action_cancel → 'cancelled' + clears x_gearment_outbound_ref
+- [X] T4-01-C-13 GREEN: x_gearment_outbound_state + 4 quote fields + _advance_gearment_state helper on mhf sale.order
+- [X] T4-01-C-14 GREEN: action_get_gearment_quote + action_open_gearment_quote_wizard
+- [X] T4-01-C-15 GREEN: gearment.quote.wizard TransientModel + form view; action_confirm + action_cancel
+- [X] T4-01-C-16 GREEN: form button "Sync to Gearment" + Gearment notebook tab on mhf sale_order_views.xml
+- [X] T4-01-C-17 GREEN: ACL CSV + manifest bump 19.0.1.0.17
+- [X] T4-01-C-18 code-reviewer + security-reviewer parallel; block on CRITICAL/HIGH
+- [X] T4-01-C-19 Verify: -u mhf exit 0; full test tags green; grep _logger.info/print
+- [X] T4-01-C-20 Tracker P4-01-C → done; findings.md §"P4-01-C" with E1-E5 + FR-017 11th

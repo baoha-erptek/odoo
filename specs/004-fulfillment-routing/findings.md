@@ -613,3 +613,56 @@ Fixed inline before commit with new `_idempotency_key()` helper + regression tes
 - `ffc2b7f919e` test(P4-01-B): RED — 23 tests across payload + adapter
 - `3f35e1d4aca` feat(P4-01-B): GREEN — contract regen + Idempotency-Key fix
 - (this commit) docs(P4-01-B): mark sub-phase done in tracker + findings
+
+---
+
+## 2026-05-10 — P4-01-C landed (Sub-phase C of P4-01)
+
+### Decisions resolved (E1-E5)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| E1 — coexistence of `x_gearment_status` and `x_gearment_outbound_state` | E1.b: keep both | Status = webhook-driven Gearment-side; outbound_state = operator-driven push lifecycle. No migration; no semantic overlap. |
+| E2 — quote field placement | E2.a: on `sale.order` | Persists across wizard close/reopen; single source for view rendering. Wizard reads via `related=`. |
+| E3 — double-click race | E3.a: state guard at start of action_confirm | Combined with Gearment idempotency (P4-01-B SHA-256 Idempotency-Key), second click hits state='confirmed' and raises clean. |
+| E4 — expired quote | E4.a: raise UserError, force re-fetch | Auto-refresh would risk silent price change. Conservative until owner provides refresh-on-confirm SLA. |
+| E5 — form button visibility | E5.b: Etsy + ref-empty + has-Gearment-SKU | E5.a alone risks operator confusion (button visible, payload build fails). Server-side gate in `action_get_gearment_quote`. |
+
+### State machine ordering note
+
+`_GEARMENT_OUTBOUND_STATE_SEQUENCE = (draft, quoted, operator_review, confirmed, cancelled)` with `_advance_gearment_state` doing index comparison `current_idx >= target_idx → no-op`. This means `cancelled` (index 4) is **forward-reachable from any state with lower index** — i.e. operator can cancel from `quoted` (index 1) directly without going through `operator_review` first. The "forward-only" guard prevents going BACKWARD (e.g. from `operator_review` to `draft`), not jumping forward to `cancelled`. Test `test_advance_gearment_state_cancel_from_quoted` confirms this works as intended. The sequence tuple is the data structure; the guard is the index check.
+
+### FR-017 11th confirmation
+
+Wizard `action_confirm` and `action_cancel` BOTH call `_check_ba_shipping_or_raise()` BEFORE any `sudo()` write. ACL CSV gives `group_ba_shipping` + `group_ba_manager` `1,1,1,0` on the wizard, but cancel flips `x_gearment_outbound_ref=False` on `sale.order` via sudo — that's a write outside the wizard table that the ACL doesn't cover. Defense-in-depth: gate guarded the action method even though the user DOES have wizard write rights. Pattern matches `tracking_import_line._check_ba_shipping_or_raise` (8th confirmation) and the project memory `feedback_fr017_write_defense_in_depth.md`.
+
+### Surprises
+
+1. **Tests fail-fast on missing env vars**: `GearmentApiAdapter()` instantiation calls `GearmentApiClient()` which raises if `GEARMENT_API_KEY` / `GEARMENT_API_SECRET` / `GEARMENT_API_BASE_URL` are missing. Mocking `GearmentApiAdapter.get_quote` / `.confirm` doesn't help because the mock applies AFTER `__init__`. Fix: wrap test bodies in `mock.patch.dict('os.environ', _TEST_ENV, clear=False)`. Same pattern as P4-01-B test files. Documented in test docstring.
+
+2. **`action_open_gearment_quote_wizard` auto-advances state on click**: when wizard opens from a `quoted`-state order, state advances to `operator_review` immediately. If operator closes the modal without confirm/cancel, the order is "stuck" in `operator_review`. Recovery path: re-open the wizard (action button still visible because `x_gearment_outbound_ref` is still empty); `action_open_gearment_quote_wizard` is idempotent — only advances when state==`quoted` so re-opening is safe. Operator can then click Confirm or Cancel. Documented as P3 in security review; not a code defect.
+
+3. **Late import of `services.gearment_adapter` inside `wizard.action_confirm`**: avoids the import-time circular trap where the wizards module would try to load `services` before that package is fully initialised at registry-build time. Pattern reused from `models/sale_order.py.action_push_to_gearment`. Memory-worthy if it bites again.
+
+### Tests
+
+- 27 P4-01-C tests pass (12 Phase 1 DB + 15 Phase 2 ORM)
+- 398 mhf tests pass (no regressions in P0-18b1 / P0-18b2 / P1-DROP / P2-03..06 / P4-01-B)
+- Module installs cleanly: `-u multichannel_hub_fulfillment --stop-after-init` exit 0
+
+### Reviews
+
+- code-reviewer **APPROVE** — 0 CRITICAL/HIGH/MEDIUM. Confirmed forward-only state guard allows `cancel` jump from `quoted` (test `test_advance_gearment_state_cancel_from_quoted` verifies). Guard order on `action_confirm` validated. Module documentation excellent.
+- security-reviewer **APPROVE** — 0 CRITICAL/HIGH. 1 P2 (test `__all__` hygiene — applied inline, added 4 P4-01-* test modules to `__all__`). 2 P3 (cancel state docstring, wizard close-without-action UX) deferred.
+
+### Closure
+
+- T4-01-C-01..20 all `[X]` in tasks.md
+- Tracker P4-01-C row state `todo` → `done` with full landing summary
+- Sub-phase D = P4-01-D (separate slice; D3 + D4 + D5 form button per p4-01-plan.md §3)
+
+### Commit chain
+
+- `5c4f3553e51` test(P4-01-C): RED — state machine + quote wizard + FR-017 11th confirmation
+- `5855a201c69` feat(P4-01-C): GREEN — Gearment state machine + quote wizard + FR-017 gate
+- (this commit) docs(P4-01-C): mark sub-phase done in tracker + findings
