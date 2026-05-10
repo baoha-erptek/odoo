@@ -403,3 +403,56 @@ All five recommendations accepted as defaults for sandbox implementation (W5). R
 W2 → W5 unblocked. P0-14..17 move from `blocked` to `todo` in the tracker.
 
 ---
+
+
+---
+
+## P0-22 — Etsy API ↔ email-parser ingest parity (2026-05-10)
+
+### Decision
+
+Routed `email_parser` output through a new `EtsyEmailAdapter` that emits the canonical `EtsyOrderPayload`, joining the same write path as `EtsyApiAdapter`. Rejected the alternative (extending `order_creator.process_parse_result` inline) because it locks two divergent code paths in permanently.
+
+### Implementation summary
+
+- `EtsyOrderPayload` gained 4 optional fields: `shipping_service`, `processing_time`, `discount_code`, `subtotal` (defaults `None`).
+- `EtsyLineItemPayload` gained `name_override` (default `None`) — lets the email path keep its rendered product label as the operator-visible `sale.order.line.name`.
+- `EtsyApiAdapter._receipt_to_payload` populates the 4 new fields when the receipt carries them. New `_processing_time` helper composes `min/max_processing_days` into the human string format the email parser emits ("1-2 business days").
+- `OrderCreator.process_etsy_payload` writes the 4 new fields onto `sale.order` and honors `name_override` on lines.
+- `EtsyEmailAdapter` itself is a stateless service with no Odoo ORM dependency — its only entry point is `parse_result_to_payload(parse_result, email_log_id, shop_id) → EtsyOrderPayload`.
+
+### Surprises
+
+1. **`email.utils.parsedate_to_datetime` returns timezone-aware datetimes.** Odoo `Datetime` fields require naive UTC and raise `ValueError` on aware inputs. Must normalise via `.astimezone(timezone.utc).replace(tzinfo=None)`. (See `etsy_email_adapter._parse_email_date`.)
+2. **`is_duplicate_transaction` blocks parity tests that ingest the same Etsy receipt via both paths.** The dedup check is global on `etsy_transaction_id`. Parity tests must use distinct transaction IDs across the two ingestions and exclude `etsy_transaction_id` from the parity assertion — it's a path-unique identifier, not a content field. The slice plan was framed as "identical orders" but the realisable parity claim is "identical field shapes".
+3. **Decision-rationale scope creep risk.** The original tracker entry mentioned routing email through canonical payload OR extending `process_parse_result` directly. Choosing the canonical-payload route means `process_parse_result` is now a parallel duplicate write path until P2-07 rebinds the cron. This is intentional (smaller blast radius for this slice) but the duplication needs documenting so the email-cron rebind doesn't get lost in P2-07 noise.
+
+### Email-cron rebind: deferred to P2-07
+
+The slice ships the adapter + parity proof. The email-polling cron in `etsy_integration` still calls `OrderCreator.process_parse_result` directly. The cutover will:
+1. Replace the cron entrypoint with `EtsyEmailAdapter().parse_result_to_payload(...) → EtsyOrderIngestor.ingest()`.
+2. Delete `process_parse_result` (and the email-only `_build_line_vals`).
+3. Land as part of P2-07 (production cutover from email to API per ADR-008a §5).
+
+### Tests
+
+- 41 P0-22 tests: 13 Phase 1 DB introspection + 24 Phase 2 ORM unit + 4 Phase 2 acceptance.
+- 505 `etsy_integration` tests green (0 failed, 0 errors). No regressions.
+- Module installs cleanly: `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration --stop-after-init --http-port=8888 --gevent-port=8889` exit 0.
+
+### Reviews
+
+- code-reviewer: **APPROVE** — 0 CRITICAL/HIGH/MEDIUM blockers. Notes: missing edge-case test on `_processing_time` single-bound (lo=None,hi=N or vice-versa) — logic handles it correctly but no explicit test. Acceptable for a parity slice.
+- security-reviewer: **APPROVE** — 0 CRITICAL/HIGH. 1 MEDIUM applied inline (`_parse_email_date` broadened exception catch from `(TypeError, ValueError)` to `Exception` with rationale comment, defensive against future `email_parser` schema drift). 1 LOW deferred (defensive `int()` coercion on `_processing_time` numerics; Etsy API spec says they're integers, deferred unless schema drift surfaces).
+
+### Closure
+
+- T0-22-01..14 marked `[X]` in `tasks.md`.
+- Tracker P0-22 row state `todo` → `done`.
+- T088 + T089 (Phase 11 module rename, parity test) close pre-emptively because P0-22 ships the same work in advance of the rename.
+
+### Commit chain
+
+- `8f9384eb9bd` test(P0-22): RED — 9-field parity tests + golden-fixture acceptance
+- `23b419b49e6` feat(P0-22): GREEN — Etsy ingest parity via EtsyEmailAdapter
+

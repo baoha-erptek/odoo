@@ -171,6 +171,29 @@ These tasks land in the renamed `etsy_channel_email` module (was `etsy_integrati
 
 ---
 
+## Phase 11.5: P0-22 — Ingest parity (early arrival of T088 + T089)
+
+Brought forward from Phase 11 because production cutover (P2-07) cannot ship until the API path writes the same `sale.order` / `sale.order.line` shape as the email path. Lands in `etsy_integration/` (pre-rename); migrates with the rest of the module under T085–T087. Plan: [`p0-22-plan.md`](./p0-22-plan.md).
+
+- [X] T0-22-01 Read `EtsyOrderPayload` + `EtsyLineItemPayload`; add 4 optional `sale.order` fields (`shipping_service`, `processing_time`, `discount_code`, `subtotal`) + `name_override` on line item
+- [X] T0-22-02 Read `email_parser.ParseResult`; verify it exposes `shipping_service` / `processing_time` / `discount_code` / `subtotal` / per-line `product_name`
+- [X] T0-22-03 Write Phase 1 DB tests — 11 field existence + readonly=True on `payment_status` / `etsy_last_modified`
+- [X] T0-22-04 Write Phase 2 ORM unit tests — per-adapter per-field mapping (4 email-side, 4 API-side)
+- [X] T0-22-05 Write Phase 2 golden-fixture parity test — email + API → identical `sale.order` on 9 fields
+- [X] T0-22-06 Author golden-email fixture (`tests/data/sample_p0_22_golden.txt`) covering all 9 fields
+- [X] T0-22-07 Author golden-receipt JSON fixture (`tests/fixtures/etsy_v3/p0_22_golden_receipt.json`) with same `order_id`
+- [X] T0-22-08 Implement `EtsyEmailAdapter._parse_result_to_payload` (`ParseResult` → `EtsyOrderPayload`, `source='email'`)
+- [X] T0-22-09 Extend `EtsyApiAdapter` to populate new payload fields where receipt JSON has them
+- [X] T0-22-10 Update `EtsyOrderIngestor` to write the 4 new payload fields onto `sale.order` + `name_override` onto `sale.order.line`
+- [X] T0-22-11 Run `code-reviewer` + `security-reviewer` in parallel; block on CRITICAL/HIGH
+- [X] T0-22-12 Run `odoo -u etsy_integration --stop-after-init`; verify 0 errors + all etsy_integration test tags pass
+- [X] T0-22-13 Append `findings.md` §"P0-22" with implementation-choice rationale + any surprises
+- [X] T0-22-14 Update tracker P0-22 row to `state=done`; T088 + T089 reference P0-22 commits
+
+When T085–T087 (module rename) land, T0-22 code moves to `etsy_channel_email/` along with the rest of `etsy_integration/`. T088 + T089 close at that point because their work is already done.
+
+---
+
 ## Phase 12: Polish & Cross-cutting
 
 - [ ] T092 [P] Add `i18n/vi_VN.po` to both `etsy_channel_api` and `etsy_channel_email` with 100% string coverage; CI gate per Spec 003's `test_i18n_coverage` pattern
