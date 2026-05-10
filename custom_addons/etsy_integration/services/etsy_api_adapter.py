@@ -156,7 +156,36 @@ class EtsyApiAdapter:
             last_modified=self._unix_to_datetime(
                 receipt.get('last_modified_tsz') or receipt.get('updated_timestamp'),
             ),
+            # P0-22 — channel-agnostic fields. The Etsy v3 receipts endpoint
+            # returns these inconsistently (some shops/listings populate
+            # `shipping_method` + `coupon_code`, others don't). When absent
+            # we emit None so the ingestor writes a falsy value to keep the
+            # symmetric write contract with the email path. `subtotal` is
+            # always derivable from grandtotal - shipping_cost.
+            shipping_service=receipt.get('shipping_method') or None,
+            processing_time=self._processing_time(receipt),
+            discount_code=receipt.get('coupon_code') or None,
+            subtotal=self._money_amount(receipt.get('subtotal'))
+            or (
+                self._money_amount(receipt.get('grandtotal'))
+                - self._money_amount(receipt.get('total_shipping_cost'))
+            ),
         )
+
+    @staticmethod
+    def _processing_time(receipt: dict) -> str | None:
+        """Render `min/max_processing_days` as the same human string format
+        the email parser emits ("1-2 business days").
+        """
+        lo = receipt.get('min_processing_days')
+        hi = receipt.get('max_processing_days')
+        if lo is None and hi is None:
+            return None
+        if lo is None:
+            return f'up to {hi} business days'
+        if hi is None or lo == hi:
+            return f'{lo} business days'
+        return f'{lo}-{hi} business days'
 
     def _transaction_to_line_item(self, txn: dict) -> EtsyLineItemPayload:
         return EtsyLineItemPayload(

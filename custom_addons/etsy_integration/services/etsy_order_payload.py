@@ -57,6 +57,11 @@ class EtsyLineItemPayload:
     unit_price: float
     variations: dict[str, str] = field(default_factory=dict)
     personalisation: str | None = None
+    # P0-22 — when the source channel supplies a custom display name for the
+    # line (e.g. email parser's product_name string after personalisation
+    # rendering) the ingestor copies it onto `sale.order.line.name`. None
+    # means "use product.display_name" (current behaviour).
+    name_override: str | None = None
 
 
 @dataclass(frozen=True)
@@ -97,3 +102,13 @@ class EtsyOrderPayload:
     # over a batch as the new watermark and FR-009 status-only re-sync
     # uses it to distinguish stale fetches from genuine updates.
     last_modified: datetime | None = None
+    # P0-22 — channel-agnostic shipping/discount metadata. Email receipts
+    # always carry these; API receipts populate them when the v3 endpoint
+    # exposes the fields (`shipping_method`, `min/max_processing_days`,
+    # `coupon_code`). When unavailable, adapters set None and the ingestor
+    # writes a falsy value to `sale.order.etsy_*`. Optional with `None`
+    # default so existing call-sites (P0-16b2) don't break.
+    shipping_service: str | None = None
+    processing_time: str | None = None
+    discount_code: str | None = None
+    subtotal: float | None = None

@@ -531,6 +531,14 @@ class OrderCreator:
             'etsy_raw_source_id': payload.raw_source_id,
             'payment_status': payload.payment_status or False,
             'etsy_last_modified': payload.last_modified or False,
+            # P0-22 — channel-agnostic fields lifted onto sale.order so both
+            # ingest paths produce identical orders. Adapters set None when
+            # the source channel doesn't carry the value; write False so the
+            # column stays unset rather than empty-string.
+            'etsy_shipping_service': payload.shipping_service or '',
+            'etsy_processing_time': payload.processing_time or '',
+            'etsy_discount_code': payload.discount_code or '',
+            'etsy_subtotal': payload.subtotal or 0.0,
             # Multichannel foundation (mhc FR-024) — see process_parse_result
             # for rationale. Both ingest paths must stamp these consistently.
             'sales_channel': 'etsy',
@@ -556,14 +564,20 @@ class OrderCreator:
                 )
                 continue
             product = self.find_or_create_product(item.title, '')
-            order_vals['order_line'].append((0, 0, {
+            line_vals = {
                 'product_id': product.id,
                 'product_uom_qty': item.quantity or 1,
                 'price_unit': item.unit_price or 0.0,
                 'etsy_transaction_id': str(item.transaction_id),
                 'etsy_personalisation': item.personalisation or '',
                 'etsy_sku': item.sku or '',
-            }))
+            }
+            # P0-22 — when the adapter supplied a custom display name (email
+            # path uses the buyer-facing product_name with rendered options),
+            # honour it. None means "use product.display_name" (default).
+            if getattr(item, 'name_override', None):
+                line_vals['name'] = item.name_override
+            order_vals['order_line'].append((0, 0, line_vals))
 
         if not order_vals['order_line']:
             _logger.warning(
