@@ -10,6 +10,7 @@ nhắc tới phiên bản trước.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from copy import deepcopy
@@ -35,6 +36,7 @@ from docx.shared import Cm, Pt, RGBColor
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 XLSX_PATH = os.path.join(OUT_DIR, "Theo_Doi_Du_An_VN.xlsx")
 DOCX_PATH = os.path.join(OUT_DIR, "SRS_He_Thong_Quan_Ly_Don_Hang_VN.docx")
+JIRA_KEYS_PATH = os.path.join(OUT_DIR, "jira_keys.json")
 
 PROJECT_TITLE = "Hệ thống quản lý đơn hàng đa kênh"
 RELEASE_DATE = "Tháng 5/2026"
@@ -99,6 +101,12 @@ CATALOG_RAW = [
      "Khi đang chạy đường dự phòng, hệ thống thử lại đường chính mỗi giờ. Sau 6 lần "
      "thành công liên tiếp, tự quay về đường chính. Admin có thể khoá việc tự quay về.",
      "Chủ dự án", "Cao", "Giai đoạn 1", ""),
+    (GROUPS[0], "Đối chiếu dữ liệu giữa đường chính và đường dự phòng",
+     "Sau mỗi đợt đồng bộ, hệ thống so sánh đơn lấy từ kết nối Etsy chính thức với đơn "
+     "lấy từ email dự phòng để bảo đảm 100% trùng khớp về số đơn, sản phẩm, giá, người "
+     "nhận và phí vận chuyển. Sai lệch được liệt kê trên một trang riêng cho BA xử lý.",
+     "Chủ dự án", "Cao", "Giai đoạn 1",
+     "Đã đối chiếu thành công 12/12 đơn mẫu trên môi trường demo."),
     (GROUPS[0], "Xuất Excel tin nhắn khách theo khoảng thời gian",
      "Marketing chọn khoảng thời gian, bấm 'Xuất tin nhắn' để tải Excel tất cả tin nhắn khách.",
      "Marketing", "Trung bình", "Giai đoạn 2", ""),
@@ -182,6 +190,12 @@ CATALOG_RAW = [
     (GROUPS[2], "Nhãn trạng thái file thiết kế trên mỗi dòng đơn",
      "Mỗi dòng đơn hiện nhãn: chờ duyệt / đã duyệt / cần chỉnh sửa. Bấm vào để mở file.",
      "BA, Marketing", "Trung bình", "Giai đoạn 1", ""),
+    (GROUPS[2], "Bảng điều khiển dạng dòng sản phẩm (theo từng sản phẩm trong đơn)",
+     "Bảng điều khiển Đơn hàng có chế độ xem theo từng dòng sản phẩm thay vì cả đơn — "
+     "BA thấy ngay 34 cột thông tin Marketing đang dùng trên Excel (mã đơn, ảnh, chú "
+     "thích cá nhân hoá, kích thước, số lượng, ngày hứa giao, người phụ trách...). Tất "
+     "cả thao tác sửa, lọc, sắp xếp đều hoạt động ở mức dòng sản phẩm.",
+     "BA", "Cao", "Giai đoạn 1", ""),
 
     # 4. Bảng điều khiển Vận chuyển -----------------------------------------
     (GROUPS[3], "Trang Tracking riêng (không phải bộ lọc Đơn hàng)",
@@ -210,6 +224,12 @@ CATALOG_RAW = [
     (GROUPS[3], "Hiển thị tình trạng tracking thực tế (in-transit, delivered, returned)",
      "Lấy tình trạng từ carrier (USPS, UniUni, YunExpress) và cập nhật lên màn hình theo thời gian thực.",
      "Marketing", "Trung bình", "Giai đoạn 2", ""),
+    (GROUPS[3], "Trạng thái nhãn vận chuyển có ảnh minh hoạ",
+     "Khi BA chọn trạng thái cho nhãn vận chuyển (Đã in, Đã dán, Đã giao bưu cục, ...), "
+     "danh sách tuỳ chọn hiển thị kèm ảnh thực tế của nhãn ở mỗi trạng thái — giúp BA "
+     "nhận diện nhanh và giảm sai sót. Admin có thể thêm/sửa trạng thái và ảnh trong phần "
+     "Cài đặt mà không cần lập trình viên.",
+     "BA, Sản xuất", "Trung bình", "Giai đoạn 1", ""),
 
     # 5. Bảng điều khiển Sản xuất -------------------------------------------
     (GROUPS[4], "Đặt tên 'Bảng điều khiển Sản xuất'",
@@ -438,8 +458,17 @@ CATALOG_RAW = [
 ]
 
 
+def _load_jira_keys():
+    """Sidecar map từ ten_ngan -> mã JIRA (vd ESTY-123). Trả về {} nếu chưa có."""
+    if not os.path.exists(JIRA_KEYS_PATH):
+        return {}
+    with open(JIRA_KEYS_PATH, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def build_catalog():
     """Trả về danh sách hạng mục với STT và status mặc định."""
+    jira_keys = _load_jira_keys()
     out = []
     for stt, row in enumerate(CATALOG_RAW, start=1):
         nhom, ten_ngan, mo_ta, phong_ban, muc_uu_tien, giai_doan, ghi_chu = row
@@ -454,6 +483,7 @@ def build_catalog():
                 "giai_doan": giai_doan,
                 "trang_thai": "Chưa bắt đầu",
                 "ghi_chu": ghi_chu,
+                "jira_key": jira_keys.get(ten_ngan, ""),
             }
         )
     return out
@@ -650,9 +680,9 @@ def build_xlsx(catalog):
     s2 = wb.create_sheet("Hang_Muc_Cong_Viec")
     headers = [
         "STT", "Nhóm hạng mục", "Tên hạng mục", "Mô tả ngắn", "Phòng ban đề xuất",
-        "Mức ưu tiên", "Giai đoạn", "Trạng thái", "Ghi chú",
+        "Mức ưu tiên", "Giai đoạn", "Trạng thái", "Ghi chú", "JIRA",
     ]
-    widths = [6, 32, 38, 60, 22, 14, 14, 16, 35]
+    widths = [6, 32, 38, 60, 22, 14, 14, 16, 35, 14]
     for i, (h, w) in enumerate(zip(headers, widths), start=1):
         c = s2.cell(row=1, column=i, value=h)
         c.fill = _header_fill()
@@ -674,10 +704,11 @@ def build_xlsx(catalog):
             item["giai_doan"],
             item["trang_thai"],
             item["ghi_chu"],
+            item["jira_key"],
         ]
         for col, val in enumerate(values, start=1):
             c = s2.cell(row=idx, column=col, value=val)
-            c.alignment = _wrap() if col not in (1, 6, 7, 8) else _center()
+            c.alignment = _wrap() if col not in (1, 6, 7, 8, 10) else _center()
             c.border = _border()
         s2.row_dimensions[idx].height = 48
 
@@ -958,6 +989,15 @@ def build_docx(catalog):
         ],
         widths_cm=[3.5, 6.0, 2.0, 5.0],
     )
+    _add_heading(doc, "3.1 Tình trạng triển khai hiện tại", level=2)
+    _add_paragraph(
+        doc,
+        "Môi trường demo đã chạy ổn định trên máy chủ riêng và hoàn tất một lượt vòng "
+        "đời đơn hàng đầu tiên: kéo đơn từ Etsy về, gửi file thiết kế lên Google Drive, "
+        "đẩy đơn cho Gearment, nhận webhook trạng thái, nhập tracking, đánh dấu đã giao "
+        "và đồng bộ về Etsy. 12/12 đơn mẫu của đợt thử nghiệm đầu tiên đạt kết quả "
+        "đúng. Đây là cơ sở để bước tiếp sang giai đoạn cấu hình cho dữ liệu thực.",
+    )
 
     # --- 4. Đồng bộ đơn -----------------------------------------------------
     _add_heading(doc, "4. Đồng bộ đơn hàng từ Etsy", level=1)
@@ -1000,6 +1040,14 @@ def build_docx(catalog):
         "cho admin; mọi thay đổi được lưu lại. Khi đường chính ổn định trở lại (6 lần "
         "thành công liên tiếp), hệ thống tự quay về đường chính. Admin có thể khoá việc "
         "tự quay về.",
+    )
+    _add_heading(doc, "4.4 Đối chiếu giữa hai đường", level=2)
+    _add_paragraph(
+        doc,
+        "Sau mỗi đợt đồng bộ, hệ thống tự so sánh đơn lấy từ kết nối Etsy chính thức với "
+        "đơn lấy từ email dự phòng. Mọi sai lệch về số đơn, sản phẩm, giá, người nhận và "
+        "phí vận chuyển được liệt kê trên một trang riêng để BA xử lý trước khi đóng đợt. "
+        "Đợt thử nghiệm đầu tiên trên môi trường demo đạt 12/12 đơn khớp tuyệt đối.",
     )
 
     # --- 5. Làm sạch dữ liệu cũ --------------------------------------------
@@ -1051,6 +1099,9 @@ def build_docx(catalog):
         "• Cảnh báo đơn quá 2 ngày chưa duyệt file thiết kế.",
         "• Mỗi dòng đơn có nhãn trạng thái file thiết kế: chờ duyệt / đã duyệt / cần chỉnh sửa.",
         "• Tab Lịch sử trên đơn: ai đổi, lúc nào, từ giá trị nào sang giá trị nào.",
+        "• Chế độ xem theo dòng sản phẩm: hiển thị 34 cột thông tin Marketing đang dùng "
+        "trên Excel (mã đơn, ảnh, chú thích cá nhân hoá, kích thước, số lượng, ngày hứa "
+        "giao, người phụ trách, ...) — sửa, lọc, sắp xếp đều ở mức từng sản phẩm.",
     ]:
         _add_paragraph(doc, line)
 
@@ -1069,6 +1120,9 @@ def build_docx(catalog):
         "• Mọi thay đổi đồng bộ sang Bảng Đơn hàng trong vòng 5 giây.",
         "• Khoá thao tác mua nhãn khi đơn đang chờ duyệt đổi địa chỉ — tránh in nhãn sai.",
         "• Hiển thị tình trạng tracking thực tế (in-transit, delivered, returned) — bật ở giai đoạn 2.",
+        "• Trạng thái nhãn vận chuyển có ảnh minh hoạ: khi BA chọn trạng thái, danh sách "
+        "tuỳ chọn hiển thị kèm ảnh thực tế của nhãn — giúp nhận diện nhanh và giảm sai sót. "
+        "Admin có thể thêm/sửa trạng thái và ảnh trong phần Cài đặt.",
     ]:
         _add_paragraph(doc, line)
 
