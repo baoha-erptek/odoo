@@ -314,6 +314,59 @@ Lightweight bugfix flow inspired by `spec-kit-bugfix` (taxonomy adopted; tooling
 
 This flow is **inline** — no external tooling, no `/speckit.bugfix.*` commands required. The spec-kit-bugfix repo (https://github.com/Quratulain-bilal/spec-kit-bugfix) was reviewed 2026-05-01 but not installed (untrusted external code; existing playbook + tracker + findings.md + memory cover the same ground).
 
+### E2E run defect intake (added 2026-05-10)
+
+The post-slice flow above covers the *fix mechanics*. This subsection defines the *intake*: how a defect surfaced during a multi-slice E2E run gets captured, triaged, and routed without dropping. E2E exercises every slice end-to-end and *will* surface bugs that per-slice unit tests didn't catch — the orphan-cron incident (memory `project_orphan_cron_methods.md`) is the canonical example of this failure mode.
+
+**Defect lifecycle**:
+
+```
+[surfaced] → [triaged] → [routed] → [fixed] → [verified] → [closed]
+   E2E       severity    spec/slice  9-phase   E2E re-run    tracker
+                                     loop      of section    state=done
+```
+
+**Capture rules** (when a step in the E2E run fails or behaves unexpectedly):
+
+1. **Stop the run** at the failing step. Do not continue past §N if §N is broken — downstream steps will mask the root cause.
+2. **Capture evidence** as a single H2 entry in `docs/E2E_DEFECTS_<YYYY-MM-DD>.md` (one file per run date):
+   - Symptom (one sentence)
+   - Step / section ID (e.g., "§6 push to Gearment")
+   - Repro recipe (exact xmlrpc call or UI click path)
+   - Stack trace tail (last 30 lines of `docker logs esty19_odoo`)
+   - Suspected cause (one sentence — guess is fine)
+   - Severity (CRITICAL / HIGH / MEDIUM / LOW — see table)
+   - Linked slice ID(s) it likely belongs to
+3. **Mirror into tracker** under the **"E2E Defects in Flight"** subsection of `006-master-plan-tracking.md` so it survives session boundaries.
+4. **Append to the relevant `specs/<spec>/findings.md`** under its **"E2E surfacing (live)"** subsection.
+
+**Severity tags** (mirror code-review levels):
+
+| Tag | Definition | Action |
+|-----|------------|--------|
+| **CRITICAL** | Data loss, security hole, crashes pipeline at this step or downstream, blocks all 4 ordertest2 receipts | Stop run; spawn hotfix slice **before** continuing. Same 9-phase loop, branch off `feature/006-master-plan-coding`. |
+| **HIGH** | Functional bug visible to operator; workaround exists | Capture; finish run using workaround; open hotfix slice in next session. |
+| **MEDIUM** | Cosmetic / non-blocking | Capture only; bundle into the next slice that touches the same area. |
+| **LOW** | Polish / observation | Capture; defer to W7 polish sprint. |
+
+**Routing rules** (where the fix belongs):
+
+| Symptom origin | Owner / artifact |
+|---|---|
+| Etsy ingest / email / Gmail OAuth | `specs/001-etsy-order-migration/findings.md` + new slice `P0-FIX-<n>` |
+| Operations dashboard (line-level, P1-01b) | `specs/003-dashboard-design-multichannel/findings.md` + amendment to P1-01 family |
+| Design file upload / GDrive sync | `specs/003-dashboard-design-multichannel/findings.md` + slice `P1-OPS-DESIGN-FIX-<n>` |
+| Pipeline state machine / routing | `specs/004-fulfillment-routing/findings.md` + slice `P1-DROP-FIX-<n>` |
+| Gearment adapter / push / state machine / quote wizard | `specs/004-fulfillment-routing/findings.md` + amendment to P4-01-x family |
+| Tracking import / GKE / logistics inbox cron | `specs/004-fulfillment-routing/findings.md` (P2-06 area) + slice `P2-FIX-<n>` |
+| Cross-cutting (auth, ACLs, ICPs, cron wiring) | Append to `findings.md` of the spec where most-recent edits landed; default to `specs/006-master-plan/findings.md` if ambiguous |
+
+**Regression-test contract**: every CRITICAL or HIGH fix MUST land with a Phase 1 (DB) **and** Phase 2 (ORM) test that fails on the broken commit and passes on the fix — exactly the standard 9-phase loop, no shortcut. The E2E re-run is *not* a substitute for unit tests (memory `feedback_e2e_pipeline_first.md` constrains scope but does not waive the per-slice test contract).
+
+**ADR contradiction**: per memory `feedback_follow_master_plan_playbook.md`, if a defect contradicts an ADR — STOP and escalate. Tracker `state→blocked`, finding logged, owner pinged before any code change.
+
+**Re-verification**: after a hotfix lands, re-run the failing E2E section in isolation (script supports `--from-section N`) before resuming the full run. Only mark the defect `closed` after the full run passes through that section.
+
 ---
 
 ## Change log
@@ -322,4 +375,5 @@ This flow is **inline** — no external tooling, no `/speckit.bugfix.*` commands
 - **2026-04-26 (revision 1)**: Workflow pivot — from "worktree per slice" to **single-workspace-on-main**. All forward coding now lands directly on `main` in the primary workspace. Worktrees reserved for rework / bugfix only. Wave 1 (RED tests) and Wave 2 (planning + findings + tasks.md) consolidated to `main` via rebase; wave worktrees and branches pruned. Wave plan rewritten as sequential. Added Phase 7 principle: "Code first, E2E later" — finish ALL spec coding before E2E sprint (W7 gate).
 - **2026-04-27 (revision 2)**: Branching pivot — forward work moves from `main` to long-lived feature branch `feature/006-master-plan-coding` (cut from `main` 2026-04-27). `main` becomes the merge target, not the working branch, so it stays green during the multi-slice E2E coding push. Single-workspace pattern unchanged — we're still in `/home/odoo/odoo_dev/other_projects/odoo19_esty/`, just on a different branch. Merge back to `main` (fast-forward or rebase) after W7 E2E sprint passes. Memory `feedback_use_worktree_for_new_work.md` revised to match. P0-20 (`multichannel_hub_core` skeleton) was the first slice landed under this revision.
 - **2026-04-29 (revision 3)**: Operating-model additions in response to owner's parallel-execution + Telegram-dispatch + persistent-PM questions. (1) Codified "Parallelism modes" subsection (Mode 1 in-slice agents / Mode 2 disjoint-module worktrees / Mode 3 hotfix). (2) Phase 0 references new `/dispatch-slice` skill (Telegram-trigger compatible). (3) Phase 6 adds explicit WIP-commit rule for mid-slice exits. (4) New "Why no persistent PM agent" section locks in the stateless-PM design (bloat / drift / concurrency / ROI). No code changed; doc-only revision.
+- **2026-05-10 (revision 5)**: Added "E2E run defect intake" subsection under "Bug surfaces post-slice (or during E2E)". Defines run-time defect capture rules, severity tags, routing table, regression-test contract, ADR-contradiction escape hatch, and section-isolated re-verification path. Companion artifacts: `docs/E2E_DEFECTS_<date>.md` template + new tracker subsection "E2E Defects in Flight" + per-spec `findings.md` "E2E surfacing (live)" subsection. Owner directive 2026-05-10: "E2E test process can introduce bugs, make sure we have a way to track and flow to handle them in playbook." No code changed; doc-only revision.
 - **2026-05-03 (revision 4)**: Aligned playbook to E2 v1.2 Owner red-feedback (`.0temp/E2_Quy_trinh_san_xuat_edit.pdf`). Added "Owner voice" traceability section with 12-row red-theme → slice mapping. Three uncovered surfaces surfaced for Owner: (1) **P1-02d (PD A4 batch)** re-prioritize from "not critical" to W4; (2) **propose new slice P1-11** for auto status transitions on `mrp.workorder.button_finish` (currently no P-task ID despite living in `D2_production_flow.md` design notes); (3) **Customer Message Hub (B13)** still architectural-only — needs Owner scope decision (export-only vs full inbox) before slice spawn. No code changed; doc-only revision. Companion deliverable: `.0temp/E2_Quy_trinh_san_xuat-v2.docx` sent to Owner for red-feedback re-confirmation. Tracker NOT mutated this revision — tracker edits wait for Owner answers on B8/B9/B13.

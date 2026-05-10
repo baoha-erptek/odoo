@@ -1434,3 +1434,14 @@ contract.
   siblings + migrate data. Defer to post-W7.
 - **OWL jump-to-order button** (DECISION 4 fallback): add only if UAT
   shows the auto-generated `sale.order.line` form is unusable.
+
+---
+
+## E2E surfacing (live)
+
+Defects surfaced during E2E runs on staging that map to this spec. Each row links to `docs/E2E_DEFECTS_<date>.md` and the hotfix slice in `.claude/plans/006-master-plan-tracking.md` ("E2E Defects in Flight"). See playbook §"E2E run defect intake" for capture/triage/routing rules.
+
+| Date | Run § | Symptom | Severity | Hotfix slice | State |
+|------|-------|---------|----------|--------------|-------|
+| _(none yet)_ |
+

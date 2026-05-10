@@ -721,3 +721,14 @@ All 4 sub-phases (P4-01-B contract regen, P4-01-C state machine + wizard, P4-01-
 - `998c0dc3e30` test(P4-01-D): RED — 15 tests across D3/D4/D5 + FR-017 13th regression
 - `8410d3274a7` feat(P4-01-D): GREEN — D3 bulk action + D4 Etsy tab + D5 form button + 13th gate
 - (this commit) docs(P4-01-D): mark P4-01 parent done — tracker + findings
+
+---
+
+## E2E surfacing (live)
+
+Defects surfaced during E2E runs on staging that map to this spec. Each row links to `docs/E2E_DEFECTS_<date>.md` and the hotfix slice in `.claude/plans/006-master-plan-tracking.md` ("E2E Defects in Flight"). See playbook §"E2E run defect intake" for capture/triage/routing rules.
+
+| Date | Run § | Symptom | Severity | Hotfix slice | State |
+|------|-------|---------|----------|--------------|-------|
+| _(none yet)_ |
+

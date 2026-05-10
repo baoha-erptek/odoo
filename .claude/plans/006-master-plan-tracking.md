@@ -317,6 +317,20 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 
 ---
 
+## E2E Defects in Flight
+
+> Live register of bugs surfaced during multi-slice E2E runs on staging (`demo_esty` on `129.150.63.207`). Mirror of `docs/E2E_DEFECTS_<run-date>.md` for cross-session continuity. See playbook §"E2E run defect intake" for capture / triage / routing rules.
+
+| Defect ID | Surfaced (run date / §) | Severity | Symptom | Owner spec | Hotfix slice | State | Fixed by |
+|-----------|--------------------------|----------|---------|------------|--------------|-------|----------|
+| _(none yet — populate during 2026-05-10 run; new rows appended as defects are surfaced)_ |
+
+**Severity legend**: CRITICAL (data loss / pipeline crash) → stop run, hotfix immediately. HIGH (bug w/ workaround) → finish run, hotfix next session. MEDIUM (cosmetic) → bundle into next slice. LOW (polish) → defer to W7.
+
+**State machine**: `surfaced` → `triaged` → `routed` → `fixing` → `verifying` → `closed`.
+
+---
+
 ## Change log
 
 - **2026-04-13**: File created. Wave A + Wave B logged as complete. Phase 0 execution tasks defined. E1 + E2 + E3 external dependencies added.
