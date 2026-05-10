@@ -82,6 +82,51 @@ description: "Tasks for Spec 003 — Three Operational Dashboards, Design & Addr
 
 ---
 
+## Phase 4b: P1-LBL — `label_status` Selection → Many2one (Owner directive D2, 2026-05-10)
+
+**Source**: tracker row P1-LBL (`.claude/plans/006-master-plan-tracking.md` line 135) + JPG fixture `.0temp/2026-05-10_093634.jpg`.
+**Goal**: replace the fixed `label_status` Selection on `sale.order.fulfillment` with a Many2one to a configurable master-data model `label.status.option`; seed 16 status options matching owner's daily-ops board.
+**Independent test**: 16 seed rows present after install; fulfillment write to `label_status_id` resolves and emits bus event; non-BA-manager direct write raises AccessError; migration rewrites legacy Selection rows to safe-default `Chờ duyệt` with `_logger.warning` audit trail.
+**Out of scope** — deferred to follow-up **P1-LBL-MIGRATE** slice: owner-authored mapping table for legacy Selection codes (`none`/`requested`/`buying`/`bought`/`failed`) → seed-record codes. Until that lands, all pre-existing fulfillment rows land on `Chờ duyệt` and BA-manager triages manually.
+
+- [ ] T-LBL-01 [P] [P1-LBL] Create `multichannel_hub_core/models/label_status_option.py` defining `label.status.option` Model: `name` Char(required, translate=True), `code` Char(unique, xmlid-friendly), `color` Integer(default=0), `sequence` Integer(default=10), `bucket` Selection([('target','MP target'),('pd_selfmake','PD self-make'),('done','Done'),('approval','Approval')], required=True), `active` Boolean(default=True). Inherit `mail.thread`; `tracking=True` on `name`/`bucket`/`active`/`color`/`sequence`. `_sql_constraints` UNIQUE on `code` and `name`.
+- [ ] T-LBL-02 [P1-LBL] Add `init()` raw-SQL UNIQUE mirror on `(code)` in `label_status_option.py` per `_sql_constraints` drift template (9th confirmation; canonical in `multichannel_hub_core/models/design_file.py:134-148`). Use `pg_constraint IF NOT EXISTS` pre-check (NOT EXCEPTION clause — PG raises 42P07 not 42710 on re-run).
+- [ ] T-LBL-03 [P] [P1-LBL] Create `multichannel_hub_core/data/label_status_data.xml` (`noupdate="1"`) with **16 seed records** keyed by xmlid `label_status_<code>`. Codes derived from JPG fixture `.0temp/2026-05-10_093634.jpg`:
+  - **target bucket** (red box, "MP sẽ CHUYỂN TÌNH TRẠNG NÀY"): `us_od` ("US-od", color=1, seq=10), `vietnam_od` ("Vietnam-od", color=1, seq=20)
+  - **pd_selfmake bucket** (green box, "pd TỰ SX"): `vn_tattoo` (color=10, seq=110), `vn_wooden_dish` (color=10, seq=120), `vn_dish` (color=10, seq=130), `vn_dish_ng` (color=2, seq=140), `vn_dish_fix` ("[Fix] VN-Dish", color=2, seq=150), `vn_sp_moi` ("VN-SP mới", color=10, seq=160), `vn_packed` (color=10, seq=170), `vn_packed_1` ("VN-Packed 1", color=10, seq=180), `vn_apron` (color=10, seq=190), `vn_handkerchief` (color=10, seq=200)
+  - **done bucket** (blue box): `vn_fulfilled` ("VN-Fulfilled", color=4, seq=300)
+  - **approval bucket** (orange box): `cho_duyet` ("Chờ duyệt", color=3, seq=410), `da_gui_proof` ("Đã gửi proof", color=3, seq=420), `cho_file` ("Chờ file", color=3, seq=430)
+  - Names preserved verbatim (Vietnamese diacritics included). Color indices follow Odoo standard palette (1=red, 2=orange, 3=yellow, 4=light blue, 10=green).
+- [ ] T-LBL-04 [P] [P1-LBL] Add ACL rows in `multichannel_hub_core/security/ir.model.access.csv`: `access_label_status_option_user` (`base.group_user`, R/0/0/0); `access_label_status_option_ba_manager` (`multichannel_hub_core.group_ba_manager`, R/W/C/U). Read for everyone, write only for BA-manager.
+- [ ] T-LBL-05 [P1-LBL] In `multichannel_hub_core/models/sale_order_fulfillment.py:80`, replace the `label_status = fields.Selection(...)` definition with `label_status_id = fields.Many2one('label.status.option', ondelete='restrict', tracking=True, index=True)`. Drop the legacy Selection attribute entirely; **do NOT keep both fields** (avoids dual-write divergence per memory `feedback_fr017_write_defense_in_depth.md`).
+- [ ] T-LBL-06 [P1-LBL] Update `_BUS_TRIGGER_FIELDS` (line 12) and `_ADDRESS_LOCK_FIELDS` (line 28) in `models/sale_order_fulfillment.py`: replace literal `'label_status'` with `'label_status_id'` in both frozensets. Update bus payload at line 229: `'label_status': self.label_status_id.code` (transmit the comodel code, not the M2O id).
+- [ ] T-LBL-07 [P1-LBL] **FR-017 16th confirmation**: extend `sale.order.fulfillment.write()` (and `create()` if it touches `label_status_id`) to require `_check_ba_manager_or_raise()` BEFORE `sudo().write({...})` whenever `label_status_id` is in `vals`. Pattern mirrors P2-06 `logistics.partner` write defense exactly. ACL CSV stays read-only for BA-shipping users so the override is the only write path.
+- [ ] T-LBL-08 [P1-LBL] Update `multichannel_hub_core/views/operations_dashboard_views.xml` (lines 50-53, 76, 93-94): replace `<field name="label_status" widget="badge" decoration-...>` with `<field name="label_status_id" widget="many2one_tags" options="{'no_create': True}"/>`; rewrite the saved-filter domain at line 76 (`[('label_status', '=', 'bought')]`) to use the seed xmlid, e.g. `[('label_status_id.code', '=', 'vn_fulfilled')]` (or whichever code matches the legacy "bought" semantic — owner sign-off in P1-LBL-MIGRATE will finalize); update `group_by` filter at line 93-94 to `'label_status_id'` (Many2one group-by uses comodel `display_name` automatically; flat-sibling per Odoo 19 RNG memory).
+- [ ] T-LBL-09 [P1-LBL] Update `multichannel_hub_core/data/operations_dashboard_saved_filters.xml` line 40: rewrite the legacy domain `[..., ('label_status', '!=', 'none')]` to use `('label_status_id', '!=', False)` (M2O Falsy means "unset"; matches the legacy "none" semantic).
+- [ ] T-LBL-10 [P1-LBL] Create `multichannel_hub_core/migrations/19.0.1.0.<NEXT>/post-label-status-default.py` (NEXT = post-bump manifest version, choose at commit time). Script:
+  1. `target = env.ref('multichannel_hub_core.label_status_cho_duyet', raise_if_not_found=True)`.
+  2. `cr.execute("SELECT id FROM sale_order_fulfillment WHERE label_status_id IS NULL")` → collect IDs.
+  3. `cr.execute("UPDATE sale_order_fulfillment SET label_status_id = %s WHERE label_status_id IS NULL", (target.id,))`.
+  4. `_logger.warning("P1-LBL migration: rewrote %d sale.order.fulfillment rows to default 'Chờ duyệt' (id=%s); audit list: %s", count, target.id, list(ids))` — enumerate rewritten record IDs per tracker requirement.
+- [ ] T-LBL-11 [P1-LBL] Update existing tests that hard-code legacy Selection values (the slice MUST land green): `tests/test_tracking_dashboard.py:91,98,229,286`, `tests/test_operations_dashboard_orm.py:102,182,192,201,322-333`, `tests/test_phase2_orm.py:166-168`, `tests/test_audit_coverage_db.py:124`, `tests/test_operations_dashboard_db.py:225-227`. Replace literal `'bought'`/`'none'`/`'requested'`/`'failed'` writes with `env.ref('multichannel_hub_core.label_status_<code>').id` writes; replace introspection of `label_status` Selection with `label_status_id` M2O. Default-value assertion in `test_phase2_orm.py:166-168` flips from `'none'` to `False` (M2O default).
+- [ ] T-LBL-12 [P] [P1-LBL] Phase 1 DB tests in new `multichannel_hub_core/tests/test_label_status_db.py`:
+  - `test_model_registered` — `'label.status.option' in env.registry`
+  - `test_unique_constraint_present` — `pg_constraint` row for `code_unique` post-install (drift-template idempotency check)
+  - `test_seed_records_loaded` — exactly 16 rows, bucket distribution `target=2, pd_selfmake=10, done=1, approval=3`
+  - `test_seed_xmlids_resolvable` — every `label_status_<code>` xmlid resolves
+  - `test_fulfillment_field_swap` — `sale_order_fulfillment` table has `label_status_id` integer FK column; legacy `label_status` varchar column does NOT exist (dropped, not orphaned)
+  - `test_acl_grants` — `ir.model.access` rows for `label.status.option`: base.group_user R-only; group_ba_manager R/W/C/U
+- [ ] T-LBL-13 [P1-LBL] Phase 2 ORM tests in new `multichannel_hub_core/tests/test_label_status_orm.py`:
+  - `test_create_with_duplicate_code_raises` — IntegrityError surfaces ValidationError
+  - `test_fulfillment_write_emits_bus_on_label_status_id_change` — bus.bus channel `multichannel_hub.fulfillment_update` fires when `label_status_id` changes
+  - `test_fulfillment_write_blocked_for_non_ba_manager` — FR-017 16th confirmation: BA-shipping user write raises AccessError; ba_manager user succeeds
+  - `test_fulfillment_address_lock_includes_label_status_id` — pending address change blocks `label_status_id` write per `_ADDRESS_LOCK_FIELDS`
+  - `test_migration_default_writes_cho_duyet_with_warning` — apply migration helper to fulfillment rows with NULL `label_status_id`; assert all rewritten to `label_status_cho_duyet` xmlid and `_logger.warning` captured via `assertLogs`
+  - `test_kanban_color_reachable_via_m2o` — `fulfillment.label_status_id.color` is an integer in palette range
+- [ ] T-LBL-14 [P1-LBL] Bump `multichannel_hub_core/__manifest__.py` version (next free patch) and append `'data/label_status_data.xml'` to the `data` list. Verify clean install: `docker exec namco_odoo19 odoo -d namco_odoo19 -u multichannel_hub_core --stop-after-init` returns 0; expect post-migration `_logger.warning` line confirming rewrite count; ruff check (if available) clean.
+
+---
+
 ## Phase 5: US3 — Process Dashboard for Production VN+US (P1, configurable pipeline)
 
 **Goal**: PD's 18 columns, pipeline-state column with colour chips, warehouse-zone filter.
