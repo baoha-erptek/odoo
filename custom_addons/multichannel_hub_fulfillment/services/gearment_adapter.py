@@ -1,28 +1,56 @@
 """GearmentAdapter — Protocol + concrete impl wrapping GearmentApiClient.
 
-Spec 005 P0-16b2 EtsyApiAdapter pattern mirrored here.
+P4-01-B (2026-05-10) corrected the URL constants and response parsing per the
+readiness probe in `specs/004-fulfillment-routing/findings.md` 2026-05-09:
 
-Out of scope for P0-18b1:
-- live POST draft/confirm (P4-01 + owner sign-off)
-- webhook signature discovery (P0-18b2)
+- G1 fix: `POST /api/v3/orders` → `POST /api/v3/orders/draft`
+- G2 fix: payload schema regen — see `gearment_payload.py`
+- G3 fix: `/orders/{ref}/price` returns Money proto shape
+  `{currency_code, units, nanos}` for `order_*` fields; `_money_to_decimal()`
+  decodes them into `(Decimal, currency_code)` tuples.
+- G4 fix: `confirm()` calls `POST /api/v3/orders/draft/labeled`.
 
-Idempotency belt-and-braces: HTTP `Idempotency-Key` header + body
-`reference_id` field, both derived from `payload.external_order_id`.
-P0-18b2 will determine which Gearment honors.
+Idempotency belt-and-braces (carried forward from P0-18b1):
+- HTTP `Idempotency-Key: sha256(reference_id)` header
+- body `reference_id` field
+
+State machine + operator-review wizard live in P4-01-C (follow-up slice).
 """
+import hashlib
 import json
 import logging
 import time
+from dataclasses import dataclass
+from decimal import Decimal
 from typing import Protocol
 
 from .gearment_api_client import GearmentApiClient
 from .gearment_payload import GearmentOrderPayload
 
+
+def _idempotency_key(reference_id: str) -> str:
+    """SHA-256 hex of reference_id — matches `GearmentOrderPayload.idempotency_key`.
+
+    Hashing prevents HTTP header injection if `reference_id` ever contains
+    CRLF (the value is sourced from `sale.order.channel_order_ref` which is
+    user-editable in some flows). Also keeps the Idempotency-Key contract
+    symmetric between `push_order` and `confirm`.
+    """
+    return hashlib.sha256(reference_id.encode()).hexdigest()
+
 _logger = logging.getLogger(__name__)
 
+# URL constants — see findings.md 2026-05-09 for the probe evidence.
+_DRAFT_URL = 'api/v3/orders/draft'
+_PRICE_URL = 'api/v3/orders/{ref}/price'
+_LABELED_URL = 'api/v3/orders/draft/labeled'
+
 # PII keys dropped from `gearment.api.log.request_payload_summary` (audit hygiene).
-# Mirrors P0-17 etsy.api.log scrubbing pattern.
+# Mirrors P0-17 etsy.api.log scrubbing pattern. Now also covers the new
+# `addresses[].first_name/last_name/street_*/email/phone` keys via deep scrub.
 _PII_KEYS = frozenset({
+    'first_name',
+    'last_name',
     'buyer_name',
     'address_line_1',
     'address_line_2',
@@ -32,15 +60,60 @@ _PII_KEYS = frozenset({
     'phone',
     'notes',
     'address',
+    'addresses',
 })
 
 
-def _scrub_pii(payload_dict: dict) -> dict:
-    """Return a new dict with PII keys removed (immutable input).
+def _scrub_pii(value):
+    """Recursively drop PII keys. Returns a new structure (immutable input)."""
+    if isinstance(value, dict):
+        return {
+            k: _scrub_pii(v)
+            for k, v in value.items()
+            if k not in _PII_KEYS
+        }
+    if isinstance(value, list):
+        return [_scrub_pii(item) for item in value]
+    return value
 
-    Used by adapter before storing payload in gearment.api.log.
+
+def _money_to_decimal(money) -> tuple[Decimal, str]:
+    """Decode Gearment's proto-Money shape `{currency_code, units, nanos}`.
+
+    `units` is the integer part (string in JSON to avoid JS precision loss).
+    `nanos` is the fractional part in nano-units (1 nano = 1e-9). Both can be
+    missing if Gearment returns a partial Money on degraded endpoints. We
+    degrade to zero rather than KeyError so the wizard can still display a
+    line item with currency code preserved.
     """
-    return {k: v for k, v in payload_dict.items() if k not in _PII_KEYS}
+    if not money:
+        return (Decimal('0E-9'), '')
+    currency = money.get('currency_code', '') or ''
+    units_raw = money.get('units', '0') or '0'
+    nanos = money.get('nanos', 0) or 0
+    try:
+        units = Decimal(str(units_raw))
+        nanos_dec = Decimal(nanos) / Decimal('1000000000')
+    except (ValueError, TypeError, ArithmeticError):
+        return (Decimal('0E-9'), currency)
+    # Quantize to 9 decimal places so test assertions on (45 + 0.99) parts
+    # produce a stable representation.
+    return ((units + nanos_dec).quantize(Decimal('0.000000001')), currency)
+
+
+@dataclass(frozen=True)
+class GearmentQuote:
+    """Decoded quote response from `/orders/{ref}/price`. P4-01-B."""
+
+    currency: str
+    order_total: Decimal
+    order_sub_total: Decimal
+    order_shipping_fee: Decimal
+    order_tax: Decimal
+    order_discount: Decimal
+    order_handle_fee: Decimal
+    order_gift_message_fee: Decimal
+    order_fee: Decimal
 
 
 class GearmentAdapter(Protocol):
@@ -50,9 +123,9 @@ class GearmentAdapter(Protocol):
 
     def push_order(self, payload: GearmentOrderPayload) -> dict: ...
 
-    def get_quote(self, partner_ref: str) -> dict: ...
+    def get_quote(self, reference_id: str) -> dict: ...
 
-    def confirm(self, partner_ref: str) -> dict: ...
+    def confirm(self, reference_id: str, options: dict | None = None) -> dict: ...
 
     def register_webhooks(self, callback_url: str, events: list) -> list: ...
 
@@ -60,12 +133,7 @@ class GearmentAdapter(Protocol):
 
 
 class GearmentApiAdapter:
-    """Concrete adapter wrapping GearmentApiClient (P0-18a).
-
-    Constructor accepts optional `env` (for `gearment.api.log` writes) and
-    optional `client` (for testing). Default-instantiates `GearmentApiClient`.
-    Tests mock `requests.Session` at the client module level — see test docs.
-    """
+    """Concrete adapter wrapping GearmentApiClient (P0-18a)."""
 
     def __init__(self, env=None, client=None):
         self.env = env
@@ -82,13 +150,9 @@ class GearmentApiAdapter:
         error_message: str | None = None,
         sale_order_id: int | None = None,
     ) -> None:
-        """Persist a gearment.api.log row (best-effort; never raises).
-
-        request_payload is PII-scrubbed before storage; Authorization headers
-        are never accepted as payload keys.
-        """
+        """Persist a gearment.api.log row (best-effort; never raises)."""
         if self.env is None:
-            return  # Logging requires Odoo env; tests without env get a no-op
+            return
         try:
             scrubbed = _scrub_pii(request_payload or {})
             payload_summary = json.dumps(scrubbed, default=str)[:4000]
@@ -124,17 +188,17 @@ class GearmentApiAdapter:
             return False
 
     def push_order(self, payload: GearmentOrderPayload) -> dict:
-        """POST /api/v3/orders with Idempotency-Key header + reference_id body.
+        """POST /api/v3/orders/draft with Idempotency-Key + reference_id body.
 
-        Returns: {'partner_ref', 'price_quote', 'quote_expires_at'}.
+        Returns: {'reference_id', 'order_id', 'raw_response'}.
         """
         body = payload.serialize()
         headers = {'Idempotency-Key': payload.idempotency_key}
-        endpoint = 'POST /api/v3/orders'
+        endpoint = f'POST /{_DRAFT_URL}'
         started = time.monotonic()
         try:
             resp = self.client._request(
-                'POST', 'api/v3/orders', json=body, headers=headers,
+                'POST', _DRAFT_URL, json=body, headers=headers,
             )
             duration_ms = int((time.monotonic() - started) * 1000)
             self._log_call(
@@ -142,10 +206,11 @@ class GearmentApiAdapter:
                 http_status=200, duration_ms=duration_ms,
                 request_payload=body, response_data=resp,
             )
+            data = resp.get('data', {}) if isinstance(resp, dict) else {}
             return {
-                'partner_ref': resp.get('order_id'),
-                'price_quote': resp.get('price_quote'),
-                'quote_expires_at': resp.get('quote_expires_at'),
+                'reference_id': data.get('reference_id') or payload.reference_id,
+                'order_id': data.get('order_id') or data.get('id'),
+                'raw_response': resp,
             }
         except Exception as exc:  # noqa: BLE001
             duration_ms = int((time.monotonic() - started) * 1000)
@@ -156,25 +221,40 @@ class GearmentApiAdapter:
             )
             raise
 
-    def get_quote(self, partner_ref: str) -> dict:
-        """GET /api/v3/orders/{partner_ref} returns quote dict."""
-        endpoint = f'GET /api/v3/orders/{partner_ref}'
+    def get_quote(self, reference_id: str) -> dict:
+        """GET /api/v3/orders/{reference_id}/price returns decoded quote.
+
+        Returns dict with keys: currency, order_total, order_sub_total,
+        order_shipping_fee, order_tax, order_discount, order_handle_fee,
+        order_gift_message_fee, order_fee, raw_response.
+        """
+        path = _PRICE_URL.format(ref=reference_id)
+        endpoint = f'GET /{path}'
         started = time.monotonic()
         try:
-            resp = self.client._request(
-                'GET', f'api/v3/orders/{partner_ref}',
-            )
+            resp = self.client._request('GET', path)
             duration_ms = int((time.monotonic() - started) * 1000)
             self._log_call(
                 endpoint=endpoint, source='quote',
                 http_status=200, duration_ms=duration_ms,
                 response_data=resp,
             )
-            return {
-                'price_quote': resp.get('price_quote'),
-                'shipping_estimate': resp.get('shipping_estimate'),
-                'quote_expires_at': resp.get('quote_expires_at'),
-            }
+            data = resp.get('data', {}) if isinstance(resp, dict) else {}
+            currency = ''
+            decoded = {}
+            for key in (
+                'order_total', 'order_sub_total', 'order_shipping_fee',
+                'order_tax', 'order_discount', 'order_handle_fee',
+                'order_gift_message_fee', 'order_fee',
+            ):
+                amount, cur = _money_to_decimal(data.get(key))
+                decoded[key] = amount
+                # First non-empty currency wins (probe shows all are USD-aligned).
+                if cur and not currency:
+                    currency = cur
+            decoded['currency'] = currency
+            decoded['raw_response'] = resp
+            return decoded
         except Exception as exc:  # noqa: BLE001
             duration_ms = int((time.monotonic() - started) * 1000)
             self._log_call(
@@ -183,14 +263,47 @@ class GearmentApiAdapter:
             )
             raise
 
-    def confirm(self, partner_ref: str) -> dict:
-        """Stub: live confirm requires owner sign-off + state machine.
+    def confirm(self, reference_id: str, options: dict | None = None) -> dict:
+        """POST /api/v3/orders/draft/labeled — submit labeled draft.
 
-        Implementation lives in P4-01.
+        `options` is forwarded as the request body's `data.options` entry so
+        future per-confirm settings (e.g. operator approval flag) thread
+        through without an interface change. P4-01-C wizard wires this up.
+
+        Returns the full Gearment response dict so callers can inspect status
+        + any returned partner_ref / tracking metadata.
+
+        Raises `ValueError` on empty/whitespace `reference_id` (defense at
+        the boundary; Gearment would reject it but we want a clean Odoo-side
+        error before the audit-log write fires).
         """
-        raise NotImplementedError(
-            "P4-01: live confirm requires owner sign-off + full state machine"
-        )
+        if not isinstance(reference_id, str) or not reference_id.strip():
+            raise ValueError("confirm() requires a non-empty reference_id")
+        body = {'data': {'reference_id': reference_id}}
+        if options:
+            body['data']['options'] = options
+        endpoint = f'POST /{_LABELED_URL}'
+        started = time.monotonic()
+        try:
+            resp = self.client._request(
+                'POST', _LABELED_URL, json=body,
+                headers={'Idempotency-Key': _idempotency_key(reference_id)},
+            )
+            duration_ms = int((time.monotonic() - started) * 1000)
+            self._log_call(
+                endpoint=endpoint, source='confirm',
+                http_status=200, duration_ms=duration_ms,
+                request_payload=body, response_data=resp,
+            )
+            return resp if isinstance(resp, dict) else {}
+        except Exception as exc:  # noqa: BLE001
+            duration_ms = int((time.monotonic() - started) * 1000)
+            self._log_call(
+                endpoint=endpoint, source='confirm',
+                http_status=None, duration_ms=duration_ms,
+                request_payload=body, error_message=str(exc),
+            )
+            raise
 
     def register_webhooks(self, callback_url: str, events: list) -> list:
         """Stub: webhook registration deferred to P0-18b2.

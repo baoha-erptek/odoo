@@ -1,55 +1,109 @@
-"""GearmentOrderPayload — canonical order payload + idempotency key.
+"""GearmentOrderPayload — canonical payload for /api/v3/orders/draft (P4-01).
 
-Domain-level structure independent of Gearment wire format.
-Adapter calls payload.serialize() to obtain the dict POSTed to /api/v3/orders.
+Schema regenerated 2026-05-10 from the readiness probe in
+`specs/004-fulfillment-routing/findings.md` 2026-05-09 (G2 contract gap).
+The legacy schema (external_order_id / address dict / quantity / product_id)
+is fully replaced.
+
+Wire shape (`/api/v3/orders/draft` POST body):
+
+    {"data": {
+        "reference_id": "SO-2026-00123",
+        "addresses": [{
+            "first_name": "Alice", "last_name": "Buyer",
+            "street_1": "123 Main St", "zip_code": "02108", "country_code": "US",
+            ...
+        }],
+        "line_items": [{"product_id": 1234, "quantity": 1, ...}],
+        ...
+    }}
+
+Idempotency belt-and-braces:
+- HTTP `Idempotency-Key` header = sha256(reference_id) (set by adapter)
+- body field `reference_id` mirrors the SO name (Gearment dedupe hint)
+
+Both adapter writes; whichever Gearment honors wins. P0-18b1 captured both.
 """
+
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
+class GearmentAddress:
+    """Buyer's address per /orders/draft schema."""
+
+    first_name: str
+    last_name: str
+    street_1: str
+    street_2: str | None
+    city: str
+    state: str | None
+    zip_code: str
+    country_code: str
+    phone: str | None = None
+    email: str | None = None
+
+
+@dataclass(frozen=True)
+class GearmentLineItem:
+    """One line item on a Gearment order draft."""
+
+    product_id: int
+    quantity: int
+    sku: str | None = None
+    design_url_front: str | None = None
+    design_url_back: str | None = None
+    personalisation: str | None = None
+    custom_attributes: dict | None = None
+
+
+@dataclass(frozen=True)
 class GearmentOrderPayload:
-    """Canonical order payload sent to Gearment API.
+    """Canonical payload sent to `POST /api/v3/orders/draft`.
 
-    Idempotency belt-and-braces (P0-18b1):
-    - HTTP header `Idempotency-Key: sha256(external_order_id)` (set by adapter)
-    - body field `reference_id == external_order_id` (set by serialize())
-
-    P0-18b2 will confirm which approach Gearment honors.
+    `addresses` and `line_items` are tuples (not lists) so the dataclass is
+    structurally immutable — `.append()` on a list-typed field would bypass
+    `frozen=True`. Pattern carried forward from `EtsyOrderPayload`.
     """
 
-    external_order_id: str
-    platform: str
+    reference_id: str
     store_id: str
-    quantity: int
-    product_id: int
-    address: dict
-    shipping_method: str
-    design_files: list = field(default_factory=list)
+    addresses: tuple[GearmentAddress, ...]
+    line_items: tuple[GearmentLineItem, ...]
+    shipping_method: str | None = None
     notes: str | None = None
     custom_attributes: dict | None = None
 
     @property
     def idempotency_key(self) -> str:
-        """SHA-256 hex of external_order_id for HTTP `Idempotency-Key` header."""
-        return hashlib.sha256(self.external_order_id.encode()).hexdigest()
+        """SHA-256 hex of reference_id for HTTP `Idempotency-Key` header."""
+        return hashlib.sha256(self.reference_id.encode()).hexdigest()
 
     def serialize(self) -> dict:
-        """Return wire-format dict for Gearment POST body.
+        """Return wire-format dict for the POST body.
 
-        `reference_id` mirrors `external_order_id` (idempotency dedup hint).
-        Keeps `notes` / `custom_attributes` even when None for stable schema.
+        Probe S3 finding: `/orders/draft` rejects `data: []` array envelope
+        with `unmarshal proto: unexpected token [`. Single-object envelope
+        `{"data": {...}}` is the working shape.
         """
         return {
-            'external_order_id': self.external_order_id,
-            'reference_id': self.external_order_id,
-            'platform': self.platform,
-            'store_id': self.store_id,
-            'quantity': self.quantity,
-            'product_id': self.product_id,
-            'address': self.address,
-            'shipping_method': self.shipping_method,
-            'design_files': self.design_files,
-            'notes': self.notes,
-            'custom_attributes': self.custom_attributes,
+            'data': {
+                'reference_id': self.reference_id,
+                'store_id': self.store_id,
+                'addresses': [
+                    _without_none(asdict(addr)) for addr in self.addresses
+                ],
+                'line_items': [
+                    _without_none(asdict(item)) for item in self.line_items
+                ],
+                'shipping_method': self.shipping_method,
+                'notes': self.notes,
+                'custom_attributes': self.custom_attributes,
+            },
         }
+
+
+def _without_none(d: dict) -> dict:
+    """Drop None-valued keys so optional fields don't pollute the wire body."""
+    return {k: v for k, v in d.items() if v is not None}

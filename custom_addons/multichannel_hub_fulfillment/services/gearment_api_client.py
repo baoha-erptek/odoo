@@ -30,6 +30,10 @@ _logger = logging.getLogger(__name__)
 _DEFAULT_RATE_LIMIT = 100
 _DEFAULT_RATE_PERIOD = 10.0
 _BACKOFF_SECONDS = (1, 2, 4)
+# P4-01-B (S4 surprise) — production throttles via 503 + Cloudflare timeouts,
+# not 429. Longer backoff lets the upstream recover before each retry.
+_SERVICE_UNAVAILABLE_BACKOFF = (5, 15, 45)
+_SERVICE_UNAVAILABLE_CODES = (503, 504)
 _MAX_RETRIES = 3
 _MAX_RETRY_AFTER_SECONDS = 60
 _AUTH_STATUS_CODES = (401, 403)
@@ -41,6 +45,15 @@ class RateLimitError(Exception):
     def __init__(self, message: str, retry_after: float = None):
         super().__init__(message)
         self.retry_after = retry_after
+
+
+class ServiceUnavailableError(Exception):
+    """Raised when 503/504 retries exceed the budget (P4-01-B, S4).
+
+    Distinct from `RateLimitError` so logging/alerting can distinguish
+    "infrastructure transient" (Cloudflare WAF, upstream blip) from
+    "quota exhausted" (Gearment Go server).
+    """
 
 
 class GearmentApiClient:
@@ -89,25 +102,39 @@ class GearmentApiClient:
 
         last_retry_after = None
         response = None
+        # Two retry paths sharing one loop: 429 (rate limit, short backoff,
+        # honors Retry-After) and 503/504 (infrastructure, longer backoff).
+        # Anything else exits the loop on the first response.
         for attempt in range(_MAX_RETRIES + 1):
             response = session.request(method, url, **kwargs)
-            if response.status_code != 429:
-                break
-
-            header_value = response.headers.get('Retry-After')
-            if header_value is not None:
-                try:
-                    last_retry_after = int(header_value)
-                except (TypeError, ValueError):
-                    last_retry_after = None
-
-            if last_retry_after is not None:
-                # Cap so a malformed/hostile upstream cannot pin us for hours.
-                wait = min(last_retry_after, _MAX_RETRY_AFTER_SECONDS)
-            else:
-                wait = _BACKOFF_SECONDS[min(attempt, len(_BACKOFF_SECONDS) - 1)]
-            time.sleep(wait)
+            if response.status_code == 429:
+                header_value = response.headers.get('Retry-After')
+                if header_value is not None:
+                    try:
+                        last_retry_after = int(header_value)
+                    except (TypeError, ValueError):
+                        last_retry_after = None
+                if last_retry_after is not None:
+                    # Cap so a malformed/hostile upstream cannot pin us for hours.
+                    wait = min(last_retry_after, _MAX_RETRY_AFTER_SECONDS)
+                else:
+                    wait = _BACKOFF_SECONDS[min(attempt, len(_BACKOFF_SECONDS) - 1)]
+                time.sleep(wait)
+                continue
+            if response.status_code in _SERVICE_UNAVAILABLE_CODES:
+                wait = _SERVICE_UNAVAILABLE_BACKOFF[
+                    min(attempt, len(_SERVICE_UNAVAILABLE_BACKOFF) - 1)
+                ]
+                time.sleep(wait)
+                continue
+            break
         else:
+            # Loop exhausted — last response decides which exception class.
+            if response is not None and response.status_code in _SERVICE_UNAVAILABLE_CODES:
+                raise ServiceUnavailableError(
+                    f"Gearment service unavailable retries exhausted "
+                    f"(last status {response.status_code})"
+                )
             raise RateLimitError(
                 "Gearment rate limit retries exhausted",
                 retry_after=last_retry_after,
