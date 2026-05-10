@@ -171,7 +171,7 @@ class SaleOrder(models.Model):
             payload = gearment_payload_builder.build_payload(order, files)
             try:
                 adapter = adapter_cls(env=order.env)
-                response = adapter.push_order(payload)
+                response = adapter.push_order(payload, sale_order_id=order.id)
             except Exception as exc:
                 _logger.warning(
                     "Gearment push failed for order %s: %s",

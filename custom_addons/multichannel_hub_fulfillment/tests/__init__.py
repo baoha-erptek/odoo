@@ -30,6 +30,7 @@ from . import test_p4_01_c_state_machine_orm
 from . import test_p4_01_d_db
 from . import test_p4_01_d_orm
 from . import test_p4_01_fix_payload_schema
+from . import test_p4_01_fix_log_linkage
 
 __all__ = [
     'test_gearment_api_client',
@@ -60,4 +61,5 @@ __all__ = [
     'test_p4_01_c_state_machine_db',
     'test_p4_01_c_state_machine_orm',
     'test_p4_01_fix_payload_schema',
+    'test_p4_01_fix_log_linkage',
 ]

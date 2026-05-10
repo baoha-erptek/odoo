@@ -147,19 +147,31 @@ class GearmentApiAdapter:
         duration_ms: int | None = None,
         request_payload: dict | None = None,
         response_data: dict | None = None,
+        response_text: str | None = None,
         error_message: str | None = None,
         sale_order_id: int | None = None,
+        direction: str | None = None,
     ) -> None:
-        """Persist a gearment.api.log row (best-effort; never raises)."""
+        """Persist a gearment.api.log row (best-effort; never raises).
+
+        `response_text` carries the raw response body when the call failed
+        (e.g. 4xx HTTPError) so operators can read the vendor's validation
+        messages without scraping logs. Truncated to 4000 chars; takes
+        precedence over `response_data` (which is the JSON-decoded form
+        only set on success). See P4-01-FIX-LOG-LINKAGE +
+        feedback_capture_response_body_before_blackbox_probe (memory).
+        """
         if self.env is None:
             return
         try:
             scrubbed = _scrub_pii(request_payload or {})
             payload_summary = json.dumps(scrubbed, default=str)[:4000]
-            response_summary = (
-                json.dumps(response_data, default=str)[:4000]
-                if response_data is not None else None
-            )
+            if response_text is not None:
+                response_summary = response_text[:4000]
+            elif response_data is not None:
+                response_summary = json.dumps(response_data, default=str)[:4000]
+            else:
+                response_summary = None
             # sudo: cron / system writes only; sale_manager has read-only ACL.
             # Adapter callers run within trusted Odoo env; bypass record rules
             # so non-privileged callers still produce audit trail.
@@ -172,9 +184,25 @@ class GearmentApiAdapter:
                 'response_summary': response_summary,
                 'error_message': error_message,
                 'source': source,
+                'direction': direction,
             })
         except Exception:  # noqa: BLE001
             _logger.exception("gearment.api.log write failed; skipping audit row")
+
+    @staticmethod
+    def _extract_failure_meta(exc: Exception) -> tuple[int | None, str | None]:
+        """Pull (http_status, response_body) off a `requests.HTTPError`.
+
+        Other exceptions (timeout, connection error, our own ValueError) yield
+        (None, None). The status + body live on `exc.response` for HTTPError;
+        this helper hides the import-time check from the call site.
+        """
+        response = getattr(exc, 'response', None)
+        if response is None:
+            return None, None
+        status = getattr(response, 'status_code', None)
+        text = getattr(response, 'text', None)
+        return status, text
 
     # ------------------------------------------------------------- Protocol API
 
@@ -187,10 +215,18 @@ class GearmentApiAdapter:
             _logger.warning("Gearment test_connection failed: %s", exc)
             return False
 
-    def push_order(self, payload: GearmentOrderPayload) -> dict:
+    def push_order(
+        self,
+        payload: GearmentOrderPayload,
+        sale_order_id: int | None = None,
+    ) -> dict:
         """POST /api/v3/orders/draft with Idempotency-Key + reference_id body.
 
         Returns: {'reference_id', 'order_id', 'raw_response'}.
+
+        `sale_order_id` is forwarded into `gearment.api.log.sale_order_id` so
+        operators can trace which order produced which API failure (P4-01-
+        FIX-LOG-LINKAGE / Defect-2026-05-10-03).
         """
         body = payload.serialize()
         headers = {'Idempotency-Key': payload.idempotency_key}
@@ -202,9 +238,10 @@ class GearmentApiAdapter:
             )
             duration_ms = int((time.monotonic() - started) * 1000)
             self._log_call(
-                endpoint=endpoint, source='draft',
+                endpoint=endpoint, source='draft', direction='outbound',
                 http_status=200, duration_ms=duration_ms,
                 request_payload=body, response_data=resp,
+                sale_order_id=sale_order_id,
             )
             data = resp.get('data', {}) if isinstance(resp, dict) else {}
             return {
@@ -214,10 +251,12 @@ class GearmentApiAdapter:
             }
         except Exception as exc:  # noqa: BLE001
             duration_ms = int((time.monotonic() - started) * 1000)
+            status, response_text = self._extract_failure_meta(exc)
             self._log_call(
-                endpoint=endpoint, source='draft',
-                http_status=None, duration_ms=duration_ms,
-                request_payload=body, error_message=str(exc),
+                endpoint=endpoint, source='draft', direction='outbound',
+                http_status=status, duration_ms=duration_ms,
+                request_payload=body, response_text=response_text,
+                error_message=str(exc), sale_order_id=sale_order_id,
             )
             raise
 

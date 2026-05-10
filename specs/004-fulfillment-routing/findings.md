@@ -731,7 +731,7 @@ Defects surfaced during E2E runs on staging that map to this spec. Each row link
 | Date | Run § | Symptom | Severity | Hotfix slice | State |
 |------|-------|---------|----------|--------------|-------|
 | 2026-05-10 | §6 | Defect-2026-05-10-02: Gearment live API returns 400 on `/api/v3/orders/draft` for all 4 ordertest2 orders (synthetic SKU `DEMO-T-<id>` likely not registered in Gearment catalog) | HIGH | P4-01-FIX-DEMO-PAYLOAD (proposed) | surfaced |
-| 2026-05-10 | §6 | Defect-2026-05-10-03: gearment.api.log on failure path missing sale_order_id, http_status (=0), direction; stored URL path mismatch | MEDIUM | P4-01-FIX-LOG-LINKAGE (proposed) | surfaced |
+| 2026-05-10 | §6 | Defect-2026-05-10-03: gearment.api.log on failure path missing sale_order_id, http_status (=0), direction; stored URL path mismatch | MEDIUM | P4-01-FIX-LOG-LINKAGE | closed |
 | 2026-05-10 | §8b | Defect-2026-05-10-04: GKE logistics.partner has empty gdrive_archive_folder_id; processed files accumulate in inbox | MEDIUM | P2-FIX-ARCHIVE-FOLDER (proposed) | surfaced |
 | 2026-05-10 | §6 (post-fix) | Defect-2026-05-10-05: After P4-01-FIX-PAYLOAD-SCHEMA landed, Gearment still rejects `printing_options[].location_code='front'`. 12 probe variants exhausted (snake_case/camelCase/UPPER + enum constants + URL-companion keys) — opaque validator. Needs Gearment API support engagement to get canonical schema. | HIGH | P4-01-FIX-PRINTING-OPTIONS (proposed) | surfaced |
 
