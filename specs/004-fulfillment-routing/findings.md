@@ -666,3 +666,58 @@ Wizard `action_confirm` and `action_cancel` BOTH call `_check_ba_shipping_or_rai
 - `5c4f3553e51` test(P4-01-C): RED — state machine + quote wizard + FR-017 11th confirmation
 - `5855a201c69` feat(P4-01-C): GREEN — Gearment state machine + quote wizard + FR-017 gate
 - (this commit) docs(P4-01-C): mark sub-phase done in tracker + findings
+
+---
+
+## 2026-05-10 — P4-01-D landed (Sub-phase D — UI surfaces, P4-01 closed)
+
+### Three surfaces shipped
+
+| Surface | What | File |
+|---|---|---|
+| D3 | Bulk "Sync to Gearment" server action on Operations Dashboard (sale.order.line list); mapped-dedupe, per-order savepoint, FR-017 12th gate, bus.bus._sendone progress | `mhf/models/sale_order_line.py` (new) + `mhf/views/sale_order_views.xml` action XML |
+| D4 | Read-only Shipping Tracking subsection inside Etsy tab; 5 fulfillment fields surfaced via P1-05 delegation | `etsy_integration/views/sale_order_views.xml` (xpath append) |
+| D5 | "Sync to Gearment" + "Review Quote" header buttons + Gearment notebook tab on SO form; Odoo 19 native visibility expr | `mhf/views/sale_order_views.xml` (new) |
+
+### Plan deviation: D3 server action location
+
+Plan §2 placed the bulk sync server action in `mhc/views/operations_dashboard_views.xml` alongside `action_server_bulk_mark_shipped`. Implementation moved it to `mhf/views/sale_order_views.xml` per ADR-003: "This module has no Etsy/Gearment-specific code. If a model, service, or view references etsy_*/gearment_* anything, it belongs in etsy_channel/multichannel_hub_fulfillment, not here." The action calls `records.action_gearment_bulk_sync()` which is a mhf-defined method — placing the server action XML in mhc would make mhc reference a Gearment-specific method by name, violating the architectural firewall. The mhc operations_dashboard_views.xml stays clean (only generic `action_server_bulk_mark_shipped`); the new Gearment action is colocated with the rest of the mhf Gearment surface.
+
+### Security HIGH caught and fixed inline (FR-017 13th confirmation)
+
+`sale.order.action_get_gearment_quote` (added in P4-01-C) had a form-button `groups=` UI gate but NO method-level FR-017 gate. Non-shipping users could RPC-bypass and trigger writes to `x_gearment_quote_*` fields + Gearment API call. Security-reviewer flagged HIGH; fix applied inline:
+- New `_check_ba_shipping_or_raise()` helper on mhf `sale.order`
+- Called BEFORE any write at the start of `action_get_gearment_quote`
+- New regression test `test_get_quote_fr017_13th_blocks_non_shipping_user` in `test_p4_01_c_state_machine_orm.py`
+
+This is the **13th FR-017 confirmation** (8th = tracking_import_line; 11th = wizard.action_confirm; 12th = sale_order_line.action_gearment_bulk_sync; 13th = sale.order.action_get_gearment_quote). Pattern: every action method that ends up writing to a tracked field needs its own gate, regardless of UI-level button group restrictions.
+
+### Surprises
+
+1. **`bus.bus._sendmany` doesn't exist in Odoo 19** — only `_sendone(channel, notification_type, message)`. Initial implementation used `_sendmany` from older Odoo conventions and tests failed with `AttributeError`. Memory-worthy for future bus integrations.
+
+2. **`view.arch` returns post-processed combined arch in Odoo 19** — for view-arch xpath assertions on inheriting views, the test must use `view.arch_db` (raw stored XML) instead of `view.arch` (resolved/combined). Symptom: xpath finds `<page>` in source but not in `view.arch`. Documented inline in `test_p4_01_d_db.py:setUp`.
+
+3. **Server action `state='code'` runs in user context for `env.user.has_group()`** — Odoo 19 server-action execution model preserves the calling user's group memberships in `eval_context['env']` (not sudo'd). Means `_check_ba_shipping_or_raise()` inside `action_gearment_bulk_sync` correctly evaluates the operator's actual permissions, not superuser. Verified via `test_non_shipping_user_blocked_before_any_write`.
+
+### Tests
+
+- 12 P4-01-D tests (4 view-arch + 4 ORM bulk action + 4 form button visibility/D4 readonly checks)
+- 28 P4-01-C tests still green (+1 FR-017 13th regression added)
+- 1075 cross-module tests, 1 baseline failure (pre-existing `test_seed_skips_empty_urls` since P2-03; unrelated)
+- Module installs cleanly: `-u multichannel_hub_fulfillment,multichannel_hub_core,etsy_integration --stop-after-init` exit 0
+
+### Reviews
+
+- code-reviewer **APPROVE** — 0 CRITICAL/HIGH/MEDIUM. Notes: chatter promise in module docstring vs implementation (cleaned up to "bus notification" language); plan deviation on D3 location (documented above).
+- security-reviewer — 0 CRITICAL; **1 HIGH** (FR-017 13th — applied inline with `_check_ba_shipping_or_raise` on `action_get_gearment_quote` + regression test); 2 MEDIUMs applied inline (html.escape on bus error payload + expanded broad-except rationale comment); 2 LOWs deferred (action_open_gearment_quote_wizard gate-comment + manifest dep observation).
+
+### P4-01 parent slice closure
+
+All 4 sub-phases (P4-01-B contract regen, P4-01-C state machine + wizard, P4-01-D UI surfaces, plus initial readiness probe in 2026-05-09) are complete. P4-01 parent row in tracker flipped from `split` → `done`. Unblocks P4-01b (bulk-action follow-up — already lightweight per its tracker row), P4-02 (returns/refunds), P5 reporting.
+
+### Commit chain
+
+- `998c0dc3e30` test(P4-01-D): RED — 15 tests across D3/D4/D5 + FR-017 13th regression
+- `8410d3274a7` feat(P4-01-D): GREEN — D3 bulk action + D4 Etsy tab + D5 form button + 13th gate
+- (this commit) docs(P4-01-D): mark P4-01 parent done — tracker + findings

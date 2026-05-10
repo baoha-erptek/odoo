@@ -561,3 +561,25 @@ Plan: [`p4-01-c-plan.md`](./p4-01-c-plan.md). Decisions E1.b/E2.a/E3.a/E4.a/E5.b
 - [X] T4-01-C-18 code-reviewer + security-reviewer parallel; block on CRITICAL/HIGH
 - [X] T4-01-C-19 Verify: -u mhf exit 0; full test tags green; grep _logger.info/print
 - [X] T4-01-C-20 Tracker P4-01-C → done; findings.md §"P4-01-C" with E1-E5 + FR-017 11th
+
+
+## P4-01-D — Gearment UI surfaces D3+D4+D5 (added 2026-05-10)
+
+Plan: [`p4-01-d-plan.md`](./p4-01-d-plan.md). Decisions DD1-DD5 resolved.
+
+- [X] T4-01-D-01 RED Phase 1 view-arch: D5 button exists with group_ba_shipping + visibility expr
+- [X] T4-01-D-02 RED Phase 1 view-arch: D5 Gearment notebook tab + state + breakdown + expires-at
+- [X] T4-01-D-03 RED Phase 1 view-arch: D4 Etsy tab Shipping subsection — 5 fields readonly
+- [X] T4-01-D-04 RED Phase 1 view-arch: D3 server action + binding_model_id=sale.order.line
+- [X] T4-01-D-05 RED Phase 2 ORM: bulk action dedupes orders
+- [X] T4-01-D-06 RED Phase 2 ORM: savepoint isolation
+- [X] T4-01-D-07 RED Phase 2 ORM: FR-017 12th gate
+- [X] T4-01-D-08 RED Phase 2 ORM: bus.bus.sendmany call count
+- [X] T4-01-D-09 GREEN: mhf/models/sale_order_line.py + action_gearment_bulk_sync
+- [X] T4-01-D-10 GREEN: mhf/views/sale_order_views.xml form button + Gearment tab
+- [X] T4-01-D-11 GREEN: mhc operations_dashboard_views.xml server action
+- [X] T4-01-D-12 GREEN: etsy_integration/views/sale_order_views.xml Shipping subsection
+- [X] T4-01-D-13 GREEN: __init__.py + manifest 19.0.1.0.18
+- [X] T4-01-D-14 code-reviewer + security-reviewer parallel
+- [X] T4-01-D-15 Verify: -u mhf + mhc + etsy_integration exit 0; full tags green; grep
+- [X] T4-01-D-16 Tracker P4-01-D → done; P4-01 parent row split → done; findings.md
