@@ -162,10 +162,11 @@ class TestPhase2ORM(TransactionCase):
         """Test that fulfillment sibling has correct default values."""
         order = self._create_order()
 
-        self.assertEqual(
-            order.fulfillment_id.label_status,
-            'none',
-            "label_status should default to 'none'"
+        # P1-LBL — label_status_id is a Many2one (no required=True);
+        # nullable post-migration to avoid breaking _inherits auto-create.
+        self.assertFalse(
+            order.fulfillment_id.label_status_id,
+            "label_status_id should default to False (M2O unset)"
         )
         self.assertEqual(
             order.fulfillment_id.tracking_state,

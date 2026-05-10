@@ -84,18 +84,24 @@ class TestTrackingDashboardActions(TransactionCase):
         cls.order2.action_confirm()
 
         # Create fulfillments
+        # P1-LBL — label_status Selection→M2O. Use seed reference; admin
+        # user in setUpClass passes the FR-017 ba_manager gate.
+        cls.label_vn_fulfilled = cls.env.ref(
+            'multichannel_hub_core.label_status_vn_fulfilled')
+        cls.label_cho_duyet = cls.env.ref(
+            'multichannel_hub_core.label_status_cho_duyet')
         cls.fulfillment1 = cls.env['sale.order.fulfillment'].create({
             'order_id': cls.order1.id,
             'tracking_number': '9400111899223456789001',
             'shipping_carrier_id': cls.carrier.id,
-            'label_status': 'bought',
+            'label_status_id': cls.label_vn_fulfilled.id,
             'tracking_state': 'label_ready',
         })
         cls.fulfillment2 = cls.env['sale.order.fulfillment'].create({
             'order_id': cls.order2.id,
             'tracking_number': '9400111899223456789002',
             'shipping_carrier_id': cls.carrier.id,
-            'label_status': 'bought',
+            'label_status_id': cls.label_vn_fulfilled.id,
             'tracking_state': 'label_ready',
         })
 
@@ -226,7 +232,7 @@ class TestTrackingDashboardActions(TransactionCase):
             'warehouse_zone': 'vn',
             'tracking_number': '9400111899223456789003',
             'shipping_carrier_id': self.carrier.id,
-            'label_status': 'none',
+            'label_status_id': False,
             'tracking_state': 'none',
         })
 
@@ -283,7 +289,7 @@ class TestTrackingDashboardActions(TransactionCase):
             'order_id': self.order2.id,
             'tracking_number': '9400111899223456789099',
             'shipping_carrier_id': self.carrier.id,
-            'label_status': 'none',
+            'label_status_id': False,
             'tracking_state': 'none',
         })
 

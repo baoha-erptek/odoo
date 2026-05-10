@@ -37,5 +37,20 @@
             <field name="implied_ids" eval="[(4, ref('multichannel_hub_core.group_ba_user'))]"/>
         </record>
 
+        <!--
+            BA Manager — caps the channel-agnostic BA hierarchy.
+            Added P1-LBL (2026-05-10) to gate label.status.option master-data
+            edits. Distinct from multichannel_hub_fulfillment.group_ba_manager
+            (which is the narrower "BA Shipping Manager" role for GKE schema
+            approval). The two coexist intentionally — P1-LBL is editing
+            label-status master data, not approving shipping schemas. Future
+            slice may consolidate.
+        -->
+        <record id="group_ba_manager" model="res.groups">
+            <field name="name">BA Manager</field>
+            <field name="implied_ids" eval="[(4, ref('multichannel_hub_core.group_ba_lead'))]"/>
+            <field name="comment">Senior BA role with master-data write permission (label statuses, future enums). Implies BA Lead.</field>
+        </record>
+
     </data>
 </odoo>

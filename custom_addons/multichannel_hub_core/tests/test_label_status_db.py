@@ -72,13 +72,12 @@ class TestLabelStatusDbModel(TransactionCase):
             f"Expected 16 seed records, found {total_count}"
         )
 
-        # Verify distribution via read_group
-        groups = model.read_group(
-            domain=[],
-            fields=['bucket'],
-            groupby=['bucket']
-        )
-        distribution = {g['bucket']: g['__count'] for g in groups}
+        # Odoo 19: read_group is deprecated; use search_count per bucket
+        # (smaller surface, no groupby semantics drift across versions).
+        distribution = {
+            bucket: model.search_count([('bucket', '=', bucket)])
+            for bucket in ('target', 'pd_selfmake', 'done', 'approval')
+        }
 
         expected_dist = {
             'target': 2,
@@ -179,7 +178,15 @@ class TestLabelStatusDbModel(TransactionCase):
             "At least one ACL row should exist for label.status.option"
         )
 
-        acl_by_group = {row.group_id.xml_id: row for row in acl_rows if row.group_id}
+        # Odoo 19: res.groups has no .xml_id attr; use _get_external_id() (returns dict)
+        acl_by_group = {}
+        for row in acl_rows:
+            if not row.group_id:
+                continue
+            ext_ids = row.group_id.get_external_id()
+            xml_id = ext_ids.get(row.group_id.id)
+            if xml_id:
+                acl_by_group[xml_id] = row
 
         # Verify base.group_user — read-only
         self.assertIn(

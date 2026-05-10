@@ -49,11 +49,14 @@ class TestEtsyShipNotifiedAt(TransactionCase):
 
         cls.carrier = cls.env.ref('multichannel_hub_core.shipping_carrier_usps')
 
+        # P1-LBL — label_status Selection → Many2one. Use seed reference.
+        cls.label_vn_fulfilled = cls.env.ref(
+            'multichannel_hub_core.label_status_vn_fulfilled')
         cls.fulfillment = cls.env['sale.order.fulfillment'].create({
             'order_id': cls.order.id,
             'tracking_number': '9400111899223456789001',
             'shipping_carrier_id': cls.carrier.id,
-            'label_status': 'bought',
+            'label_status_id': cls.label_vn_fulfilled.id,
             'tracking_state': 'shipped',
         })
 
@@ -117,7 +120,7 @@ class TestEtsyShipNotifiedAt(TransactionCase):
             'order_id': self.order.id,
             'tracking_number': '9400111899223456789002',
             'shipping_carrier_id': self.carrier.id,
-            'label_status': 'none',
+            'label_status_id': False,
             'tracking_state': 'none',
         })
 

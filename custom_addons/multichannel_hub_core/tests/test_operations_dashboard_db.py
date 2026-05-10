@@ -222,9 +222,9 @@ class TestOperationsDashboardMerge(TransactionCase):
             "List view should include tracking_state column"
         )
         self.assertIn(
-            '<field name="label_status"',
+            '<field name="label_status_id"',
             arch,
-            "List view should include label_status column"
+            "List view should include label_status_id column (P1-LBL M2O swap)"
         )
         self.assertIn(
             '<field name="shipping_date"',

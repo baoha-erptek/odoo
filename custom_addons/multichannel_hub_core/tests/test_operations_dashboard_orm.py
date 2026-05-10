@@ -43,6 +43,10 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         # Create test carrier
         cls.carrier = cls.env.ref('multichannel_hub_core.shipping_carrier_usps')
 
+        # P1-LBL — label_status seed references for fixture writes
+        cls.label_vn_fulfilled = cls.env.ref(
+            'multichannel_hub_core.label_status_vn_fulfilled')
+
         # Create test users with appropriate groups
         # Marketing User group
         cls.marketing_user = cls.env['res.users'].create({
@@ -99,7 +103,7 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         order.fulfillment_id.write({
             'tracking_number': f'TRK{order.id:010d}',
             'shipping_carrier_id': self.carrier.id,
-            'label_status': 'bought',
+            'label_status_id': self.label_vn_fulfilled.id,
             'tracking_state': 'label_ready',
             'warehouse_zone': 'vn',
             'production_blocked': False,
@@ -179,7 +183,7 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         )
         unblocked_fulfillment.write({
             'production_blocked': False,
-            'label_status': 'bought',
+            'label_status_id': self.label_vn_fulfilled.id,
         })
 
         # 2. Blocked (should NOT match)
@@ -189,16 +193,16 @@ class TestOperationsDashboardMergeORM(TransactionCase):
         blocked_fulfillment.write({
             'production_blocked': True,
             'block_reason': 'Address issue',
-            'label_status': 'bought',
+            'label_status_id': self.label_vn_fulfilled.id,
         })
 
-        # 3. Unblocked without label (should NOT match)
+        # 3. Unblocked without label (should NOT match — label_status_id IS False)
         no_label_order, no_label_fulfillment = self._create_order_with_fulfillment(
             sales_channel='etsy'
         )
         no_label_fulfillment.write({
             'production_blocked': False,
-            'label_status': 'none',
+            'label_status_id': False,
         })
 
         # Get the Production Team filter
@@ -319,18 +323,22 @@ class TestOperationsDashboardMergeORM(TransactionCase):
             "Initial tracking_state should be 'label_ready'"
         )
 
-    def test_related_label_status_readable_via_sale_order_record(self):
-        """Test label_status is readable via sale.order due to _inherits delegation."""
+    def test_related_label_status_id_readable_via_sale_order_record(self):
+        """Test label_status_id is readable via sale.order due to _inherits delegation (P1-LBL)."""
         order, fulfillment = self._create_order_with_fulfillment()
 
-        # Test that label_status can be read from the order (via _inherits)
-        order_label_status = order.label_status
-        fulfillment_label_status = fulfillment.label_status
+        # Test that label_status_id can be read from the order (via _inherits)
+        order_label = order.label_status_id
+        fulfillment_label = fulfillment.label_status_id
 
         self.assertEqual(
-            order_label_status,
-            fulfillment_label_status,
-            "label_status should be readable from sale.order via _inherits"
+            order_label.id,
+            fulfillment_label.id,
+            "label_status_id should be readable from sale.order via _inherits"
+        )
+        self.assertEqual(
+            order_label.code, 'vn_fulfilled',
+            "M2O traversal to comodel.code works via _inherits"
         )
 
     def test_related_warehouse_zone_readable_via_sale_order_record(self):

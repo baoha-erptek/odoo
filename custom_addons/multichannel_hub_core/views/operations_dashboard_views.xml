@@ -47,10 +47,9 @@
                        decoration-success="tracking_state == 'delivered'"
                        decoration-info="tracking_state in ('shipped','in_transit')"
                        decoration-warning="tracking_state == 'returned'"/>
-                <field name="label_status" widget="badge" optional="show"
-                       decoration-success="label_status == 'bought'"
-                       decoration-warning="label_status == 'requested'"
-                       decoration-danger="label_status == 'failed'"/>
+                <field name="label_status_id" widget="many2one_tags"
+                       options="{'no_create': True, 'no_open': True}"
+                       optional="show"/>
                 <field name="shipping_date" optional="hide"/>
                 <field name="warehouse_zone" optional="hide"/>
                 <field name="production_blocked" optional="hide"/>
@@ -72,8 +71,8 @@
                 <separator/>
                 <filter string="Production Blocked" name="filter_blocked"
                         domain="[('production_blocked', '=', True)]"/>
-                <filter string="Label Bought" name="filter_label_bought"
-                        domain="[('label_status', '=', 'bought')]"/>
+                <filter string="Label Set" name="filter_label_set"
+                        domain="[('label_status_id', '!=', False)]"/>
                 <filter string="Shipped" name="filter_shipped"
                         domain="[('tracking_state', '=', 'shipped')]"/>
                 <filter string="Delivered" name="filter_delivered"
@@ -91,7 +90,7 @@
                 <filter string="Tracking State" name="group_tracking_state"
                         context="{'group_by': 'tracking_state'}"/>
                 <filter string="Label Status" name="group_label_status"
-                        context="{'group_by': 'label_status'}"/>
+                        context="{'group_by': 'label_status_id'}"/>
                 <filter string="Warehouse" name="group_warehouse"
                         context="{'group_by': 'warehouse_zone'}"/>
                 <filter string="Priority" name="group_priority"

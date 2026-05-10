@@ -65,10 +65,17 @@ class TestLabelStatusOrmBehavior(TransactionCase):
             'login': 'salesman@example.com',
             'group_ids': [(6, 0, [cls.env.ref('sales_team.group_sale_salesman').id])],
         })
+        # ba_manager needs both: BA Manager (FR-017 gate) AND Sales/User
+        # (sale.order.fulfillment write ACL). The two layers are separate
+        # by design — ACL controls table-level CRUD, FR-017 gate controls
+        # field-specific RPC writes.
         cls.ba_manager = cls.env['res.users'].create({
             'name': 'BA Manager',
             'login': 'ba_manager@example.com',
-            'group_ids': [(6, 0, [cls.env.ref('multichannel_hub_core.group_ba_manager').id])],
+            'group_ids': [(6, 0, [
+                cls.env.ref('multichannel_hub_core.group_ba_manager').id,
+                cls.env.ref('sales_team.group_sale_salesman').id,
+            ])],
         })
 
     def _create_order_with_fulfillment(self):
@@ -103,8 +110,11 @@ class TestLabelStatusOrmBehavior(TransactionCase):
         })
         self.assertIsNotNone(record1.id)
 
-        # Second record with same code should raise
-        with self.assertRaises((IntegrityError, psycopg2.IntegrityError)):
+        # Second record with same code should raise.
+        # Memory feedback_odoo19_test_gotchas.md: tuple form
+        # assertRaises((A, B)) breaks Odoo's _assertRaises issubclass check.
+        # Use a savepoint so the failed insert doesn't poison the parent tx.
+        with self.assertRaises(IntegrityError), self.env.cr.savepoint():
             model.create({
                 'name': 'Test Label 2 (dup)',
                 'code': 'vn_fulfilled_dup_test',  # Duplicate
@@ -220,10 +230,10 @@ class TestLabelStatusOrmBehavior(TransactionCase):
             "Error message should mention address lock"
         )
 
-        # Write with bypass flag should succeed
-        fulfillment.write({
+        # Write with bypass flag should succeed (Odoo: context via with_context, not write kwarg)
+        fulfillment.with_context(bypass_address_change_check=True).write({
             'label_status_id': self.label_cho_duyet.id,
-        }, context={'bypass_address_change_check': True})
+        })
         self.assertEqual(fulfillment.label_status_id.id, self.label_cho_duyet.id)
 
     def test_migration_default_writes_cho_duyet_with_warning(self):
@@ -246,13 +256,12 @@ class TestLabelStatusOrmBehavior(TransactionCase):
         # Verify it's NULL before migration
         self.assertFalse(fulfillment.label_status_id)
 
-        # Import and call migration helper
-        # Note: migration file path is placeholder (set by GREEN phase)
-        from odoo.addons.multichannel_hub_core.migrations.post_label_status_default import migrate
-
-        # Call migration
+        # P1-LBL — call the model helper directly. The version-dir migration
+        # script (migrations/19.0.1.0.29/post_label_status_default.py) just
+        # delegates to this helper; testing the helper covers both paths.
+        # Importing from a dotted-version dir is not a valid Python path.
         with self.assertLogs('odoo.addons.multichannel_hub_core', level='WARNING') as log_ctx:
-            migrate(self.env.cr, '19.0.1.0.29')
+            self.env['label.status.option']._post_migrate_default_null_rows()
 
         # Verify record is updated to cho_duyet
         fulfillment.invalidate_recordset()

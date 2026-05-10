@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+            P1-LBL seed (Owner directive D2, 2026-05-10).
+            16 records derived verbatim from .0temp/2026-05-10_093634.jpg.
+            Distribution: target=2, pd_selfmake=10, done=1, approval=3.
+            Color indices follow Odoo standard palette
+            (1=red, 2=orange, 3=yellow, 4=light blue, 10=green).
+        -->
+
+        <!-- Bucket: target — MP-controlled state changes (red box on JPG) -->
+        <record id="label_status_us_od" model="label.status.option">
+            <field name="name">US-od</field>
+            <field name="code">us_od</field>
+            <field name="color">1</field>
+            <field name="sequence">10</field>
+            <field name="bucket">target</field>
+        </record>
+        <record id="label_status_vietnam_od" model="label.status.option">
+            <field name="name">Vietnam-od</field>
+            <field name="code">vietnam_od</field>
+            <field name="color">1</field>
+            <field name="sequence">20</field>
+            <field name="bucket">target</field>
+        </record>
+
+        <!-- Bucket: pd_selfmake — PD-internal production states (green box on JPG) -->
+        <record id="label_status_vn_tattoo" model="label.status.option">
+            <field name="name">VN-Tattoo</field>
+            <field name="code">vn_tattoo</field>
+            <field name="color">10</field>
+            <field name="sequence">110</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_wooden_dish" model="label.status.option">
+            <field name="name">VN-Wooden Dish</field>
+            <field name="code">vn_wooden_dish</field>
+            <field name="color">10</field>
+            <field name="sequence">120</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_dish" model="label.status.option">
+            <field name="name">VN-Dish</field>
+            <field name="code">vn_dish</field>
+            <field name="color">10</field>
+            <field name="sequence">130</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_dish_ng" model="label.status.option">
+            <field name="name">VN-Dish NG</field>
+            <field name="code">vn_dish_ng</field>
+            <field name="color">2</field>
+            <field name="sequence">140</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_dish_fix" model="label.status.option">
+            <field name="name">[Fix] VN-Dish</field>
+            <field name="code">vn_dish_fix</field>
+            <field name="color">2</field>
+            <field name="sequence">150</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_sp_moi" model="label.status.option">
+            <field name="name">VN-SP mới</field>
+            <field name="code">vn_sp_moi</field>
+            <field name="color">10</field>
+            <field name="sequence">160</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_packed" model="label.status.option">
+            <field name="name">VN-Packed</field>
+            <field name="code">vn_packed</field>
+            <field name="color">10</field>
+            <field name="sequence">170</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_packed_1" model="label.status.option">
+            <field name="name">VN-Packed 1</field>
+            <field name="code">vn_packed_1</field>
+            <field name="color">10</field>
+            <field name="sequence">180</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_apron" model="label.status.option">
+            <field name="name">VN-Apron</field>
+            <field name="code">vn_apron</field>
+            <field name="color">10</field>
+            <field name="sequence">190</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+        <record id="label_status_vn_handkerchief" model="label.status.option">
+            <field name="name">VN-Handkerchief</field>
+            <field name="code">vn_handkerchief</field>
+            <field name="color">10</field>
+            <field name="sequence">200</field>
+            <field name="bucket">pd_selfmake</field>
+        </record>
+
+        <!-- Bucket: done — terminal state (blue box on JPG) -->
+        <record id="label_status_vn_fulfilled" model="label.status.option">
+            <field name="name">VN-Fulfilled</field>
+            <field name="code">vn_fulfilled</field>
+            <field name="color">4</field>
+            <field name="sequence">300</field>
+            <field name="bucket">done</field>
+        </record>
+
+        <!-- Bucket: approval — pending-action states (orange box on JPG) -->
+        <record id="label_status_cho_duyet" model="label.status.option">
+            <field name="name">Chờ duyệt</field>
+            <field name="code">cho_duyet</field>
+            <field name="color">3</field>
+            <field name="sequence">410</field>
+            <field name="bucket">approval</field>
+        </record>
+        <record id="label_status_da_gui_proof" model="label.status.option">
+            <field name="name">Đã gửi proof</field>
+            <field name="code">da_gui_proof</field>
+            <field name="color">3</field>
+            <field name="sequence">420</field>
+            <field name="bucket">approval</field>
+        </record>
+        <record id="label_status_cho_file" model="label.status.option">
+            <field name="name">Chờ file</field>
+            <field name="code">cho_file</field>
+            <field name="color">3</field>
+            <field name="sequence">430</field>
+            <field name="bucket">approval</field>
+        </record>
+
+    </data>
+</odoo>

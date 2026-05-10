@@ -1,6 +1,8 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from .label_status_option import _check_ba_manager_or_raise
+
 
 # Fields whose changes trigger a bus.bus push to the tracking dashboard.
 # Writes touching only fields outside this set are silent (operator notes,
@@ -9,7 +11,7 @@ _BUS_TRIGGER_FIELDS = frozenset({
     'tracking_number',
     'tracking_url',
     'tracking_state',
-    'label_status',
+    'label_status_id',
     'shipping_date',
     'production_blocked',
     'block_reason',
@@ -25,7 +27,7 @@ _ADDRESS_LOCK_FIELDS = frozenset({
     'tracking_number',
     'tracking_state',
     'shipping_date',
-    'label_status',
+    'label_status_id',
 })
 
 
@@ -77,18 +79,20 @@ class SaleOrderFulfillment(models.Model):
         index=True,
         tracking=True,
     )
-    label_status = fields.Selection(
-        [
-            ('none', 'None'),
-            ('requested', 'Requested'),
-            ('buying', 'Buying'),
-            ('bought', 'Bought'),
-            ('failed', 'Failed'),
-        ],
+    # P1-LBL — replaces the legacy Selection field. Many2one to a
+    # configurable master-data model (label.status.option) so BA-manager
+    # can edit codes without code releases. Nullable post-migration to
+    # avoid breaking the _inherits auto-create on sale.order.create
+    # (existing rows are defaulted to 'Chờ duyệt' by migration
+    # 19.0.1.0.29). FR-017 16th confirmation: writes to label_status_id
+    # are gated by _check_ba_manager_or_raise() in write() override.
+    label_status_id = fields.Many2one(
+        'label.status.option',
         string='Label Status',
-        default='none',
-        required=True,
+        ondelete='restrict',
+        index=True,
         tracking=True,
+        help="Configurable label status drawn from label.status.option master data.",
     )
     tracking_state = fields.Selection(
         [
@@ -177,6 +181,17 @@ class SaleOrderFulfillment(models.Model):
         return records
 
     def write(self, vals):
+        # FR-017 16th confirmation (P1-LBL) — label_status_id is BA-manager
+        # master data; gate operator-initiated writes to it before the
+        # generic ADDRESS_LOCK + bus-emit checks. Bypass via context flag
+        # `bypass_label_status_check=True` (intended for migration scripts
+        # and the post-init default rewriter).
+        if (
+            'label_status_id' in vals
+            and not self.env.context.get('bypass_label_status_check')
+        ):
+            _check_ba_manager_or_raise(self.env)
+
         # FR-017 defense-in-depth — block ship-progress writes when the
         # parent order has a pending address-change request. The bulk
         # action filters first; this guard catches direct-RPC writes that
@@ -226,7 +241,7 @@ class SaleOrderFulfillment(models.Model):
             'order_name': order.name if order else '',
             'tracking_number': self.tracking_number or '',
             'tracking_state': self.tracking_state or '',
-            'label_status': self.label_status or '',
+            'label_status': self.label_status_id.code or '',
             'updated_by': self.env.user.id,
             'updated_at': fields.Datetime.now().isoformat(),
         }

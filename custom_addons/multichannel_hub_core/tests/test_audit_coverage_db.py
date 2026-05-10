@@ -121,7 +121,7 @@ class TestAuditCoverageFieldTracking(TransactionCase):
             'tracking_number', 'tracking_url', 'tracking_state', 'shipping_date',
             'shipping_carrier_id', 'mp_note', 'pd_note', 'production_blocked',
             'block_reason', 'pic_user_id', 'pd_pic_user_id', 'order_priority',
-            'warehouse_zone', 'fulfillment_status', 'label_status'
+            'warehouse_zone', 'fulfillment_status', 'label_status_id'
         },
         'design.file': {'name', 'state', 'storage_mode', 'rejection_reason'},
         'design.file.route': {'state', 'recipient_type', 'delivery_method'},

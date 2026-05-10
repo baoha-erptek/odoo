@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.28',
+    'version': '19.0.1.0.31',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -37,6 +37,7 @@ fulfillment delegation landed:
         'security/multichannel_hub_security.xml',
         'security/ir.model.access.csv',
         'data/shipping_carrier_data.xml',
+        'data/label_status_data.xml',
         'data/order_pipeline_seed.xml',
         'data/order_pipeline_state_seed.xml',
         'data/mto_phantom_product_seed.xml',

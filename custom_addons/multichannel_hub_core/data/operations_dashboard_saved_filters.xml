@@ -37,7 +37,7 @@
         <record id="filter_operations_production_team" model="ir.filters">
             <field name="name">My role: Production — Ready to ship</field>
             <field name="model_id">sale.order</field>
-            <field name="domain">[('production_blocked', '=', False), ('label_status', '!=', 'none')]</field>
+            <field name="domain">[('production_blocked', '=', False), ('label_status_id', '!=', False)]</field>
             <field name="action_id" ref="action_operations_dashboard"/>
         </record>
 
