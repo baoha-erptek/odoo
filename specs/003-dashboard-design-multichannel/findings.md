@@ -1324,3 +1324,113 @@ Owner directive D2; commit e7bc56d30e0 on feature/006-master-plan-coding.
 
 - code-reviewer: APPROVE (0 CRITICAL/HIGH; 2 MEDIUM doc-only).
 - security-reviewer: APPROVE (0 CRITICAL/HIGH/MEDIUM/LOW).
+
+---
+
+## P1-01b — Operations Dashboard refactor sale.order → sale.order.line (2026-05-10)
+
+Operator-facing list view rebound from `sale.order` (one row per order) to
+`sale.order.line` (one row per item) per owner directive D6 to match the
+daily-ops Excel mental model. 34 columns lifted verbatim; column ORDER is
+contract.
+
+### Surprises (memory-worthy)
+
+1. **`ir.ui.menu.action_id` does not exist in Odoo 19** — the canonical
+   field is `action` (Selection-style reference, not a Many2one). Tests
+   that introspect `legacy_menu.action_id.res_model` raise
+   `AttributeError`. Use `legacy_menu.action.res_model` instead.
+
+2. **`_inherits` writes per-field via the auto-generated inverse**, NOT
+   as a single batched dict on the delegate. Consequence: writing
+   `order.write({'production_blocked': True, 'block_reason': 'X'})` when
+   `production_blocked` lives on the delegated `sale.order.fulfillment`
+   triggers `_check_block_reason_when_blocked` against the intermediate
+   state where `production_blocked=True` and `block_reason` is still
+   empty. Workaround: write directly to `order.fulfillment_id` (single
+   write reaches the target model with both fields set), or test the
+   delegation contract via a no-cascade field like `mp_note`.
+
+3. **`noupdate="1"` saved-filter XML records survive `-u` reloads.**
+   Editing the XML in place does not refresh the existing rows. To
+   rewrite `model_id` or `domain` on existing databases, write a Python
+   migration under `migrations/<version>/post-*.py`. Pure-XML edits only
+   affect FRESH installs.
+
+4. **Manifest version bump that has already been applied silently
+   skips the matching `migrations/X.Y.Z/` folder.** Odoo records the
+   installed version in `ir_module_module.latest_version`; if it equals
+   the manifest version, no migrations run. Workaround: bump again
+   (e.g., to `.32a`), or run the migration logic ad-hoc via SQL/odoo
+   shell (P1-01b used direct SQL via `psql` to rewrite the 3
+   ir.filters rows after the bumped install had already finished).
+
+5. **mhc cannot reference etsy_integration field names** per ADR-003
+   one-way dependency. The view validator hard-rejects
+   `<field name="etsy_transaction_id"/>` in any mhc XML. Solution
+   adopted in P1-01b: declare channel-agnostic Char equivalents
+   (`transaction_id`, `personalisation`) on `sale.order.line` in mhc;
+   etsy ingest dual-writes both old and new fields per DECISION 1
+   coexist policy; cleanup deferred to a future slice.
+
+6. **`amount_delivery` requires the `delivery` module**, which is not
+   an mhc dependency. Original plan called for
+   `related='order_id.amount_delivery'` for SHIPPING_COST; instead a
+   plain `shipping_cost` Char on `sale.order` (mhc) was added, with the
+   line shadow `related='order_id.shipping_cost'`. Channel ingest
+   populates the raw cost label.
+
+7. **List-view field collisions**: declaring the SKU column as
+   `<field name="product_id" string="SKU"/>` would collide with the
+   PRODUCT_NAME column at view level (same field, different `string`).
+   Resolved by introducing a dedicated `sku` related shadow on
+   `sale.order.line` (`related='product_id.default_code'`).
+
+### Architectural decisions executed
+
+- **DECISION 1 (coexist with etsy_*)**: New mhc fields stand alongside
+  the existing `etsy_*` siblings. No deprecation; etsy ingest can
+  dual-write at its convenience. Cleanup is a separate slice after
+  operator UAT confirms the new dashboard fields are populated end-to-
+  end.
+- **DECISION 2 (non-stored compute + manual override)**: 5 variant
+  labels (option_label, color, size, side, face_mask_size) are
+  non-stored Char with `_compute_*` reading
+  `product_template_attribute_value_ids` by attribute-name
+  (case-insensitive) and `_inverse_*` writing to a `<name>_manual`
+  stored Char sibling. Operator manual entry overrides the auto-derived
+  value.
+- **DECISION 3 (store=False on related shadows)**: All ~25 related
+  shadows on `sale.order.line` are `store=False, readonly=True`.
+  Saved-filter domains traverse `order_id.<field>`; Odoo executes
+  against the canonical column on the parent model (already indexed).
+  No measurable filter performance issue in test runs.
+- **DECISION 4 (auto-pick form fallback)**: `view_mode="list,form"`
+  with no explicit form view; Odoo auto-generates a sparse `sale.order
+  .line` form. Operator UAT will confirm whether to add an OWL
+  jump-to-order button.
+
+### Test contract
+
+- 21 P1-01b tests (10 DB + 11 ORM) all green.
+- 982/983 cross-module tests green; sole failure is the pre-existing
+  P1-LBL baseline `TestHistoricalSeedT078.test_seed_skips_empty_urls`
+  (unrelated).
+
+### Approvals
+
+- code-reviewer: APPROVE (0 CRITICAL/HIGH/MEDIUM/LOW).
+- security-reviewer: APPROVE (0 findings; FR-017 9th confirmation
+  preserved; related shadows readonly; legacy menu group-gated;
+  migration idempotent + ORM-only; no new sudo/raw-SQL/ACL).
+
+### Follow-ups
+
+- **R-2026-05-10-FOLLOWUP**: remove legacy fallback menu
+  `menu_operations_dashboard_legacy_orders` + action after 2026-05-24
+  staging UAT sign-off. TODO comment in `menu.xml`.
+- **etsy_* deprecation slice** (DECISION 1 cleanup half): once
+  channel ingest writes new mhc fields end-to-end, drop the etsy_*
+  siblings + migrate data. Defer to post-W7.
+- **OWL jump-to-order button** (DECISION 4 fallback): add only if UAT
+  shows the auto-generated `sale.order.line` form is unusable.

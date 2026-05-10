@@ -20,6 +20,9 @@ fulfillment delegation landed:
 - P1-01a: Order Dashboard + sales_channel + row decorations
 - P1-02a: design.file MVP + 3-col kanban + 10MB cap
 - P1-03: Tracking Dashboard + Mark-Shipped + bus.bus channel
+- P1-DASH-MERGE: unified Operations Dashboard (ADR-DASH-MERGE)
+- P1-LBL: label_status Selection -> Many2one + 16-record seed
+- P1-01b: dashboard refactor sale.order -> sale.order.line + 34 Excel cols
 - Remaining Phase 1+: design.file routing/GDrive/bulk-print, sync.health,
   Process Dashboard, carrier_detector
     """,
