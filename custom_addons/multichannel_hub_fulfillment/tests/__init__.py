@@ -27,6 +27,8 @@ from . import test_p4_01_b_payload
 from . import test_p4_01_b_adapter
 from . import test_p4_01_c_state_machine_db
 from . import test_p4_01_c_state_machine_orm
+from . import test_p4_01_d_db
+from . import test_p4_01_d_orm
 
 __all__ = [
     'test_gearment_api_client',

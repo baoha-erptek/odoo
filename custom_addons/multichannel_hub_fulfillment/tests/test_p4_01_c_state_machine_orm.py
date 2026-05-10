@@ -118,6 +118,20 @@ class TestP401CGetQuote(TransactionCase):
         with self.assertRaises(UserError):
             self.order_no_sku.action_get_gearment_quote()
 
+    def test_get_quote_fr017_13th_blocks_non_shipping_user(self):
+        """FR-017 13th confirmation — direct RPC by non-shipping user
+        is rejected BEFORE any write to x_gearment_* fields."""
+        non_shipping = self.env['res.users'].create({
+            'name': 'Cara D', 'login': 'cara_p4d@example.com',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+        with self.assertRaises(AccessError):
+            self.order_with_sku.with_user(non_shipping).action_get_gearment_quote()
+        # State must NOT have advanced
+        self.assertEqual(
+            self.order_with_sku.x_gearment_outbound_state, 'draft',
+        )
+
     def test_get_quote_calls_adapter_and_writes_fields(self):
         GearmentApiAdapter = _state_machine_helpers()
         with mock.patch.dict('os.environ', _TEST_ENV, clear=False), \
