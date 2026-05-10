@@ -266,6 +266,16 @@ class OrderCreator:
             # never fires. Surfaced 2026-05-08 staging E2E run.
             'sales_channel': 'etsy',
             'channel_order_ref': parse_result.order_id,
+            # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror parsed values into
+            # channel-agnostic shadows so the unified Operations Dashboard
+            # (model sale.order.line, related-shadows on order) shows values
+            # for email-ingested orders. Coexist with etsy_* twins per
+            # p1-01b-plan.md DECISION 1 (cleanup deferred).
+            'gift_message': getattr(parse_result, 'gift_message', '') or '',
+            'processing_time': getattr(parse_result, 'processing_time', '') or '',
+            'discount_code': getattr(parse_result, 'discount_code', '') or '',
+            'shipping_service_label': parse_result.shipping_service or '',
+            'shipping_cost': str(parse_result.shipping_cost or ''),
             'order_line': [],
         }
         if currency:
@@ -543,6 +553,14 @@ class OrderCreator:
             # for rationale. Both ingest paths must stamp these consistently.
             'sales_channel': 'etsy',
             'channel_order_ref': payload.etsy_order_id,
+            # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror channel-agnostic
+            # shadows for the unified Operations Dashboard. See email-path
+            # comment for rationale.
+            'gift_message': payload.gift_message or '',
+            'processing_time': payload.processing_time or '',
+            'discount_code': payload.discount_code or '',
+            'shipping_service_label': payload.shipping_service or '',
+            'shipping_cost': str(payload.shipping_total or ''),
             'order_line': [],
         }
         if currency:
@@ -571,6 +589,10 @@ class OrderCreator:
                 'etsy_transaction_id': str(item.transaction_id),
                 'etsy_personalisation': item.personalisation or '',
                 'etsy_sku': item.sku or '',
+                # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10) — channel-agnostic
+                # shadows so api-ingested lines render in the dashboard.
+                'transaction_id': str(item.transaction_id),
+                'personalisation': item.personalisation or '',
             }
             # P0-22 — when the adapter supplied a custom display name (email
             # path uses the buyer-facing product_name with rendered options),
@@ -651,13 +673,21 @@ class OrderCreator:
     # ------------------------------------------------------------------
 
     def _build_line_vals(self, txn, product):
-        """Build a dict of vals for a sale.order.line."""
+        """Build a dict of vals for a sale.order.line.
+
+        P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror parsed line values
+        into channel-agnostic shadow fields on sale.order.line so the
+        Operations Dashboard renders values for email-ingested lines.
+        Channel-agnostic fields coexist with etsy_* twins per p1-01b-plan.md
+        DECISION 1 (UAT cleanup deferred).
+        """
+        personalisation = getattr(txn, 'personalisation', '') or ''
         return {
             'product_id': product.id,
             'product_uom_qty': txn.quantity or 1,
             'price_unit': txn.price or 0.0,
             'etsy_transaction_id': str(txn.transaction_id),
-            'etsy_personalisation': getattr(txn, 'personalisation', '') or '',
+            'etsy_personalisation': personalisation,
             'etsy_sku': getattr(txn, 'sku', '') or '',
             'etsy_option': getattr(txn, 'option', '') or '',
             'etsy_color': getattr(txn, 'color', '') or '',
@@ -667,6 +697,19 @@ class OrderCreator:
             'etsy_image_url': getattr(txn, 'image_url', '') or '',
             'etsy_design_link_front': getattr(txn, 'design_link_front', '') or '',
             'etsy_design_link_back': getattr(txn, 'design_link_back', '') or '',
+            # Channel-agnostic shadows for unified Operations Dashboard.
+            'transaction_id': str(txn.transaction_id),
+            'personalisation': personalisation,
+            'image_url': getattr(txn, 'image_url', '') or '',
+            'design_link_front': getattr(txn, 'design_link_front', '') or '',
+            'design_link_back': getattr(txn, 'design_link_back', '') or '',
+            # Variant-label manual overrides — written here so dashboard shows
+            # values immediately without waiting for the inverse compute path.
+            'option_label_manual': getattr(txn, 'option', '') or '',
+            'color_manual': getattr(txn, 'color', '') or '',
+            'size_manual': getattr(txn, 'size', '') or '',
+            'side_manual': getattr(txn, 'side', '') or '',
+            'face_mask_size_manual': getattr(txn, 'face_mask_size', '') or '',
         }
 
     def _resolve_country(self, code, name):

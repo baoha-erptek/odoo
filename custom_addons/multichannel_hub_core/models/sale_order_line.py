@@ -162,7 +162,13 @@ class SaleOrderLine(models.Model):
 
     # Fulfillment / BA / PD / MP fields via order_id (P1-05 _inherits delegates
     # transparently — `order_id.label_status_id` resolves via fulfillment_id).
-    label_status_id = fields.Many2one(related='order_id.label_status_id', readonly=True)
+    # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): label_status_id flipped to
+    # writable so the dashboard tree supports inline edit. Writes propagate
+    # through related → order_id.label_status_id → fulfillment_id.label_status_id
+    # via _inherits delegation. Order-level ACL on sale.order remains the
+    # authoritative gate (BA-shipping group only); related writeback inherits
+    # the same permission check.
+    label_status_id = fields.Many2one(related='order_id.label_status_id', readonly=False)
     pic_user_id = fields.Many2one(related='order_id.pic_user_id', readonly=True)
     pd_pic_user_id = fields.Many2one(related='order_id.pd_pic_user_id', readonly=True)
     mp_note = fields.Text(related='order_id.mp_note', readonly=True)

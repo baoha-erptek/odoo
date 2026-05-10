@@ -91,6 +91,15 @@
                 <!-- Excel column 34: SUBTOTAL -->
                 <field name="price_subtotal" string="SUBTOTAL" optional="show"/>
 
+                <!-- Internal Odoo PK appended after Excel-contracted columns
+                     (P1-01b-FIX-DASHBOARD-GAPS, 2026-05-10). Surfaces native
+                     sale.order.id for cross-referencing tickets, GDrive paths,
+                     and Gearment logs. Read-only; not part of the 34-col Excel
+                     contract — operator may drag-position via UI. -->
+                <field name="order_id" string="Sale Order"
+                       options="{'no_create': True, 'no_open': False}"
+                       optional="show"/>
+
                 <!-- BA/Marketing/PD columns appended at right edge (P1-DASH-MERGE heritage). -->
                 <field name="pic_user_id" widget="many2one_avatar_user" optional="show"/>
                 <field name="pd_pic_user_id" optional="show"/>
