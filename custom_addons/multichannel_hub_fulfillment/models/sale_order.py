@@ -10,16 +10,35 @@ trigger is the standard `purchase.order.button_confirm` boundary (see
   on failure so the caller (PO override) can roll back the transaction.
 - `_advance_pipeline_to(code)` — public helper to move the SO pipeline to
   a target state code. Idempotent: no-op if already at-or-after target.
+
+P4-01-C added the operator-driven Gearment outbound state machine
+(`x_gearment_outbound_state`) and the quote handshake. This is distinct
+from `x_gearment_status` which is webhook-driven Gearment-side state
+(decision E1.b in `specs/004-fulfillment-routing/p4-01-c-plan.md`).
 """
+import json
 import logging
+from datetime import timedelta
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 from ..services import gearment_adapter, gearment_payload_builder
 
 _logger = logging.getLogger(__name__)
 
 _ACCEPTABLE_DESIGN_STATES = ('approved', 'proof_sent')
+
+# Forward-only ordering for `_advance_gearment_state` — index in this tuple
+# is the state's "sequence number." `cancelled` sits at the end so it's
+# only reachable via explicit operator action (E3 invariant: no auto-cancel).
+_GEARMENT_OUTBOUND_STATE_SEQUENCE = (
+    'draft', 'quoted', 'operator_review', 'confirmed', 'cancelled',
+)
+# Default quote TTL when adapter response doesn't carry an explicit
+# expires-at value. Short enough that operator must review today; long
+# enough for back-and-forth with BA. Adjust via ICP later if needed.
+_GEARMENT_QUOTE_DEFAULT_TTL_MINUTES = 30
 
 
 class SaleOrder(models.Model):
@@ -45,6 +64,48 @@ class SaleOrder(models.Model):
         ],
         string='Gearment Status',
         readonly=True, copy=False, tracking=True,
+        help="Gearment-side fulfillment state — webhook-driven (P0-18b2). "
+             "See `x_gearment_outbound_state` for the local push lifecycle.",
+    )
+
+    # P4-01-C — local outbound push lifecycle. Distinct from x_gearment_status
+    # (webhook-driven, Gearment-side). Decision E1.b: keep both; never reuse.
+    x_gearment_outbound_state = fields.Selection(
+        [
+            ('draft', 'Draft'),
+            ('quoted', 'Quoted'),
+            ('operator_review', 'Operator Review'),
+            ('confirmed', 'Confirmed'),
+            ('cancelled', 'Cancelled'),
+        ],
+        string='Gearment Outbound State',
+        default='draft', tracking=True, copy=False,
+        help="Operator-driven push lifecycle: draft → quoted → "
+             "operator_review → confirmed (or cancelled). Distinct from "
+             "Gearment Status which reflects upstream fulfillment state.",
+    )
+
+    # P4-01-C — quote handshake fields (E2.a: persist on order, not on
+    # the transient wizard, so close+reopen reuses the same quote until
+    # it expires). All readonly — only `action_get_gearment_quote` writes.
+    x_gearment_quote_total = fields.Float(
+        string='Gearment Quote Total', readonly=True, copy=False,
+        digits=(12, 4),  # nano-precision retained from proto-Money
+    )
+    x_gearment_quote_currency = fields.Char(
+        string='Gearment Quote Currency', readonly=True, copy=False, size=8,
+    )
+    x_gearment_quote_expires_at = fields.Datetime(
+        string='Gearment Quote Expires At', readonly=True, copy=False,
+        help="UTC timestamp after which `action_confirm` raises and the "
+             "operator must fetch a fresh quote (E4 invariant).",
+    )
+    x_gearment_quote_breakdown_json = fields.Text(
+        string='Gearment Quote Breakdown (JSON)', readonly=True, copy=False,
+        help="JSON-serialised dict of decoded Money fields: "
+             "{order_sub_total, order_shipping_fee, order_tax, "
+             "order_discount, order_handle_fee, order_gift_message_fee, "
+             "order_fee, order_total, currency}.",
     )
 
     # ------------------------------------------------------------------
@@ -128,3 +189,95 @@ class SaleOrder(models.Model):
             order.message_post(body=_(
                 "Order pushed to Gearment (ref %s).", ref))
             order._advance_pipeline_to('confirmed')
+
+    # ------------------------------------------------------------------
+    # P4-01-C — Gearment outbound state machine + quote handshake
+    # ------------------------------------------------------------------
+    def _advance_gearment_state(self, target: str) -> None:
+        """Forward-only transition on `x_gearment_outbound_state`.
+
+        No-op when the current state is already at-or-past `target` (compared
+        by index in `_GEARMENT_OUTBOUND_STATE_SEQUENCE`). The `cancelled`
+        terminal sits at the end so it can only be reached via an explicit
+        operator action (the wizard's `action_cancel`), never auto-advanced.
+        """
+        self.ensure_one()
+        if target not in _GEARMENT_OUTBOUND_STATE_SEQUENCE:
+            raise ValueError(
+                f"Unknown Gearment outbound state '{target}'"
+            )
+        target_idx = _GEARMENT_OUTBOUND_STATE_SEQUENCE.index(target)
+        current = self.x_gearment_outbound_state or 'draft'
+        current_idx = _GEARMENT_OUTBOUND_STATE_SEQUENCE.index(current)
+        if current_idx >= target_idx:
+            return
+        self.x_gearment_outbound_state = target
+
+    def _has_gearment_eligible_lines(self) -> bool:
+        """E5.b — true iff at least one line has a Gearment SKU set."""
+        self.ensure_one()
+        return any(
+            (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+            for line in self.order_line
+        )
+
+    def action_get_gearment_quote(self):
+        """Fetch a price quote from Gearment and store on the order.
+
+        Transitions `x_gearment_outbound_state` draft→quoted on success.
+        E5.b guard: refuses if no order line has `x_gearment_sku` set.
+        """
+        self.ensure_one()
+        if not self._has_gearment_eligible_lines():
+            raise UserError(_(
+                "No Gearment-eligible lines on this order. Set "
+                "`x_gearment_sku` on at least one product before requesting "
+                "a quote."
+            ))
+        reference_id = self.channel_order_ref or self.name
+        adapter = gearment_adapter.GearmentApiAdapter(env=self.env)
+        quote = adapter.get_quote(reference_id)
+        # quote dict carries Decimal totals (P4-01-B). Convert to floats for
+        # storage on the Float field; keep full precision in JSON breakdown.
+        breakdown = {
+            k: str(quote[k]) for k in (
+                'order_sub_total', 'order_shipping_fee', 'order_tax',
+                'order_discount', 'order_handle_fee',
+                'order_gift_message_fee', 'order_fee', 'order_total',
+            ) if k in quote
+        }
+        breakdown['currency'] = quote.get('currency', '')
+        expires_at = quote.get('expires_at') or (
+            fields.Datetime.now()
+            + timedelta(minutes=_GEARMENT_QUOTE_DEFAULT_TTL_MINUTES)
+        )
+        self.write({
+            'x_gearment_quote_total': float(quote.get('order_total') or 0.0),
+            'x_gearment_quote_currency': quote.get('currency', '') or '',
+            'x_gearment_quote_expires_at': expires_at,
+            'x_gearment_quote_breakdown_json': json.dumps(breakdown),
+        })
+        self._advance_gearment_state('quoted')
+        self.message_post(body=_(
+            "Quote fetched from Gearment (total %(total)s %(cur)s, expires "
+            "%(exp)s).",
+            total=quote.get('order_total'),
+            cur=quote.get('currency', ''),
+            exp=expires_at,
+        ))
+
+    def action_open_gearment_quote_wizard(self):
+        """Move to operator_review and open the wizard modal."""
+        self.ensure_one()
+        if self.x_gearment_outbound_state == 'quoted':
+            self._advance_gearment_state('operator_review')
+        wizard = self.env['gearment.quote.wizard'].create({
+            'order_id': self.id,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'gearment.quote.wizard',
+            'view_mode': 'form',
+            'res_id': wizard.id,
+            'target': 'new',
+        }

@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub - Fulfillment',
-    'version': '19.0.1.0.16',
+    'version': '19.0.1.0.17',
     'category': 'Sales/Fulfillment',
     'summary': 'Fulfillment integration service for multichannel operations',
     'author': 'Etsy Migration Team',
@@ -18,6 +18,7 @@
         'views/product_template_views.xml',
         'views/tracking_import_views.xml',
         'views/logistics_partner_views.xml',
+        'wizards/gearment_quote_wizard_views.xml',
     ],
     'external_dependencies': {
         'python': ['openpyxl'],
