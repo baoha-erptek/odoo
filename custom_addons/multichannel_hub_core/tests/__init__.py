@@ -41,3 +41,5 @@ from . import test_operations_dashboard_line_db
 from . import test_operations_dashboard_line_orm
 from . import test_p1_design_url_validation
 from . import test_p1_01b_fix_dashboard_gaps
+from . import test_phase1_design_file_created_via
+from . import test_phase2_design_auto_create_seed

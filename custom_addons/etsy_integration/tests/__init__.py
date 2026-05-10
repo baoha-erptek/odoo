@@ -36,3 +36,4 @@ from . import test_image_cron_wired
 from . import test_p0_22_db
 from . import test_p0_22_orm
 from . import test_p0_22_parity
+from . import test_phase2_order_creator_design_seed

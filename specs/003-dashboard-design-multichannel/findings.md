@@ -1443,5 +1443,51 @@ Defects surfaced during E2E runs on staging that map to this spec. Each row link
 
 | Date | Run § | Symptom | Severity | Hotfix slice | State |
 |------|-------|---------|----------|--------------|-------|
-| _(none yet)_ |
+| 2026-05-11 | E2E rerun §6 | Gearment 4xx `[repeated.min_items]` on `data.line_items` for 4 ordertest2 orders | HIGH (RCA-resolved) | P1-DESIGN-AUTO-CREATE-FROM-EMAIL | **resolved 2026-05-10** — design.file auto-create on email/API ingest. RCA chain visible only after Defect-11-02 fix exposed real vendor body. |
+
+---
+
+## P1-DESIGN-AUTO-CREATE-FROM-EMAIL surprises (2026-05-10)
+
+**1. EtsyLineItemPayload schema gap, not a parser gap.** The planner R3 risk
+("API payload may carry design links in a different shape") materialized as a
+hard schema absence: `EtsyLineItemPayload` (frozen dataclass at
+`etsy_integration/services/etsy_order_payload.py`) had no
+`design_link_front`/`back` fields at all. The Etsy v3 API adapter never
+extracted them, and `_build_line_vals` for the email path used
+`getattr(txn, 'design_link_front', '')` which silently returned `''` on the
+API path. Fix: add the fields with `''` defaults; the API path is now a
+structural no-op (creates 0 design.file rows on api_ingest until
+`P1-DESIGN-API-EXTRACT-LINKS` extracts them from receipt
+variations/personalisation). This means Defect-2026-05-11-01 only fully
+resolves for the **email path**; the API path needs a follow-up slice.
+
+**2. API path uses inline `line_vals`, not `_build_line_vals`.** Looking at
+`OrderCreator.process_etsy_payload` (~line 583-608) revealed the API path
+builds `line_vals` inline rather than calling the email path's
+`_build_line_vals`. Both paths now write `design_link_front`/`back` to
+`sale.order.line` (so the seeding hook fires uniformly), but the API path's
+inline dict had to be patched separately.
+
+**3. Pre-existing DB pollution surfaced a "shared DB query" anti-pattern.**
+`test_design_file_lifecycle.TestHistoricalSeedT078.test_seed_skips_empty_urls`
+queries ALL `design.file` rows for `file_url IS NULL`, not just rows it
+created. An orphaned `id=3380 TestDF_TRACK` row from a prior test run made
+the test fail under our changes despite our slice not touching that path.
+Cleaned the orphan; the test is structurally brittle and worth a follow-up
+fix to scope the search to its own fixture rows.
+
+**4. tdd-guide forgot to register tests in `tests/__init__.py`.** Both
+multichannel_hub_core and etsy_integration `tests/__init__.py` need explicit
+`from . import test_<name>` for new test files to be discovered. tdd-guide
+created the files but didn't update the `__init__.py`. Caught when the test
+suite ran but our 17 tests didn't appear in output.
+
+**5. `created_via` migration runs idempotently with `IS NULL` filter.** Per
+memory `project_sql_constraints_drift.md`, init() raw SQL is the
+belt-and-braces guarantee for the existing UNIQUE on `(order_line_id,
+file_url)` — no mirror needed for the new field, since the field is just a
+Selection (not a UNIQUE). Migration script in
+`migrations/19.0.1.0.35/post-migrate-backfill-created-via.py` only touches
+rows where `created_via IS NULL`, so it's safe to re-run.
 

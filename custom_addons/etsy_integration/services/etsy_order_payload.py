@@ -62,6 +62,12 @@ class EtsyLineItemPayload:
     # rendering) the ingestor copies it onto `sale.order.line.name`. None
     # means "use product.display_name" (current behaviour).
     name_override: str | None = None
+    # P1-DESIGN-AUTO-CREATE-FROM-EMAIL — channel-agnostic design URL fields.
+    # The Etsy v3 adapter does not yet populate these; defaults keep the
+    # auto-create hook on the API path a no-op until a future adapter slice
+    # extracts URLs from the receipt's variations / personalisation block.
+    design_link_front: str = ''
+    design_link_back: str = ''
 
 
 @dataclass(frozen=True)

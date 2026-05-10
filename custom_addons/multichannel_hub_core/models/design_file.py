@@ -139,6 +139,27 @@ class DesignFile(models.Model):
         help="True for rows backfilled from historical etsy_design_link_* columns (T078).",
     )
 
+    # P1-DESIGN-AUTO-CREATE-FROM-EMAIL (ADR-009 amendment).
+    # Audit provenance: distinguishes auto-seeded rows (email/API ingest) from
+    # operator-uploaded rows. Existing rows are backfilled to 'migration_seed'
+    # by migrations/19.0.1.0.35/post-migrate-backfill-created-via.py.
+    created_via = fields.Selection(
+        [
+            ('migration_seed', 'Migration seed'),
+            ('email_ingest', 'Email ingest'),
+            ('api_ingest', 'API ingest'),
+            ('operator_wizard', 'Operator wizard'),
+        ],
+        string='Created Via',
+        default='operator_wizard',
+        required=True,
+        index=True,
+        tracking=True,
+        help="Audit provenance — how this design.file was created. "
+             "Auto-seeded rows from email/API ingest start at state='pending' "
+             "and require operator approval before Gearment push.",
+    )
+
     # P1-02b — Design file routing
     route_ids = fields.One2many(
         'design.file.route',
@@ -599,6 +620,83 @@ class DesignFile(models.Model):
             "from %s candidate lines.",
             created, len(candidates),
         )
+        return created
+
+    # ------------------------------------------------------------------
+    # P1-DESIGN-AUTO-CREATE-FROM-EMAIL — live ingest seeding
+    # ------------------------------------------------------------------
+
+    def _seed_design_files_from_lines(self, order, created_via='email_ingest'):
+        """Seed design.file rows from a freshly-ingested order's lines.
+
+        Called from `OrderCreator.process_parse_result` (email path) and
+        `OrderCreator.process_etsy_payload` (API path) immediately after
+        `sale.order.create()`. Walks each `order.order_line` and, for any line
+        whose channel-agnostic `design_link_front` / `design_link_back` is
+        non-empty, creates a `design.file` row with `state='pending'`,
+        `storage_mode='url'`, and the provided `created_via` provenance marker.
+
+        Idempotent on `(order_line_id, file_url)` — search before create — so
+        re-ingestion of the same email/payload does not duplicate rows. The
+        underlying SQL UNIQUE on the same key (see `init()`) is the
+        belt-and-braces guarantee.
+
+        Lines without parsed design links are skipped silently (zero design
+        files for the order is a valid state — the operator will use the
+        upload wizard instead). State stays `pending` so the existing
+        operator-approval flow remains the gate before Gearment push.
+
+        :param order: a `sale.order` recordset (singleton). Empty recordset
+            is tolerated (returns 0).
+        :param created_via: one of ``'email_ingest'`` or ``'api_ingest'``.
+            Other values raise ValueError to fail-fast on caller drift.
+        :return: int, count of newly created rows (excluding skipped duplicates).
+        """
+        if created_via not in ('email_ingest', 'api_ingest'):
+            raise ValueError(
+                "_seed_design_files_from_lines: created_via must be "
+                "'email_ingest' or 'api_ingest', got %r" % (created_via,)
+            )
+        if not order:
+            return 0
+
+        roles = (
+            ('design_link_front', 'Front'),
+            ('design_link_back', 'Back'),
+        )
+        created = 0
+        for line in order.order_line:
+            for field_name, role_label in roles:
+                url = (getattr(line, field_name, '') or '').strip()
+                if not url:
+                    continue
+                existing = self.search([
+                    ('order_line_id', '=', line.id),
+                    ('file_url', '=', url),
+                ], limit=1)
+                if existing:
+                    continue
+                product_label = (
+                    line.product_id.display_name
+                    if line.product_id else (line.name or '?')
+                )
+                self.create({
+                    'name': f"{product_label} — {role_label}",
+                    'order_line_id': line.id,
+                    'storage_mode': 'url',
+                    'file_url': url,
+                    'state': 'pending',
+                    'is_seed': False,
+                    'created_via': created_via,
+                })
+                created += 1
+
+        if created:
+            _logger.info(
+                "design.file._seed_design_files_from_lines: seeded %s rows "
+                "for sale.order %s (created_via=%s).",
+                created, order.name or order.id, created_via,
+            )
         return created
 
     # ------------------------------------------------------------------

@@ -227,7 +227,45 @@ When a `design.file` row's `state` writes to `'approved'`, the system sweeps **s
 
 **Out of scope for this amendment**: re-introducing the 5-state machine. If the operator workflow ever needs `awaiting_approval` / `needs_revision` distinct from `pending`, file a separate ADR-009 successor.
 
+## Amendment — Provenance (`created_via`) field (2026-05-10, P1-DESIGN-AUTO-CREATE-FROM-EMAIL)
+
+To distinguish `design.file` rows by **how** they came into existence (email
+ingest auto-create vs. API ingest auto-create vs. operator wizard upload vs.
+historical migration backfill), `design.file` carries a new
+`created_via` Selection field with four values:
+
+| Value             | Meaning                                                    | Set by                                              |
+|-------------------|------------------------------------------------------------|-----------------------------------------------------|
+| `migration_seed`  | Backfilled from historical `etsy_design_link_*` columns    | `_seed_from_historical_lines` (P1-02a) + post-migrate script for legacy operator-wizard rows |
+| `email_ingest`    | Auto-seeded by `OrderCreator.process_parse_result`         | Email-path order creation when parsed `design_link_front`/`back` is non-empty |
+| `api_ingest`      | Auto-seeded by `OrderCreator.process_etsy_payload`         | API-path order creation when `EtsyLineItemPayload.design_link_*` is non-empty |
+| `operator_wizard` | Created via the design upload wizard UI (P1-09)            | Operator manual upload; default for any `create()` that doesn't set the field |
+
+The post-install migration in `multichannel_hub_core/migrations/19.0.1.0.35/`
+backfills existing rows: `is_seed=True` → `'migration_seed'`; everything else →
+`'operator_wizard'`. New rows default to `'operator_wizard'` so any code path
+that does not explicitly set provenance (most operator flows, the upload
+wizard, or any manual data fix) is correctly classified.
+
+Auto-seeded rows always start at `state='pending'` (the operator approval gate
+before Gearment push remains the same). Provenance is **not** a state and does
+**not** branch the lifecycle — it's purely an audit dimension that lets RCA on
+empty `data.line_items` failures distinguish "no email parsed a link" from
+"adapter never extracted a link" from "operator never uploaded".
+
+`tracking=True` on the field — chatter on `design.file` records the provenance
+on create. The field is `index=True` because RCA queries filter design.file by
+`(order_id, created_via)` to count "how many auto-created vs. operator-uploaded
+files for this order" before pushing to Gearment.
+
+**Out of scope**: branching the lifecycle by provenance. Auto-seeded rows go
+through the same `pending → approved/rejected` flow as operator-uploaded rows.
+A future slice may surface "seeded automatically — please confirm URL is the
+correct asset" UI in the kanban for `email_ingest` / `api_ingest` rows; that's
+UX, not lifecycle.
+
 ## Revision history
 
 - **2026-04-26**: Initial authoring. Accepted same day with Owner-recommended design (flexible, internal-Odoo, leverages GDrive primary + Discord/local fallback per ADR-006/012).
 - **2026-05-08**: Amendment — sibling-archive-on-approve rule (`active=False` on non-approved siblings) added to support multi-file uploads from P1-DESIGN-MULTI-UPLOAD. Doc-only change in P1-DESIGN-MULTI-DOC slice; behaviour lands in P1-DESIGN-AUTO-ARCHIVE.
+- **2026-05-10**: Amendment — `created_via` provenance field added (P1-DESIGN-AUTO-CREATE-FROM-EMAIL). Required for RCA distinguishing auto-seed vs. operator-upload origins after Defect-2026-05-11-01 (empty Gearment line_items because no design.file rows linked).

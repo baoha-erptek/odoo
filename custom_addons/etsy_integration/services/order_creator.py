@@ -321,6 +321,12 @@ class OrderCreator:
         _logger.info(
             'Created sale.order %s (Etsy #%s) with %d lines',
             order.name, parse_result.order_id, len(order.order_line))
+        # P1-DESIGN-AUTO-CREATE-FROM-EMAIL: seed design.file rows from parsed
+        # design_link_front/back so Gearment push has approved-design candidates
+        # rather than an empty line_items array. State stays 'pending' — the
+        # operator still reviews via the upload wizard before push.
+        self._env['design.file']._seed_design_files_from_lines(
+            order, created_via='email_ingest')
         return order
 
     # ------------------------------------------------------------------
@@ -593,6 +599,12 @@ class OrderCreator:
                 # shadows so api-ingested lines render in the dashboard.
                 'transaction_id': str(item.transaction_id),
                 'personalisation': item.personalisation or '',
+                # P1-DESIGN-AUTO-CREATE-FROM-EMAIL — channel-agnostic design
+                # URLs feed `design.file._seed_design_files_from_lines` after
+                # order create. EtsyLineItemPayload defaults to '' until a
+                # future Etsy API adapter slice extracts them from receipts.
+                'design_link_front': getattr(item, 'design_link_front', '') or '',
+                'design_link_back': getattr(item, 'design_link_back', '') or '',
             }
             # P0-22 — when the adapter supplied a custom display name (email
             # path uses the buyer-facing product_name with rendered options),
@@ -623,6 +635,11 @@ class OrderCreator:
             'Created sale.order %s (Etsy #%s, source=api) with %d lines',
             order.name, payload.etsy_order_id, len(order.order_line),
         )
+        # P1-DESIGN-AUTO-CREATE-FROM-EMAIL: mirror seeding on the API path so
+        # API-ingested orders also get design.file rows when the payload carried
+        # design_link_front/back (populated by _build_line_vals at line 704-705).
+        self._env['design.file']._seed_design_files_from_lines(
+            order, created_via='api_ingest')
         return order
 
     def _payload_partner(self, payload):

@@ -436,10 +436,26 @@ Within Phase 7 (US5), parallelisable: T066, T067, T068, T070, T071, T072, T076, 
 - Phase-1 DB: row-count and index assertions on every migration + seed
 - E2E: deferred to Spec 003 cluster (not in this tasks list — per playbook E2E happens after all spec coding completes)
 
+## P1-DESIGN-AUTO-CREATE-FROM-EMAIL — auto-seed design.file on order ingest
+
+Slice landed 2026-05-10 (commit on `feature/006-master-plan-coding`). Unblocks
+Defect-2026-05-11-01 / reclassified Defect-2026-05-10-05: empty `data.line_items`
+in Gearment payload because no design.file rows linked.
+
+- [X] T-DF-AUTO-01 [US5] Add `created_via` Selection field to `design.file` (`migration_seed`, `email_ingest`, `api_ingest`, `operator_wizard`; default `operator_wizard`; `tracking=True`; `index=True`; `required=True`). ADR-009 amendment §"Provenance" — distinguishes auto-seeded rows from operator wizard uploads.
+- [X] T-DF-AUTO-02 [US5] Implement `design.file._seed_design_files_from_lines(order, created_via)` instance method — search-before-create on `(order_line_id, file_url)` (mirrors `_seed_from_historical_lines` idempotency at design_file.py:580). Skips empty URLs. Creates rows with `state='pending'`, `storage_mode='url'`, `is_seed=False`. Returns count of newly created rows. Fail-fast `ValueError` if `created_via` not in `{email_ingest, api_ingest}`.
+- [X] T-DF-AUTO-03 [US5] Hook `OrderCreator.process_parse_result` (email path, line ~325) and `OrderCreator.process_etsy_payload` (API path, line ~626) to call seed with `email_ingest` / `api_ingest` markers. API path also adds `design_link_front`/`back` to the inline `line_vals` dict so the channel-agnostic fields land on `sale.order.line` for both ingest sources.
+- [X] T-DF-AUTO-04 [US5] Extend `EtsyLineItemPayload` dataclass with `design_link_front` and `design_link_back` (default `''`). Etsy v3 adapter does not yet populate them; future adapter slice will extract from receipt variations / personalisation. Today the API path is a structural no-op for auto-create, but the channel-agnostic field name lets `_build_line_vals` and `_seed_design_files_from_lines` work uniformly across paths.
+- [X] T-DF-AUTO-05 [US5] Phase 1 DB tests (3) + Phase 2 ORM tests (14) — `multichannel_hub_core/tests/test_phase1_design_file_created_via.py`, `multichannel_hub_core/tests/test_phase2_design_auto_create_seed.py`, `etsy_integration/tests/test_phase2_order_creator_design_seed.py`. Coverage: front-only / back-only / both / empty-skip / idempotent re-run / pre-existing-url-skip / created_via marker / order-with-no-lines / email path E2E / API path E2E / re-ingest no duplicate / order_line ↔ design.file relation.
+- [X] T-DF-AUTO-06 [US5] Post-install migration `migrations/19.0.1.0.35/post-migrate-backfill-created-via.py` — `is_seed=TRUE` rows → `'migration_seed'`; all other existing rows → `'operator_wizard'`. Idempotent (only touches `created_via IS NULL`). Manifest version 19.0.1.0.34 → 19.0.1.0.35.
+
+Follow-ups:
+- P1-DESIGN-API-EXTRACT-LINKS — extend `EtsyApiAdapter` to populate `design_link_front`/`back` on `EtsyLineItemPayload` from receipt `variations`/`personalisation`. Today it ships empty for the API path.
+
 ## Cross-references
 
 - spec.md US1–US7 (each task maps to a User Story phase)
 - plan.md (Stage 4.1 refresh) — module structure, ADR alignments
 - data-model.md — model definitions (referenced per task)
 - research.md R1–R5 — design decisions encoded
-- ADRs: 001 (split), 003 (4-module), 005 (carrier), 006 (storage), 007 (delegation), 009 (file lifecycle), 010 (configurable pipeline), 012 (GDrive failover)
+- ADRs: 001 (split), 003 (4-module), 005 (carrier), 006 (storage), 007 (delegation), 009 (file lifecycle, +Provenance amendment 2026-05-10), 010 (configurable pipeline), 012 (GDrive failover)
