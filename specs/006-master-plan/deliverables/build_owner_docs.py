@@ -37,6 +37,7 @@ OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 XLSX_PATH = os.path.join(OUT_DIR, "Theo_Doi_Du_An_VN.xlsx")
 DOCX_PATH = os.path.join(OUT_DIR, "SRS_He_Thong_Quan_Ly_Don_Hang_VN.docx")
 JIRA_KEYS_PATH = os.path.join(OUT_DIR, "jira_keys.json")
+STATUS_OVERRIDES_PATH = os.path.join(OUT_DIR, "status_overrides.json")
 
 PROJECT_TITLE = "Hệ thống quản lý đơn hàng đa kênh"
 RELEASE_DATE = "Tháng 5/2026"
@@ -466,9 +467,18 @@ def _load_jira_keys():
         return json.load(fh)
 
 
+def _load_status_overrides():
+    """Sidecar map từ ten_ngan -> trạng thái (Đang làm / Hoàn thành / Chặn). Trả về {} nếu chưa có."""
+    if not os.path.exists(STATUS_OVERRIDES_PATH):
+        return {}
+    with open(STATUS_OVERRIDES_PATH, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def build_catalog():
     """Trả về danh sách hạng mục với STT và status mặc định."""
     jira_keys = _load_jira_keys()
+    status_overrides = _load_status_overrides()
     out = []
     for stt, row in enumerate(CATALOG_RAW, start=1):
         nhom, ten_ngan, mo_ta, phong_ban, muc_uu_tien, giai_doan, ghi_chu = row
@@ -481,7 +491,7 @@ def build_catalog():
                 "phong_ban": phong_ban,
                 "muc_uu_tien": muc_uu_tien,
                 "giai_doan": giai_doan,
-                "trang_thai": "Chưa bắt đầu",
+                "trang_thai": status_overrides.get(ten_ngan, "Chưa bắt đầu"),
                 "ghi_chu": ghi_chu,
                 "jira_key": jira_keys.get(ten_ngan, ""),
             }
