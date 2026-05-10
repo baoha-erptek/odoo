@@ -29,6 +29,12 @@ _logger = logging.getLogger(__name__)
 
 _DEFAULT_LARGE_FILE_THRESHOLD_BYTES = 10 * 1024 * 1024  # 10 MB per ADR-006 §2
 
+# P1-DESIGN-URL-VALIDATION: Drive file IDs are alphanumeric + `_-`.
+# Real IDs are 33+ chars; the regex stays permissive on length to
+# survive Drive id-format changes but strict on the character set so
+# the computed `gdrive_preview_url` cannot be hijacked.
+_GDRIVE_FILE_ID_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+
 
 class DesignFile(models.Model):
     _name = 'design.file'
@@ -257,6 +263,50 @@ class DesignFile(models.Model):
                 raise ValidationError(_(
                     "Design file '%(name)s' uses GDrive storage mode but is missing "
                     "file ID and/or folder ID. Both are required.",
+                    name=rec.name or '?',
+                ))
+
+    @api.constrains('file_url')
+    def _check_file_url_scheme(self):
+        """P1-DESIGN-URL-VALIDATION: reject non-http(s) schemes on file_url.
+
+        Defense-in-depth above the production-team write-ACL. The field
+        feeds into outbound payloads to Gearment (printing_options[].url)
+        AND into chatter rendering. Allow `http(s)://` only — reject
+        `javascript:`, `data:`, `file:`, and relative paths so a malicious
+        operator cannot smuggle XSS / SSRF / file-disclosure URLs into
+        downstream consumers.
+        """
+        for rec in self:
+            if not rec.file_url:
+                continue
+            url = rec.file_url.strip()
+            if not (url.lower().startswith('https://') or
+                    url.lower().startswith('http://')):
+                raise ValidationError(_(
+                    "Design file '%(name)s' has an invalid file_url. "
+                    "Only http:// and https:// URLs are accepted; got %(scheme)s.",
+                    name=rec.name or '?',
+                    scheme=url.split(':', 1)[0] if ':' in url else url[:30],
+                ))
+
+    @api.constrains('gdrive_file_id')
+    def _check_gdrive_file_id_format(self):
+        """P1-DESIGN-URL-VALIDATION: enforce Drive id format `[A-Za-z0-9_-]+`.
+
+        Real Drive file IDs are 33+ alphanumeric chars + `_` and `-`.
+        Anything else (path separators, whitespace, URL query chars, HTML
+        tags) lets an attacker control the computed `gdrive_preview_url`
+        and exfiltrate cookies on user click.
+        """
+        for rec in self:
+            if not rec.gdrive_file_id:
+                continue
+            if not _GDRIVE_FILE_ID_RE.match(rec.gdrive_file_id):
+                raise ValidationError(_(
+                    "Design file '%(name)s' has an invalid gdrive_file_id. "
+                    "Only alphanumeric, underscore, and hyphen characters "
+                    "are accepted (Drive id format).",
                     name=rec.name or '?',
                 ))
 
