@@ -25,6 +25,8 @@ from . import test_phase2_shipping_carrier_p2_05
 from . import test_phase2_orm_p2_06
 from . import test_p4_01_b_payload
 from . import test_p4_01_b_adapter
+from . import test_p4_01_c_state_machine_db
+from . import test_p4_01_c_state_machine_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -50,4 +52,8 @@ __all__ = [
     'test_phase2_orm_p2_04',
     'test_phase2_shipping_carrier_p2_05',
     'test_phase2_orm_p2_06',
+    'test_p4_01_b_payload',
+    'test_p4_01_b_adapter',
+    'test_p4_01_c_state_machine_db',
+    'test_p4_01_c_state_machine_orm',
 ]
