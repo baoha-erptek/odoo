@@ -160,32 +160,45 @@ class GearmentApiAdapter:
         precedence over `response_data` (which is the JSON-decoded form
         only set on success). See P4-01-FIX-LOG-LINKAGE +
         feedback_capture_response_body_before_blackbox_probe (memory).
+
+        P4-01-FIX-LOG-LINKAGE-EXCEPTION-PATH (Defect-2026-05-11-02,
+        2026-05-11): writes go through a fresh registry cursor with an
+        explicit ``cr.commit()`` so the audit row survives an outer
+        transaction rollback — caller is expected to ``raise`` after a
+        4xx/5xx, which Odoo's XML-RPC dispatcher then converts to a
+        request-level rollback. The original same-cursor write was
+        rolled back with everything else, leaving operators blind to
+        vendor failures (Defect-05 visibility regression).
         """
         if self.env is None:
             return
+        scrubbed = _scrub_pii(request_payload or {})
+        payload_summary = json.dumps(scrubbed, default=str)[:4000]
+        if response_text is not None:
+            response_summary = response_text[:4000]
+        elif response_data is not None:
+            response_summary = json.dumps(response_data, default=str)[:4000]
+        else:
+            response_summary = None
+        vals = {
+            'sale_order_id': sale_order_id,
+            'endpoint': endpoint,
+            'http_status': http_status,
+            'duration_ms': duration_ms,
+            'request_payload_summary': payload_summary,
+            'response_summary': response_summary,
+            'error_message': error_message,
+            'source': source,
+            'direction': direction,
+        }
         try:
-            scrubbed = _scrub_pii(request_payload or {})
-            payload_summary = json.dumps(scrubbed, default=str)[:4000]
-            if response_text is not None:
-                response_summary = response_text[:4000]
-            elif response_data is not None:
-                response_summary = json.dumps(response_data, default=str)[:4000]
-            else:
-                response_summary = None
+            # Fresh cursor + explicit commit so the row survives even if the
+            # caller (or the request dispatcher) rolls back. See docstring.
             # sudo: cron / system writes only; sale_manager has read-only ACL.
-            # Adapter callers run within trusted Odoo env; bypass record rules
-            # so non-privileged callers still produce audit trail.
-            self.env['gearment.api.log'].sudo().create({
-                'sale_order_id': sale_order_id,
-                'endpoint': endpoint,
-                'http_status': http_status,
-                'duration_ms': duration_ms,
-                'request_payload_summary': payload_summary,
-                'response_summary': response_summary,
-                'error_message': error_message,
-                'source': source,
-                'direction': direction,
-            })
+            with self.env.registry.cursor() as cr:
+                cr_env = self.env(cr=cr)
+                cr_env['gearment.api.log'].sudo().create(vals)
+                cr.commit()
         except Exception:  # noqa: BLE001
             _logger.exception("gearment.api.log write failed; skipping audit row")
 
