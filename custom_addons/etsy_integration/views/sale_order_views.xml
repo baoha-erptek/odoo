@@ -66,6 +66,24 @@
                             <field name="etsy_gift_message"/>
                         </group>
                     </group>
+                    <!--
+                        P4-01-D D4 — read-only Shipping Tracking subsection.
+                        Surfaces existing sale.order.fulfillment fields
+                        (delegated via P1-05 _inherits) inside the Etsy tab.
+                        No new fields, no Etsy-outbound API push — just makes
+                        tracking data discoverable in the operator's natural
+                        workspace. Owner D4: smallest blast radius.
+                    -->
+                    <group>
+                        <group string="Shipping Tracking">
+                            <field name="tracking_number" readonly="1"/>
+                            <field name="shipping_carrier_id" readonly="1"/>
+                            <field name="tracking_state" readonly="1"/>
+                            <field name="shipping_date" readonly="1"/>
+                            <field name="tracking_url" readonly="1"
+                                   widget="url"/>
+                        </group>
+                    </group>
                 </page>
             </xpath>
 

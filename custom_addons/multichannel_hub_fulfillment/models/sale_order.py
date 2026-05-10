@@ -21,7 +21,7 @@ import logging
 from datetime import timedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from ..services import gearment_adapter, gearment_payload_builder
 
@@ -221,13 +221,31 @@ class SaleOrder(models.Model):
             for line in self.order_line
         )
 
+    def _check_ba_shipping_or_raise(self):
+        """FR-017 13th confirmation — gate on `group_ba_shipping`. Mirrors
+        the helper on `gearment.quote.wizard` and `sale.order.line`. Lives
+        here because `action_get_gearment_quote` writes to `x_gearment_*`
+        fields on the order; without this gate, an RPC user with mere
+        sale.order R/W could bypass the form-button's `groups=` UI gate.
+        """
+        user = self.env.user
+        if (user.has_group('multichannel_hub_fulfillment.group_ba_shipping')
+                or user.has_group('base.group_system')):
+            return
+        raise AccessError(_(
+            "Only BA Shipping operators can fetch a Gearment quote."
+        ))
+
     def action_get_gearment_quote(self):
         """Fetch a price quote from Gearment and store on the order.
 
         Transitions `x_gearment_outbound_state` draft→quoted on success.
         E5.b guard: refuses if no order line has `x_gearment_sku` set.
+        FR-017 13th confirmation: `_check_ba_shipping_or_raise()` runs
+        BEFORE any write, so direct RPC by non-shipping users is rejected.
         """
         self.ensure_one()
+        self._check_ba_shipping_or_raise()
         if not self._has_gearment_eligible_lines():
             raise UserError(_(
                 "No Gearment-eligible lines on this order. Set "
