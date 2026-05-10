@@ -41,15 +41,21 @@ class TestOperationsDashboardLineOrm(TransactionCase):
             'is_company': False,
         })
 
+        # Resolve a US state without depending on a specific xmlid that may not exist
+        # (base.state_us_ca is not loaded in all CE installs — RED-gate fixture fix).
+        us_country = cls.env.ref('base.us')
+        us_state = cls.env['res.country.state'].search(
+            [('country_id', '=', us_country.id), ('code', '=', 'CA')], limit=1
+        )
         cls.shipping_partner = cls.env['res.partner'].create({
             'name': 'Test Shipping Address',
             'email': 'ship@example.com',
             'is_company': False,
             'street': '123 Main St',
             'city': 'Springfield',
-            'state_id': cls.env.ref('base.state_us_ca').id,
+            'state_id': us_state.id if us_state else False,
             'zip': '90210',
-            'country_id': cls.env.ref('base.us').id,
+            'country_id': us_country.id,
             'phone': '555-1234',
         })
 
