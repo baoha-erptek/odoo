@@ -3,40 +3,34 @@
     <data noupdate="1">
 
         <!--
-            P1-DASH-MERGE saved filters — naming-based role scoping.
+            P1-01b — saved filters re-bound from sale.order to
+            sale.order.line (model swap mirrors the dashboard view).
+            Domains traverse via related shadows declared on
+            sale.order.line in models/sale_order_line.py (P1-01b T-01b-04).
 
-            Odoo 19 ir.filters has no group_ids field; only user_ids
-            (Many2many res.users). Group-level gating would require a
-            post_init hook to expand groups → users at install time,
-            which goes stale when users join the group later. We
-            instead rely on the filter NAME pattern ("My role: …")
-            for self-selection, with the parent Operations menu still
-            gated by sales_team.group_sale_salesman so non-sales
-            users never reach this dashboard at all.
-
-            RD filter deferred to a follow-up slice per Owner decision
-            (Q1 of P1-DASH-MERGE Phase 0 dispatch). The sentinel test
-            test_no_rd_filter_installed catches accidental scope creep
-            on a future revisit.
+            Naming-based role scoping preserved per P1-DASH-MERGE
+            rationale: ir.filters has no group_ids field; group-level
+            gating would go stale. Operations menu still gated by
+            sales_team.group_sale_salesman.
         -->
 
         <record id="filter_operations_marketing_user" model="ir.filters">
             <field name="name">My role: Marketing — Draft orders</field>
-            <field name="model_id">sale.order</field>
-            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="model_id">sale.order.line</field>
+            <field name="domain">[('order_id.state', '=', 'draft')]</field>
             <field name="action_id" ref="action_operations_dashboard"/>
         </record>
 
         <record id="filter_operations_ba_lead" model="ir.filters">
             <field name="name">My role: BA Lead — Open orders</field>
-            <field name="model_id">sale.order</field>
-            <field name="domain">[('state', 'in', ['draft', 'sale'])]</field>
+            <field name="model_id">sale.order.line</field>
+            <field name="domain">[('order_id.state', 'in', ['draft', 'sale'])]</field>
             <field name="action_id" ref="action_operations_dashboard"/>
         </record>
 
         <record id="filter_operations_production_team" model="ir.filters">
             <field name="name">My role: Production — Ready to ship</field>
-            <field name="model_id">sale.order</field>
+            <field name="model_id">sale.order.line</field>
             <field name="domain">[('production_blocked', '=', False), ('label_status_id', '!=', False)]</field>
             <field name="action_id" ref="action_operations_dashboard"/>
         </record>

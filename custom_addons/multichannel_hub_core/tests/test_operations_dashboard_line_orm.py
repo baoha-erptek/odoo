@@ -272,12 +272,12 @@ class TestOperationsDashboardLineOrm(TransactionCase):
                 "Line label_status_id should mirror order_id.label_status_id "
                 "(via _inherits delegation, no fulfillment_id hop)"
             )
-            # Also test production_blocked delegation
-            order.write({'production_blocked': True})
+            # Also test mp_note delegation (no constraint cascade unlike production_blocked).
+            order.write({'mp_note': 'P1-01b delegation test'})
             self.assertEqual(
-                line.production_blocked,
-                True,
-                "Line production_blocked should mirror order_id.production_blocked"
+                line.mp_note,
+                'P1-01b delegation test',
+                "Line mp_note should mirror order_id.mp_note via _inherits"
             )
         except AttributeError as e:
             self.fail(
@@ -430,16 +430,14 @@ class TestOperationsDashboardLineOrm(TransactionCase):
 
     def test_saved_filters_rebound_to_line_model(self):
         """Test that all saved filters for operations_dashboard target sale.order.line."""
-        filters = self.env['ir.filters'].search([
-            ('name', 'ilike', 'operations_dashboard')
-        ])
-
+        action = self.env.ref('multichannel_hub_core.action_operations_dashboard')
+        filters = self.env['ir.filters'].search([('action_id', '=', action.id)])
         if not filters:
             self.skipTest("No saved filters loaded (may be in RED phase)")
-
         for filt in filters:
+            # ir.filters.model_id is a Selection (model name), not a Many2one.
             self.assertEqual(
-                filt.model_id.model,
+                filt.model_id,
                 'sale.order.line',
                 f"Filter '{filt.name}' should target sale.order.line"
             )
@@ -452,9 +450,9 @@ class TestOperationsDashboardLineOrm(TransactionCase):
         """
         try:
             legacy_menu = self.env.ref('multichannel_hub_core.menu_operations_dashboard_legacy_orders')
-            self.assertIsNotNone(legacy_menu.action_id)
+            self.assertIsNotNone(legacy_menu.action)
             self.assertEqual(
-                legacy_menu.action_id.res_model,
+                legacy_menu.action.res_model,
                 'sale.order',
                 "Legacy menu should open sale.order list for backward compat"
             )

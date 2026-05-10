@@ -75,9 +75,9 @@ class TestOperationsDashboardLineDb(TransactionCase):
                 "Legacy menu menu_operations_dashboard_legacy_orders should exist for UAT fallback"
             )
             # Verify the action it opens targets sale.order
-            if legacy_menu.action_id:
+            if legacy_menu.action:
                 self.assertEqual(
-                    legacy_menu.action_id.res_model,
+                    legacy_menu.action.res_model,
                     'sale.order',
                     "Legacy menu action should open sale.order list"
                 )
@@ -230,17 +230,14 @@ class TestOperationsDashboardLineDb(TransactionCase):
         Queries ir.filters and verifies all rows with name matching
         'operations_dashboard' have model_id == 'sale.order.line'.
         """
-        filters = self.env['ir.filters'].search([
-            ('name', 'ilike', 'operations_dashboard')
-        ])
-
+        action = self.env.ref('multichannel_hub_core.action_operations_dashboard')
+        filters = self.env['ir.filters'].search([('action_id', '=', action.id)])
         if not filters:
-            # Filters may not be loaded yet in RED phase
             self.skipTest("No saved filters found; may not be loaded yet")
-
         for filt in filters:
+            # ir.filters.model_id is a Selection (model name), not a Many2one.
             self.assertEqual(
-                filt.model_id.model,
+                filt.model_id,
                 'sale.order.line',
-                f"Filter '{filt.name}' should target sale.order.line model"
+                f"Filter '{filt.name}' should target sale.order.line"
             )

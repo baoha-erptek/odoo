@@ -139,6 +139,36 @@ class SaleOrder(models.Model):
              "transition.log row in the same transaction.",
     )
 
+    # P1-01b — channel-agnostic order-level fields lifted from owner's daily-ops
+    # Excel (.0temp/Esty main 2 - 15h VN 06 08 2025.xlsx). Coexist with the
+    # etsy_* equivalents in etsy_integration during operator UAT (DECISION 1
+    # in p1-01b-plan.md); cleanup deferred to follow-up slice.
+    gift_message = fields.Char(
+        string='Gift Message',
+        tracking=True,
+        help='Channel-agnostic gift message lifted from buyer-supplied data.')
+    processing_time = fields.Char(
+        string='Processing Time',
+        tracking=True,
+        help='Channel-supplied processing time label (e.g. "1-3 days"). '
+             'Free-text to accommodate channels that ship various encodings.')
+    discount_code = fields.Char(
+        string='Discount Code',
+        tracking=True,
+        help='Channel-supplied discount/promo code applied at checkout.')
+    shipping_service_label = fields.Char(
+        string='Shipping Service Label',
+        tracking=True,
+        help='Operator/channel-supplied shipping service label. Falls back '
+             'to shipping_carrier_id.name in the Operations Dashboard when '
+             'unset.')
+    shipping_cost = fields.Char(
+        string='Shipping Cost (Display)',
+        tracking=True,
+        help='Free-text shipping cost as supplied by the channel; placeholder '
+             'until the delivery module dependency is added per follow-up. '
+             'Channel ingest populates with the raw cost label (e.g. "$4.50").')
+
     _sql_constraints = []  # Reserved for downstream slices.
 
     # NB: the composite (sales_channel, has_pending_address_change) index

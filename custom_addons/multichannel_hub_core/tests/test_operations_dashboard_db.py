@@ -31,7 +31,7 @@ class TestOperationsDashboardMerge(TransactionCase):
         try:
             view = self.env.ref('multichannel_hub_core.operations_dashboard_list_view')
             self.assertIsNotNone(view, "operations_dashboard_list_view should exist")
-            self.assertEqual(view.model, 'sale.order', "View should target sale.order model")
+            self.assertEqual(view.model, 'sale.order.line', "View should target sale.order model")
         except ValueError:
             self.fail("env.ref('multichannel_hub_core.operations_dashboard_list_view') "
                      "raised ValueError; view not found")
@@ -41,7 +41,7 @@ class TestOperationsDashboardMerge(TransactionCase):
         try:
             view = self.env.ref('multichannel_hub_core.operations_dashboard_search_view')
             self.assertIsNotNone(view, "operations_dashboard_search_view should exist")
-            self.assertEqual(view.model, 'sale.order', "Search view should target sale.order model")
+            self.assertEqual(view.model, 'sale.order.line', "Search view should target sale.order model")
         except ValueError:
             self.fail("env.ref('multichannel_hub_core.operations_dashboard_search_view') "
                      "raised ValueError; search view not found")
@@ -52,7 +52,7 @@ class TestOperationsDashboardMerge(TransactionCase):
             action = self.env.ref('multichannel_hub_core.action_operations_dashboard')
             self.assertIsNotNone(action, "action_operations_dashboard should exist")
             self.assertEqual(
-                action.res_model, 'sale.order',
+                action.res_model, 'sale.order.line',
                 "Operations dashboard action should target sale.order model"
             )
             self.assertIn('list', action.view_mode, "Action should include list view")
@@ -112,7 +112,7 @@ class TestOperationsDashboardMerge(TransactionCase):
             self.assertIsNotNone(filter_rec, "filter_operations_marketing_user should exist")
             # ir.filters.model_id is a Selection (Char-like), not a Many2one.
             self.assertEqual(
-                filter_rec.model_id, 'sale.order',
+                filter_rec.model_id, 'sale.order.line',
                 "Marketing filter should apply to sale.order"
             )
             self.assertIsNotNone(filter_rec.domain, "Filter should have a domain defined")
@@ -135,7 +135,7 @@ class TestOperationsDashboardMerge(TransactionCase):
             filter_rec = self.env.ref('multichannel_hub_core.filter_operations_ba_lead')
             self.assertIsNotNone(filter_rec, "filter_operations_ba_lead should exist")
             self.assertEqual(
-                filter_rec.model_id, 'sale.order',
+                filter_rec.model_id, 'sale.order.line',
                 "BA Lead filter should apply to sale.order"
             )
             self.assertIsNotNone(filter_rec.domain, "Filter should have a domain defined")
@@ -155,7 +155,7 @@ class TestOperationsDashboardMerge(TransactionCase):
             filter_rec = self.env.ref('multichannel_hub_core.filter_operations_production_team')
             self.assertIsNotNone(filter_rec, "filter_operations_production_team should exist")
             self.assertEqual(
-                filter_rec.model_id, 'sale.order',
+                filter_rec.model_id, 'sale.order.line',
                 "Production Team filter should apply to sale.order"
             )
             self.assertIsNotNone(filter_rec.domain, "Filter should have a domain defined")
@@ -192,7 +192,7 @@ class TestOperationsDashboardMerge(TransactionCase):
                 "Server action should have a binding_model_id"
             )
             self.assertEqual(
-                action.binding_model_id.model, 'sale.order',
+                action.binding_model_id.model, 'sale.order.line',
                 "Bulk Mark Shipped should be bound to sale.order (unified list)"
             )
 

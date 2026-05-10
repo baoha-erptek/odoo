@@ -18,6 +18,38 @@
               action="action_operations_dashboard"
               sequence="10"/>
 
+    <!-- P1-01b — Legacy fallback menu (R-2026-05-10 mitigation).
+         Recreates the previous sale.order list under Operations
+         → Legacy → Order View (P1-01a) so operators have a familiar
+         fallback during P1-01b UAT.
+         TODO: remove after 2026-05-24 staging UAT sign-off (one sprint). -->
+    <record id="action_operations_dashboard_legacy_orders" model="ir.actions.act_window">
+        <field name="name">Order View (P1-01a Legacy)</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                P1-01a fallback view (sale.order list). Removed after
+                2026-05-24 once P1-01b UAT signs off. Use the new
+                Operations Dashboard for daily work.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_operations_legacy"
+              name="Legacy"
+              parent="menu_operations_root"
+              sequence="90"
+              groups="multichannel_hub_core.group_ba_lead"/>
+
+    <menuitem id="menu_operations_dashboard_legacy_orders"
+              name="Order View (P1-01a)"
+              parent="menu_operations_legacy"
+              action="action_operations_dashboard_legacy_orders"
+              sequence="10"
+              groups="multichannel_hub_core.group_ba_lead"/>
+
     <!-- Explicit deletes so env.ref() returns falsy after upgrade —
          Odoo does not auto-purge ir_model_data rows when XML is
          removed from a module's data list. -->
