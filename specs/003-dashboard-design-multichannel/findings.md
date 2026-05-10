@@ -1259,3 +1259,68 @@ Then:
 - code-reviewer: 4 false-positive CRITICALs **rejected** after diff verification.
 - security-reviewer: APPROVE WITH CONDITIONS — HIGH 1 + MEDIUM 1 applied inline; LOWs declined (already covered or deferred).
 
+
+---
+
+## P1-LBL — Selection→M2O label.status.option (2026-05-10)
+
+Owner directive D2; commit e7bc56d30e0 on feature/006-master-plan-coding.
+
+### Architectural decisions made inline
+
+1. **`group_ba_manager` lives in mhf, not mhc.** Created a separate mhc-local
+   `group_ba_manager` ("BA Manager", senior master-data role) rather than
+   promote mhf's narrower "BA Shipping Manager" cross-module. Two coexist;
+   future consolidation slice TBD.
+2. **`label_status_id` is nullable** (no `required=True`). The legacy Selection
+   had `required=True, default='none'`, but the M2O equivalent
+   (`required=True` + lambda default to `cho_duyet`) breaks the `_inherits`
+   auto-create path on `sale.order.create` because the default lambda runs
+   under SUPERUSER context but the env hasn't loaded the seed yet. Defaulted
+   via post-migration instead.
+3. **Saved-filter rewrite at line 76** — deferred owner-mapping of legacy
+   `'bought'` to a specific seed code. Used `('label_status_id', '!=', False)`
+   (M2O Falsy = "unset", semantic match for legacy `'none'`). P1-LBL-MIGRATE
+   will refine when owner authors the mapping.
+
+### Surprises (memory-worthy)
+
+1. **Odoo 19 migration loader requires HYPHEN prefix.** `/opt/odoo/odoo/modules/migration.py:192`:
+   `if os.path.basename(f).startswith(f"{stage}-")` — `pre_/post_/end_`
+   (underscore) silently skipped. tdd-guide's initial migrations used
+   underscore and were no-ops. Renamed to hyphen + bumped manifest to .31 to
+   force re-fire. **Add to feedback_odoo19_test_gotchas.md.**
+
+2. **Saved filters with `noupdate="1"` skip data-XML updates on `-u`.** Legacy
+   `('label_status', '!=', 'none')` survived the upgrade and broke
+   `sale.order.search`. Required a migration step to UPDATE the existing
+   ir.filters row.
+
+3. **`res.groups.xml_id` does not exist in Odoo 19.** Use
+   `record._get_external_id()` (returns dict). Initial test_acl_grants used
+   `.xml_id` and errored.
+
+4. **`read_group` deprecated in Odoo 19.** `KeyError: '__count'` on the result
+   dict — switched to `search_count` per bucket.
+
+5. **`assertRaises((A, B))` tuple breaks Odoo's `_assertRaises`** (Nth
+   confirmation). Use single class + savepoint pattern.
+
+6. **`.write(vals, context={...})` is invalid Odoo syntax.** Must use
+   `.with_context(...).write(vals)`.
+
+7. **FR-017 gate and ACL are independent layers.** The test BA-manager user
+   needs BOTH `multichannel_hub_core.group_ba_manager` (gate) AND
+   `sales_team.group_sale_salesman` (fulfillment write ACL). Either alone
+   is insufficient.
+
+8. **Hyphen-vs-underscore migration filename trail.** Three migration
+   directories `.29/.30/.31` exist as a result. `.29/.30` are hyphen-renamed
+   reruns of the originally-broken underscore versions; `.31` is the
+   combined idempotent fixup. Kept all three so any environment mid-upgrade
+   from .28 lands cleanly regardless of which dir was last successfully run.
+
+### Approvals
+
+- code-reviewer: APPROVE (0 CRITICAL/HIGH; 2 MEDIUM doc-only).
+- security-reviewer: APPROVE (0 CRITICAL/HIGH/MEDIUM/LOW).
