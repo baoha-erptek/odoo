@@ -246,6 +246,14 @@ def make_products():
             else:
                 prod = Product.create(vals)
             prod.product_tmpl_id.x_default_pipeline_id = pipeline.id
+            # Gearment requires a NUMERIC catalog id in line_items[].legacy_id.
+            # Demo data uses the template id directly so re-runs are stable and
+            # operators can trace a SKU back to the template row. Real catalog
+            # ids replace this when production product master is loaded. The
+            # seed unconditionally writes (no "if empty" guard) so stale
+            # non-numeric values from earlier E2E runs get corrected on re-seed.
+            if code == 'gearment_pod':
+                prod.product_tmpl_id.x_gearment_sku = str(prod.product_tmpl_id.id)
             prods.append(prod)
         out[code] = prods
         _logger.info("Pipeline %s → %d products", code, len(prods))

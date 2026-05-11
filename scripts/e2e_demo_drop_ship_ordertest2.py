@@ -738,8 +738,10 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
     # _write_pipeline_state hook → auto-push doesn't fire. Two fixups
     # to demonstrate the doc's "Routing → Gearment" arrow:
     #   (a) ensure each line's product has x_gearment_sku (gating field
-    #       used by _gearment_push_should_fire); demo seed defaults
-    #       missing values to a synthetic SKU "DEMO-<product_id>".
+    #       used by _gearment_push_should_fire); demo backfill uses the
+    #       template id so _safe_int parses it (Gearment requires a
+    #       numeric catalog id in line_items[].legacy_id — non-numeric
+    #       strings coerce to 0 and trigger oneof_variant_id_legacy_id).
     #   (b) explicitly call sale.order.action_push_to_gearment, which
     #       is the public RPC-friendly entry point bypassed by the
     #       guard-context write above.
@@ -759,7 +761,7 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
             tmpl_id = prod["product_tmpl_id"][0]
             rpc(
                 ctx, "admin", "product.template", "write",
-                [[tmpl_id], {"x_gearment_sku": f"DEMO-T-{tmpl_id}"}],
+                [[tmpl_id], {"x_gearment_sku": str(tmpl_id)}],
             )
     try:
         rpc_void(
