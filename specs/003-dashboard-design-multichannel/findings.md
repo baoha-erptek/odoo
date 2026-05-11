@@ -1491,3 +1491,81 @@ Selection (not a UNIQUE). Migration script in
 `migrations/19.0.1.0.35/post-migrate-backfill-created-via.py` only touches
 rows where `created_via IS NULL`, so it's safe to re-run.
 
+
+## P1-DESIGN-WIZ-ATTACH-SCOPE — attachment-ownership gate landed (2026-05-11)
+
+Defense-in-depth security follow-up to P1-DESIGN-MULTI-UPLOAD (§1143).
+Added explicit ownership check at the top of
+`design.file.upload.wizard._do_upload_for_attachment`. **17th FR-017
+confirmation**.
+
+### Gate logic (final, after security review)
+
+```python
+wizard_carve_out = (
+    attachment.res_model == 'design.file.upload.wizard'
+    and attachment.res_id == self.id
+)
+if (
+    attachment.create_uid.id != self.env.user.id
+    and not wizard_carve_out
+):
+    raise AccessError(_("You can only upload files that you created or that are attached to this wizard."))
+```
+
+The carve-out's `res_id == self.id` clause was added during security review
+(CRITICAL-1). Without it, an attacker could `write`
+`res_model='design.file.upload.wizard'` on an arbitrary orphan attachment they
+own and donate it to another user's wizard — bypassing the gate.
+
+### Surprises (memory-worthy)
+
+1. **Odoo M2M descriptors silently filter unreadable records.** When user_b
+   accesses `wizard.attachment_ids` and the env user lacks read access on an
+   attachment (per base `ir.attachment` record rules), Odoo returns the M2M
+   recordset with the unreadable record SILENTLY ELIDED — no AccessError, no
+   warning. So integration tests constructing cross-tenant scenarios via
+   plain `with_user(other_user)` find that `self.attachment_ids` is empty
+   from user_b's env and the gate at `_do_upload_for_attachment` never fires.
+   This means our gate is correctly the "second line of defense" — base rules
+   are the first. To exercise the gate in tests, call
+   `_do_upload_for_attachment` directly (and construct the cross-user
+   attachment via sudo to simulate a base-rule bypass).
+
+2. **`sudo().create({'create_uid': owner_id, ...})` IGNORES `create_uid` in
+   vals.** Sudo elevates env.user to superuser, which is what Odoo
+   auto-stamps onto `create_uid`. The `create_uid` value passed in vals is
+   silently overridden. Tests that need a specific `create_uid` must use
+   `env['model'].with_user(owner).create({...})` (no sudo) and construct the
+   record via a code path that doesn't trip ACL/record rules — for orphan
+   `ir.attachment` (no `res_model` link), this works because base
+   `ir.attachment.create` only checks the linked-record write ACL when
+   `res_model` is set.
+
+3. **`ir.attachment.create` checks WRITE access on the linked record**
+   (`res_model`/`res_id`) at line 784 of base `ir_attachment.py`. Non-admin
+   users cannot link attachments to records they don't own (e.g., a generic
+   sale.order). For test fixtures, prefer orphan attachments
+   (`res_model=False, res_id=0`) when the test only needs ownership semantics.
+
+4. **Carve-outs on Odoo selectors must check BOTH `res_model` AND `res_id`
+   together.** A res_model-only carve-out is bypassable: any user with write
+   access to `ir.attachment` can flip `res_model` on an orphan attachment
+   they own to a value matching the carve-out and donate it. Always tighten
+   the carve-out to also assert `res_id == <expected_record_id>`.
+
+### Tests
+
+5 tests, all pass:
+- `test_upload_own_attachment_succeeds_end_to_end` — full integration positive
+- `test_gate_blocks_cross_user_attachment` — direct gate call, cross-user → AccessError
+- `test_gate_allows_wizard_res_model_carve_out` — direct gate call,
+  res_model='design.file.upload.wizard' AND res_id=wizard.id → accepted
+- `test_gate_rejects_orphan_with_wizard_res_model_spoofed` — direct gate call,
+  res_model spoofed but res_id=0 → AccessError (CRITICAL-1 regression)
+- `test_gate_allows_caller_owned_attachment` — direct gate call,
+  caller owns attachment → accepted
+
+### Manifest
+
+mhc 19.0.1.0.35 → 19.0.1.0.36.

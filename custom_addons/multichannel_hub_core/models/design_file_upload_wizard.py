@@ -127,7 +127,35 @@ class DesignFileUploadWizard(models.TransientModel):
             self._do_upload_for_mode()
 
     def _do_upload_for_attachment(self, attachment):
-        """Per-attachment dispatch reusing the storage_mode-specific helpers."""
+        """Per-attachment dispatch reusing the storage_mode-specific helpers.
+
+        FR-017 defense-in-depth (P1-DESIGN-WIZ-ATTACH-SCOPE): explicit
+        attachment-ownership gate. Odoo base ``ir.attachment`` record rules
+        already constrain visibility, but we enforce a per-model gate as a
+        second line of defense in case base rules are bypassed (e.g.,
+        upstream sudo() write paths or a future relaxed record rule).
+
+        Allowed:
+        - ``attachment.create_uid == self.env.user`` (operator's own upload)
+        - ``attachment.res_model == 'design.file.upload.wizard'`` AND
+          ``attachment.res_id == self.id`` (carve-out for attachments
+          auto-created by the many2many_binary widget for THIS wizard
+          instance). The ``res_id == self.id`` check closes the bypass
+          where an attacker could ``write`` ``res_model`` to an arbitrary
+          orphan attachment they own and donate it to another wizard.
+        """
+        wizard_carve_out = (
+            attachment.res_model == 'design.file.upload.wizard'
+            and attachment.res_id == self.id
+        )
+        if (
+            attachment.create_uid.id != self.env.user.id
+            and not wizard_carve_out
+        ):
+            raise AccessError(
+                _("You can only upload files that you created or that are attached to this wizard.")
+            )
+
         blob = (
             base64.b64decode(attachment.datas) if attachment.datas else b''
         )
