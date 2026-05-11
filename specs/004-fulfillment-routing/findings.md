@@ -734,4 +734,17 @@ Defects surfaced during E2E runs on staging that map to this spec. Each row link
 | 2026-05-10 | §6 | Defect-2026-05-10-03: gearment.api.log on failure path missing sale_order_id, http_status (=0), direction; stored URL path mismatch | MEDIUM | P4-01-FIX-LOG-LINKAGE | closed |
 | 2026-05-10 | §8b | Defect-2026-05-10-04: GKE logistics.partner has empty gdrive_archive_folder_id; processed files accumulate in inbox | MEDIUM | P2-FIX-ARCHIVE-FOLDER (proposed) | surfaced |
 | 2026-05-10 | §6 (post-fix) | Defect-2026-05-10-05: After P4-01-FIX-PAYLOAD-SCHEMA landed, Gearment still rejects `printing_options[].location_code='front'`. 12 probe variants exhausted (snake_case/camelCase/UPPER + enum constants + URL-companion keys) — opaque validator. Needs Gearment API support engagement to get canonical schema. | HIGH | P4-01-FIX-PRINTING-OPTIONS (proposed) | surfaced |
+| 2026-05-12 | §E3 | Defect-2026-05-12-02: Demo product templates seeded with non-numeric `x_gearment_sku` (`DEMO-T-{id}` from `scripts/e2e_demo_drop_ship_ordertest2.py`; stale `GMT-DEMO-EMAIL-*` on staging templates 13/14/16/17). `_safe_int` coerced these to 0; Gearment 400 with `oneof_variant_id_legacy_id`. Vendor double-reports `printing_options` error from the same invariant — do NOT chase per memory `feedback_fix_observability_before_chasing_symptoms.md`. | MEDIUM | P0-FIX-DEMO-NUMERIC-SKU | **closed** 2026-05-12 c09db19bd0f |
+
+---
+
+## 2026-05-12 (P0-FIX-DEMO-NUMERIC-SKU spec-drift note)
+
+Two surprises surfaced during the slice that are worth carrying forward:
+
+**1. Planner agent missed a second seed surface.** The dispatched planner read `deployment/scripts/seed-demo-esty.py` + `gearment_payload_builder._safe_int` + the `x_gearment_sku` field def, and produced a clean plan — but never grepped the wider repo for `x_gearment_sku` writes. The orchestrator's pre-Phase-2 grep found `scripts/e2e_demo_drop_ship_ordertest2.py:762` writing `f"DEMO-T-{tmpl_id}"` — that was actually the source of the bad SKUs on staging templates (per the defect doc). The seed-demo-esty script itself wasn't writing the field at all. **Carry-forward**: when slice scope is "fix demo data," planner prompts must explicitly require a repo-wide grep for *every* write site of the affected field, not just the script the defect names. The grep takes 2 seconds and prevents shipping a half-fix that misses the actually-broken code path.
+
+**2. `GMT-DEMO-EMAIL-NNNN` pattern not in any code path.** Defect-2026-05-12-02 named two patterns of bad SKUs: `GMT-DEMO-EMAIL-*` (templates 13/14/16/17) and `DEMO-T-*` (template 18). The slice patches the `DEMO-T-*` source; the `GMT-DEMO-EMAIL-*` pattern doesn't appear in any current Python file. It's either operator-manual residue or from a removed seeder. **Carry-forward**: the unconditional write in `seed-demo-esty.py make_products` (no `if empty` guard) forward-corrects stale values on re-seed, so the deployment workflow naturally cleans this up without needing a one-shot data migration.
+
+**Trivial-slice shortcut applied**: this slice qualifies for the playbook's "≤50 LOC, no business logic" shortcut (actual diff: +13/-3). Phase 1/2 tests deferred because `multichannel_hub_fulfillment/tests/test_p4_01_fix_payload_schema.py::test_builder_sets_legacy_id_from_numeric_sku` already proves the invariant — numeric `x_gearment_sku='1234'` produces `payload.line_items[0].legacy_id=1234`. The only thing this slice changes is which numeric value goes in; the parsing surface is unchanged. Documented in commit body so the skip is auditable.
 
