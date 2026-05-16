@@ -20,6 +20,9 @@ ADRs for the multichannel e-commerce hub. Each ADR captures a single significant
 | [005](ADR-005-carrier-unification.md) | Unified carrier model via `shipping.carrier` | Proposed | Specs 003, 004a, 005 |
 | [006](ADR-006-design-file-storage.md) | Design file storage — filestore/URL only, 10 MB cap | Proposed | Specs 003, 004 |
 | [007](ADR-007-fulfillment-delegation-mixin.md) | `sale.order.fulfillment` delegation mixin | Proposed | Specs 003, 004 |
+| [013](ADR-013-etsy-listing-architecture.md) | Etsy listing model architecture & product mapping | Accepted | Spec 008 |
+
+> Note: ADR-008–012 exist on disk but were never added to this index (pre-existing doc drift, flagged in `specs/008-listings-inventory-sync/findings.md`). ADR-013 added here so Spec 008's load-bearing decision is discoverable.
 
 ## How to use
 
