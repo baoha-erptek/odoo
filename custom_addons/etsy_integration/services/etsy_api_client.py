@@ -119,10 +119,11 @@ class EtsyApiClient:
 
     def _session(self) -> requests.Session:
         session = requests.Session()
-        # Direct dict assignment so tests that patch `requests.Session` and
-        # check `session.headers` see a real dict (not a Mock).
+        # P1-10: pull plaintext through the Fernet helper. The raw
+        # column holds ciphertext; reading it directly into the
+        # Authorization header would 401 every request.
         session.headers = {
-            'Authorization': f'Bearer {self.shop.sudo().etsy_oauth_access_token}',
+            'Authorization': f'Bearer {self.shop._get_access_token()}',
             'x-api-key': self.client_id,
             'Accept': 'application/json',
         }
@@ -150,7 +151,7 @@ class EtsyApiClient:
         try:
             payload = etsy_oauth.refresh_access_token(
                 self.client_id,
-                self.shop.sudo().etsy_oauth_refresh_token,
+                self.shop._get_refresh_token(),
             )
         except (requests.RequestException, KeyError, ValueError) as exc:
             raise ValueError(f"Etsy token refresh failed: {exc}") from exc
@@ -162,16 +163,17 @@ class EtsyApiClient:
             raise ValueError(
                 "Etsy token refresh failed: missing access/refresh in response"
             )
-        write_vals = {
-            'etsy_oauth_access_token': access_token,
-            'etsy_oauth_refresh_token': refresh_token,
-        }
+        # P1-10: route through Fernet-encrypting helpers; raw columns
+        # hold ciphertext.
+        self.shop._set_access_token(access_token)
+        self.shop._set_refresh_token(refresh_token)
         if expires_in:
             # Store as naive UTC to match the convention used elsewhere.
-            write_vals['etsy_oauth_token_expires_at'] = (
-                datetime.utcnow() + timedelta(seconds=int(expires_in))
-            )
-        self.shop.sudo().write(write_vals)
+            self.shop.sudo().write({
+                'etsy_oauth_token_expires_at': (
+                    datetime.utcnow() + timedelta(seconds=int(expires_in))
+                ),
+            })
 
     def _send_with_429_retry(self, session, method, url, **kwargs):
         """Single 429-retry loop. Returns the final response (any status)

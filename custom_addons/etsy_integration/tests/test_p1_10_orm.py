@@ -45,8 +45,11 @@ class TestFernetCrypto(TransactionCase):
 
         plaintext = 'test_token_plaintext_12345'
 
-        ciphertext = encrypt(plaintext)
-        decrypted = decrypt(ciphertext)
+        # P1-10: encrypt/decrypt take env explicitly — Odoo 19
+        # dropped the implicit Environment.envs class attribute, so
+        # signature evolved during GREEN.
+        ciphertext = encrypt(plaintext, self.env)
+        decrypted = decrypt(ciphertext, self.env)
 
         self.assertEqual(
             decrypted,
@@ -73,11 +76,13 @@ class TestFernetCrypto(TransactionCase):
             "DELETE FROM ir_config_parameter WHERE key = %s",
             ('etsy.oauth.fernet_key',)
         )
-        self.env['ir.config_parameter'].clear_caches()
+        # Odoo 19 dropped Model.clear_caches(); the canonical path
+        # is registry.clear_cache(<stable cache name>).
+        self.env.registry.clear_cache('stable')
 
         # Now trying to decrypt should raise ValueError
         with self.assertRaises(ValueError) as cm:
-            decrypt('gAAAAA_dummy_ciphertext_')
+            decrypt('gAAAAA_dummy_ciphertext_', self.env)
 
         self.assertIn(
             'key',
@@ -102,7 +107,7 @@ class TestFernetCrypto(TransactionCase):
         plaintext = 'test_plaintext'
 
         # Encrypt with the current key
-        ciphertext = encrypt(plaintext)
+        ciphertext = encrypt(plaintext, self.env)
 
         # Corrupt the key by setting a different one
         from cryptography.fernet import Fernet
@@ -113,11 +118,13 @@ class TestFernetCrypto(TransactionCase):
         )
 
         # Clear Odoo's ICP cache so the next call picks up the new key
-        self.env['ir.config_parameter'].clear_caches()
+        # Odoo 19 dropped Model.clear_caches(); the canonical path
+        # is registry.clear_cache(<stable cache name>).
+        self.env.registry.clear_cache('stable')
 
         # Decrypt with the wrong key should raise InvalidToken
         with self.assertRaises(InvalidToken):
-            decrypt(ciphertext)
+            decrypt(ciphertext, self.env)
 
     def test_lazy_key_generation_is_idempotent(self):
         """Test that concurrent (simulated) callers see the same generated key.
@@ -140,7 +147,7 @@ class TestFernetCrypto(TransactionCase):
         plaintext = 'test_plaintext_for_idempotency'
 
         # First "caller": encrypt (triggers lazy key generation if missing)
-        ciphertext1 = encrypt(plaintext)
+        ciphertext1 = encrypt(plaintext, self.env)
 
         # Read the generated key
         self.env.cr.execute(
@@ -152,11 +159,11 @@ class TestFernetCrypto(TransactionCase):
         key1 = row[0]
 
         # Decrypt and verify it works
-        decrypted1 = decrypt(ciphertext1)
+        decrypted1 = decrypt(ciphertext1, self.env)
         self.assertEqual(decrypted1, plaintext)
 
         # Second "caller": encrypt again (key already exists)
-        ciphertext2 = encrypt(plaintext)
+        ciphertext2 = encrypt(plaintext, self.env)
 
         # Verify the key is still the same
         self.env.cr.execute(
@@ -172,7 +179,7 @@ class TestFernetCrypto(TransactionCase):
         )
 
         # Decrypt the second ciphertext and verify it matches
-        decrypted2 = decrypt(ciphertext2)
+        decrypted2 = decrypt(ciphertext2, self.env)
         self.assertEqual(decrypted2, plaintext)
 
     def test_encrypted_output_is_unique(self):
@@ -190,8 +197,8 @@ class TestFernetCrypto(TransactionCase):
 
         plaintext = 'test_plaintext_for_uniqueness'
 
-        ciphertext1 = encrypt(plaintext)
-        ciphertext2 = encrypt(plaintext)
+        ciphertext1 = encrypt(plaintext, self.env)
+        ciphertext2 = encrypt(plaintext, self.env)
 
         self.assertNotEqual(
             ciphertext1,
@@ -506,6 +513,16 @@ class TestTokenHelpers(TransactionCase):
         super().setUpClass()
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
 
+        # Stub _read_credentials so EtsyApiClient can be instantiated
+        # without /opt/odoo/secrets/credentials.json existing in the
+        # test container (the file is bind-mounted in real deploys).
+        cls._creds_patcher = mock.patch(
+            'odoo.addons.etsy_integration.services.etsy_api_client._read_credentials',
+            return_value={'client_id': 'test_client_id'},
+        )
+        cls._creds_patcher.start()
+        cls.addClassCleanup(cls._creds_patcher.stop)
+
     def setUp(self):
         super().setUp()
         # Create a test shop for each test
@@ -564,10 +581,18 @@ class TestTokenHelpers(TransactionCase):
         except ImportError:
             self.fail("EtsyApiClient not yet implemented (RED OK)")
 
-        # Set an encrypted token on the shop
+        # Set an encrypted token on the shop, then snapshot the
+        # ciphertext BEFORE the refresh so the after-comparison is
+        # meaningful (both snapshots must read the same column).
         old_plaintext = 'old_access_token_xyz'
         self.shop._set_access_token(old_plaintext)
         self.shop._set_refresh_token('old_refresh_token_abc')
+
+        self.env.cr.execute(
+            "SELECT etsy_oauth_access_token FROM etsy_shop WHERE id = %s",
+            (self.shop.id,),
+        )
+        old_ciphertext = self.env.cr.fetchone()[0]
 
         new_response = {
             'access_token': 'new_access_token_refreshed',
@@ -603,9 +628,6 @@ class TestTokenHelpers(TransactionCase):
                 row = self.env.cr.fetchone()
                 new_ciphertext = row[0]
 
-                # New ciphertext must be different from old
-                self.shop.refresh()
-                old_ciphertext = self.shop.etsy_oauth_access_token
                 self.assertNotEqual(
                     new_ciphertext,
                     old_ciphertext,
@@ -630,6 +652,10 @@ class TestTokenHelpers(TransactionCase):
 
         plaintext = 'plaintext_bearer_token_xyz'
         self.shop._set_access_token(plaintext)
+        # EtsyApiClient.__init__ validates both tokens are present;
+        # supply a refresh token too even though this test only
+        # asserts the Bearer-header construction.
+        self.shop._set_refresh_token('plaintext_refresh_token_xyz')
 
         # Mock the requests library
         with mock.patch(

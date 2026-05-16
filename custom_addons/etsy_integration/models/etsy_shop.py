@@ -103,6 +103,86 @@ class EtsyShop(models.Model):
             'context': {'default_etsy_shop_id': self.id},
         }
 
+    # ------------------------------------------------------------------
+    # P1-10: Fernet-at-rest token helpers.
+    #
+    # Decision D-P1-10-01 (helper-method indirection over raw Char
+    # columns): callers route through these four helpers; the columns
+    # store Fernet ciphertext, the helpers handle encrypt/decrypt at
+    # the boundary. Production callers: `controllers/etsy_oauth.py` on
+    # token persistence; `services/etsy_api_client.py` on refresh +
+    # session-header reads. Direct `.etsy_oauth_access_token` reads
+    # outside these call sites are a regression (see findings.md
+    # §P1-10 for the grep-CI gate).
+    #
+    # sudo() rationale: the three token columns carry
+    # `groups='base.group_system'` (P0-14) so non-system writes/reads
+    # raise AccessError. The cron + controller paths run under the
+    # cron actor (system) or under the OAuth callback (system after
+    # check_access_rule on the shop); calling user may not be system,
+    # so we sudo at the boundary inside each helper.
+    # ------------------------------------------------------------------
+
+    def _get_access_token(self) -> str:
+        """Decrypt and return the Etsy access token; '' if unset.
+
+        Lazy-migration fallback (D-P1-10-03): if the column holds a
+        non-Fernet value (P0-14 plaintext from before this slice),
+        return it as-is and log once. Next refresh writes ciphertext
+        via `_set_access_token`.
+        """
+        self.ensure_one()
+        ciphertext = self.sudo().etsy_oauth_access_token or ''
+        if not ciphertext:
+            return ''
+        if not ciphertext.startswith('gAAAAA'):
+            _logger.warning(
+                "etsy.shop[id=%s] token column holds non-Fernet content "
+                "(P0-14 plaintext); returning as-is. Re-encrypt by "
+                "running a token refresh.", self.id,
+            )
+            return ciphertext
+        from ..services.fernet_crypto import decrypt
+        return decrypt(ciphertext, self.env)
+
+    def _set_access_token(self, plaintext: str) -> None:
+        """Encrypt and persist the Etsy access token. '' clears the column."""
+        self.ensure_one()
+        from ..services.fernet_crypto import encrypt
+        ciphertext = encrypt(plaintext, self.env) if plaintext else False
+        self.sudo().write({'etsy_oauth_access_token': ciphertext})
+        # Flush so callers reading the raw column via SQL (audit
+        # tooling, drift checks) see the ciphertext immediately.
+        self.sudo().flush_recordset(['etsy_oauth_access_token'])
+
+    def _get_refresh_token(self) -> str:
+        """Decrypt and return the Etsy refresh token; '' if unset.
+
+        Same lazy-migration fallback as `_get_access_token` —
+        non-Fernet values are returned as-is for the one-call
+        migration window.
+        """
+        self.ensure_one()
+        ciphertext = self.sudo().etsy_oauth_refresh_token or ''
+        if not ciphertext:
+            return ''
+        if not ciphertext.startswith('gAAAAA'):
+            _logger.warning(
+                "etsy.shop[id=%s] refresh-token column holds non-Fernet "
+                "content (P0-14 plaintext); returning as-is.", self.id,
+            )
+            return ciphertext
+        from ..services.fernet_crypto import decrypt
+        return decrypt(ciphertext, self.env)
+
+    def _set_refresh_token(self, plaintext: str) -> None:
+        """Encrypt and persist the Etsy refresh token. '' clears the column."""
+        self.ensure_one()
+        from ..services.fernet_crypto import encrypt
+        ciphertext = encrypt(plaintext, self.env) if plaintext else False
+        self.sudo().write({'etsy_oauth_refresh_token': ciphertext})
+        self.sudo().flush_recordset(['etsy_oauth_refresh_token'])
+
     @api.model
     def _cron_sync_orders(self):
         """Scheduled action: incremental Etsy receipts sync per shop.

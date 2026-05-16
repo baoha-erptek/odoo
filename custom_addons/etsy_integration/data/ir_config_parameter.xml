@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    P1-10: Fernet-at-rest encryption key for Etsy OAuth tokens.
+
+    Empty initial value — `services/fernet_crypto._get_or_generate_key`
+    lazy-generates the actual Fernet key on the first encrypt() call,
+    serialised via pg_advisory_xact_lock so concurrent requests can
+    never persist different keys.
+
+    Read access gated to base.group_system via the get_param override
+    in `models/ir_config_parameter.py` (decision D-P1-10-02).
+
+    noupdate=1 — the empty placeholder is created once at install and
+    must never be reset on subsequent -u runs (that would orphan all
+    encrypted tokens in production).
+-->
+<odoo noupdate="1">
+    <record id="etsy_oauth_fernet_key" model="ir.config_parameter">
+        <field name="key">etsy.oauth.fernet_key</field>
+        <field name="value"></field>
+    </record>
+</odoo>

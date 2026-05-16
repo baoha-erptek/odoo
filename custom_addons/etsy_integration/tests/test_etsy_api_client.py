@@ -397,10 +397,11 @@ class TestEtsyApiClient401Refresh(TransactionCase):
 
         # Verify refresh was called
         self.assertTrue(mock_refresh.called)
-        # Verify shop record was updated (Odoo 19: invalidate_recordset, no .refresh())
+        # Verify shop record was updated (Odoo 19: invalidate_recordset, no .refresh()).
+        # P1-10: raw columns hold Fernet ciphertext now; verify via the decrypt helpers.
         self.shop.invalidate_recordset()
-        self.assertEqual(self.shop.sudo().etsy_oauth_access_token, 'new_access_token')
-        self.assertEqual(self.shop.sudo().etsy_oauth_refresh_token, 'new_refresh_token')
+        self.assertEqual(self.shop._get_access_token(), 'new_access_token')
+        self.assertEqual(self.shop._get_refresh_token(), 'new_refresh_token')
         # Verify ping succeeded
         self.assertEqual(result, {'user_id': 12345})
 

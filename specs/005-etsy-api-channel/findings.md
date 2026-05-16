@@ -456,3 +456,31 @@ The slice ships the adapter + parity proof. The email-polling cron in `etsy_inte
 - `8f9384eb9bd` test(P0-22): RED — 9-field parity tests + golden-fixture acceptance
 - `23b419b49e6` feat(P0-22): GREEN — Etsy ingest parity via EtsyEmailAdapter
 
+
+---
+
+## P1-10 — Production OAuth + Fernet-at-rest token encryption (2026-05-16)
+
+### What shipped
+
+- **Fernet-at-rest** for the 3 `etsy.shop` token columns. Decision D-P1-10-01: helper-method indirection (`_get/_set_access_token`, `_get/_set_refresh_token`) over the raw Char columns rather than a custom field type — minimal schema change, preserves P0-14's `groups='base.group_system'` ACL. All production callers (OAuth callback + `EtsyApiClient` session header + refresh) route through helpers.
+- **Lazy instance key** in `ir.config_parameter.etsy.oauth.fernet_key`, generated on first `encrypt()` under `pg_advisory_xact_lock` with re-read-after-lock (D-P1-10-02, mitigates R-P1-10-7 concurrent-generation race). `get_param` override in `models/ir_config_parameter.py` gates `_SENSITIVE_KEYS` to system, treating `env.su` as a trust marker.
+- **Lazy P0-14 plaintext migration** (D-P1-10-03): `_get_*` returns non-`gAAAAA` content as-is + WARN; next refresh re-writes ciphertext. No migration script.
+- **Scope assertion** (D-P1-10-04/05/06): callback hard-fails 400 if granted scopes ≠ 4 E1-approved set or if `conversations_r` present; durable `etsy.api.log` row `source='scope_validation'` via fresh registry cursor + commit (survives the 400 rollback); token PII deliberately excluded.
+- Credential plumbing audited: `client_id/secret` read from `secrets/credentials.json` (path overridable via ICP `etsy.oauth.credentials_path`), no hard-coded secrets. Operator runbook authored at `operator-runbook.md`.
+
+### Surprises / non-obvious
+
+- **Signature drift RED→GREEN**: RED test contract was `encrypt(plaintext)`; GREEN clarified to `encrypt(plaintext, env)` because Odoo 19 dropped the implicit `Environment.envs` class attribute — the crypto helper has no ambient env. Contract (round-trip under one instance key) unchanged; documented in the module docstring.
+- **`env.su` as trust boundary**: in Odoo 19 `sudo()` sets `env.su=True` without changing `env.uid`, so `env.user._is_system()` alone rejects sudo-with-non-admin-user paths (the `auth='public'` OAuth callback). The gate accepts `env.su` as equivalent to system membership. Future code must keep `.sudo()` reachable only from trusted paths — flagged for the grep-CI gate (R-P1-10-6, deferred).
+- **Pre-existing `_logger.info`** at `etsy_api_log.py:128` (retention sweep) is out-of-slice and operational, not debug — left untouched per surgical-changes rule; reviewer concurred.
+
+### Tests
+
+- 19 P1-10 tests green (`TestP1_10Schema` + `TestFernetCrypto` + `TestScopeValidation` + `TestTokenHelpers`), 0 failed/0 errors. Module `-u etsy_integration` clean.
+- `ruff` not installed in the local shell — plan §5 says "if available"; skipped, noted. Not a blocker.
+
+### Reviews
+
+- code-reviewer: **PASS** — 0 CRITICAL/HIGH. 1 MEDIUM (vacuous assertion in `test_authorization_header_uses_plaintext` — mock never called) noted for optional follow-up; behaviour itself is correct and covered by `test_refresh_token_round_trip_through_api_client`.
+- security-reviewer: **PASS** — 0 CRITICAL/HIGH. Confirmed audit-row PII scrubbing, sudo justification, advisory-lock race mitigation, scope-bypass resistance. Recommended documenting the `env.su` trust-boundary invariant (done above).

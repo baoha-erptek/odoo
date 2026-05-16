@@ -62,11 +62,12 @@ class TestEtsyApiLog_Model(TransactionCase):
         )
 
     def test_source_selection_includes_all_values(self):
-        """Source field Selection includes all 10 required values.
+        """Source field Selection includes all 11 required values.
 
         Originally 8; extended to 10 in P3-LEAD-DEDUPE (T008) with
-        'conversation_sync' (Etsy Conversations API) and 'message_send'
-        (outbound buyer reply, P1-MSG-* slices).
+        'conversation_sync' and 'message_send'; extended to 11 in
+        P1-10 (D-P1-10-05) with 'scope_validation' (OAuth scope
+        assertion audit rows).
         """
         field = self.env['etsy.api.log']._fields['source']
         selection = field.selection
@@ -78,6 +79,7 @@ class TestEtsyApiLog_Model(TransactionCase):
             'audit', 'sync', 'tracking_push', 'webhook_register',
             'listing_push', 'listing_pull', 'buyer_message_sync',
             'health_check', 'conversation_sync', 'message_send',
+            'scope_validation',
         ]
 
         for source in required_sources:
@@ -86,8 +88,8 @@ class TestEtsyApiLog_Model(TransactionCase):
                 f"Source '{source}' missing from selection"
             )
         self.assertEqual(
-            len(selection_keys), 10,
-            f"Selection should have exactly 10 values, got {len(selection_keys)}"
+            len(selection_keys), 11,
+            f"Selection should have exactly 11 values, got {len(selection_keys)}"
         )
 
     def test_source_selection_rejects_invalid_value(self):

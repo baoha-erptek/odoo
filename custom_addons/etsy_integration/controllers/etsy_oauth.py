@@ -4,12 +4,16 @@ The authorize route generates a PKCE verifier+challenge, persists the
 verifier (keyed by a random `state` UUID) into `ir.config_parameter`, and
 redirects the logged-in user to Etsy's /oauth/connect endpoint. The
 callback route validates the state, retrieves the verifier, exchanges
-the code for tokens via the helper in `services.etsy_oauth`, and stores
-the tokens on the targeted `etsy.shop` row.
+the code for tokens via the helper in `services.etsy_oauth`, asserts
+the granted scope set matches the four approved scopes, and persists
+the tokens on the targeted `etsy.shop` row via the Fernet-encryption
+helpers on `etsy.shop`.
 
-Sandbox-only notes (P0-14, 2026-04-27): tokens are plaintext on
-etsy.shop with `groups='base.group_system'`. Phase 1 (P1-10) introduces
-Fernet-at-rest encryption per Spec 005 findings Q2.
+P1-10 (2026-05-12): tokens are now stored as Fernet ciphertext via the
+`etsy.shop._set_access_token` / `_set_refresh_token` helpers. Scope
+assertion against the four E1-approved scopes (`transactions_r/w`,
+`listings_r/w`, `shops_r`, `email_r`) hard-fails the callback on missing
+or forbidden scope (`conversations_r` is excluded from the E1 grant).
 """
 import json
 import logging
@@ -17,7 +21,7 @@ import secrets as _secrets
 
 import requests
 
-from odoo import fields, http
+from odoo import SUPERUSER_ID, api, fields, http
 from odoo.exceptions import AccessError
 from odoo.http import request
 
@@ -32,6 +36,18 @@ from ..services.etsy_oauth import (
 _logger = logging.getLogger(__name__)
 
 _PENDING_PARAM_PREFIX = 'etsy.oauth.pending.'
+
+# P1-10 scope-assertion contract — see specs/005-etsy-api-channel/
+# p1-10-plan.md §D-P1-10-04 and the 2026-05-12 E1 approval bookkeeping.
+_REQUIRED_SCOPES = frozenset({
+    'transactions_r', 'transactions_w',
+    'listings_r', 'listings_w',
+    'shops_r', 'email_r',
+})
+# E1 approval explicitly excludes conversations_r. If Etsy ever returns
+# it (e.g. lingering pre-2026-05-12 grant), reject — proceeding would
+# bind the shop to a scope set we cannot rely on.
+_FORBIDDEN_SCOPES = frozenset({'conversations_r'})
 
 
 def _read_credentials(env):
@@ -81,6 +97,55 @@ def _bad_request(message):
     assertions read response.status_code directly.
     """
     return request.make_response(message, status=400, headers=[('Content-Type', 'text/plain')])
+
+
+def _audit_scope_failure(shop_id: int, error_message: str) -> None:
+    """Write an `etsy.api.log` row from a fresh cursor + commit.
+
+    The audit row must survive the 400 response, which rolls back the
+    outer controller transaction (the response itself signals failure
+    and Odoo's HTTP layer reverts any uncommitted ORM state). We open
+    a new cursor on the same registry, write the audit row as
+    SUPERUSER, and commit before returning — pattern documented in
+    memory `feedback_capture_response_body_before_blackbox_probe.md`
+    (Defect-11-02 fix carried forward).
+    """
+    with request.env.registry.cursor() as audit_cr:
+        env_audit = api.Environment(audit_cr, SUPERUSER_ID, {})
+        env_audit['etsy.api.log'].sudo().create({
+            'shop_id': shop_id,
+            'endpoint': 'GET /etsy/api/oauth/callback',
+            'source': 'scope_validation',
+            'error_message': error_message,
+            # Deliberately do NOT include the access_token /
+            # refresh_token / scope-bearing JSON body. The scope list
+            # alone is sufficient for operator triage; the tokens are
+            # PII per D-P1-10-04 and must not leak into the audit log.
+        })
+        audit_cr.commit()
+
+
+def _validate_scope_grant(scope_str: str, shop_id: int) -> str:
+    """Return error message string if invalid (and audit), else ''.
+
+    Validates the `scope` parameter from Etsy's token-exchange
+    response against the E1 2026-05-12 approval set. On failure,
+    writes a durable audit row before returning the human-readable
+    error message (which becomes the 400 response body).
+    """
+    granted = set((scope_str or '').split())
+    missing = _REQUIRED_SCOPES - granted
+    forbidden = granted & _FORBIDDEN_SCOPES
+    if not missing and not forbidden:
+        return ''
+    parts = []
+    if missing:
+        parts.append(f"missing required scopes: {sorted(missing)}")
+    if forbidden:
+        parts.append(f"forbidden scopes present: {sorted(forbidden)}")
+    error_message = "Etsy OAuth scope validation failed; " + "; ".join(parts)
+    _audit_scope_failure(shop_id, error_message)
+    return error_message
 
 
 class EtsyOAuthController(http.Controller):
@@ -203,10 +268,27 @@ class EtsyOAuthController(http.Controller):
         if not shop.exists():
             return _bad_request("Etsy shop disappeared during OAuth")
 
+        # P1-10 scope assertion — hard-fail before persisting tokens.
+        # Audit row is written from a fresh cursor + commit inside the
+        # helper so the failure survives the 400's transaction
+        # rollback.
+        scope_error = _validate_scope_grant(
+            token_response.get('scope', ''),
+            shop.id,
+        )
+        if scope_error:
+            _logger.warning(
+                "Etsy OAuth scope validation failed (shop_id=%s): %s",
+                shop.id, scope_error,
+            )
+            return _bad_request("Etsy OAuth scope validation failed")
+
         expires_in = int(token_response.get('expires_in') or 3600)
+        # P1-10: route tokens through the Fernet helpers — the raw
+        # columns now hold ciphertext.
+        shop._set_access_token(token_response['access_token'])
+        shop._set_refresh_token(token_response.get('refresh_token') or '')
         shop.write({
-            'etsy_oauth_access_token': token_response['access_token'],
-            'etsy_oauth_refresh_token': token_response.get('refresh_token') or False,
             'etsy_oauth_token_expires_at': fields.Datetime.add(
                 fields.Datetime.now(), seconds=expires_in,
             ),

@@ -39,6 +39,10 @@ _SOURCE_SELECTION = [
     ('health_check', 'Health Check'),
     ('conversation_sync', 'Conversation Sync'),
     ('message_send', 'Outbound Message Send'),
+    # P1-10: scope-assertion failures on the OAuth callback. The audit
+    # row is written from a fresh cursor + commit so it survives the
+    # 400 response that rolls back the outer controller transaction.
+    ('scope_validation', 'OAuth Scope Validation'),
 ]
 
 

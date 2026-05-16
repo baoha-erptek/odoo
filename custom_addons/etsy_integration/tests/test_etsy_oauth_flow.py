@@ -219,12 +219,16 @@ class TestEtsyOAuthControllerFlow(HttpCase):
             }),
         )
 
-        # Mock the token exchange response from Etsy
+        # Mock the token exchange response from Etsy. Include the
+        # four E1-approved scopes (P1-10 scope assertion) — without
+        # them the callback hard-fails the grant.
         token_response = {
             'access_token': 'test_access_token_abc123',
             'refresh_token': 'test_refresh_token_xyz789',
             'expires_in': 3600,
             'token_type': 'bearer',
+            'scope': 'transactions_r transactions_w listings_r '
+                     'listings_w shops_r email_r',
         }
 
         with mock.patch(
@@ -249,17 +253,19 @@ class TestEtsyOAuthControllerFlow(HttpCase):
             f'State row etsy.oauth.pending.{state} must be consumed after callback',
         )
 
-        # Verify tokens were written to etsy.shop
+        # Verify tokens were written to etsy.shop. P1-10: raw
+        # columns hold Fernet ciphertext now, so verify via the
+        # decrypt helpers.
         self.etsy_shop.invalidate_recordset()
         self.assertEqual(
-            self.etsy_shop.etsy_oauth_access_token,
+            self.etsy_shop._get_access_token(),
             'test_access_token_abc123',
-            'Access token must be written to shop',
+            'Access token (decrypted) must match the value Etsy returned',
         )
         self.assertEqual(
-            self.etsy_shop.etsy_oauth_refresh_token,
+            self.etsy_shop._get_refresh_token(),
             'test_refresh_token_xyz789',
-            'Refresh token must be written to shop',
+            'Refresh token (decrypted) must match the value Etsy returned',
         )
         self.assertIsNotNone(
             self.etsy_shop.etsy_oauth_token_expires_at,

@@ -49,7 +49,8 @@ class TestP1_10Schema(SingleTransactionCase):
         test_user = self.env['res.users'].create({
             'name': 'Test User',
             'login': 'test_user@example.com',
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
+            # Odoo 19 renamed res.users.groups_id -> group_ids.
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
         })
 
         # Non-admin user should NOT be able to read the ICP key
