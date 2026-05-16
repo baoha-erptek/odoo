@@ -41,3 +41,5 @@ from . import test_p1_10_orm
 from . import test_phase2_order_creator_design_seed
 from . import test_p1_12_db
 from . import test_p1_12_orm
+from . import test_p1_11a_phase1_db
+from . import test_p1_11a_phase2_orm
