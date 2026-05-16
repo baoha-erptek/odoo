@@ -603,3 +603,33 @@ hard-depend on the model. **Owner decision 2026-05-16:** fold T047
 (model + ir.model.access.csv) into P1-11a. Final P1-11a scope =
 T013 + T047 + T050 + T054 + T055 + T058. ADR-008a §3 audit trail
 complete; no orphan dependency.
+
+### P1-11a outcome (2026-05-16)
+
+- **Surprise — `sync_mode` is NOT NULL with no DB default.** Phase-1
+  RED tests raw-INSERT `etsy_shop (name, create_uid, create_date)`
+  only. Odoo applies field defaults in ORM `create()`, not as a
+  Postgres column default, so the legacy required `sync_mode`
+  column rejected the insert *before* the new `active_source`
+  trigger logic ran. Fix: the `etsy_shop.init()` BEFORE INSERT
+  trigger also defaults `sync_mode := 'email_only'` when NULL,
+  then maps `active_source` from it. Trigger is the real mechanism
+  that makes the raw-SQL Phase-1 "migration mapping" tests
+  deterministic; the `post-migrate.py` only covers shops that
+  exist at upgrade time.
+- **tracking=True deferred.** data-model.md §1 marks
+  `active_source`/`auto_recovery`/`active_source_changed_at`
+  `tracking=True`, but `etsy.shop` does not `_inherit`
+  `mail.thread`. Adding the mixin is out of P1-11a surgical scope;
+  the audit trail is instead the explicit append-only
+  `etsy.shop.source.change.log`. Revisit if chatter is wanted.
+- **Superseded test rewritten, not deleted.**
+  `TestEtsyOrderSyncer_CronFilter.test_cron_method_skips_email_only_shops`
+  encoded the ADR-002 `sync_mode='api_only'` cron filter. T058
+  repoints the cron to `active_source='api'`; the test now creates
+  shops with `active_source` (+ C-ESY-001 tokens for the api one).
+  Full `/etsy_integration` suite (478) re-run 0-fail confirms this
+  is a contract update, not regression-masking.
+- Reviews: code-reviewer + security-reviewer both no CRITICAL/HIGH.
+  Security flagged a non-blocking gap (no explicit C-SCL-001 unlink
+  test) — closed with `TestP1_11a_Phase2_SourceChangeLogAppendOnly`.
