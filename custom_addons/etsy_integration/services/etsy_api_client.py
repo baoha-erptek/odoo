@@ -252,3 +252,28 @@ class EtsyApiClient:
         """
         kwargs = {'params': params} if params else {}
         return self._request('GET', path, **kwargs)
+
+    def push_tracking(self, shop_path_id, receipt_id, carrier_name,
+                      tracking_number):
+        """P1-12: create a receipt shipment (tracking pushback).
+
+        ``POST shops/{shop_id}/receipts/{receipt_id}/tracking`` with the
+        Etsy v3 form fields ``tracking_code`` + ``carrier_name``. Returns
+        ``(ok, http_status, error_message)``. Same rate-limit / 401-refresh
+        / 429-retry guarantees as ``_request``; raises on hard transport or
+        auth failure so the caller (EtsyTrackingPusher) can mark the push
+        failed and audit it.
+        """
+        # receipt_id originates from order.etsy_order_id (Etsy API receipt
+        # id, but the legacy email path can set arbitrary values) — URL-
+        # encode it so a crafted value cannot traverse to another API path.
+        from urllib.parse import quote
+        safe_receipt = quote(str(receipt_id), safe='')
+        path = f'shops/{int(shop_path_id)}/receipts/{safe_receipt}/tracking'
+        self._request('POST', path, data={
+            'tracking_code': tracking_number,
+            'carrier_name': carrier_name,
+        })
+        # `_request` raises for any non-2xx; reaching here is success. Etsy
+        # returns 200 with the updated receipt body on this endpoint.
+        return (True, 200, '')

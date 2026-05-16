@@ -51,4 +51,15 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="ir_cron_etsy_tracking_push" model="ir.cron">
+        <field name="name">Etsy: Push Tracking to Etsy</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_push_tracking()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>

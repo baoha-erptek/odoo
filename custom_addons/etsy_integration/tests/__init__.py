@@ -39,3 +39,5 @@ from . import test_p0_22_parity
 from . import test_p1_10_db
 from . import test_p1_10_orm
 from . import test_phase2_order_creator_design_seed
+from . import test_p1_12_db
+from . import test_p1_12_orm

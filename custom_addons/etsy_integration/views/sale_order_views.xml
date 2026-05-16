@@ -32,6 +32,17 @@
                         string="Request address change"
                         invisible="has_pending_address_change or not is_etsy_order"
                         class="btn-secondary"/>
+                <!-- P1-12 T036: on-demand tracking push (manual retry;
+                     webhook per D-A is the primary trigger). Restricted
+                     to the production/fulfillment team — the action
+                     triggers an authenticated external Etsy API call
+                     using system OAuth tokens (security review HIGH). -->
+                <button name="action_push_tracking_to_etsy"
+                        type="object"
+                        string="Push tracking to Etsy"
+                        invisible="not is_etsy_order"
+                        groups="multichannel_hub_core.group_production_team"
+                        class="btn-secondary"/>
             </xpath>
 
             <xpath expr="//field[@name='partner_shipping_id']" position="attributes">

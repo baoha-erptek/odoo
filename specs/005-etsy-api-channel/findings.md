@@ -484,3 +484,92 @@ The slice ships the adapter + parity proof. The email-polling cron in `etsy_inte
 
 - code-reviewer: **PASS** — 0 CRITICAL/HIGH. 1 MEDIUM (vacuous assertion in `test_authorization_header_uses_plaintext` — mock never called) noted for optional follow-up; behaviour itself is correct and covered by `test_refresh_token_round_trip_through_api_client`.
 - security-reviewer: **PASS** — 0 CRITICAL/HIGH. Confirmed audit-row PII scrubbing, sudo justification, advisory-lock race mitigation, scope-bypass resistance. Recommended documenting the `env.su` trust-boundary invariant (done above).
+
+---
+
+## P1-12 — EtsyTrackingPusher (US3) — 2026-05-16
+
+Closes the ingest→fulfill→track loop. `services/etsy_tracking_pusher.py`
+`EtsyTrackingPusher(env).push(order)`; `EtsyApiClient.push_tracking`;
+`sale.order.etsy_tracking_push_status/at/error` (T026 tail); cron
+`_cron_push_tracking` (5min fallback); `action_push_tracking_to_etsy`
+button; webhook wiring in `gearment_webhook_dispatcher._handle_tracking_order_updated`.
+
+### Decisions
+
+- **D-A confirmed at implementation**: trigger is the Gearment
+  `tracking_order_updated` webhook handler, NOT a `sale.order` write
+  (owner directive 2026-05-10 D4 — Etsy tab is a read-only mirror).
+  Synchronous soft-fail (no queue model — T039's "enqueue" reframed to
+  inline call); 5-min cron + on-demand button are the retry paths.
+- **`pending` status reserved**: sync push goes `none`→`pushed`|`failed`.
+  `pending` kept in the Selection for a future async/queue variant.
+
+### Surprises / non-obvious
+
+- **`etsy.shop` has no numeric Etsy shop-id field** (by design). The
+  existing P0-16c adapter (`etsy_api_adapter.py:66-69`) already uses the
+  Odoo `etsy.shop` record id as the `{shop_id}` URL path segment
+  (`shop_path_id = int(shop_id)` where `shop_id` is `shop.id`). P1-12
+  mirrors that convention for endpoint consistency. **If the real Etsy
+  numeric shop id is ever required, it is a cross-cutting defect across
+  P0-16c + P1-12, not a P1-12-local bug** — flag for a dedicated slice.
+- **`etsy_order_id` IS the Etsy receipt_id**: `etsy_api_adapter.py:122-127`
+  sets both `etsy_receipt_id` and `etsy_order_id` to `receipt_id` ("Etsy
+  uses receipt_id as the canonical order identifier"). Etsy v3 is 1:1
+  order↔receipt — no multi-receipt handling needed.
+- **`field.default` is a callable in Odoo 19**: a scalar `default='none'`
+  is normalized to `lambda recs: 'none'` during field setup, so a
+  `field.default == 'none'` assertion can never pass. The tdd-guide RED
+  test asserted that directly; corrected to resolve the callable. The
+  behavioural sibling test (create record, check value) is the correct
+  check and already passed.
+- **Module-level vs lazy import for mock targets**: the Phase-2 tests
+  patch `...etsy_tracking_pusher.EtsyApiClient`. A lazy in-function
+  import means the name does not exist at module scope and `mock.patch`
+  fails with "module does not have the attribute". `EtsyApiClient` is a
+  plain service (no registry-order hazard) so a top-level import is both
+  correct and patch-friendly — planner's lazy-import caution did not apply.
+- **tdd-guide scaffolding drift**: first RED pass invented a non-existent
+  `etsy.shop.etsy_numeric_shop_id` field and used the demo xml-id
+  `product.product_product_1` (demo data is off) — all Phase-2
+  setUpClass crashed for the wrong reason. Required a correction pass
+  before RED was meaningful. Pattern: always verify RED fails for
+  *missing production code*, not scaffolding ValueErrors.
+
+### E2E surfacing (live) — pre-existing, NOT P1-12
+
+- `multichannel_hub_fulfillment/tests/test_p4_01_fix_log_linkage.py`:
+  `TestApiLogFailurePathEnrichment` (5) + `TestApiLogSuccessPathDirection`
+  (1) **fail on clean baseline too** (verified by stashing P1-12 and
+  re-running the identical `-u … --test-tags=/etsy_integration,/multichannel_hub_fulfillment`
+  suite: 6 failed of 732 with no P1-12, vs 6 failed of 758 with P1-12).
+  Root cause is the known P4-01 durable-fresh-cursor+commit FK artifact
+  (`gearment_api_log_sale_order_id_fkey` — the fresh cursor commits the
+  log row but the test's `sale.order` is never committed). **Out of
+  P1-12 surgical scope.** Recommend a dedicated defect slice
+  (P4-01-FIX-LOG-LINKAGE-TXN) to make the durable-audit cursor tolerate
+  uncommitted FK targets in TransactionCase, or relax the FK.
+
+### Reviews
+
+- code-reviewer: 0 CRITICAL. 1 HIGH (`_logger.info` on routine success →
+  downgraded to `_logger.debug`). MEDIUMs accepted/documented: hardcoded
+  `200` in `push_tracking` return (Etsy `createReceiptShipment` returns
+  200; `_request` raises on non-2xx so reaching the return == success);
+  missing return type hint (internal service).
+- security-reviewer: 1 CRITICAL fixed (receipt_id URL-path injection →
+  `urllib.parse.quote(safe='')`); 3 HIGH fixed (button now gated to
+  `multichannel_hub_core.group_production_team` at view AND method per
+  FR-017; webhook split — permanent `ValueError`→`_logger.error`,
+  transient→warning). MEDIUMs documented & accepted: tracking_number /
+  carrier in audit `response_summary` are logistics metadata, not buyer
+  PII; `etsy.api.log` ACL already system + `group_etsy_api_log_reader`;
+  error text truncated to 1000 chars.
+
+### Tests
+
+- 26 P1-12 tests green (`test_p1_12_db.py` 7 + `test_p1_12_orm.py` 19),
+  0 failed / 0 error. `-u etsy_integration,multichannel_hub_fulfillment
+  --stop-after-init` exit 0 (128 modules). `ruff` not installed locally
+  (plan §5 "if available"); skipped, not a blocker.

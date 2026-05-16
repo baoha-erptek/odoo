@@ -241,6 +241,30 @@ class GearmentWebhookDispatcher:
         # (order_completed / explicit operator action).
         if vals:
             self._write_fulfillment(fulfillment, vals)
+            # P1-12 (ADR decision D-A): the Gearment webhook is the
+            # primary, low-latency trigger for the Etsy tracking pushback.
+            # Soft-fail — tracking is already persisted locally above and
+            # the webhook must still 200; the 5-min _cron_push_tracking
+            # sweep retries any push that fails here.
+            if number and order.etsy_order_id and order.etsy_shop_id:
+                try:
+                    from odoo.addons.etsy_integration.services.\
+                        etsy_tracking_pusher import EtsyTrackingPusher
+                    EtsyTrackingPusher(self.env).push(order)
+                except ValueError as exc:
+                    # Permanent auth/config failure (missing or revoked
+                    # OAuth token, refresh failed). ERROR so operator
+                    # alerting catches it — the cron sweep will keep
+                    # retrying but cannot self-heal a revoked token.
+                    _logger.error(
+                        "P1-12: Etsy tracking push permanent failure for "
+                        "%s (OAuth/config): %s", order.name, exc,
+                    )
+                except Exception as exc:  # noqa: BLE001 — soft-fail (transient)
+                    _logger.warning(
+                        "P1-12: Etsy tracking push soft-failed for %s: %s",
+                        order.name, exc,
+                    )
         _logger.debug(
             "P0-18b2c: tracking_order_updated processed %s number=%s",
             order.name, number,

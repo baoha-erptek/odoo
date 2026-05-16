@@ -86,6 +86,31 @@ class SaleOrder(models.Model):
         help='True when an Etsy order has a non-positive amount_total — '
              'used by the migration wizard to quarantine bad data.')
 
+    # Spec 005 P1-12 (US3) — tracking-push-to-Etsy state. Written only by
+    # services/etsy_tracking_pusher.EtsyTrackingPusher (webhook-triggered
+    # per ADR decision D-A, on-demand button, or the 5-min fallback cron).
+    # Not group-gated: the Etsy tab is a read-only mirror (owner directive
+    # 2026-05-10 D4) so operators read these; the single writer is service
+    # code, not the form.
+    etsy_tracking_push_status = fields.Selection(
+        selection=[
+            ('none', 'Not Pushed'),
+            ('pending', 'Pending'),
+            ('pushed', 'Pushed'),
+            ('failed', 'Failed'),
+        ],
+        string='Etsy Tracking Push Status',
+        default='none', copy=False, index=True,
+        help='Lifecycle of the tracking-number push to Etsy '
+             '(POST receipts/{receipt_id}/tracking).')
+    etsy_tracking_push_at = fields.Datetime(
+        string='Etsy Tracking Pushed At', copy=False,
+        help='Timestamp of the last successful tracking push to Etsy.')
+    etsy_tracking_push_error = fields.Text(
+        string='Etsy Tracking Push Error', copy=False,
+        help='Error detail from the last failed tracking push; cleared '
+             'on the next successful push.')
+
     # P1-04 (Spec 003 US4): address-change approval workflow.
     address_change_request_ids = fields.One2many(
         'etsy.address.change.request', 'order_id',
@@ -338,3 +363,68 @@ class SaleOrder(models.Model):
             len(processed_ids), len(raw_emails))
 
         self.env['etsy.email.log']._check_parse_failures()
+
+    def action_push_tracking_to_etsy(self):
+        """P1-12 T036 — on-demand tracking push from the sale.order form.
+
+        Synchronous; returns a client notification action so the operator
+        gets immediate feedback. The webhook path (D-A) is the primary
+        trigger; this button is the manual retry/override.
+        """
+        self.ensure_one()
+        # Defense-in-depth: the view `groups=` only hides the button;
+        # mirror it at the method so an RPC call cannot trigger an
+        # authenticated external Etsy push (system OAuth tokens) without
+        # the production-team role (security review HIGH; FR-017 pattern).
+        if not self.env.user._is_system() and not self.env.user.has_group(
+                'multichannel_hub_core.group_production_team'):
+            raise UserError(_(
+                'Only the production/fulfillment team can push tracking '
+                'to Etsy.'))
+        from ..services.etsy_tracking_pusher import EtsyTrackingPusher
+        ok = EtsyTrackingPusher(self.env).push(self)
+        if ok:
+            title, msg, kind = _('Tracking pushed'), _(
+                'Tracking number was pushed to Etsy.'), 'success'
+        else:
+            title, msg, kind = _('Tracking push failed'), (
+                self.etsy_tracking_push_error or _('Push failed.')), 'danger'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {'title': title, 'message': msg, 'type': kind,
+                       'sticky': False},
+        }
+
+    @api.model
+    def _cron_push_tracking(self):
+        """P1-12 T035 — fallback sweep: push tracking for Etsy orders that
+        the webhook (D-A primary trigger) has not yet delivered.
+
+        Picks Etsy orders whose push status is unresolved and that have a
+        fulfillment carrying a tracking number. Per-order soft-fail so one
+        bad order does not poison the batch.
+        """
+        from ..services.etsy_tracking_pusher import EtsyTrackingPusher
+
+        candidates = self.search([
+            ('etsy_order_id', '!=', False),
+            ('etsy_shop_id', '!=', False),
+            ('etsy_tracking_push_status', 'in', ('none', 'pending', 'failed')),
+        ])
+        if not candidates:
+            return
+        pusher = EtsyTrackingPusher(self.env)
+        Fulfillment = self.env['sale.order.fulfillment']
+        for order in candidates:
+            fulfillment = Fulfillment.search(
+                [('order_id', '=', order.id),
+                 ('tracking_number', '!=', False)], limit=1)
+            if not fulfillment:
+                continue
+            try:
+                pusher.push(order)
+            except Exception:  # noqa: BLE001 — batch isolation
+                _logger.exception(
+                    'P1-12: cron tracking push failed for %s (Etsy #%s)',
+                    order.name, order.etsy_order_id)
