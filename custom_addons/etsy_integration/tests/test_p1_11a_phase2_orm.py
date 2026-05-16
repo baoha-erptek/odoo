@@ -96,7 +96,7 @@ class TestP1_11a_Phase2_SourceChangeLogModel(TransactionCase):
 
     def test_source_change_log_changed_at_required(self):
         """changed_at field must be required."""
-        field = self.env['etsy.shop.source.change_log']._fields['changed_at']
+        field = self.env['etsy.shop.source.change.log']._fields['changed_at']
 
         self.assertTrue(
             field.required,
@@ -243,7 +243,7 @@ class TestP1_11a_Phase2_ConstraintC_ESY_002(TransactionCase):
         cls.non_system_user = cls.env['res.users'].create({
             'name': 'Non-System User',
             'login': 'nonbsystem@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('base.group_user').id])],
+            'group_ids': [(6, 0, [cls.env.ref('base.group_user').id])],
         })
 
         # System user (for comparison)
@@ -653,3 +653,39 @@ class TestP1_11a_Phase2_SourceChangeLogAudit(TransactionCase):
             {'api', 'email'},
             "to_source field must have selection values 'api' and 'email'"
         )
+
+
+@tagged('post_install', '-at_install')
+class TestP1_11a_Phase2_SourceChangeLogAppendOnly(TransactionCase):
+    """Phase 2: C-SCL-001 — source.change.log rows are append-only;
+    only system administrators may delete them.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        cls.shop = cls.env['etsy.shop'].create({
+            'name': 'Append-Only Test Shop',
+            'active_source': 'email',
+        })
+        cls.log = cls.env['etsy.shop.source.change.log'].create({
+            'shop_id': cls.shop.id,
+            'to_source': 'email',
+            'reason': 'bootstrap',
+        })
+        cls.non_system_user = cls.env['res.users'].create({
+            'name': 'CSCL Non-System User',
+            'login': 'cscl_nonsystem@example.com',
+            'group_ids': [(6, 0, [cls.env.ref('base.group_user').id])],
+        })
+
+    def test_non_system_user_cannot_unlink_log(self):
+        """C-SCL-001: a non-system user deleting an audit row raises AccessError."""
+        with self.assertRaises(AccessError):
+            self.log.with_user(self.non_system_user).unlink()
+
+    def test_system_user_can_unlink_log(self):
+        """C-SCL-001 carve-out: system administrators may delete audit rows."""
+        self.log.with_user(self.env.ref('base.user_root')).unlink()
+        self.assertFalse(self.log.exists())

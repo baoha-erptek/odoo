@@ -299,15 +299,21 @@ class TestEtsyOrderSyncer_PartialFailure(TransactionCase):
 class TestEtsyOrderSyncer_CronFilter(TransactionCase):
 
     def test_cron_method_skips_email_only_shops(self):
+        # P1-11a / ADR-008a §2: the cron now filters on active_source
+        # (sync_mode superseded). C-ESY-001 requires OAuth tokens when
+        # active_source='api'.
         api_shop = self.env['etsy.shop'].create({
-            'name': 'ApiOnlyShop', 'sync_mode': 'api_only',
+            'name': 'ApiOnlyShop',
+            'active_source': 'api',
+            'etsy_oauth_access_token': 'tok',
+            'etsy_oauth_refresh_token': 'ref',
         })
         self.env['etsy.shop'].create({
-            'name': 'EmailOnlyShop', 'sync_mode': 'email_only',
+            'name': 'EmailOnlyShop', 'active_source': 'email',
         })
         with patch.object(EtsyOrderSyncer, 'sync_shop_orders') as mock_sync:
             self.env['etsy.shop']._cron_sync_orders()
-        # Only the api_only shop should be processed
+        # Only the api-source shop should be processed
         called_shops = [c.args[0] for c in mock_sync.call_args_list]
         self.assertEqual(len(called_shops), 1)
         self.assertEqual(called_shops[0].id, api_shop.id)

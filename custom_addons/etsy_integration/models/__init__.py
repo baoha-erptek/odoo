@@ -1,5 +1,6 @@
 from . import ir_config_parameter
 from . import etsy_shop
+from . import etsy_shop_source_change_log
 from . import etsy_shop_gdrive
 from . import etsy_email_log
 from . import etsy_sync_health

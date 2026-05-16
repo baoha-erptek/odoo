@@ -44,10 +44,29 @@ class EtsyOrderIngestor:
     def ingest(self, payload, shop):
         """Apply `payload` to the database.
 
+        T058 / ADR-008a §2 — the ingestor is source-aware: a shop runs
+        exactly one active adapter at a time, recorded on
+        `shop.active_source` ('api' or 'email'). The adapter that built
+        this payload is `payload.source`. A mismatch (e.g. a late
+        email-sourced payload arriving for a shop already cut over to
+        the API adapter, or vice versa) is an invariant violation worth
+        flagging — but we still ingest: the syncer cursor is the
+        authoritative stale-fetch gate, and dropping a real receipt
+        would lose order data. Soft-warn only, no behaviour change.
+
         Returns the `sale.order` record (created or re-synced). Returns
         `None` if the payload had no usable line items (delegated to
         `OrderCreator` which already handles that edge case).
         """
+        active = shop.active_source
+        if payload.source != active:
+            expected = 'api' if active == 'api' else 'email'
+            _logger.warning(
+                'Etsy ingest source mismatch: shop %s (id=%s) '
+                'active_source=%s but payload.source=%s (expected %s); '
+                'ingesting anyway (syncer cursor is authoritative).',
+                shop.name, shop.id, active, payload.source, expected,
+            )
         existing = self._env['sale.order'].search(
             [('etsy_order_id', '=', payload.etsy_order_id)], limit=1,
         )

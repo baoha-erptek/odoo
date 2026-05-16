@@ -1,7 +1,8 @@
 import logging
+from datetime import timedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -81,9 +82,213 @@ class EtsyShop(models.Model):
              'no sale.order writes. Use during cutover validation.',
     )
 
+    # Spec 005 P1-11a — ADR-008a §2 source-switching architecture.
+    # `active_source` supersedes `sync_mode` (ADR-002) as the canonical
+    # adapter selector; `sync_mode` is kept (not dropped) for the dual-
+    # column transition window and is mapped by the post-migration.
+    # `tracking=True` from data-model.md §1 is intentionally omitted:
+    # `etsy.shop` does not inherit `mail.thread`; adding the mixin is
+    # out of P1-11a surgical scope (see findings.md).
+    active_source = fields.Selection(
+        selection=[('api', 'Etsy API'), ('email', 'Email')],
+        string='Active Source',
+        default='email',
+        required=True,
+        help='Which upstream adapter feeds the single ingestion '
+             'pipeline for this shop (ADR-008a). Toggling is restricted '
+             'to system administrators (C-ESY-002).',
+    )
+    active_source_changed_at = fields.Datetime(
+        string='Active Source Changed At',
+        help='Set automatically on every active_source transition.',
+    )
+    auto_recovery = fields.Boolean(
+        string='Auto Recovery',
+        default=True,
+        required=True,
+        help='When False, the recovery probe never auto-switches the '
+             'shop back to its primary source (ADR-008a §3).',
+    )
+    health_check_consecutive_failures = fields.Integer(
+        string='Health-Check Consecutive Failures',
+        default=0,
+        help='Counter for the 3-failure auto-failover threshold. '
+             'Reset to 0 on a successful probe.',
+    )
+    recovery_probe_consecutive_successes = fields.Integer(
+        string='Recovery-Probe Consecutive Successes',
+        default=0,
+        help='Counter for the 6-success recovery threshold. '
+             'Reset to 0 on a failed probe.',
+    )
+
     _sql_constraints = [
         ('name_unique', 'UNIQUE(name)', 'Shop name must be unique!'),
     ]
+
+    def init(self):
+        """Install a BEFORE INSERT trigger so rows created outside the
+        ORM (raw-SQL inserts, the dual-column transition window) still
+        get a deterministic `active_source` mapped from the legacy
+        `sync_mode`, plus non-null `auto_recovery` / counter defaults.
+
+        Raw SQL justification: ORM field defaults are applied in
+        `create()` only; rows inserted directly into `etsy_shop`
+        (migrations, data-fix scripts, tests) would otherwise leave
+        `active_source` NULL and violate the `required=True` invariant.
+        The trigger mirrors the post-migration CASE mapping exactly.
+
+        Idempotent: `CREATE OR REPLACE FUNCTION` plus a `pg_trigger`
+        existence pre-check (NOT an EXCEPTION clause — PG raises on
+        duplicate trigger), per the project _sql_constraints-drift
+        house pattern.
+        """
+        self.env.cr.execute("""
+            CREATE OR REPLACE FUNCTION etsy_shop_active_source_default_fn()
+            RETURNS trigger AS $fn$
+            BEGIN
+                IF NEW.sync_mode IS NULL THEN
+                    NEW.sync_mode := 'email_only';
+                END IF;
+                IF NEW.active_source IS NULL THEN
+                    NEW.active_source := CASE NEW.sync_mode
+                        WHEN 'api_only' THEN 'api'
+                        WHEN 'email_only' THEN 'email'
+                        ELSE 'email' END;
+                END IF;
+                IF NEW.auto_recovery IS NULL THEN
+                    NEW.auto_recovery := TRUE;
+                END IF;
+                IF NEW.health_check_consecutive_failures IS NULL THEN
+                    NEW.health_check_consecutive_failures := 0;
+                END IF;
+                IF NEW.recovery_probe_consecutive_successes IS NULL THEN
+                    NEW.recovery_probe_consecutive_successes := 0;
+                END IF;
+                RETURN NEW;
+            END;
+            $fn$ LANGUAGE plpgsql;
+        """)
+        self.env.cr.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_trigger
+                    WHERE tgname = 'etsy_shop_active_source_default'
+                ) THEN
+                    CREATE TRIGGER etsy_shop_active_source_default
+                        BEFORE INSERT ON etsy_shop
+                        FOR EACH ROW
+                        EXECUTE FUNCTION etsy_shop_active_source_default_fn();
+                END IF;
+            END $$;
+        """)
+
+    @api.constrains('active_source', 'etsy_oauth_access_token',
+                    'etsy_oauth_refresh_token')
+    def _check_api_source_has_tokens(self):
+        """C-ESY-001: `active_source='api'` requires both OAuth tokens.
+
+        sudo() rationale: the two token columns carry
+        `groups='base.group_system'`; the constraint must read them
+        regardless of which (system) user triggered the write.
+        """
+        for shop in self:
+            if shop.active_source != 'api':
+                continue
+            shop_su = shop.sudo()
+            if not shop_su.etsy_oauth_access_token:
+                raise ValidationError(
+                    "Etsy OAuth access token is required when "
+                    "active_source is 'api' (C-ESY-001)."
+                )
+            if not shop_su.etsy_oauth_refresh_token:
+                raise ValidationError(
+                    "Etsy OAuth refresh token is required when "
+                    "active_source is 'api' (C-ESY-001)."
+                )
+
+    def write(self, vals):
+        """FR-017 write-level mirror of the C-ESY-002 UI gate, plus
+        append-only source-change audit logging.
+
+        The form field is system-group-gated in the view; this method
+        gate is the security boundary (RPC-bypassable otherwise — 18
+        prior FR-017 confirmations). `env.su` is allowed so internal
+        sudo paths (token setters, migration backfills) are unaffected;
+        those never write `active_source` anyway.
+        """
+        if ('active_source' in vals
+                and not self.env.su
+                and not self.env.user._is_system()):
+            raise AccessError(
+                "The 'active_source' field on Etsy Shop is restricted "
+                "to system administrators (C-ESY-002 / FR-017)."
+            )
+
+        track = 'active_source' in vals
+        if track and 'active_source_changed_at' not in vals:
+            vals = dict(vals, active_source_changed_at=fields.Datetime.now())
+        old_source = {s.id: s.active_source for s in self} if track else {}
+
+        result = super().write(vals)
+
+        if track:
+            actor_id = self.env.user.id
+            now = fields.Datetime.now()
+            # sudo(): the audit model is create-only for base.group_system;
+            # the change itself is already authorised by the gate above.
+            log_model = self.env['etsy.shop.source.change.log'].sudo()
+            for shop in self:
+                previous = old_source.get(shop.id)
+                if previous == shop.active_source:
+                    continue
+                log_model.create({
+                    'shop_id': shop.id,
+                    'from_source': previous or False,
+                    'to_source': shop.active_source,
+                    'reason': 'manual',
+                    'actor_user_id': actor_id,
+                    'changed_at': now,
+                    'health_check_failures_at_change':
+                        shop.health_check_consecutive_failures,
+                })
+        return result
+
+    def _probe_api(self):
+        """T050 — health probe for the API adapter: lightweight read
+        against the Etsy ping endpoint. Returns True on HTTP 2xx.
+
+        Used by the health-check cron (separate slice) to drive the
+        3-failure auto-failover counter; no caller in P1-11a.
+        """
+        self.ensure_one()
+        from ..services.etsy_api_client import EtsyApiClient
+        try:
+            EtsyApiClient(self.env, self)._request(
+                'GET', '/v3/application/openapi-ping',
+            )
+            return True
+        except Exception:
+            _logger.debug(
+                'Etsy API probe failed for shop %s (id=%s)',
+                self.name, self.id,
+            )
+            return False
+
+    def _probe_email(self, fresh_hours=24):
+        """T050 — health probe for the email adapter: the Gmail-sourced
+        ingest is healthy if any receipt email was processed within
+        `fresh_hours`. `etsy.email.log` is shop-agnostic (one Gmail
+        inbox feeds all shops), so this is a global freshness check.
+        Returns bool; no caller in P1-11a.
+        """
+        self.ensure_one()
+        threshold = fields.Datetime.now() - timedelta(hours=fresh_hours)
+        recent = self.env['etsy.email.log'].sudo().search_count([
+            ('date_received', '>=', threshold),
+        ])
+        return recent > 0
 
     @api.depends('order_ids')
     def _compute_order_count(self):
@@ -187,7 +392,9 @@ class EtsyShop(models.Model):
     def _cron_sync_orders(self):
         """Scheduled action: incremental Etsy receipts sync per shop.
 
-        OQ5: Cron filters to shops with `sync_mode='api_only'` only.
+        OQ5: Cron filters to shops with `active_source='api'` only
+        (ADR-008a §2 — supersedes the legacy `sync_mode='api_only'`
+        filter; mapped 1:1 by the P1-11a post-migration).
         Audit-mode flag is honored by the syncer but does NOT trigger
         the cron; audit runs are typically manual during cutover.
 
@@ -205,9 +412,9 @@ class EtsyShop(models.Model):
 
         from ..services.etsy_order_syncer import EtsyOrderSyncer
 
-        shops = self.search([('sync_mode', '=', 'api_only')])
+        shops = self.search([('active_source', '=', 'api')])
         if not shops:
-            _logger.debug('Etsy API sync cron: no api_only shops configured.')
+            _logger.debug('Etsy API sync cron: no api-source shops configured.')
             return
 
         syncer = EtsyOrderSyncer(self.env)

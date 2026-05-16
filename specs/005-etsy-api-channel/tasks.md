@@ -47,7 +47,7 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 3: US1 — Etsy OAuth2 PKCE authorization (P1)
 
-- [ ] T013 [US1] Implement `etsy.shop` extension in `models/etsy_shop.py` — add API token fields, `active_source` (default 'email' for existing shops, 'api' post scope-grant), `auto_recovery`, `health_check_consecutive_failures`, `recovery_probe_consecutive_successes` per data-model.md §1
+- [X] T013 [US1] Implement `etsy.shop` extension in `models/etsy_shop.py` — add API token fields, `active_source` (default 'email' for existing shops, 'api' post scope-grant), `auto_recovery`, `health_check_consecutive_failures`, `recovery_probe_consecutive_successes` per data-model.md §1
 - [ ] T014 [US1] Add `etsy.shop` C-ESY-001 (token-required-when-active_source=api) and C-ESY-002 (manual-toggle-requires-system-group) constraints
 - [ ] T015 [P] [US1] Implement `services/etsy_api_client.py` — OAuth2 PKCE flow, token refresh on 401, request signing, response parsing, integrates `multichannel_hub_core/utils/rate_limiter.py`
 - [ ] T016 [US1] Implement `controllers/etsy_oauth_callback.py` — `/etsy/api/oauth/callback` route consuming state-nonce, swapping code for tokens, persisting to `etsy.shop`
@@ -101,18 +101,18 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 7: US8 — Source switching (REQ-SRC-01..04, the new core ADR-008a v2)
 
-- [ ] T047 [US8] Implement `models/etsy_shop_source_change_log.py` — `etsy.shop.source.change.log` per data-model.md §2 with append-only constraint (C-SCL-001) + auto-failover/recovery-probe-actor=null constraint (C-SCL-002)
+- [X] T047 [US8] Implement `models/etsy_shop_source_change_log.py` — `etsy.shop.source.change.log` per data-model.md §2 with append-only constraint (C-SCL-001) + auto-failover/recovery-probe-actor=null constraint (C-SCL-002)
 - [ ] T048 [P] [US8] Add ACL for `etsy.shop.source.change.log`: read `group_audit_reader` + Manager; create via system; no update/delete except `base.group_system`
 - [ ] T049 [US8] Implement `services/etsy_health_checker.py` — `EtsyHealthChecker.evaluate(shop)` per research.md R7: probes the shop's active source; on failure increments `health_check_consecutive_failures`; on success resets counter; when counter ≥ 3 → switch source, write `etsy.shop.source.change.log` row with `reason='auto-failover'`, raise HIGH alert
-- [ ] T050 [US8] Implement source-specific probes: `_probe_api(shop)` calls `GET /v3/application/openapi-ping`; `_probe_email(shop)` queries Gmail label freshness ≥ N hours
+- [X] T050 [US8] Implement source-specific probes: `_probe_api(shop)` calls `GET /v3/application/openapi-ping`; `_probe_email(shop)` queries Gmail label freshness ≥ N hours
 - [ ] T051 [P] [US8] Add cron `cron_etsy_health_check` (default 5min interval) calling `EtsyHealthChecker.evaluate` for every shop
 - [ ] T052 [US8] Implement `services/etsy_recovery_prober.py` — `EtsyRecoveryProber.evaluate(shop)`: ONLY for shops in failover; probes the original primary; on success increments `recovery_probe_consecutive_successes`; on failure resets counter; when counter ≥ 6 AND `auto_recovery=True` → switch back, write source-change row with `reason='recovery-probe'`
 - [ ] T053 [P] [US8] Add cron `cron_etsy_recovery_probe` (default 1h interval) calling `EtsyRecoveryProber.evaluate` for every in-failover shop
-- [ ] T054 [P] [US8] Implement migration script `migrations/19.0.1.0.0_post.py` to map legacy `sync_mode → active_source` per data-model.md §1, and bootstrap `etsy.shop.source.change.log` with `reason='bootstrap'` row per shop
-- [ ] T055 [US8] Add `etsy.shop.active_source` manual-toggle UI: form view selection field gated by `groups='base.group_system'` per data-model.md §1 C-ESY-002
+- [X] T054 [P] [US8] Implement migration script `migrations/19.0.1.0.0_post.py` to map legacy `sync_mode → active_source` per data-model.md §1, and bootstrap `etsy.shop.source.change.log` with `reason='bootstrap'` row per shop
+- [X] T055 [US8] Add `etsy.shop.active_source` manual-toggle UI: form view selection field gated by `groups='base.group_system'` per data-model.md §1 C-ESY-002
 - [ ] T056 [P] [US8] Add `auto_recovery` checkbox in shop form view with help text "Sticky override — uncheck to prevent auto-switch-back from email to api"
 - [ ] T057 [P] [US8] Implement `etsy.shop.source.change.log` views in `views/etsy_shop_source_change_log_views.xml` (list + filter by reason)
-- [ ] T058 [US8] Modify `EtsyOrderIngestor.ingest` (T008) to dynamically select adapter from `shop.active_source` — `EtsyApiAdapter` if 'api', `EtsyEmailAdapter` if 'email'
+- [X] T058 [US8] Modify `EtsyOrderIngestor.ingest` (T008) to dynamically select adapter from `shop.active_source` — `EtsyApiAdapter` if 'api', `EtsyEmailAdapter` if 'email'
 - [ ] T059 [P] [US8] Phase-2 test `tests/test_health_check_failover.py` — 3-fail threshold triggers switch + audit log row + HIGH alert
 - [ ] T060 [P] [US8] Phase-2 test `tests/test_recovery_probe.py` — 6-success threshold triggers switch back; `auto_recovery=False` blocks switch back
 - [ ] T061 [P] [US8] Phase-2 test `tests/test_source_change_log.py` — append-only constraint, actor-null on auto-failover/recovery-probe, indexes `(shop_id, changed_at DESC)` and `(reason, changed_at DESC)`

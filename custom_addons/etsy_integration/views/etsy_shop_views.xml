@@ -48,6 +48,16 @@
                             <field name="active" invisible="1"/>
                             <field name="revenue_total" widget="monetary"/>
                         </group>
+                        <group string="Etsy API Configuration"
+                               groups="base.group_system">
+                            <field name="active_source"/>
+                            <field name="auto_recovery"/>
+                            <field name="active_source_changed_at" readonly="1"/>
+                            <field name="health_check_consecutive_failures"
+                                   readonly="1"/>
+                            <field name="recovery_probe_consecutive_successes"
+                                   readonly="1"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Orders" name="orders">

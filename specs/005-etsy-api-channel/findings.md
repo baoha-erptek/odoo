@@ -573,3 +573,33 @@ button; webhook wiring in `gearment_webhook_dispatcher._handle_tracking_order_up
   0 failed / 0 error. `-u etsy_integration,multichannel_hub_fulfillment
   --stop-after-init` exit 0 (128 modules). `ruff` not installed locally
   (plan §5 "if available"); skipped, not a blocker.
+
+## P1-11 dispatch blocked → resolved by inserting P1-11a (2026-05-16)
+
+**Blocker (Phase 0 dispatch, /dispatch-slice P1-11):** P1-11's exit
+action is "flip pilot shop's `etsy.shop.active_source='api'`" per
+ADR-008a v2, but `active_source` does **not exist anywhere in
+`custom_addons/`** (0 occurrences). Code follows ADR-002 `sync_mode`
+(`etsy_shop.py`; ingestor T008/P0-16b1 explicitly selects adapter "via
+`etsy_shop.sync_mode` (per ADR-002, not `active_source` per superseded
+spec)"). ADR-008a (Accepted 2026-04-26) supersedes ADR-002's sync_mode
+default with `active_source` + a `sync_mode→active_source` migration,
+but that migration/field was never built. P1-11's tracker `Depends on`
+(P1-10 ✓, P1-12 ✓) omits the true prerequisites: tasks **T013, T050,
+T054, T055, T058** (all `[ ]` unchecked, US8) — `active_source` field +
+health probes + `sync_mode→active_source` migration + system-gated
+toggle UI + ingestor adapter-selection by `active_source`.
+
+**Resolution (owner, 2026-05-16):** honor ADR-008a as written. Insert
+a new prerequisite slice **P1-11a — Etsy active_source scaffolding**
+(covers T013/T050/T054/T055/T058) ahead of P1-11. P1-11 (pilot flip)
+re-blocks on P1-11a. ADR-002 sync_mode is migrated, not amended.
+
+**Sub-finding (planner, P1-11a):** `etsy.shop.source.change.log`
+(task T047) also unbuilt (0 matches in `custom_addons/`). T054's
+migration bootstraps `reason='bootstrap'` rows into it and C-ESY-002's
+manual-toggle `write()` override logs `reason='manual'` rows — both
+hard-depend on the model. **Owner decision 2026-05-16:** fold T047
+(model + ir.model.access.csv) into P1-11a. Final P1-11a scope =
+T013 + T047 + T050 + T054 + T055 + T058. ADR-008a §3 audit trail
+complete; no orphan dependency.
