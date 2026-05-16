@@ -308,6 +308,63 @@ class EtsyShop(models.Model):
             'context': {'default_etsy_shop_id': self.id},
         }
 
+    def action_authorize_etsy(self):
+        """T017 — open the OAuth2 PKCE authorize flow for this shop.
+
+        Hands the browser to the `/etsy/api/oauth/authorize` controller
+        route (auth='user'), which generates the PKCE verifier and
+        redirects to Etsy's consent screen; on callback it persists
+        Fernet-encrypted tokens for this shop.
+
+        System-only (FR-017 defense-in-depth): the route writes
+        privileged OAuth credentials for this shop, so the gate is
+        enforced here at the method — the view `groups=` only hides
+        the button and is RPC-bypassable on its own.
+        """
+        self.ensure_one()
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Authorizing an Etsy shop is restricted to system '
+                'administrators.'
+            )
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/etsy/api/oauth/authorize?shop_id=%s' % self.id,
+            'target': 'self',
+        }
+
+    def action_test_connection(self):
+        """T017 — operator connectivity check before an `active_source`
+        cutover. Probes the Etsy API with this shop's stored OAuth
+        tokens (wraps `_probe_api()` → GET /v3/application/openapi-ping)
+        and surfaces the result as a UI notification.
+
+        System-only (FR-017 defense-in-depth): this triggers an
+        outbound Etsy API call with the shop's system OAuth
+        credentials, so the gate is enforced at the method — the view
+        `groups=` only hides the button.
+        """
+        self.ensure_one()
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Testing the Etsy connection is restricted to system '
+                'administrators.'
+            )
+        reachable = self._probe_api()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Etsy Connection',
+                'message': (
+                    'Etsy API is reachable.' if reachable
+                    else 'Etsy API probe failed — check the server logs.'
+                ),
+                'type': 'success' if reachable else 'warning',
+                'sticky': False,
+            },
+        }
+
     # ------------------------------------------------------------------
     # P1-10: Fernet-at-rest token helpers.
     #

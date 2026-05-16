@@ -43,3 +43,5 @@ from . import test_p1_12_db
 from . import test_p1_12_orm
 from . import test_p1_11a_phase1_db
 from . import test_p1_11a_phase2_orm
+from . import test_p1_11_runbook_phase1_db
+from . import test_p1_11_runbook_phase2_orm

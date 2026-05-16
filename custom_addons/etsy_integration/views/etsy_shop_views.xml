@@ -36,6 +36,20 @@
                             icon="fa-shopping-cart">
                             <field name="order_count" widget="statinfo" string="Orders"/>
                         </button>
+                        <button
+                            name="action_authorize_etsy"
+                            type="object"
+                            string="Authorize Etsy"
+                            class="oe_stat_button"
+                            icon="fa-key"
+                            groups="base.group_system"/>
+                        <button
+                            name="action_test_connection"
+                            type="object"
+                            string="Test Connection"
+                            class="oe_stat_button"
+                            icon="fa-plug"
+                            groups="base.group_system"/>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <div class="oe_title">

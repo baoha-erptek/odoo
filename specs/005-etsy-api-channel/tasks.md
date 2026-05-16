@@ -51,7 +51,7 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 - [ ] T014 [US1] Add `etsy.shop` C-ESY-001 (token-required-when-active_source=api) and C-ESY-002 (manual-toggle-requires-system-group) constraints
 - [ ] T015 [P] [US1] Implement `services/etsy_api_client.py` — OAuth2 PKCE flow, token refresh on 401, request signing, response parsing, integrates `multichannel_hub_core/utils/rate_limiter.py`
 - [ ] T016 [US1] Implement `controllers/etsy_oauth_callback.py` — `/etsy/api/oauth/callback` route consuming state-nonce, swapping code for tokens, persisting to `etsy.shop`
-- [ ] T017 [P] [US1] Add `views/etsy_shop_views.xml` — Settings → Etsy API Configuration form with "Authorize Etsy" button + "Test Connection" button + active_source toggle (system-group-only)
+- [X] T017 [P] [US1] Add `views/etsy_shop_views.xml` — Settings → Etsy API Configuration form with "Authorize Etsy" button + "Test Connection" button + active_source toggle (system-group-only) — DONE P1-11-RUNBOOK 2026-05-16 (active_source toggle landed earlier in P1-11a; this slice added the two buttons + thin gated action methods)
 - [ ] T018 [P] [US1] Add token-expiry alert cron `cron_etsy_token_expiry_alert` — checks `etsy_refresh_token_expires_at` and raises a 7-day-warning activity per FR-004
 - [ ] T019 [P] [US1] Phase-2 test `tests/test_oauth_flow.py` — PKCE code_verifier/challenge generation, refresh-token flow, expired-token auto-refresh, scope validation
 - [ ] T020 [US1] Phase-1 DB test verifying `groups='base.group_system'` ACL on token columns (read fails for non-admin)

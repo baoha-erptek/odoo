@@ -663,3 +663,15 @@ Recommended follow-up slice **P1-11-RUNBOOK**: finish T017
 prereqs, flip, verify, rollback). Small, mostly doc + one view +
 one thin action method. Not a P1-11 blocker (cutover is doable via
 shell today) but a P1-13 enabler. Proposed on tracker 2026-05-16.
+
+**Outcome (P1-11-RUNBOOK landed 2026-05-16)**: the gap analysis
+prediction held — Phase-0 spec-drift check confirmed `active_source`
+toggle + `etsy.shop.source.change.log` audit already shipped by
+P1-11a (T013/T055), so the slice reduced to: two thin gated action
+methods (`action_authorize_etsy` → `act_url` to the existing
+`/etsy/api/oauth/authorize?shop_id=<id>` route; `action_test_connection`
+→ wraps existing `_probe_api()` as a `display_notification`), two
+`oe_button_box` buttons, and `operator-runbook.md` §5. No model,
+field, ACL, or controller changes. FR-017 method gate on both
+(20th confirmation). 19 tests RED→GREEN; full suite 499/0-fail;
+both reviews CLEAN. No new surprises.
