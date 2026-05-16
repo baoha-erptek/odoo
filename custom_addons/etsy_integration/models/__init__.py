@@ -14,3 +14,4 @@ from . import res_partner
 from . import res_config_settings
 from . import etsy_message_dedupe
 from . import multichannel_enquiry_etsy
+from . import etsy_listing
