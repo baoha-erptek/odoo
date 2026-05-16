@@ -633,3 +633,33 @@ complete; no orphan dependency.
 - Reviews: code-reviewer + security-reviewer both no CRITICAL/HIGH.
   Security flagged a non-blocking gap (no explicit C-SCL-001 unlink
   test) — closed with `TestP1_11a_Phase2_SourceChangeLogAppendOnly`.
+
+### P1-11 dispatch — operator-runbook gap (2026-05-16)
+
+`/dispatch-slice P1-11` aborted at Phase 0: P1-11 is an **operational
+flip** (BA-lead names pilot shop; admin completes prod OAuth; admin
+sets `active_source='api'` via the system-gated form), not a code
+slice — no entries in `tasks.md`, scaffolding already shipped by
+P1-11a. Walked owner through the cutover procedure synthesized from
+code (`etsy_shop.py` write-gate/C-ESY-001, `EtsyOrderIngestor` T058
+adapter switch, `etsy.shop.source.change.log` audit, P1-12
+`etsy_tracking_push_status`). Two gaps surfaced that block *repeatable*
+cutover (matters for P1-13's 2–4 additional shops):
+
+- **`operator-runbook.md` ends at P1-10 §4.** No §5 for the P1-11
+  `active_source` flip: prerequisites, the system-gated form step,
+  post-flip round-trip verification, rollback. Operators have no
+  written procedure for the cutover or for P1-13 repeats.
+- **T017 unchecked** — no "Authorize Etsy" / "Test Connection"
+  buttons on the `etsy.shop` form. Prereq-3 ("API adapter succeeded
+  ≥1×") currently requires `odoo shell` to call `_probe_api()`
+  (`/v3/application/openapi-ping`); not operator-accessible without
+  shell. T013/T055 (`active_source` field + system-gated toggle)
+  landed in P1-11a but T017's buttons did not.
+
+Recommended follow-up slice **P1-11-RUNBOOK**: finish T017
+(Authorize + Test-Connection buttons, Test-Connection wraps
+`_probe_api()`) + author `operator-runbook.md` §5 (pilot cutover:
+prereqs, flip, verify, rollback). Small, mostly doc + one view +
+one thin action method. Not a P1-11 blocker (cutover is doable via
+shell today) but a P1-13 enabler. Proposed on tracker 2026-05-16.
