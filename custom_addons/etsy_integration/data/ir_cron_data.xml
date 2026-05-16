@@ -61,6 +61,16 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="cron_etsy_listing_variant_sync" model="ir.cron">
+        <field name="name">Etsy: Listing Variant Inventory Sync</field>
+        <field name="model_id" ref="model_etsy_listing_product"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_variants()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="ir_cron_etsy_tracking_push" model="ir.cron">
         <field name="name">Etsy: Push Tracking to Etsy</field>
         <field name="model_id" ref="sale.model_sale_order"/>

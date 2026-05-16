@@ -47,3 +47,5 @@ from . import test_p1_11_runbook_phase1_db
 from . import test_p1_11_runbook_phase2_orm
 from . import test_p_list_pull_phase1_db
 from . import test_p_list_pull_phase2_orm
+from . import test_p_list_inv_pull_phase1_db
+from . import test_p_list_inv_pull_phase2_orm

@@ -15,3 +15,4 @@ from . import res_config_settings
 from . import etsy_message_dedupe
 from . import multichannel_enquiry_etsy
 from . import etsy_listing
+from . import etsy_listing_product

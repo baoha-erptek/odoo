@@ -1,6 +1,18 @@
 from odoo import api, fields, models
 
 
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    # P-LIST-INV-PULL (ADR-013 §2): dual-index link to the Etsy variant
+    # snapshot. Set by SKU discovery or operator override; ondelete
+    # set null so deleting the snapshot never cascades to the product.
+    etsy_listing_variant_id = fields.Many2one(
+        'etsy.listing.product', string='Etsy Listing Variant',
+        ondelete='set null', index=True,
+    )
+
+
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
