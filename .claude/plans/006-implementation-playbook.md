@@ -125,6 +125,7 @@ Do **not** create per-slice forward-work worktrees. The previous Wave 1 / Wave 2
 Update in the same checkpoint commit (or the next one if it would balloon):
 - `specs/<spec>/tasks.md` — `[X]` marks; partial = `[~]` with reason; deferred = `[~]` + target slice
 - `.claude/plans/006-master-plan-tracking.md` — task `state`, `last reviewed` date, blocker rows, **Change-log entry**
+- `.claude/plans/006-overview.md` — refresh the scope scorecard row(s) the slice touched + the snapshot date + "Next dispatch" pointer. Derived digest only; the tracker stays authoritative. If a slice changes no scope's done/total, just bump the date.
 - `specs/006-master-plan/MASTER_PLAN.md` — **status snapshot at the top of the slice's Phase section** (e.g., add `✅ P1-04 Address-change approval landed YYYY-MM-DD` under the relevant Phase). The MASTER_PLAN is the strategy doc; the tracker is the execution log; both must agree on what's done.
 - ADRs in `specs/006-master-plan/adrs/` — only if architecture diverged
 - `specs/<spec>/quickstart.md` — only if env vars / setup steps changed
