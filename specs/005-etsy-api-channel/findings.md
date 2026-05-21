@@ -675,3 +675,65 @@ methods (`action_authorize_etsy` → `act_url` to the existing
 field, ACL, or controller changes. FR-017 method gate on both
 (20th confirmation). 19 tests RED→GREEN; full suite 499/0-fail;
 both reviews CLEAN. No new surprises.
+
+## P1-11-DEPLOY-STAGING — staging refresh executed (2026-05-21)
+
+Pre-cutover staging refresh landed on `esty19_odoo` / DB `esty_odoo19`
+fronted by `https://odoo.hatafax.com`. Release/ops slice (Phases
+1/2/3/4/8 N/A per tracker). Five surprises worth keeping:
+
+- **Tracker exit-criteria version numbers drifted from feature-branch
+  HEAD.** Tracker row froze `etsy_integration 19.0.2.3.8` and `mhc
+  19.0.1.0.35` as exit targets, but HEAD had moved to 19.0.2.6.0 and
+  19.0.1.0.36 respectively (P-LIST-PULL, P-LIST-INV-PULL,
+  P1-DESIGN-WIZ-ATTACH-SCOPE landed after the tracker row was authored
+  the same morning). The slice instruction ("bring current with HEAD")
+  takes precedence over the frozen numbers. **Rule**: for release/ops
+  slices, version numbers in the row are *expected-as-of-authoring*,
+  not exit gates — re-read HEAD manifests at dispatch time.
+
+- **`pg_dump | tee file.sql.gz; gzip file.sql.gz` silently produces
+  plaintext.** `gzip` refuses to add a second `.gz` suffix and (with
+  `2>/dev/null`) skips the file. Mid-flight catch: `file(1)` on the
+  output reported `UTF-8 Unicode text` instead of `gzip compressed
+  data`. Fix: rename then gzip (`mv .gz .sql; gzip -9 .sql`). Worth
+  remembering for any future deploy script: name the streamed file
+  `.sql` and gzip after, or pipe through `gzip -9 > file.sql.gz` in
+  one shot.
+
+- **Secrets bind-mount needs 750/640 with group=container-odoo-gid,
+  not 700/600 root-only.** Host `/odoo/esty19/secrets` initially set
+  to `chmod 700 root:root`; in-container `odoo` user (uid 100, gid 101)
+  could neither traverse the dir nor read the file. Fix: `chown root:101
+  /odoo/esty19/secrets && chmod 750` on the dir AND `chown root:101
+  /odoo/esty19/secrets/etsy_credentials.json && chmod 640` on the file.
+  The host `ls -l` shows the group as `systemd-journal` because gid 101
+  resolves to a different name on the host — only the numeric gid
+  matters across the bind-mount. **Memory candidate**: add to
+  `reference_staging_ssh_deploy.md` so the next operator doesn't repeat.
+
+- **Cron #22 "Etsy: Fetch Order Emails" was already disabled
+  (`active=f`, `lastcall=2026-05-08`) 13 days before this slice.** Not
+  a regression introduced by the migration; pre-existing state. Exit-6
+  ("4 legacy shops still ingest one full email cycle") is therefore
+  re-interpreted as a no-regression check: 4 shops intact (Julien,
+  Carina, Viktor, Sven, all `sync_mode=email_only` + `active_source=email`
+  after the post-migrate sync_mode→active_source mapping), 5 historical
+  `etsy_email_log` rows intact, no errors in container logs since
+  restart, API-mode crons (#32/#36/#37/#38) all fired cleanly post-restart
+  proving the `active_source` dispatch filter works. The cron is paused
+  by owner choice (P1-11 pivot toward API ingest); reactivating it is
+  out of scope here.
+
+- **`client_secret` length is 10 chars** — unusually short vs typical
+  Etsy v3 Shared Secret (~24 chars). Owner explicitly chose to proceed
+  as-is; will surface as a real-OAuth 400 at the jahandmadeart pilot
+  callback (P1-11) if wrong. Documented here so the post-mortem trail
+  is preserved if that happens.
+
+**Rollback target**: `/odoo/esty19/backup-pre-P1-11-DEPLOY-STAGING-20260521T143357Z.sql.gz`
+(2.4MB gzipped, md5 `efa95e3e9122e521ed30b168835378ef`).
+**Compose backup**: `/odoo/esty19/docker-compose.yml.bak.pre-P1-11-DEPLOY-STAGING.20260521T143640Z`.
+
+Unblocks: P1-11 jahandmadeart pilot flip (operator-runbook §5.1
+prereqs are now reachable on staging); downstream P1-13 + P2-07.
