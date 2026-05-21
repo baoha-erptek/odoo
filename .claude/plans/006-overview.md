@@ -1,6 +1,6 @@
 # Master Plan 006 — Overview Snapshot
 
-**Snapshot date**: 2026-05-17
+**Snapshot date**: 2026-05-21
 **Generated from**: [`006-master-plan-tracking.md`](006-master-plan-tracking.md) (authoritative — owner, blockers, per-slice detail live there)
 **Regenerate**: refreshed in playbook Phase 7. Do NOT hand-edit slice detail here; this is a derived digest only.
 
@@ -10,7 +10,7 @@
 
 Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulfill→track pipeline live on production shops**, replacing the legacy email parser. Reporting/observability is explicitly post-E2E polish.
 
-**Coded toward the E2E-pipeline target: ~85%.** The ingest→fulfill→track code loop is closed (P1-12 landed 2026-05-16, closed US3). Remaining work to the target is **operational cutover**, not new feature code.
+**Coded toward the E2E-pipeline target: ~85%.** The ingest→fulfill→track code loop is closed (P1-12 landed 2026-05-16, closed US3). Remaining work to the target is **operational cutover**, not new feature code. **New gate surfaced 2026-05-21**: staging Odoo is still on `etsy_integration` 19.0.1.0.0 (no `active_source`, no OAuth columns, mhc/mhf not installed, no secrets mount) — `P1-11-DEPLOY-STAGING` must land before P1-11 can be exercised against jahandmadeart or any other shop.
 
 ---
 
@@ -36,10 +36,11 @@ Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulf
 ## Priority to reach the final target
 
 **P0 — on the cutover critical path:**
-1. **P1-11** pilot-shop cutover — owner-operational flip (`active_source='api'`); biggest single unblock
+0. **P1-11-DEPLOY-STAGING** — pre-cutover staging refresh (rsync 3 modules + install mhc/mhf + upgrade etsy_integration 19.0.1.0.0→19.0.2.3.8 + add `secrets/` mount + drop Etsy credentials JSON + set `etsy.oauth.credentials_path`). *Hard prereq for P1-11*; release/ops task. _Added 2026-05-21._
+1. **P1-11** pilot-shop cutover — owner-operational flip (`active_source='api'`); biggest single unblock once 0 is green
 2. **P1-13** — additional 2–4 shops (waiting only on P1-11)
 3. **P2-07** — Gmail-cron rebind / email→API cutover; Phase 2 exit = all 19 shops `api_only`, Gmail off
-4. **E2 Gearment sandbox keys** (owner)
+4. **E2 Gearment sandbox keys** (owner) — required for P1-11 §5.3 tracking-back round-trip verify
 
 **P1 — clean/complete pipeline:**
 5. P-LIST-INV-PUSH (inventory writeback)
@@ -59,6 +60,6 @@ Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulf
 
 ## Pointers
 
-- **Next codeable dispatch**: P-LIST-INV-PUSH deferred → see tracker §"Active prioritization" for next; P1-11 stays owner-operational
-- **Last tracker change-log entry**: 2026-05-16 (P-LIST-INV-PULL landed)
+- **Next codeable dispatch**: P-LIST-INV-PUSH deferred → see tracker §"Active prioritization" for next; P1-11 stays owner-operational, now gated on `P1-11-DEPLOY-STAGING` (release/ops slice, not a code dispatch)
+- **Last tracker change-log entry**: 2026-05-21 (P1-11-DEPLOY-STAGING raised — bookkeeping)
 - **Branch**: `feature/006-master-plan-coding` (merge to `main` after W7 E2E sprint)
