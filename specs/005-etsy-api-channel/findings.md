@@ -725,11 +725,15 @@ fronted by `https://odoo.hatafax.com`. Release/ops slice (Phases
   by owner choice (P1-11 pivot toward API ingest); reactivating it is
   out of scope here.
 
-- **`client_secret` length is 10 chars** — unusually short vs typical
-  Etsy v3 Shared Secret (~24 chars). Owner explicitly chose to proceed
-  as-is; will surface as a real-OAuth 400 at the jahandmadeart pilot
-  callback (P1-11) if wrong. Documented here so the post-mortem trail
-  is preserved if that happens.
+- **`client_secret` length is 10 chars** — initially flagged as
+  unusually short vs typical Etsy v3 Shared Secret (~24 chars). Owner
+  explicitly chose to proceed as-is. **Retracted later the same day**
+  (P1-XAPI-SHARED-SECRET-HEADER research): Etsy's own Quickstart
+  example uses `a1b2c3d4e5` (10 chars) for the shared secret. There
+  is no documented minimum length; 10 chars is normal for the personal-
+  access tier. The actual defect that would have surfaced as an
+  authentication failure was a separate one in our request-header
+  construction — captured in the next entry.
 
 **Rollback target**: `/odoo/esty19/backup-pre-P1-11-DEPLOY-STAGING-20260521T143357Z.sql.gz`
 (2.4MB gzipped, md5 `efa95e3e9122e521ed30b168835378ef`).
@@ -737,3 +741,84 @@ fronted by `https://odoo.hatafax.com`. Release/ops slice (Phases
 
 Unblocks: P1-11 jahandmadeart pilot flip (operator-runbook §5.1
 prereqs are now reachable on staging); downstream P1-13 + P2-07.
+
+## P1-XAPI-SHARED-SECRET-HEADER — Etsy 2026-02-09 header enforcement (2026-05-21)
+
+Two findings worth keeping from a same-day deep-research detour after
+P1-11-DEPLOY-STAGING.
+
+**(1) Etsy dev portal vocabulary → OAuth2 vocabulary.** The Etsy
+"Manage your apps" UI uses non-standard names that confused the
+operator briefing during the staging refresh:
+
+| Etsy dev portal UI | Maps to | Where it's used in our code |
+|---|---|---|
+| **Keystring** | OAuth2 `client_id` | `credentials['client_id']` in `services/etsy_api_client.py`, `controllers/etsy_oauth.py` |
+| **Shared Secret** | OAuth2 `client_secret` | `credentials['client_secret']` in the OAuth controller (token exchange) AND, per fix below, in `EtsyApiClient` for the `x-api-key` header |
+| **Status: Personal access** | App tier metadata (not a credential) | not stored |
+| **Rate Limit** | Per-key QPS + QPD throttle (not a credential) | not stored |
+
+The JSON file at `/opt/odoo/secrets/credentials.json` uses the OAuth2
+names (`client_id`/`client_secret`/`redirect_uris`) — operators
+copying values from Etsy's UI must remember the rename.
+
+**(2) Real defect surfaced from research.** Etsy began enforcing the
+combined header form `x-api-key: keystring:shared_secret` on
+2026-02-09 (etsy/open-api Discussion #1521 — enforcement was deferred
+once from 2026-01-18 to 2026-02-09 per the announcement). The
+keystring-only form is now rejected. Our `EtsyApiClient._session()`
+was still emitting the pre-enforcement form:
+
+```python
+# Before (file:line `services/etsy_api_client.py:127` in 19.0.2.6.0):
+session.headers = {
+    'Authorization': f'Bearer {self.shop._get_access_token()}',
+    'x-api-key': self.client_id,
+    ...
+}
+```
+
+The defect went undetected because the only call site that
+exercises `EtsyApiClient` at runtime requires
+`active_source='api'` on an `etsy.shop`, and no shop had been
+flipped yet — the staging refresh in P1-11-DEPLOY-STAGING was the
+first time `active_source='api'` became *possible* on staging.
+
+Fix landed in 19.0.2.7.0 (`commit 4348cd32b79`): validate
+`credentials['client_secret']` non-empty at `__init__`, store
+`self.client_secret`, build header as
+`f'{self.client_id}:{self.client_secret}'`. The corresponding test
+`TestEtsyApiClientSession.test_session_sets_x_api_key_header` had
+codified the wrong format (`'test_client_id'`) — also fixed.
+`TestTokenHelpers.setUpClass` in `test_p1_10_orm.py` had a credentials
+mock with only `client_id`; backfilled with `client_secret` so its
+4 tests don't trip the new fail-fast.
+
+**Etsy's own example secret is 10 chars.** Etsy's Quickstart
+documents `1aa2bb33c44d55eeeeee6fff:a1b2c3d4e5` as the combined-header
+example — the secret half is `a1b2c3d4e5`, 10 chars. The
+P1-11-DEPLOY-STAGING note that called the operator's 10-char value
+"unusually short" was wrong. There is no documented length floor for
+the shared secret; 10 chars is consistent with Etsy's own sample.
+
+**One LOW-priority follow-up deferred by security-reviewer**:
+`controllers/etsy_oauth._read_credentials()` does not fail-fast on
+missing `client_secret` the way `services/etsy_api_client._read_credentials`
+caller now does. If the JSON file is missing the key, the OAuth
+controller fails at line 246 inside `exchange_code_for_token` instead
+of at credential-load. Not user-visible (operator-facing error
+remains clear) — defer until next time someone touches that file.
+
+**Pre-existing flakes confirmed by this slice's full-suite run**
+(not introduced by either P1-11-DEPLOY-STAGING or
+P1-XAPI-SHARED-SECRET-HEADER):
+
+- `test_non_ba_lead_cannot_call_action_approve_via_rpc` — PostgreSQL
+  `digest_digest` deadlock during `assertRaises` savepoint flush.
+  Concurrent-test interaction with the standard mail/digest workers.
+  Passes in isolation.
+- `test_callback_with_valid_state_exchanges_token` — full-suite
+  test-ordering pollution. Passes in isolation.
+
+Both stay on the books as known flakes; route via E2E defect intake
+if either becomes blocking.
