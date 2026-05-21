@@ -6,10 +6,12 @@ Read-only sandbox client for the Etsy v3 API. Mirrors the shape of
 
 Auth (per Etsy v3 docs): two HTTP headers required on every request:
   - Authorization: Bearer <access_token>
-  - x-api-key: <client_id>
+  - x-api-key: <client_id>:<client_secret>     (since 2026-02-09 enforcement;
+    etsy/open-api Discussion #1521 — keystring-only form is rejected)
 
 Tokens come from the `etsy.shop` record (P0-14 fields with `groups='base.group_system'`);
-`client_id` is read from `secrets/credentials.json` via `_read_credentials()`.
+`client_id` and `client_secret` are read from `secrets/credentials.json` via
+`_read_credentials()`.
 
 Rate limiter: per-instance `TokenBucket(rate=8, period=1.0)` (per architect Q3 in
 `specs/005-etsy-api-channel/findings.md`). Lives in `multichannel_hub_core.utils`
@@ -112,9 +114,12 @@ class EtsyApiClient:
             ) from exc
         if not credentials.get('client_id'):
             raise ValueError("EtsyApiClient: client_id missing from credentials")
+        if not credentials.get('client_secret'):
+            raise ValueError("EtsyApiClient: client_secret missing from credentials")
 
         self.shop = shop
         self.client_id = credentials['client_id']
+        self.client_secret = credentials['client_secret']
         self._rate_limiter = TokenBucket(_RATE_LIMIT_QPS, _RATE_LIMIT_PERIOD)
 
     def _session(self) -> requests.Session:
@@ -124,7 +129,7 @@ class EtsyApiClient:
         # Authorization header would 401 every request.
         session.headers = {
             'Authorization': f'Bearer {self.shop._get_access_token()}',
-            'x-api-key': self.client_id,
+            'x-api-key': f'{self.client_id}:{self.client_secret}',
             'Accept': 'application/json',
         }
         return session

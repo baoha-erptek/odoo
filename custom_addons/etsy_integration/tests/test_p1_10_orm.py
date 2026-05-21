@@ -516,9 +516,15 @@ class TestTokenHelpers(TransactionCase):
         # Stub _read_credentials so EtsyApiClient can be instantiated
         # without /opt/odoo/secrets/credentials.json existing in the
         # test container (the file is bind-mounted in real deploys).
+        # Both halves are required since 2026-02-09 — EtsyApiClient.__init__
+        # fail-fasts when either is missing (the `x-api-key` header is now
+        # `keystring:secret`, per etsy/open-api Discussion #1521).
         cls._creds_patcher = mock.patch(
             'odoo.addons.etsy_integration.services.etsy_api_client._read_credentials',
-            return_value={'client_id': 'test_client_id'},
+            return_value={
+                'client_id': 'test_client_id',
+                'client_secret': 'test_client_secret',
+            },
         )
         cls._creds_patcher.start()
         cls.addClassCleanup(cls._creds_patcher.stop)

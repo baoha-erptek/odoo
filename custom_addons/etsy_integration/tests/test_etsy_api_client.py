@@ -119,7 +119,12 @@ class TestEtsyApiClientSession(TransactionCase):
 
     @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
     def test_session_sets_x_api_key_header(self, mock_session_class):
-        """Session includes x-api-key header with client_id."""
+        """Session includes x-api-key in 'keystring:secret' form.
+
+        Etsy enforces the combined `keystring:shared_secret` form on the
+        `x-api-key` request header since 2026-02-09 (etsy/open-api
+        Discussion #1521). The previous keystring-only form is rejected.
+        """
         mock_session = mock.Mock()
         mock_session_class.return_value = mock_session
 
@@ -127,7 +132,27 @@ class TestEtsyApiClientSession(TransactionCase):
         session = client._session()
 
         self.assertIn('x-api-key', session.headers)
-        self.assertEqual(session.headers['x-api-key'], 'test_client_id')
+        self.assertEqual(
+            session.headers['x-api-key'],
+            'test_client_id:test_secret',
+        )
+
+    def test_init_raises_when_client_secret_missing(self):
+        """Construction fails fast if credentials lack `client_secret`.
+
+        The shared secret is required to build the post-2026-02-09
+        `x-api-key: keystring:secret` header AND to refresh tokens; a
+        missing value would otherwise surface as a 401 from Etsy on the
+        first request — fail at construction instead so operators see
+        a clear ValueError.
+        """
+        with mock.patch(
+            'odoo.addons.etsy_integration.services.etsy_api_client._read_credentials',
+            return_value={'client_id': 'test_client_id'},
+        ):
+            with self.assertRaises(ValueError) as ctx:
+                EtsyApiClient(self.shop)
+        self.assertIn('client_secret', str(ctx.exception))
 
 
 @tagged('post_install', '-at_install')
