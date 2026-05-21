@@ -44,6 +44,7 @@ services:
     volumes:
       - ./custom_addons:/opt/odoo/custom_addons
       - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./secrets:/opt/odoo/secrets:ro
       - esty_mvp_odoo_data:/var/lib/odoo
     ports:
       - "8169:8169"
