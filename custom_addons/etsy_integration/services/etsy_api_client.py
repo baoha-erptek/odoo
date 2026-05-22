@@ -55,17 +55,28 @@ _AUTH_FORBIDDEN = 403
 
 
 CREDENTIALS_PATH = '/opt/odoo/secrets/credentials.json'
+_CREDENTIALS_PATH_PARAM = 'etsy.oauth.credentials_path'
 
 
-def _read_credentials() -> dict:
+def _read_credentials(env=None) -> dict:
     """Load Etsy app credentials from the in-container secrets path.
 
-    Matches the path used by `controllers/etsy_oauth._read_credentials`
-    (`/opt/odoo/secrets/credentials.json` is the bind-mounted location in
-    the namco_odoo19 docker compose). Tests patch this function so the
-    credentials file does not need to exist inside the test container.
+    Single source of truth with `controllers/etsy_oauth._read_credentials`:
+    when an Odoo `env` is supplied, the path is read from the
+    `etsy.oauth.credentials_path` system parameter so dev / staging / prod
+    can keep distinct filenames (staging uses `etsy_credentials.json` per
+    `reference_staging_ssh_deploy.md`). When env is None (test isolation,
+    pure-Python callers), fall back to the historical hardcoded default —
+    tests patch this function so the file does not need to exist.
     """
-    with open(CREDENTIALS_PATH, 'r', encoding='utf-8') as handle:
+    path = CREDENTIALS_PATH
+    if env is not None:
+        param = env['ir.config_parameter'].sudo().get_param(
+            _CREDENTIALS_PATH_PARAM,
+        )
+        if param:
+            path = param
+    with open(path, 'r', encoding='utf-8') as handle:
         return json.load(handle)
 
 
@@ -107,10 +118,10 @@ class EtsyApiClient:
                 "EtsyApiClient: etsy_oauth_refresh_token is missing on shop"
             )
         try:
-            credentials = _read_credentials()
+            credentials = _read_credentials(env=shop.env)
         except FileNotFoundError as exc:
             raise ValueError(
-                "EtsyApiClient: secrets/credentials.json not found"
+                f"EtsyApiClient: credentials file not found ({exc.filename})"
             ) from exc
         if not credentials.get('client_id'):
             raise ValueError("EtsyApiClient: client_id missing from credentials")
@@ -236,8 +247,18 @@ class EtsyApiClient:
                 )
 
         if response.status_code == _AUTH_FORBIDDEN:
+            # Per memory feedback_capture_response_body_before_blackbox_probe.md:
+            # surface vendor error body so 403s are diagnosable without
+            # a special diagnostic deploy. Body is typically a small JSON
+            # like {"error": "...", "error_description": "..."}; truncate
+            # to 500 chars to keep the log line bounded and avoid token
+            # leakage in any pathological response.
+            body = (response.text or '')[:500]
+            _logger.warning(
+                "Etsy 403 Forbidden url=%s body=%r", url, body,
+            )
             raise ValueError(
-                "Etsy returned 403 Forbidden; check scope/permissions"
+                f"Etsy returned 403 Forbidden ({body}); check scope/permissions"
             )
 
         response.raise_for_status()

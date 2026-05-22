@@ -137,12 +137,23 @@ class EtsyListing(models.Model):
         """One read-only pull pass for `shop`: upsert fetched listings,
         soft-delete any active listing absent from the fetch, write one
         `etsy.api.log` audit row (`source='listing_pull'`)."""
+        # See etsy_order_syncer.sync_shop_orders for the shared rationale
+        # — Odoo PK != Etsy shop_id; refuse the API call without it.
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            _logger.warning(
+                'Etsy listing sync: shop %s (id=%s) has no '
+                'etsy_api_shop_id; skipping.',
+                shop.name, shop.id,
+            )
+            return {'created': 0, 'updated': 0, 'soft_deleted': 0}
+
         adapter = self._build_adapter(shop)
         seen = set()
         created = updated = 0
         error_message = None
         try:
-            for raw in adapter.fetch_listings(shop.id, since=None):
+            for raw in adapter.fetch_listings(api_shop_id, since=None):
                 listing_id = str(raw.get('listing_id'))
                 seen.add(listing_id)
                 vals = self._listing_vals_from_raw(raw, shop)
@@ -227,7 +238,9 @@ class EtsyListing(models.Model):
         cron does not.)"""
         self.env['etsy.api.log'].sudo().create({
             'shop_id': shop.id,
-            'endpoint': 'GET /v3/application/shops/%s/listings' % shop.id,
+            'endpoint': 'GET /v3/application/shops/%s/listings' % (
+                shop.sudo().etsy_api_shop_id or shop.id,
+            ),
             'source': 'listing_pull',
             'response_summary': (
                 'listing_pull: created=%d updated=%d soft_deleted=%d'

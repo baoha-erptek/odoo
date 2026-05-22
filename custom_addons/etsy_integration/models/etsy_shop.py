@@ -35,6 +35,25 @@ class EtsyShop(models.Model):
         string='Etsy OAuth Token Expires At',
     )
 
+    # Real Etsy API shop_id (e.g. 60752333 for JaHandmadeArt), distinct
+    # from the Odoo PK `id`. The sandbox-era convention
+    # `etsy.shop.id == Etsy shop_id` (memory item #132) does not survive
+    # real shop creation: Etsy assigns its own large numeric ids. All
+    # /v3/application/shops/{shop_id}/... URLs must use this field.
+    # NULL is legal on email-only shops (they never hit the API);
+    # required (by convention, not constraint) before `active_source`
+    # flips to 'api'. Auto-bootstrap from /users/me on OAuth callback
+    # is deferred to follow-up slice P1-11-SHOPID-BOOTSTRAP.
+    etsy_api_shop_id = fields.Char(
+        string='Etsy Shop ID',
+        index=True,
+        groups='base.group_system',
+        help='Numeric shop_id assigned by Etsy (visible in seller '
+             'dashboard URL). Used in /v3/application/shops/{shop_id}/* '
+             'URLs. Must be set before flipping Active Source to '
+             '"Etsy API".',
+    )
+
     # Spec 005 P0-16b1 — incremental-sync watermark. The `EtsyOrderSyncer`
     # (P0-16c) reads this when calling the adapter's `fetch_new_orders`
     # and writes a fresh value once the batch ingests cleanly. NULL on
@@ -259,20 +278,25 @@ class EtsyShop(models.Model):
         """T050 — health probe for the API adapter: lightweight read
         against the Etsy ping endpoint. Returns True on HTTP 2xx.
 
-        Used by the health-check cron (separate slice) to drive the
-        3-failure auto-failover counter; no caller in P1-11a.
+        Used by the health-check cron and by `action_test_connection`
+        (P1-11-RUNBOOK) to drive the 3-failure auto-failover counter
+        and the operator UI toast.
         """
         self.ensure_one()
         from ..services.etsy_api_client import EtsyApiClient
         try:
-            EtsyApiClient(self.env, self)._request(
-                'GET', '/v3/application/openapi-ping',
-            )
+            EtsyApiClient(self).get('openapi-ping')
             return True
-        except Exception:
-            _logger.debug(
-                'Etsy API probe failed for shop %s (id=%s)',
-                self.name, self.id,
+        except Exception as exc:
+            # Bumped from debug→warning 2026-05-22 after the operator
+            # toast surfaced "probe failed" with no log evidence on
+            # log_level=info. We still don't include the exception
+            # message in the audit channel (may carry token fragments
+            # via session headers in trace contexts) — just the type +
+            # shop identity for triage.
+            _logger.warning(
+                'Etsy API probe failed for shop %s (id=%s): %s',
+                self.name, self.id, type(exc).__name__,
             )
             return False
 

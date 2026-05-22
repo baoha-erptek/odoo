@@ -268,20 +268,25 @@ class EtsyOAuthController(http.Controller):
         if not shop.exists():
             return _bad_request("Etsy shop disappeared during OAuth")
 
-        # P1-10 scope assertion — hard-fail before persisting tokens.
-        # Audit row is written from a fresh cursor + commit inside the
-        # helper so the failure survives the 400's transaction
-        # rollback.
-        scope_error = _validate_scope_grant(
-            token_response.get('scope', ''),
-            shop.id,
-        )
-        if scope_error:
-            _logger.warning(
-                "Etsy OAuth scope validation failed (shop_id=%s): %s",
-                shop.id, scope_error,
-            )
-            return _bad_request("Etsy OAuth scope validation failed")
+        # P1-10 scope assertion — conditional. Etsy v3's token-exchange
+        # response empirically omits `scope` (2026-05-22 staging probe:
+        # keys are access_token, api_key, expires_in, refresh_token,
+        # token_type, user_id). The granted scope set is bound at the
+        # authorize step (`DEFAULT_SCOPES` in the /authorize URL); the
+        # consent screen shows the user the exact list and they cannot
+        # grant more than was requested. We retain the post-hoc check
+        # as a defense-in-depth net for the day Etsy starts returning
+        # `scope` — and to immediately surface `_FORBIDDEN_SCOPES`
+        # leakage if it ever happens.
+        granted_scope = token_response.get('scope') or ''
+        if granted_scope:
+            scope_error = _validate_scope_grant(granted_scope, shop.id)
+            if scope_error:
+                _logger.warning(
+                    "Etsy OAuth scope validation failed (shop_id=%s): %s",
+                    shop.id, scope_error,
+                )
+                return _bad_request("Etsy OAuth scope validation failed")
 
         expires_in = int(token_response.get('expires_in') or 3600)
         # P1-10: route tokens through the Fernet helpers — the raw

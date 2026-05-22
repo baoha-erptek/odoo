@@ -822,3 +822,129 @@ P1-XAPI-SHARED-SECRET-HEADER):
 
 Both stay on the books as known flakes; route via E2E defect intake
 if either becomes blocking.
+
+---
+
+## 2026-05-22 — P1-11-WIRE-LIVE pilot E2E hotfix chain
+
+JaHandmadeArt pilot OAuth → API → ingest path was blocked by five
+interdependent defects. Captured here so the follow-up slice
+**P1-11-SHOPID-BOOTSTRAP** can re-test against them and so future
+operators understand what the manifest 19.0.2.7.0 → 19.0.2.8.0 bump
+covers.
+
+**(1) Etsy v3 token-exchange response has no `scope` field.** The
+P1-10 D-P1-10-04 scope-assertion contract assumed Etsy would echo
+granted scopes in the token-exchange response and the controller
+hard-failed every callback when the field came back empty. Empirical
+diagnostic captured the response keys on staging:
+
+```
+keys = ['access_token', 'api_key', 'expires_in', 'refresh_token',
+        'token_type', 'user_id']
+scope = None
+```
+
+Resolution: keep `_validate_scope_grant` armed but gate the call on
+non-empty `scope` (`controllers/etsy_oauth.py`). If Etsy ever starts
+returning the field, the safety net activates automatically. The
+`_FORBIDDEN_SCOPES={'conversations_r'}` guard becomes effectively
+dead code until that day — left in place as documentation.
+
+**(2) `etsy_shop._probe_api` two bugs + silent debug log.** Wrong
+constructor (`EtsyApiClient(self.env, self)` against `__init__(shop)`)
+raised TypeError; URL double-prefix (`/v3/application/openapi-ping`
+against `ETSY_API_BASE_URL` which already includes `/v3/application`)
+would have given 404 if the TypeError ever reached HTTP. Bare
+`except Exception:` + `_logger.debug` swallowed both at
+`log_level=info`. Every `test_p1_11_runbook_phase2_orm` test that
+exercises the Test-Connection button uses
+`mock.patch.object(type(shop), '_probe_api', return_value=...)`, so
+the method body was never live in CI. Resolution: fix both bugs;
+bump probe-failure logging to `_logger.warning` with exception type
+(not message — may leak token fragments via session-header trace
+contexts). Follow-up slice owes a live-`_probe_api` test with mocked
+`requests`.
+
+**(3) `EtsyApiClient._read_credentials()` path divergence.** Hard
+constant `/opt/odoo/secrets/credentials.json` vs the OAuth
+controller's `etsy.oauth.credentials_path` system param (set to
+`/opt/odoo/secrets/etsy_credentials.json` on staging since
+P1-11-DEPLOY-STAGING). Resolution: `_read_credentials(env=None)` —
+when env is supplied, read from the system param; fall back to the
+hardcoded default. Callers in `__init__` pass `shop.env`. Single
+source of truth restored.
+
+**(4) 403 handler discarded the vendor body.** Per memory
+`feedback_capture_response_body_before_blackbox_probe.md` (carried
+forward from Defect-11-02). Etsy's 403 body is a small JSON like
+`{"error":"User does not own Shop 10"}` — diagnosable in seconds if
+the response body is surfaced. Now permanently captured: body
+included in the raised `ValueError` AND in a `_logger.warning` line.
+Truncated at 500 chars; tokens are not carried in error bodies so
+leakage risk is null.
+
+**(5) Sandbox convention "Odoo PK == Etsy shop_id" is dead.** Memory
+item #132 documented the convention; JaHandmadeArt killed it.
+JaHandmadeArt has Odoo PK `10` (legacy 1–4 belong to the 4 email-only
+shops, 5–9 were probably test rows). Real Etsy shop_id from
+`/users/me` is `60752333`. Resolution: new
+`etsy.shop.etsy_api_shop_id` Char field (system-group, indexed,
+help='Numeric shop_id assigned by Etsy …'), plumbed through 3
+adapter call sites:
+
+- `services/etsy_order_syncer.py: sync_shop_orders` — refuse to call
+  the API without it (warning log; return zero-counts dict).
+- `models/etsy_listing.py: _sync_shop_listings` — same.
+- `services/etsy_tracking_pusher.py: push` — same, via
+  `_mark_failed`.
+
+Four audit-log endpoint strings updated to reflect the real URL
+(falling back to `shop.id` only as a display courtesy when
+`etsy_api_shop_id` is empty — which is fine because we refuse the
+API call upstream).
+
+Shop 10 backfilled manually on staging via
+`UPDATE etsy_shop SET etsy_api_shop_id='60752333' WHERE id=10`.
+**Auto-bootstrap from `/users/me` on OAuth callback** is deferred to
+P1-11-SHOPID-BOOTSTRAP — Etsy's `/v3/application/users/me` returns
+`{shop_id, user_id}` cheaply for the primary-shop case, so callback
+post-token-persist can fetch and store the shop_id atomically with
+the OAuth state. Multi-shop owners (none today) would need separate
+wiring.
+
+**E2E proof (10:00:52 UTC 2026-05-22 cron cycle):**
+
+| Object | Value |
+|--------|-------|
+| `sale.order` | `S00006` (id=6, sync_source='api', state='draft') |
+| Etsy receipt | `3818231452` |
+| Customer (partner_id=12) | auto-created from receipt |
+| `amount_total` | ₫734,914.00 |
+| `date_order` | 2025-10-06 12:20:51 |
+| `etsy.listing` rows for shop 10 | 1 (matches Etsy `listing_active_count=1`) |
+| `etsy.listing.product` variants | 5 |
+
+**Side-tightening on staging during the run** (not strictly part of
+the slice but useful to capture):
+
+- `list_db = False` + `dbfilter = ^esty_odoo19$` — eliminates the
+  multi-DB OAuth state-binding risk (the pending state row at
+  `ir.config_parameter[etsy.oauth.pending.<state>]` is per-DB; with
+  3 DBs visible and `dbfilter=.*` the callback could land on the
+  wrong DB).
+- `proxy_mode = True` — was `False` despite nginx fronting HTTPS;
+  Odoo was treating every request as HTTP from `127.0.0.1`. Fixed
+  so absolute URLs honor the X-Forwarded-Proto from nginx.
+
+**Side-issues left for follow-ups:**
+
+- 3 stale `etsy.oauth.pending.*` rows in `ir.config_parameter` from
+  failed Authorize attempts during the diagnostic chain. Harmless
+  (no tokens), will TTL-sweep when P1-10's transient model lands.
+- `check_access_rights()` / `check_access_rule()` at
+  `controllers/etsy_oauth.py:176-177` are deprecated since Odoo
+  18.0; surfaces as `DeprecationWarning` on every Authorize click.
+  Pairs nicely with the SHOPID-BOOTSTRAP slice if the same author
+  touches the file.
+

@@ -61,6 +61,14 @@ class EtsyTrackingPusher:
         receipt_id = order.etsy_order_id
         tracking_number = fulfillment.tracking_number
 
+        # See etsy_order_syncer for shared rationale: Odoo PK != Etsy
+        # shop_id. Refuse to push without a real Etsy shop_id.
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            return self._mark_failed(
+                order, 'Shop has no etsy_api_shop_id; cannot push tracking',
+                shop=shop, http_status=None, api_called=False)
+
         carrier_name = fulfillment.shipping_carrier_id.etsy_carrier_name
         warning = ''
         if not carrier_name:
@@ -73,12 +81,12 @@ class EtsyTrackingPusher:
 
         endpoint = (
             'POST /v3/application/shops/%s/receipts/%s/tracking'
-            % (shop.id, receipt_id))
+            % (api_shop_id, receipt_id))
 
         try:
             client = EtsyApiClient(shop)
             ok, http_status, err = client.push_tracking(
-                shop_path_id=shop.id,
+                shop_path_id=api_shop_id,
                 receipt_id=receipt_id,
                 carrier_name=carrier_name,
                 tracking_number=tracking_number,
@@ -125,7 +133,8 @@ class EtsyTrackingPusher:
         self._audit(
             shop,
             endpoint or 'POST /v3/application/shops/%s/receipts/%s/tracking' % (
-                shop.id if shop else 0, order.etsy_order_id or ''),
+                (shop.sudo().etsy_api_shop_id or shop.id) if shop else 0,
+                order.etsy_order_id or ''),
             http_status,
             response_summary='API called but failed' if api_called
             else 'Push not attempted (precondition failed)',

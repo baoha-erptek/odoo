@@ -227,10 +227,14 @@ class EtsyListingProduct(models.Model):
     def _write_audit(self, shop, created, updated, soft_deleted):
         """One `etsy.api.log` row per shop variant sync. sudo(): log
         model is system-create-only; cron is already `__system__`."""
+        # Path note: variants are fetched per-listing at
+        # /listings/{listing_id}/inventory (no shop prefix); the audit
+        # string mentions the shop_id for operator readability only.
         self.env['etsy.api.log'].sudo().create({
             'shop_id': shop.id,
             'endpoint':
-                'GET /v3/application/shops/%s/listings/*/inventory' % shop.id,
+                'GET /v3/application/listings/{listing_id}/inventory '
+                '[shop %s]' % (shop.sudo().etsy_api_shop_id or shop.id),
             'source': 'listing_pull',
             'response_summary': (
                 'variant_pull: created=%d updated=%d soft_deleted=%d'

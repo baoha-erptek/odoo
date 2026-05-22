@@ -56,6 +56,21 @@ class EtsyOrderSyncer:
                 shop.name, shop.id,
             )
 
+        # Refuse to call Etsy without the real shop_id. Per
+        # P1-11-RUNBOOK 2026-05-22 finding: the sandbox convention of
+        # equating Odoo PK to Etsy shop_id breaks on real shops (Etsy
+        # 403 "User does not own Shop {odoo_id}"). The bootstrap of
+        # this field from /users/me is deferred to P1-11-SHOPID-BOOTSTRAP.
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            _logger.warning(
+                'Etsy sync: shop %s (id=%s) has no etsy_api_shop_id; '
+                'skipping. Set Etsy Shop ID in the shop form (admin) '
+                'or re-Authorize Etsy once auto-bootstrap lands.',
+                shop.name, shop.id,
+            )
+            return {'ingested': 0, 'audited': 0}
+
         adapter = self._build_adapter(shop)
         # Cursor is system-only (group_system ACL on the field). The
         # cron runs as `__system__`, so direct read works; explicit
@@ -68,7 +83,7 @@ class EtsyOrderSyncer:
         audited = 0
         last_seen = since
 
-        for payload in adapter.fetch_new_orders(shop.id, since):
+        for payload in adapter.fetch_new_orders(api_shop_id, since):
             payload_ts = payload.last_modified or payload.order_date
             try:
                 if shop.sync_audit_mode:
@@ -120,7 +135,9 @@ class EtsyOrderSyncer:
         # write the audit row without elevating the caller's session.
         self._env['etsy.api.log'].sudo().create({
             'shop_id': shop.id,
-            'endpoint': 'GET /v3/application/shops/%s/receipts (audit mode)' % shop.id,
+            'endpoint': 'GET /v3/application/shops/%s/receipts (audit mode)' % (
+                shop.sudo().etsy_api_shop_id or shop.id,
+            ),
             'source': 'audit',
             'response_summary': (
                 'audit: receipt %s amount=%s %s — '
