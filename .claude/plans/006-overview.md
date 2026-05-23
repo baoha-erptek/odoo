@@ -1,16 +1,16 @@
 # Master Plan 006 — Overview Snapshot
 
-**Snapshot date**: 2026-05-21
+**Snapshot date**: 2026-05-23
 **Generated from**: [`006-master-plan-tracking.md`](006-master-plan-tracking.md) (authoritative — owner, blockers, per-slice detail live there)
 **Regenerate**: refreshed in playbook Phase 7. Do NOT hand-edit slice detail here; this is a derived digest only.
 
 ---
 
-## Final target
+## Final target (amended 2026-05-23 per ADR-014)
 
-Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulfill→track pipeline live on production shops**, replacing the legacy email parser. Reporting/observability is explicitly post-E2E polish.
+Per ADR-008 (API-first pivot) **plus ADR-014 (central product hub)**: a real **Etsy ↔ Odoo ↔ Gearment ingest→fulfill→track pipeline live on production shops** (Etsy → Odoo → Gearment for orders; Gearment → Odoo → Etsy for tracking), **plus Odoo as the central catalog source publishing to Etsy** (Excel-canonical recurring sync feeding Odoo `product.template`, operator-wizard publish to Etsy with full create→images→inventory→publish flow). Amazon + ecommerce remain Phase 5. Reporting/observability is post-E2E polish.
 
-**Coded toward the E2E-pipeline target: ~85%.** The ingest→fulfill→track code loop is closed (P1-12 landed 2026-05-16, closed US3). Remaining work to the target is **operational cutover**, not new feature code. **New gate surfaced 2026-05-21**: staging Odoo is still on `etsy_integration` 19.0.1.0.0 (no `active_source`, no OAuth columns, mhc/mhf not installed, no secrets mount) — `P1-11-DEPLOY-STAGING` must land before P1-11 can be exercised against jahandmadeart or any other shop.
+**Coded toward the amended target: ~70%.** The denominator grew on 2026-05-23 with the addition of MP006 Phase 3 (15 new implementation slices + 1 deferred — see Spec 009/010/011 tasks.md). The ingest→fulfill→track loop is closed (was ~85% of the pre-amendment target). New work: catalog hub + outbound publish (0/15). Operational cutover for the existing inbound pipeline (P1-11 pilot sign-off, P1-13, P2-07) continues in parallel.
 
 ---
 
@@ -28,24 +28,33 @@ Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulf
 | ↳ Family D — CRM lead (Spec 007) | 5 / 7 | ~70% | P3-LEAD-MAIL-ALIAS, P3-LEAD-API-ROUTING |
 | ↳ Listings & inventory (Spec 008) | 3 / 4 | 75% | P-LIST-INV-PUSH (first `listings_w` writeback, deferred) |
 | Phase 2 — Tracking import + GDrive poll + shop cutovers | 6 / 8 | 75% | P2-07 (Gmail-cron rebind / email→API cutover), P2-08; exit = all 19 shops `api_only` |
+| **Phase 3 — Central product hub + Odoo→Etsy publish (NEW 2026-05-23 per ADR-014)** | **1 / 16** | **~6%** | P-HUB-SPEC `doing`; 5 foundation slices (Spec 009) + 4 catalog-sync slices (Spec 010) + 5 publish slices (Spec 011) + 1 deferred (P-HUB-XLS-AVAILABILITY-MAP) + VN docs |
 | Phase 4 — Gearment + returns + pricing audit | ~8 / 10 | ~80% | P4-02 returns, P4-03 pricing audit |
-| Phase 5 — Inventory/catalog/scan/Amazon/website | 0 / 5 | 0% | Future parallel tracks P5-01..05 |
+| Phase 5 — Inventory/scan/Amazon/website | 0 / 4 | 0% | Future parallel tracks; catalog work relocated to Phase 3 |
 
 ---
 
-## Priority to reach the final target
+## Priority to reach the amended final target
 
-**P0 — on the cutover critical path:**
-0. **P1-11-DEPLOY-STAGING** — pre-cutover staging refresh (rsync 3 modules + install mhc/mhf + upgrade etsy_integration 19.0.1.0.0→19.0.2.3.8 + add `secrets/` mount + drop Etsy credentials JSON + set `etsy.oauth.credentials_path`). *Hard prereq for P1-11*; release/ops task. _Added 2026-05-21._
-1. **P1-11** pilot-shop cutover — owner-operational flip (`active_source='api'`); biggest single unblock once 0 is green
-2. **P1-13** — additional 2–4 shops (waiting only on P1-11)
-3. **P2-07** — Gmail-cron rebind / email→API cutover; Phase 2 exit = all 19 shops `api_only`, Gmail off
-4. **E2 Gearment sandbox keys** (owner) — required for P1-11 §5.3 tracking-back round-trip verify
+**P0 — on the inbound cutover critical path (unchanged from 2026-05-21 snapshot):**
+1. **P1-11** pilot-shop cutover — owner-operational flip (`active_source='api'`) on JaHandmadeArt; signed off
+2. **P1-11-SHOPID-BOOTSTRAP** — auto-fetch `etsy_api_shop_id` on OAuth + C-ESY-003 constraint + tests for the 3 adapter call sites (follow-up to P1-11-WIRE-LIVE)
+3. **P1-13** — additional 2–4 shops (waiting only on P1-11 sign-off)
+4. **P2-07** — Gmail-cron rebind / email→API cutover; Phase 2 exit = all 19 shops `api_only`, Gmail off
+5. **E2 Gearment sandbox keys** (owner) — required for P1-11 §5.3 tracking-back round-trip verify
+
+**P0' — Phase 3 critical path (new 2026-05-23 per ADR-014):**
+6. **P-HUB-PROD-MODEL** — foundation: `multichannel.sales.channel` + `product.channel.status` + `product.template` extensions. Unblocks every other Phase 3 slice.
+7. **P-HUB-WIZARD** + **P-HUB-SKU-DRIFT** (mhc-half) — operator entry surfaces for catalog hygiene
+8. **P-PUB-CLIENT** — `EtsyApiClient.post/put/patch/post_multipart`; unblocks all publish slices + the Etsy push hook for P-HUB-SKU-DRIFT
+9. **P-HUB-XLS-PARSE → P-HUB-XLS-INGEST → P-HUB-XLS-CRON → P-HUB-IMAGES** — recurring catalog sync (sequential)
+10. **P-PUB-DRAFT → P-PUB-IMAGES → P-PUB-INVENTORY → P-PUB-PUBLISH → P-PUB-E2E** — outbound publish chain (Spec 011)
+11. **P-HUB-BACKFILL** — non-destructive bidirectional link of existing JaHandmadeArt listings
 
 **P1 — clean/complete pipeline:**
-5. P-LIST-INV-PUSH (inventory writeback)
-6. P1-07 Vietnamese i18n (Phase 1 exit criterion)
-7. P1-DESIGN-AUTO-ARCHIVE, P4-01b
+12. P1-07 Vietnamese i18n (Phase 1 exit criterion)
+13. P1-DESIGN-AUTO-ARCHIVE, P4-01b
+14. P-DOCS-FLOW-VN — VN owner-flow docs (can author parts in parallel with Phase 3 implementation; finalize after E2E)
 
 **P2 — deferred until E2E green:**
 8. P0-08/09/10 (data triage — BA-dependent)
@@ -60,6 +69,7 @@ Per ADR-008 (API-first pivot): a real **Etsy → Odoo → Gearment ingest→fulf
 
 ## Pointers
 
-- **Next codeable dispatch**: P-LIST-INV-PUSH deferred → see tracker §"Active prioritization" for next; P1-11 stays owner-operational, now gated on `P1-11-DEPLOY-STAGING` (release/ops slice, not a code dispatch)
-- **Last tracker change-log entry**: 2026-05-21 (P1-11-DEPLOY-STAGING raised — bookkeeping)
+- **Next codeable dispatch**: **P-HUB-PROD-MODEL** (Phase 3 foundation; unblocks all 14 other Phase 3 slices). P-LIST-INV-PUSH is **superseded by P-PUB-INVENTORY** (Spec 011).
+- **Last tracker change-log entry**: 2026-05-23 (MP006 Phase 3 added — central product hub + Odoo→Etsy outbound publish, per ADR-014)
 - **Branch**: `feature/006-master-plan-coding` (merge to `main` after W7 E2E sprint)
+- **Plan file** (this Phase 3 scope amendment): `/home/odoo/.claude/plans/actually-need-to-check-polymorphic-crayon.md`

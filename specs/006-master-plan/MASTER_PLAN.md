@@ -193,11 +193,41 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 **Exit criteria**: Daily GKE Excel imports run via wizard (manual OR auto-polled from GDrive). BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders. All 19 shops default to `active_source='api'`; the Gmail cron continues polling on the same schedule as the permanent failover source — it is never disabled.
 
-### Phase 3 — REMOVED per [ADR-008](adrs/ADR-008-api-first-pivot.md)
+### Phase 3 — Central product hub + Odoo→Etsy outbound publish (8-12 weeks) — added 2026-05-23 per [ADR-014](adrs/ADR-014-central-product-hub.md)
 
-**2026-04-13**: Spec 005 work has been redistributed across Phases 0–2. The freed Phase 3 capacity moves directly into Phase 4 (Gearment + returns + pricing audit), effectively accelerating that phase by ~4 weeks.
+**Goal**: Reverse the inbound-only posture established by [ADR-008](adrs/ADR-008-api-first-pivot.md). Make Odoo the system of record for the multichannel catalog. Implement Excel-recurring sync (catalog stays canonical for now per owner directive 2026-05-23) and Etsy outbound publish (first `listings_w` usage; supersedes Spec 008 deferred P-LIST-INV-PUSH). Amazon + ecommerce remain Phase 5.
 
-The original Phase 3 content is preserved below for traceability but is no longer a distinct phase in the execution plan.
+**Authority**: ADR-014 (architecture decision; sync direction matrix; SKU drift policy). Spec 009 (product hub foundation), Spec 010 (catalog Excel recurring sync), Spec 011 (Etsy outbound publish).
+
+| Work | Spec | Why |
+|---|---|---|
+| Author ADR-014 + Spec 009 + Spec 010 + Spec 011 + MP amendment (this row's planning slice = P-HUB-SPEC) | 009/010/011 | Foundation; owner directive 2026-05-23 |
+| `multichannel.sales.channel` reference + `product.channel.status` per-product channel state + `product.template` extensions (channel applicability M2M, pricing bookkeeping, SKU drift trio) | 009 | ADR-014 §1, §2, §4 |
+| Product-creation wizard (operator-gated; validates SKU+category+prices+channels+production-mode) | 009 | Owner directive 2026-05-23 |
+| SKU drift review + canonicalisation wizard (Keep-legacy / Accept-canonical with optional Etsy auto-push) | 009 | ADR-014 §4 |
+| Etsy-listing backfill wizard (non-destructive; pull → match-or-create `product.template`; cross-link via P-LIST-INV-PULL FK) | 009 | Owner answer 2026-05-23 |
+| openpyxl streaming parser + staging tables + per-sheet schema fingerprint + grammar v2 advisory | 010 | Owner directive 2026-05-23; reuse P2-01 pattern |
+| Catalog ingest + ADR-014 §3 conflict matrix + multi-currency pricelist seed (first-import only) | 010 | ADR-014 §3 |
+| Daily cron + manual wizard + run-report view + GDrive primary / local fallback | 010 | Reuse P2-06 GDrive pattern |
+| Catalog image download from Excel "Image 1/2" columns (content-hash idempotency) | 010 | Reuse `etsy_integration/services/image_downloader.py` pattern |
+| `EtsyApiClient.post/put/patch/post_multipart` + audit-source extensions | 011 | First `listings_w` usage |
+| `createDraftListing` + per-shop Etsy defaults (taxonomy/shipping/return policy) | 011 | Etsy v3 contract |
+| Image upload with hash-based diff (re-upload changed / DELETE removed) | 011 | Etsy quota economy |
+| Inventory PUT (entire-array-resubmit; **supersedes Spec 008 P-LIST-INV-PUSH**) | 011 | ADR-013 contract preserved; one owner for the PUT path |
+| Publish PATCH + `etsy.publish.wizard` + resumable state machine on `product.channel.status` | 011 | Owner directive 2026-05-23 |
+| End-to-end smoke on JaHandmadeArt pilot (create synthetic product → publish via wizard → verify live) | 011 | E2E gate |
+
+**Exit criteria**: A product can flow Excel → Odoo (recurring sync) → Etsy (operator wizard publish), end-to-end on JaHandmadeArt pilot. Existing JaHandmadeArt listings have been backfilled into `product.template` non-destructively. SKU drift review surface is operational. Owner-doc Vietnamese flow docs land in `docs/owner/` covering product creation, Etsy publish, order ingest, fulfillment, after-sale.
+
+**Out of scope (Phase 5)**: Amazon channel publisher; ecommerce/website channel publisher; barcode scan; raw-material inventory dashboards. Phase 5 retains the original placeholder slots; Phase 3 takes the immediate-action subset (central hub + Etsy publish).
+
+---
+
+#### Historical Phase 3 (Etsy API v3) — relocated
+
+The original Phase 3 — "Etsy API v3 after scope approval" — was REMOVED on 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md); its work was redistributed across Phases 0–2. The Phase 3 slot stayed empty until 2026-05-23 when [ADR-014](adrs/ADR-014-central-product-hub.md) took it for the central product hub + outbound publish charter.
+
+The original Phase 3 content is preserved below for traceability.
 
 ---
 
