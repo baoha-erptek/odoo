@@ -125,3 +125,86 @@ class EtsyListingPublisher:
             'external_ref': str(listing_id),
         })
         return response
+
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-INVENTORY — entire-array PUT (T018)
+    # ------------------------------------------------------------------
+    def push_inventory(self, tmpl, listing_id, shop):
+        """PUT /listings/{listing_id}/inventory with the full products[] array.
+
+        Builds one product entry per `product.product` variant of the template.
+        Etsy requires the entire array on every write (no partial updates).
+        SKU per ADR-014 §4 (resolved per-variant).
+
+        On success, the local `etsy.listing.product` snapshot rows are updated
+        from the response payload (T020).
+        """
+        if not listing_id:
+            raise ValueError("push_inventory requires a non-empty listing_id")
+        products_payload = []
+        # Template-level SKU resolution wins (ADR-014 §4) — variant default_code
+        # is typically auto-inherited from template and would defeat the v2 rule.
+        # True per-variant overrides aren't in scope for this slice; revisit if
+        # multi-variant publish surfaces a real divergence.
+        sku = self._resolve_sku(tmpl)
+        for variant in tmpl.product_variant_ids:
+            products_payload.append({
+                'sku': sku,
+                'property_values': [],
+                'offerings': [
+                    {
+                        'quantity': max(int(variant.qty_available or 0), 1),
+                        'price': float(tmpl.x_listing_price or 0.0),
+                        'is_enabled': True,
+                    },
+                ],
+            })
+        client = EtsyApiClient(shop)
+        path = "listings/%s/inventory" % listing_id
+        response = client.put(path, json={'products': products_payload})
+        self._sync_inventory_snapshot(shop, listing_id, response)
+        return response
+
+    def _sync_inventory_snapshot(self, shop, listing_id, response):
+        """Update etsy.listing.product rows from the PUT response (T020)."""
+        if not isinstance(response, dict):
+            return
+        listing = self.env['etsy.listing'].sudo().search([
+            ('shop_id', '=', shop.id),
+            ('etsy_listing_id', '=', str(listing_id)),
+        ], limit=1)
+        if not listing:
+            return
+        ListingProduct = self.env['etsy.listing.product'].sudo()
+        for entry in response.get('products') or []:
+            etsy_product_id = entry.get('product_id')
+            if not etsy_product_id:
+                continue
+            row = ListingProduct.search([
+                ('listing_id', '=', listing.id),
+                ('etsy_product_id', '=', str(etsy_product_id)),
+            ], limit=1)
+            qty = 0
+            price = 0.0
+            offerings = entry.get('offerings') or []
+            if offerings:
+                first = offerings[0]
+                qty = int(first.get('quantity') or 0)
+                price_obj = first.get('price') or {}
+                amount = price_obj.get('amount')
+                divisor = price_obj.get('divisor') or 100
+                if amount is not None and divisor:
+                    price = float(amount) / float(divisor)
+            vals = {
+                'sku': entry.get('sku') or '',
+                'quantity': qty,
+                'price': price,
+            }
+            if row:
+                row.write(vals)
+            else:
+                vals.update({
+                    'listing_id': listing.id,
+                    'etsy_product_id': str(etsy_product_id),
+                })
+                ListingProduct.create(vals)

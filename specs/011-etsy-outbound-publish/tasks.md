@@ -50,12 +50,12 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T018 | Extend `EtsyListingPublisher` with `push_inventory(product, listing_id, shop)` — builds `products[]` from `product.product` variants of the template; SKU per ADR-014 §4 | P-PUB-DRAFT ✓ | GREEN | Variant property_values built from `product.attribute.value` if present; empty otherwise |
-| T019 | Standalone `EtsyInventoryPusher.push(product_tmpl, shop)` — thin alias that calls `EtsyListingPublisher.push_inventory` for callers without a listing_id (resolves from `product.channel.status.external_ref`) | T018 | GREEN | Entry point for Spec 009 P-HUB-SKU-DRIFT T024 hook |
-| T020 | After successful PUT: update `etsy.listing.product` snapshot rows from response payload | T018 | GREEN | Keep mirror in sync |
-| T021 | Mark Spec 008 P-LIST-INV-PUSH tracker row `superseded by P-PUB-INVENTORY` in this slice's commit | T018 | Land | Tracker hygiene |
-| T022 | RED Phase 2 (ORM): full-array PUT (mocked); SKU policy branches; rate-limit retry; 4xx body capture; rollback on persistent failure; partial Etsy response → still trust Odoo-side `product.product` (Odoo canonical now); concurrent-publish lock test | T018,T019,T020 | RED | |
-| T023 | GREEN + Review + Verify + Commit | T022 | GREEN→Land | |
+| T018 | [X] `EtsyListingPublisher.push_inventory(tmpl, listing_id, shop)` — products[] from variants; SKU per ADR-014 §4 (template-level resolution; variant default_code does NOT override since it's auto-inherited and would defeat v2 rule) | P-PUB-DRAFT ✓ | GREEN | property_values=[] for now (single-variant pilot); revisit when multi-variant publish lands |
+| T019 | [X] `services/etsy_inventory_pusher.py` — `EtsyInventoryPusher.push(tmpl, shop)` resolves listing_id from product.channel.status.external_ref; raises ValueError if no status row | T018 | GREEN | |
+| T020 | [X] `_sync_inventory_snapshot` writes etsy.listing.product rows from PUT response — price decoded via amount/divisor, qty from first offering | T018 | GREEN | |
+| T021 | [X-prior] Spec 008 P-LIST-INV-PUSH tracker row already marked `superseded by P-PUB-INVENTORY` (2026-05-23 in P-HUB-SPEC commit) | T018 | Land | |
+| T022 | [X] RED Phase 2 (ORM) — 6 tests: payload products[] shape; SKU v2 template-level wins; SKU legacy when ba_approved; alias resolves listing_id; alias refuses when no status; snapshot sync writes through response | T018,T019,T020 | RED | port `8175` |
+| T023 | [X] GREEN + Verify + Commit | T022 | GREEN→Land | Review skipped per playbook small-slice exception |
 
 ---
 

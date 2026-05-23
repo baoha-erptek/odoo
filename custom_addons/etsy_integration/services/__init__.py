@@ -12,3 +12,4 @@ from . import etsy_order_syncer
 from . import etsy_email_adapter
 from . import etsy_tracking_pusher
 from . import etsy_listing_publisher
+from . import etsy_inventory_pusher
