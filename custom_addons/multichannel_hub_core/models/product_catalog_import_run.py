@@ -65,6 +65,62 @@ class ProductCatalogImportRun(models.Model):
         )
         return seq or 'CAT-IMP-NEW'
 
+    @api.model
+    def _cron_run_catalog_sync(self):
+        """Spec 010 P-HUB-XLS-CRON — daily scheduled entry point.
+
+        Selects source via ICPs (GDrive takes precedence over local):
+        - `multichannel_hub.catalog_cron_gdrive_file_id`
+        - `multichannel_hub.catalog_cron_source_path`
+
+        No-op when neither is configured. All failures (GDrive HttpError,
+        OSError, parser exception) → warning log + return False so the
+        cron survives.
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        gdrive_file_id = (ICP.get_param(
+            'multichannel_hub.catalog_cron_gdrive_file_id') or '').strip()
+        source_path = (ICP.get_param(
+            'multichannel_hub.catalog_cron_source_path') or '').strip()
+        if gdrive_file_id:
+            try:
+                from ..services.gdrive_uploader_helper import fetch_gdrive_bytes
+                source_bytes = fetch_gdrive_bytes(self.env, gdrive_file_id)
+            except Exception as exc:  # noqa: BLE001 — cron must survive
+                _logger.warning(
+                    "catalog cron GDrive fetch failed file_id=%s: %s",
+                    gdrive_file_id, exc,
+                )
+                return False
+            run = self.create({
+                'mode': 'commit',
+                'source_kind': 'gdrive',
+                'source_path': gdrive_file_id,
+            })
+            run.run_parse_and_ingest(source_bytes)
+            return True
+        if not source_path:
+            _logger.debug(
+                "catalog cron skipped: no GDrive file id and no local path"
+                " configured",
+            )
+            return False
+        try:
+            with open(source_path, 'rb') as fp:
+                source_bytes = fp.read()
+        except OSError as exc:
+            _logger.warning(
+                "catalog cron local source unreadable %s: %s", source_path, exc,
+            )
+            return False
+        run = self.create({
+            'mode': 'commit',
+            'source_kind': 'local',
+            'source_path': source_path,
+        })
+        run.run_parse_and_ingest(source_bytes)
+        return True
+
     def run_parse_and_ingest(self, source_bytes):
         """Spec 010 P-HUB-XLS-CRON — orchestrator.
 
