@@ -104,6 +104,13 @@ class DesignFile(models.Model):
         help='Cached thumbnail generated from GDrive file.',
     )
 
+    # P1-DESIGN-AUTO-ARCHIVE — soft-archive sibling files when one is
+    # approved (per slice spec). Approved row keeps active=True; siblings
+    # in non-approved states (pending/rejected) flip to active=False.
+    # Pre-existing rejected rows are not retroactively archived
+    # (preserves audit trail per slice notes).
+    active = fields.Boolean(default=True, tracking=True)
+
     state = fields.Selection(
         [
             ('pending', 'Chờ duyệt'),
@@ -485,7 +492,36 @@ class DesignFile(models.Model):
                         name=rec.name or '?',
                         old=old, new=target,
                     ))
-        return super().write(vals)
+        result = super().write(vals)
+        # P1-DESIGN-AUTO-ARCHIVE — after the write applies, if any row
+        # is now in state='approved', sweep its siblings on the same
+        # order_line_id (or order_id when line is null) and soft-archive
+        # them. Pre-existing rejected rows are NOT touched (audit trail).
+        if 'state' in vals and vals.get('state') == 'approved':
+            self._auto_archive_siblings()
+        return result
+
+    def _auto_archive_siblings(self):
+        """Soft-archive sibling non-approved files for each approved row."""
+        Sibling = self.with_context(active_test=False)
+        for rec in self:
+            if rec.state != 'approved':
+                continue
+            domain = [
+                ('id', '!=', rec.id),
+                ('state', '!=', 'approved'),
+                ('active', '=', True),
+            ]
+            if rec.order_line_id:
+                domain.append(('order_line_id', '=', rec.order_line_id.id))
+            elif rec.order_id:
+                domain.append(('order_id', '=', rec.order_id.id))
+                domain.append(('order_line_id', '=', False))
+            else:
+                continue  # no scope to archive against
+            siblings = Sibling.search(domain)
+            if siblings:
+                siblings.write({'active': False})
 
     # ------------------------------------------------------------- actions
 
