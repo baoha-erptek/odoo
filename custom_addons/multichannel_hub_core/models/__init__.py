@@ -19,3 +19,6 @@ from . import label_status_option
 from . import multichannel_sales_channel
 from . import product_channel_status
 from . import product_template
+from . import product_catalog_import_run
+from . import product_catalog_import_line
+from . import product_catalog_sheet_fingerprint

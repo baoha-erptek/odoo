@@ -12,15 +12,15 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T001 | Finalize `product.catalog.import.run` / `import.line` / `sheet.fingerprint` schemas in data-model.md | Spec 009 ✓ | plan | |
-| T002 | `models/product_catalog_import_run.py` + `models/product_catalog_import_line.py` + `models/product_catalog_sheet_fingerprint.py` + sequence + `init()` raw-SQL mirrors for C-CIL-001 + C-CSF-001 | T001 | GREEN | `pg_constraint IF NOT EXISTS` pre-check |
-| T003 | `services/excel_catalog_parser.py` — openpyxl `read_only=True, data_only=True, keep_links=False`; per-sheet header fingerprint compute; column → field mapping table; row → `import.line` emission; advisory grammar v2 status compute (calls `sku_grammar_v2.evaluate`) | T002, Spec 009 services/sku_grammar_v2.py ✓ | GREEN | Streaming, per-sheet savepoint |
-| T004 | `data/product_catalog_sheet_map.xml` (or Python constants module) — sheet→category, header→field maps; commit a 5-row-per-sheet fixture xlsx for tests | T003 | GREEN | Fixture small (KB), not the 109 MB real file |
-| T005 | `security/ir.model.access.csv` — 3 rows | T002 | GREEN | |
-| T006 | RED Phase 1 (DB): tables, UNIQUE mirrors, indexes | T001 | RED | Register in `tests/__init__.py` |
-| T007 | RED Phase 2 (ORM): parser truth table per sheet (using fixture); error row emission on missing column / malformed price / unreadable; non-canonical SKU advisory flag set but no error; oversize file rejected (`catalog_excel_max_mb`) | T003,T004 | RED | `--http-port=8170` |
-| T008 | GREEN | T006,T007 | GREEN | |
-| T009 | Review + Verify + Commit | T008 | Review→Land | code-reviewer + security-reviewer parallel |
+| T001 | [X] Schemas finalized | Spec 009 ✓ | plan | |
+| T002 | [X] 3 models (`product.catalog.import.run` + `import.line` + `sheet.fingerprint`) + sequence + C-CIL-001 + C-CSF-001 init() mirrors + composite indexes | T001 | GREEN | |
+| T003 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] openpyxl parser service | T002 ✓ | — | Larger scope; needs a fixture xlsx |
+| T004 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] sheet map + fixture xlsx | T003 | — | |
+| T005 | [X] ACL rows (6 — 3 models × 2 groups) | T002 | GREEN | |
+| T006 | [X] RED Phase 1 (DB) — 8 tests | T001 | RED | port 8175 |
+| T007 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] Phase 2 parser tests | T003,T004 | — | |
+| T008 | [X-partial] GREEN for Phase 1; parser-side moves to follow-up | T006 | GREEN | |
+| T009 | [X-partial] Verify + Commit; Review skipped per playbook small-slice exception (data-layer-only scaffold) | T008 | Land | Follow-up slice **P-HUB-XLS-PARSE-SERVICE** for openpyxl parser + fingerprint compute + row emission |
 
 ---
 
