@@ -128,6 +128,7 @@ Hệ thống được chia thành **5 nhóm chức năng kinh doanh** + 1 nhóm 
 | 4 | **Vận chuyển & tracking** | BA, Marketing | Đẩy đơn sang đối tác, nhận tracking, cập nhật về Etsy |
 | 5 | **Tin nhắn khách hàng** | Marketing, BA | Đọc và trả lời tin nhắn 19 shop ở một chỗ |
 | 6 | **Báo cáo & quản trị** | Tất cả | Dashboard cho từng bộ phận, audit log, kiểm soát giá |
+| 7 | **Trung tâm sản phẩm + xuất kênh** _(thêm 2026-05-23)_ | BA, Marketing | Một bản gốc sản phẩm duy nhất → publish ra Etsy (Amazon/Website sau) |
 
 ---
 
@@ -141,6 +142,7 @@ Hệ thống được chia thành **5 nhóm chức năng kinh doanh** + 1 nhóm 
 | 4. Vận chuyển & tracking | **80%** | Gearment API, tracking ngược Etsy, import GKE, duyệt đổi địa chỉ | Hotfix nhỏ Gearment | Bulk-send, xử lý hoàn/refund | Tháng 7/2026 |
 | 5. Tin nhắn khách hàng | **60%** | Hiển thị buyer message, CRM lead từ tin nhắn | — | Re-submit Etsy scope, kéo đầy đủ tin nhắn | Tháng 7-8/2026 (chờ Etsy duyệt) |
 | 6. Báo cáo & quản trị | **70%** | 3 dashboard chính, audit log | — | Việt hoá toàn bộ giao diện, dashboard tài chính, kiểm soát giá | Tháng 6-7/2026 |
+| 7. Trung tâm sản phẩm + xuất kênh | **65%** | Mô hình sản phẩm thống nhất, Wizard tạo sản phẩm, đăng Etsy 4-bước (draft→ảnh→inventory→active), Wizard chuẩn hoá SKU, backfill listing có sẵn | Đồng bộ Excel định kỳ (đang xây) | Đồng bộ Excel → Odoo hàng đêm, FLOW VN cho thợ in/đóng gói, hậu mãi | Tháng 7/2026 |
 
 > **Ghi chú**: Ngày dự kiến trên là **ước tính kỹ thuật**. Sau khi CDA duyệt BRD này, có thể điều chỉnh thứ tự ưu tiên theo nhu cầu kinh doanh.
 
