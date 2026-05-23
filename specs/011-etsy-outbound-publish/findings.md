@@ -13,6 +13,32 @@
 - **Pure-doc slice (this planning artifact).** No code/tests; Two-Phase Testing N/A for P-HUB-SPEC.
 - **Reused codebase invariants pre-loaded into tasks.md**: FR-017 method-top gates (memory `feedback_fr017_write_defense_in_depth` 20+ confirmations); 4xx vendor-body capture with durable cursor (memory `feedback_capture_response_body_before_blackbox_probe`); SKU policy from ADR-014 §4; `etsy_api_shop_id` field for URL construction per memory `reference_etsy_shop_id_mapping`.
 
+## P-PUB-CLIENT — 2026-05-23
+
+- Landed cleanly. 4 thin wrappers (`post/put/patch/post_multipart`) route through the existing `_request` helper, inheriting auth + rate-limit + 401-refresh + 429-retry + 4xx-body-capture. No surprises.
+- `_read_credentials` patching pattern at module scope (used in P-PUB-DRAFT + P-PUB-INVENTORY tests too) — `cls.addClassCleanup(cls._creds_patcher.stop)` is the idiom; works around the constructor reading `/opt/odoo/secrets/credentials.json` in test runs.
+
+## P-PUB-DRAFT — 2026-05-23
+
+- Landed. Single service file `etsy_listing_publisher.py` with `EtsyListingPublisher.create_draft`. SKU resolution per ADR-014 §4. 4xx → ValueError → caller transaction rolls back; durable error-status row deferred to **P-PUB-PUBLISH** orchestrator (T026) which owns the resumable state machine.
+
+## P-PUB-INVENTORY — 2026-05-23
+
+- Landed. `push_inventory(tmpl, listing_id, shop)` + standalone `EtsyInventoryPusher.push(tmpl, shop)` alias (for the Spec 009 P-HUB-SKU-DRIFT checkpoint b hook).
+- **SKU resolution at template level, not variant level** — initial implementation tried `variant.default_code or _resolve_sku(tmpl)` but Odoo auto-inherits template default_code onto variants, so variant.default_code is non-empty even when there's no explicit per-variant override. That defeats ADR-014 §4 v2 rule. Corrected to always use `_resolve_sku(tmpl)` for now; per-variant override left for a future slice when a real multi-variant publish surfaces a divergence. (RED test flagged this on first GREEN attempt.)
+- `_sync_inventory_snapshot` decodes Etsy's `{amount, divisor}` price format on PUT response.
+
+## P-PUB-IMAGES — STOP-and-escalate 2026-05-23
+
+- **Blocker**: Spec 011 tasks.md T013 specifies `product.image.x_image_sha256_cache` Char field. The `product.image` model **does not exist in Odoo 19 CE** — checked `/opt/odoo/addons/product/models/`: no image-prefixed file, no `_name = 'product.image'` declaration anywhere. Odoo 19 CE products use `image_1920` / `image_128` Binary fields directly on `product.template` and `product.product`.
+- This appears to be a planning-doc artifact from a different Odoo edition (Enterprise has `product.image`, CE does not) or an older Odoo version.
+- **Options** to unblock (need owner decision):
+  - **A.** Re-scope T013 to `product.template.x_image_sha256_cache` (single hash per template image_1920). Drops multi-image-per-product support; JaHandmadeArt pilot is single-image so fine for MVP.
+  - **B.** Drop manifest diff entirely — re-upload the template image on every publish. Simplest; trade-off is wasted bandwidth on un-changed publishes. Etsy throttling (TokenBucket(2, 10)) absorbs the cost for the pilot.
+  - **C.** Bring in `image` addon if it provides `product.image` (need to verify; this would be a manifest dep change).
+- **Recommended**: B for now (drop manifest diff); revisit if multi-image-per-listing surfaces as a real need. Cleanest minimum-change.
+- Slice frozen here pending owner choice; tracker P-PUB-IMAGES row stays `todo`.
+
 ## E2E surfacing (live)
 
 _(none yet — implementation not started)_
