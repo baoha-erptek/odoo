@@ -80,6 +80,11 @@ class TestEtsyApiLog_Model(TransactionCase):
             'listing_push', 'listing_pull', 'buyer_message_sync',
             'health_check', 'conversation_sync', 'message_send',
             'scope_validation',
+            # P-PUB-CLIENT (2026-05-23) outbound publish
+            'listing_create', 'listing_image_upload', 'listing_image_delete',
+            'listing_inventory_push', 'listing_publish',
+            # Spec 010 catalog import
+            'catalog_import_run', 'catalog_image_download',
         ]
 
         for source in required_sources:
@@ -88,8 +93,8 @@ class TestEtsyApiLog_Model(TransactionCase):
                 f"Source '{source}' missing from selection"
             )
         self.assertEqual(
-            len(selection_keys), 11,
-            f"Selection should have exactly 11 values, got {len(selection_keys)}"
+            len(selection_keys), 18,
+            f"Selection should have exactly 18 values, got {len(selection_keys)}"
         )
 
     def test_source_selection_rejects_invalid_value(self):
