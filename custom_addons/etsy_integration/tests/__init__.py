@@ -54,3 +54,4 @@ from . import test_phase2_hub_backfill_orm
 from . import test_phase1_p0_13_indexes_db
 from . import test_phase1_pub_client_db
 from . import test_phase2_pub_client_orm
+from . import test_phase2_pub_draft_orm

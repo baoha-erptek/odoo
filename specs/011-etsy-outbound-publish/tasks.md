@@ -26,11 +26,11 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T008 | `services/etsy_listing_publisher.py` — `EtsyListingPublisher` class + `create_draft(product, shop)` method; builds payload with SKU per ADR-014 §4; refuses NULL shop defaults | P-PUB-CLIENT ✓ | GREEN | Single class, single channel — no abstract base (YAGNI) |
-| T009 | On success: write `etsy.listing` row (state=`draft`, immutable url/created_at filled when Etsy returns them) + `product.channel.status` row (state=`draft`, external_ref=listing_id) | T008 | GREEN | |
-| T010 | On 4xx: capture vendor body, write `product.channel.status.state='error'` + `last_sync_error`, rollback local writes | T008 | GREEN | `feedback_capture_response_body_before_blackbox_probe` pattern |
-| T011 | RED Phase 2 (ORM): payload shape (mocked HTTP); SKU policy branches (v2-canonical / legacy / ba_approved_legacy); shop-defaults-missing refuses with clear error; happy path writes local state correctly; 4xx rolls back local state | T008,T009,T010 | RED | |
-| T012 | GREEN + Review + Verify + Commit | T011 | GREEN→Land | |
+| T008 | [X] `services/etsy_listing_publisher.py` — `EtsyListingPublisher` class + `create_draft(product, shop)` + `_resolve_sku` + `_build_create_draft_payload` + `_check_shop_defaults` | P-PUB-CLIENT ✓ | GREEN | |
+| T009 | [X] On success: writes `etsy.listing` (state='inactive' mirror; draft until publish step) + `product.channel.status` (state='draft', external_ref=str(listing_id)) | T008 | GREEN | |
+| T010 | [X-partial] On 4xx: raises ValueError → caller transaction rolls back; durable error-status row (state='error' + last_sync_error) deferred to **P-PUB-PUBLISH** orchestrator (T026) which owns the resumable state machine | T008 | GREEN | Slice deliberately keeps the publisher stateless; error-row durability is tied to the wizard/orchestrator lifecycle |
+| T011 | [X] RED Phase 2 (ORM) — 7 tests: refuses missing taxonomy / shipping_profile; v2 SKU when status != ba_approved_legacy; legacy SKU when status == ba_approved_legacy; payload includes 11 required keys + state='draft'; happy path writes etsy.listing + product.channel.status; 4xx rolls back local writes (no listing, no status) | T008,T009,T010 | RED | port `8175` |
+| T012 | [X] GREEN + Verify + Commit | T011 | GREEN→Land | Review skipped per playbook small-slice exception (single service file; FR-017 N/A — publisher is a library, not an action; gate lands in P-PUB-PUBLISH wizard T024) |
 
 ---
 
