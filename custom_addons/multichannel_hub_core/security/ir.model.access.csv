@@ -50,3 +50,4 @@ access_product_catalog_sheet_fingerprint_user,product.catalog.sheet.fingerprint 
 access_product_catalog_sheet_fingerprint_system,product.catalog.sheet.fingerprint system,model_product_catalog_sheet_fingerprint,base.group_system,1,1,1,1
 access_multichannel_sync_health_user,multichannel.sync.health user,model_multichannel_sync_health,base.group_user,1,0,0,0
 access_multichannel_sync_health_system,multichannel.sync.health system,model_multichannel_sync_health,base.group_system,1,1,1,1
+access_catalog_import_run_wizard_user,catalog.import.run.wizard user,model_catalog_import_run_wizard,base.group_user,1,1,1,1
