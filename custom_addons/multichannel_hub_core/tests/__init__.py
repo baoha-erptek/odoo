@@ -56,3 +56,4 @@ from . import test_phase1_catalog_db
 from . import test_phase1_sync_health_db
 from . import test_phase2_sync_health_orm
 from . import test_phase2_catalog_ingestor_orm
+from . import test_phase1_catalog_icp_db

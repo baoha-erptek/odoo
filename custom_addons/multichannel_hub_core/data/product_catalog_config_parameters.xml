@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Spec 010 catalog Excel sync — operator-tunable ICPs.
+         noupdate=1 so values survive `-u multichannel_hub_core`. -->
+
+    <record id="cfg_catalog_excel_max_mb" model="ir.config_parameter">
+        <field name="key">multichannel_hub.catalog_excel_max_mb</field>
+        <field name="value">200</field>
+    </record>
+
+    <record id="cfg_catalog_max_images_per_run" model="ir.config_parameter">
+        <field name="key">multichannel_hub.catalog_max_images_per_run</field>
+        <field name="value">500</field>
+    </record>
+
+    <record id="cfg_catalog_large_file_threshold_bytes" model="ir.config_parameter">
+        <field name="key">multichannel_hub.large_file_threshold_bytes</field>
+        <field name="value">10485760</field>
+    </record>
+</odoo>
