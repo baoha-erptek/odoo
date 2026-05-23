@@ -46,6 +46,22 @@ class ProductTemplate(models.Model):
         EtsyInventoryPusher(self.env).push(self, listing.shop_id)
         return True
 
+    def action_open_etsy_publish_wizard(self):
+        """Spec 011 P-PUB-PUBLISH T027 — open the publish wizard for this product.
+
+        The wizard itself carries the FR-017 method-top gate; this action is
+        only a UI entry point. View binds `groups=` for defense-in-depth visibility.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Publish to Etsy',
+            'res_model': 'etsy.publish.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_product_tmpl_id': self.id},
+        }
+
     @api.model
     def _cron_download_etsy_images(self):
         """ir.cron entry point — delegates to the existing service class.
