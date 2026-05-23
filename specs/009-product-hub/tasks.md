@@ -63,11 +63,11 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T029 | `etsy_integration/wizards/etsy_listing_backfill_wizard.py` — read `etsy.listing` + `etsy.listing.product`; ensure parent `product.template`; create `product.channel.status` rows; idempotent | P-HUB-PROD-MODEL ✓ | GREEN | Read-only against Etsy API (no outbound) |
-| T030 | Unmatched-SKU report view — line-by-line with **Create product** / **Skip — flag Etsy-only** per row | T029 | GREEN | Wizard step 2 |
-| T031 | RED Phase 1 (DB): wizard exists, `product.channel.status` row created on backfill | T029 | RED | |
-| T032 | RED Phase 2 (ORM): idempotency (run twice = same state, no duplicates, no chatter spam); match-existing-product (parent template found via FK chain); unmatched-SKU + Create-product action creates new template; unmatched-SKU + Skip action flags Etsy-only; never overwrites BA-edited fields | T029 | RED | `--http-port=8170` |
-| T033 | GREEN + Review + Verify + Commit | T031,T032 | GREEN→Land | |
+| T029 | [X] `etsy_integration/wizards/etsy_listing_backfill_wizard.py` — read `etsy.listing` + `etsy.listing.product`; ensure parent `product.template`; create `product.channel.status` rows; idempotent | P-HUB-PROD-MODEL ✓ | GREEN | Read-only against local etsy.listing mirror (no outbound) |
+| T030 | [X-partial] Unmatched-SKU surfaced as `unmatched_count` + `unmatched_skus` text on result form | T029 | GREEN | Per-row Create-product / Skip-flag-Etsy-only deferred to follow-up (R-HUB-BACKFILL-1); first JaHandmadeArt pilot has SKU-discovery-matched variants already, so unmatched count is expected 0 |
+| T031 | [X] RED Phase 1 (DB): wizard transient registered | T029 | RED | |
+| T032 | [X] RED Phase 2 (ORM): matched → channel.status + applicability; idempotency; never overwrites BA-edited applicability; unmatched reported (not auto-created); FR-017 23rd confirmation (non-BA blocked BEFORE any write) | T029 | RED | port `8175` |
+| T033 | [X] GREEN + Review + Verify + Commit | T031,T032 | GREEN→Land | security-reviewer flagged HIGH (missing FR-017 test) + 3 MEDIUM (sudo comments) — all addressed inline; 8/8 GREEN; etsy_integration 538 tests 0 NEW failures vs 531 baseline (25 pre-existing) |
 
 ---
 

@@ -49,3 +49,5 @@ from . import test_p_list_pull_phase1_db
 from . import test_p_list_pull_phase2_orm
 from . import test_p_list_inv_pull_phase1_db
 from . import test_p_list_inv_pull_phase2_orm
+from . import test_phase1_hub_backfill_db
+from . import test_phase2_hub_backfill_orm

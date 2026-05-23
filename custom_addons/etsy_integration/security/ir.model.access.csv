@@ -23,3 +23,4 @@ access_etsy_listing_user,etsy.listing.user,model_etsy_listing,base.group_user,1,
 access_etsy_listing_system,etsy.listing.system,model_etsy_listing,base.group_system,1,1,1,1
 access_etsy_listing_product_user,etsy.listing.product.user,model_etsy_listing_product,base.group_user,1,0,0,0
 access_etsy_listing_product_system,etsy.listing.product.system,model_etsy_listing_product,base.group_system,1,1,1,1
+access_etsy_listing_backfill_wizard_user,etsy.listing.backfill.wizard.user,model_etsy_listing_backfill_wizard,base.group_user,1,1,1,1
