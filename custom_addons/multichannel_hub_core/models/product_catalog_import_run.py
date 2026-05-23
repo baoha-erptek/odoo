@@ -5,7 +5,11 @@ summary. Error lines persist under `line_ids`; success/unchanged lines
 are cleared at end-of-run for volume control.
 """
 
+import logging
+
 from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 STATE_VALUES = [

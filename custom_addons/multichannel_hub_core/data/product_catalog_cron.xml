@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Spec 010 P-HUB-XLS-CRON — daily 02:00 UTC catalog Excel sync.
+         No-ops until operator sets ICP `multichannel_hub.catalog_cron_source_path`. -->
+
+    <record id="ir_cron_catalog_sync" model="ir.cron">
+        <field name="name">Catalog Excel Sync (daily)</field>
+        <field name="model_id" ref="model_product_catalog_import_run"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_run_catalog_sync()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>
