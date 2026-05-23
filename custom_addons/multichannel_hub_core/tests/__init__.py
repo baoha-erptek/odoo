@@ -58,3 +58,4 @@ from . import test_phase2_sync_health_orm
 from . import test_phase2_catalog_ingestor_orm
 from . import test_phase1_catalog_icp_db
 from . import test_phase2_excel_parser_orm
+from . import test_phase2_catalog_orchestrator_orm

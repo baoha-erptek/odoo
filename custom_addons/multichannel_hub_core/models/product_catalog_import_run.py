@@ -61,6 +61,65 @@ class ProductCatalogImportRun(models.Model):
         )
         return seq or 'CAT-IMP-NEW'
 
+    def run_parse_and_ingest(self, source_bytes):
+        """Spec 010 P-HUB-XLS-CRON — orchestrator.
+
+        Args:
+            source_bytes: bytes of the xlsx file.
+
+        Phases (this run owns the audit row + counters; called from cron
+        or from the manual-run wizard):
+            1. state='parsing'
+            2. excel_catalog_parser.parse(env, self, source_bytes)
+            3. catalog_ingestor.upsert(env, self, lines) on the pending rows
+            4. state='imported' on success / 'error' on parser failure
+
+        Per-row failures during ingest don't flip the whole run to 'error' —
+        they accumulate in rows_error counter; rows_upserted/unchanged
+        grow normally for successful rows. A truly-unrecoverable parser
+        exception (file corrupt / openpyxl raises) flips the run to error.
+        """
+        from ..services.excel_catalog_parser import parse as parse_xlsx
+        from ..services.catalog_ingestor import upsert as ingest_upsert
+        self.ensure_one()
+        self.sudo().write({
+            'state': 'parsing',
+            'start_at': fields.Datetime.now(),
+            'file_size_bytes': len(source_bytes or b''),
+        })
+        try:
+            parse_summary = parse_xlsx(self.env, self, source_bytes)
+        except Exception as exc:  # noqa: BLE001 — parser-level failure path
+            self.sudo().write({
+                'state': 'error',
+                'end_at': fields.Datetime.now(),
+                'summary_json': '{"parser_error": %r}' % str(exc)[:1000],
+            })
+            raise
+        # Pending lines from this run get upserted; error lines stay
+        # untouched and survive end-of-run cleanup.
+        pending = self.env['product.catalog.import.line'].sudo().search([
+            ('run_id', '=', self.id),
+            ('state', '=', 'pending'),
+        ])
+        ingest_counters = ingest_upsert(self.env, self, pending)
+        self.sudo().write({
+            'state': 'imported' if self.mode == 'commit' else 'previewed',
+            'end_at': fields.Datetime.now(),
+            'sheets_parsed': parse_summary.get('sheets_parsed', 0),
+            'rows_total': parse_summary.get('rows_emitted', 0)
+                          + parse_summary.get('rows_error', 0),
+            'rows_upserted': ingest_counters.get('upserted', 0),
+            'rows_unchanged': ingest_counters.get('unchanged', 0),
+            'rows_error': parse_summary.get('rows_error', 0)
+                          + ingest_counters.get('error', 0),
+        })
+        return {
+            'run': self,
+            'parse_summary': parse_summary,
+            'ingest_counters': ingest_counters,
+        }
+
     def init(self):
         cr = self.env.cr
         cr.execute("""
