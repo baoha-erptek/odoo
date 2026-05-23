@@ -76,6 +76,20 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Publisher Defaults" name="publisher_defaults">
+                            <group string="Etsy Publisher Defaults"
+                                   groups="multichannel_hub_core.group_ba_user">
+                                <field name="default_taxonomy_id"
+                                       groups="base.group_system"/>
+                                <field name="default_shipping_profile_id"
+                                       groups="base.group_system"/>
+                                <field name="default_return_policy_id"
+                                       groups="base.group_system"/>
+                                <field name="default_who_made"/>
+                                <field name="default_when_made"/>
+                                <field name="default_is_supply"/>
+                            </group>
+                        </page>
                         <page string="Orders" name="orders">
                             <field name="order_ids" readonly="1">
                                 <list>

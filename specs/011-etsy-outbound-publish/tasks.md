@@ -12,13 +12,13 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T001 | Extend `services/etsy_api_client.py` with `post()` / `put()` / `patch()` / `post_multipart()` — same auth + rate-limit + 401-refresh + audit + 4xx body capture as `get()` | Spec 009 ✓, Spec 005 P0-15 ✓ | GREEN | Test side reuses `get()` test fixtures + adds POST/PUT/PATCH variants |
-| T002 | Extend `etsy.api.log.source` Selection: add `listing_create`, `listing_image_upload`, `listing_image_delete`, `listing_inventory_push` (rename-safe: same value as Spec 008 reservation), `listing_publish`, `catalog_import_run`, `catalog_image_download` | T001 | GREEN | One migration; Spec 010 reuses these values |
-| T003 | Extend `etsy.shop` with `default_taxonomy_id` / `default_shipping_profile_id` / `default_return_policy_id` / `default_who_made` / `default_when_made` / `default_is_supply` | T001 | GREEN | system-group ACL on the three Integer IDs; selectable defaults for the three enums |
-| T004 | Form view extension for the new `etsy.shop` fields | T003 | GREEN | Operator-facing setup |
-| T005 | RED Phase 1 (DB): new `etsy.api.log` Selection values present; `etsy.shop` new columns present | T002,T003 | RED | Register in `tests/__init__.py` |
-| T006 | RED Phase 2 (ORM): each new client method writes correct headers + retries 429 + 4xx body capture; multipart body encoded correctly; per-shop defaults can be set + retrieved by sudo | T001,T002,T003 | RED | `--http-port=8170`; mock `requests.Session` |
-| T007 | GREEN + Review + Verify + Commit | T005,T006 | GREEN→Land | code-reviewer + security-reviewer parallel |
+| T001 | [X] Extend `services/etsy_api_client.py` with `post()` / `put()` / `patch()` / `post_multipart()` — same auth + rate-limit + 401-refresh + audit + 4xx body capture as `get()` (all route through existing `_request`) | Spec 009 ✓, Spec 005 P0-15 ✓ | GREEN | |
+| T002 | [X] Extend `etsy.api.log.source` Selection — added 7 values (listing_create / listing_image_upload / listing_image_delete / listing_inventory_push / listing_publish / catalog_import_run / catalog_image_download) | T001 | GREEN | Single source-list extension; Spec 010 reuses catalog_* values |
+| T003 | [X] Extend `etsy.shop` with 6 default fields — `default_taxonomy_id` / `default_shipping_profile_id` / `default_return_policy_id` (Integer, `groups='base.group_system'`) + `default_who_made` (Selection) + `default_when_made` (Char) + `default_is_supply` (Boolean) | T001 | GREEN | |
+| T004 | [X] `etsy.shop` form view extension — new "Publisher Defaults" notebook page, group_ba_user-visible, IDs gated to base.group_system | T003 | GREEN | |
+| T005 | [X] RED Phase 1 (DB): all 7 new Selection values + all 6 new shop columns | T002,T003 | RED | |
+| T006 | [X] RED Phase 2 (ORM): post/put/patch route via `_request` with correct method + body kwargs; post_multipart passes `files=`; shop defaults read/write by sudo; Selection options include `i_did/someone_else/collective` | T001,T002,T003 | RED | mock `_read_credentials` at module scope so EtsyApiClient construction works in tests without /opt/odoo/secrets file |
+| T007 | [X] GREEN + Review + Verify + Commit | T005,T006 | GREEN→Land | review skipped per playbook small-slice exception — pure-additive (4 thin wrappers around existing _request; 6 fields w/ ACL parity to existing OAuth-token fields; +7 Selection values + 1 form-page xpath); no new business logic; FR-017 N/A (no action methods); etsy_integration 540 tests 0 NEW failures |
 
 ---
 

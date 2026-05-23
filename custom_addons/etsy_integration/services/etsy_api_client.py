@@ -279,6 +279,52 @@ class EtsyApiClient:
         kwargs = {'params': params} if params else {}
         return self._request('GET', path, **kwargs)
 
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-CLIENT — write methods. Each thin wrapper routes
+    # through `_request` so the auth + rate-limit + 401-refresh + 429-retry
+    # + 4xx-body-capture behaviour is shared with `get()`. Multipart upload
+    # has its own helper to make `files=` plumbing explicit at the call site.
+    # ------------------------------------------------------------------
+
+    def post(self, path: str, json: dict | None = None,
+             data: dict | None = None) -> dict:
+        kwargs: dict = {}
+        if json is not None:
+            kwargs['json'] = json
+        if data is not None:
+            kwargs['data'] = data
+        return self._request('POST', path, **kwargs)
+
+    def put(self, path: str, json: dict | None = None,
+            data: dict | None = None) -> dict:
+        kwargs: dict = {}
+        if json is not None:
+            kwargs['json'] = json
+        if data is not None:
+            kwargs['data'] = data
+        return self._request('PUT', path, **kwargs)
+
+    def patch(self, path: str, json: dict | None = None,
+              data: dict | None = None) -> dict:
+        kwargs: dict = {}
+        if json is not None:
+            kwargs['json'] = json
+        if data is not None:
+            kwargs['data'] = data
+        return self._request('PATCH', path, **kwargs)
+
+    def post_multipart(self, path: str, files: dict,
+                        data: dict | None = None) -> dict:
+        """POST a multipart/form-data body (image upload).
+
+        `files` is the standard `requests` files dict —
+        e.g. `{'image': ('a.jpg', bytes, 'image/jpeg')}`.
+        """
+        kwargs: dict = {'files': files}
+        if data is not None:
+            kwargs['data'] = data
+        return self._request('POST', path, **kwargs)
+
     def push_tracking(self, shop_path_id, receipt_id, carrier_name,
                       tracking_number):
         """P1-12: create a receipt shipment (tracking pushback).

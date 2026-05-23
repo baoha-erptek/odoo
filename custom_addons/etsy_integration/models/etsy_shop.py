@@ -71,6 +71,44 @@ class EtsyShop(models.Model):
              'fetches receipts modified after this timestamp.',
     )
 
+    # Spec 011 P-PUB-CLIENT T003 — Etsy publisher defaults per shop. The
+    # three Integer IDs are sensitive (Etsy account-side identifiers) and
+    # gated to base.group_system. The three enums are operator-editable
+    # within BA group via standard form-view ACL.
+    default_taxonomy_id = fields.Integer(
+        string='Default Etsy Taxonomy ID',
+        groups='base.group_system',
+        help='Etsy taxonomy node id used as the default for createDraftListing.',
+    )
+    default_shipping_profile_id = fields.Integer(
+        string='Default Etsy Shipping Profile ID',
+        groups='base.group_system',
+        help='Etsy shipping profile id used as the default for createDraftListing.',
+    )
+    default_return_policy_id = fields.Integer(
+        string='Default Etsy Return Policy ID',
+        groups='base.group_system',
+        help='Etsy return policy id used as the default for createDraftListing.',
+    )
+    default_who_made = fields.Selection(
+        selection=[
+            ('i_did', 'I did'),
+            ('someone_else', 'Someone else'),
+            ('collective', 'A member of my shop'),
+        ],
+        string='Default "Who made it"',
+        default='i_did',
+    )
+    default_when_made = fields.Char(
+        string='Default "When was it made"',
+        default='made_to_order',
+        help='Etsy when_made enum value (e.g. made_to_order, 2020_2026).',
+    )
+    default_is_supply = fields.Boolean(
+        string='Default "Is Supply"',
+        default=False,
+    )
+
     # Spec 005 P0-16c — channel-source selector per ADR-002. Two values
     # only; new shops default to 'email_only' until E1 scope review +
     # per-shop cutover (P1-11). The syncer cron only fires for

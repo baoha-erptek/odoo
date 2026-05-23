@@ -43,6 +43,15 @@ _SOURCE_SELECTION = [
     # row is written from a fresh cursor + commit so it survives the
     # 400 response that rolls back the outer controller transaction.
     ('scope_validation', 'OAuth Scope Validation'),
+    # Spec 011 P-PUB-CLIENT T002 — outbound publish + write surface
+    ('listing_create', 'Listing Create (Draft)'),
+    ('listing_image_upload', 'Listing Image Upload'),
+    ('listing_image_delete', 'Listing Image Delete'),
+    ('listing_inventory_push', 'Listing Inventory Push'),
+    ('listing_publish', 'Listing Publish'),
+    # Spec 010 P-HUB-XLS-* — catalog import surface (co-located here so a single migration carries both)
+    ('catalog_import_run', 'Catalog Import Run'),
+    ('catalog_image_download', 'Catalog Image Download'),
 ]
 
 
