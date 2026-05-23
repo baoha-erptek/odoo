@@ -16,3 +16,6 @@ from . import ir_attachment
 from . import mrp_production
 from . import multichannel_enquiry
 from . import label_status_option
+from . import multichannel_sales_channel
+from . import product_channel_status
+from . import product_template

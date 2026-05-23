@@ -12,6 +12,20 @@
 - **Pure-doc slice.** No code/tests; Two-Phase Testing N/A for P-HUB-SPEC. Implementation slices (P-HUB-PROD-MODEL etc.) carry the testing burden; tasks.md encodes RED/GREEN/Review/Verify/Land phases.
 - **Reused codebase invariants pre-loaded into tasks.md** to spare implementation slices from re-discovering: (a) `_sql_constraints` is inert in Odoo 19 — `init()` raw-SQL mirror with `pg_constraint IF NOT EXISTS` pre-check is the sole enforcement (memory `project_sql_constraints_drift`, 8+ confirmations; vindicated again in Spec 008 P-LIST-PULL); (b) FR-017 method-top gate before side effects on every `action_*` (memory `feedback_fr017_write_defense_in_depth`, 20+ confirmations); (c) register new test files in `tests/__init__.py` and run with `--http-port=8170` in container (memory `feedback_odoo19_test_gotchas`, `feedback_tdd_guide_init_py_imports`); (d) verify reviewer-diff findings with `git diff --stat HEAD` before applying (memory `feedback_reviewer_agent_diff_hallucination`).
 
+## P-HUB-PROD-MODEL — 2026-05-23
+
+- **`_sql_constraints` is NOT silently inert in Odoo 19 — it logs WARNING.** Confirmed during initial GREEN run: every model with `_sql_constraints` defined emits `WARNING ... Model attribute '_sql_constraints' is no longer supported, please define model.Constraint on the model.` The previously "inert" attribute is now an active diagnostic warning. For Spec 009 we kept models clean — no declarative `_sql_constraints` leftover, just the `init()` raw-SQL mirror. Memory `project_sql_constraints_drift` upgraded from "inert" framing to "warning-noisy" framing for future slices.
+- **Seed-leak after RED test installs.** First `--test-enable -u multichannel_hub_core` run failed at `setUpClass` (models didn't exist yet) but had already loaded `data/multichannel_sales_channel_seed.xml` enough to INSERT 3 channel rows. The `ir_model_data` xmlid mappings did NOT persist (transaction abort on test-failure), leaving 3 ownerless rows. The subsequent `-u` install then re-attempted the seed INSERT and hit `uniq_multichannel_sales_channel_code`. Resolution: one-time `DELETE FROM multichannel_sales_channel;` then a clean `-u` re-populated rows AND `ir_model_data` correctly. Worth noting for any spec that combines new seed data with RED tests on the same DB.
+- **Port 8170 collided.** Memory item #134 says "container test runs need `--http-port=8170`" — but here `--http-port=8170` raised "Address already in use". Switched to `--http-port=8175` for all RED/GREEN test runs. Port number is incidental; only requirement is "not 8069 nor a port mapped by docker-compose".
+- **Two re-confirmed test traps from memory:**
+  - `Channel.search([('code','=','amazon')])` returns empty for inactive seed without `.with_context(active_test=False)`. Fixed by switching to `Channel.with_context(active_test=False).search(...)` in setUpClass + the seed-loaded assertion.
+  - `assertRaises((ValidationError, ValueError))` tuple breaks `TransactionCase._assertRaises` issubclass check (`TypeError: issubclass() arg 1 must be a class`). Workaround: wrap in `self.env.cr.savepoint()` + try/except + assert `raised` flag.
+- **Grammar v2 `evaluate()` MVP scope.** Returns `family_code` as `suggested_sku` (e.g. `("RDS", "RDS")`). Full SKU string (`RDS-CE-S35-D####`) requires MAT2 detection + SIZE encoding + DSGN registry, none in this slice. Test truth-table assertions use the family-code-as-suggested form. When DSGN registry lands (separate slice), `evaluate()` signature stays `(suggested, family_code)` but `suggested` becomes the full structured string; tests will need adjusting. Documented in service docstring.
+- **Decisions deferred to next slices** (NOT this slice's bug):
+  - FR-017 gate on `x_sku_v2_status` writes — accepted MEDIUM finding; gate lands in **P-HUB-SKU-DRIFT** wizard (T022).
+  - N+1 review on compute functions — not flagged (standard `for rec in self` idiom; no relational reads).
+  - Smart button + Channels tab on product form — **P-HUB-STATUS-VIEW** (T034–T037).
+
 ## E2E surfacing (live)
 
 _(none yet — implementation not started)_

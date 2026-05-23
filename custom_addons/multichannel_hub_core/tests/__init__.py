@@ -44,3 +44,5 @@ from . import test_p1_design_url_validation
 from . import test_p1_01b_fix_dashboard_gaps
 from . import test_phase1_design_file_created_via
 from . import test_phase2_design_auto_create_seed
+from . import test_phase1_hub_product_model_db
+from . import test_phase2_hub_product_model_orm

@@ -10,19 +10,19 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T001 | Finalize `multichannel.sales.channel` + `product.channel.status` + `product.template` extensions in data-model.md | — | plan | Source of truth = data-model.md §1–4 |
-| T002 | `models/multichannel_sales_channel.py` + `init()` C-CH-001 raw-SQL UNIQUE mirror | T001 | GREEN | `pg_constraint IF NOT EXISTS` pre-check |
-| T003 | `models/product_channel_status.py` + `init()` C-PCS-001 raw-SQL UNIQUE mirror | T001 | GREEN | Same pattern |
-| T004 | `models/product_template.py` extensions: 6 fields + `x_unit_margin` compute + `x_sku_v2_*` compute (skips `ba_approved_legacy`) | T002,T003 | GREEN | Stored computed indexed where flagged |
-| T005 | `services/sku_grammar_v2.py` — frozen `family_rules` tuple + `evaluate(name) -> (suggested, family_code)` | T001 | GREEN | Tuple regenerated from `D1_product_taxonomy_SKU.xlsx family_rules` sheet; module-load precompile |
-| T006 | `data/multichannel_sales_channel_seed.xml` — 3 channels (etsy active; amazon/website inactive); `noupdate=1` | T002 | GREEN | Admin edits persist |
-| T007 | `security/ir.model.access.csv` — 4 rows (read group_user / write group_system on both new models) | T002,T003 | GREEN | ACL mandatory for new models |
-| T008 | RED Phase 1 (DB): tables, columns, UNIQUE mirrors enforced, indexes present | T001 | RED | Register file in `tests/__init__.py` |
-| T009 | RED Phase 2 (ORM): M2M write, One2many channel-status, `x_unit_margin` recompute, grammar v2 truth table (`matches`/`non_canonical`/`msc_catchall` for representative names), `ba_approved_legacy` not overwritten | T002–T007 | RED | `--http-port=8170` |
-| T010 | GREEN: make T008/T009 pass | T008,T009 | GREEN | Min implementation |
-| T011 | Review: code-reviewer + security-reviewer parallel | T010 | Review | Block on CRITICAL/HIGH |
-| T012 | Verify: `-u multichannel_hub_core --stop-after-init` exit 0; `--test-tags` green; ruff; grep `_logger.info`/`print(` | T011 | Verify | |
-| T013 | Commit (conventional, cite T001–T012); tracker P-HUB-PROD-MODEL → done | T012 | Land | |
+| T001 | [X] Finalize `multichannel.sales.channel` + `product.channel.status` + `product.template` extensions in data-model.md | — | plan | Source of truth = data-model.md §1–4 |
+| T002 | [X] `models/multichannel_sales_channel.py` + `init()` C-CH-001 raw-SQL UNIQUE mirror | T001 | GREEN | `pg_constraint IF NOT EXISTS` pre-check |
+| T003 | [X] `models/product_channel_status.py` + `init()` C-PCS-001 raw-SQL UNIQUE mirror | T001 | GREEN | Same pattern |
+| T004 | [X] `models/product_template.py` extensions: 6 fields + `x_unit_margin` compute + `x_sku_v2_*` compute (skips `ba_approved_legacy`) | T002,T003 | GREEN | Stored computed indexed where flagged |
+| T005 | [X] `services/sku_grammar_v2.py` — frozen `family_rules` tuple + `evaluate(name) -> (suggested, family_code)` | T001 | GREEN | Tuple regenerated from `A3_grammar_v2_frozen.md §1`; module-load precompile; DSGN registry deferred |
+| T006 | [X] `data/multichannel_sales_channel_seed.xml` — 3 channels (etsy active; amazon/website inactive); `noupdate=1` | T002 | GREEN | Admin edits persist |
+| T007 | [X] `security/ir.model.access.csv` — 4 rows (read group_user / write group_system on both new models) | T002,T003 | GREEN | ACL mandatory for new models |
+| T008 | [X] RED Phase 1 (DB): tables, columns, UNIQUE mirrors enforced, indexes present | T001 | RED | Register file in `tests/__init__.py` |
+| T009 | [X] RED Phase 2 (ORM): M2M write, One2many channel-status, `x_unit_margin` recompute, grammar v2 truth table (`matches`/`non_canonical`/`msc_catchall` for representative names), `ba_approved_legacy` not overwritten | T002–T007 | RED | `--http-port=8175` (8170 collided on local; baseline pattern) |
+| T010 | [X] GREEN: make T008/T009 pass | T008,T009 | GREEN | 33/33 tests green |
+| T011 | [X] Review: code-reviewer + security-reviewer parallel | T010 | Review | 0 CRITICAL/HIGH; 1 MEDIUM (`readonly=False` on `x_sku_v2_status`) accepted — wizard gate lands in P-HUB-SKU-DRIFT |
+| T012 | [X] Verify: `-u multichannel_hub_core --stop-after-init` exit 0; `--test-tags` green; ruff not installed locally; grep `_logger.info`/`print(` clean | T011 | Verify | 5 pre-existing baseline errors in test_design_file_upload_wizard_multi (confirmed via stash) — NOT regressions |
+| T013 | [X] Commit (conventional, cite T001–T012); tracker P-HUB-PROD-MODEL → done | T012 | Land | |
 
 **Exit (P-HUB-PROD-MODEL)**: all `[X]`; tests ≥ 80 % changed lines; module installs clean; constraints mirrored in `init()`.
 

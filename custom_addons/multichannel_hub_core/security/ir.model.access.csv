@@ -36,3 +36,7 @@ access_multichannel_enquiry_close_wizard_sale_manager,close wizard sale manager,
 access_multichannel_enquiry_close_wizard_system,close wizard system,model_multichannel_enquiry_close_wizard,base.group_system,1,1,1,1
 access_label_status_option_user,label.status.option.user,model_label_status_option,base.group_user,1,0,0,0
 access_label_status_option_ba_manager,label.status.option.ba_manager,model_label_status_option,multichannel_hub_core.group_ba_manager,1,1,1,1
+access_multichannel_sales_channel_user,multichannel.sales.channel user read,model_multichannel_sales_channel,base.group_user,1,0,0,0
+access_multichannel_sales_channel_system,multichannel.sales.channel system write,model_multichannel_sales_channel,base.group_system,1,1,1,1
+access_product_channel_status_user,product.channel.status user read,model_product_channel_status,base.group_user,1,0,0,0
+access_product_channel_status_system,product.channel.status system write,model_product_channel_status,base.group_system,1,1,1,1
