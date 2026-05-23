@@ -57,3 +57,4 @@ from . import test_phase2_pub_client_orm
 from . import test_phase2_pub_draft_orm
 from . import test_phase2_pub_inventory_orm
 from . import test_phase2_pub_images_orm
+from . import test_phase2_pub_publish_orm

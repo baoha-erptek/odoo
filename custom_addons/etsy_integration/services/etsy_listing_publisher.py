@@ -44,12 +44,15 @@ class EtsyListingPublisher:
     # Payload builder
     # ------------------------------------------------------------------
     def _build_create_draft_payload(self, tmpl, shop):
+        # tmpl.sudo() — read attributes regardless of caller's stock-read ACL;
+        # the wizard's FR-017 gate proved BA membership upstream.
+        s = tmpl.sudo()
         return {
-            'sku': self._resolve_sku(tmpl),
-            'title': tmpl.name or '',
-            'description': (tmpl.description_sale or tmpl.name or ''),
-            'price': float(tmpl.x_listing_price or 0.0),
-            'quantity': max(int(tmpl.qty_available or 0), 1),
+            'sku': self._resolve_sku(s),
+            'title': s.name or '',
+            'description': (s.description_sale or s.name or ''),
+            'price': float(s.x_listing_price or 0.0),
+            'quantity': max(int(s.qty_available or 0), 1),
             'who_made': shop.sudo().default_who_made or 'i_did',
             'when_made': shop.sudo().default_when_made or 'made_to_order',
             'is_supply': bool(shop.sudo().default_is_supply),
@@ -147,15 +150,15 @@ class EtsyListingPublisher:
         # is typically auto-inherited from template and would defeat the v2 rule.
         # True per-variant overrides aren't in scope for this slice; revisit if
         # multi-variant publish surfaces a real divergence.
-        sku = self._resolve_sku(tmpl)
-        for variant in tmpl.product_variant_ids:
+        sku = self._resolve_sku(tmpl.sudo())
+        for variant in tmpl.sudo().product_variant_ids:
             products_payload.append({
                 'sku': sku,
                 'property_values': [],
                 'offerings': [
                     {
-                        'quantity': max(int(variant.qty_available or 0), 1),
-                        'price': float(tmpl.x_listing_price or 0.0),
+                        'quantity': max(int(variant.sudo().qty_available or 0), 1),
+                        'price': float(tmpl.sudo().x_listing_price or 0.0),
                         'is_enabled': True,
                     },
                 ],
@@ -180,11 +183,11 @@ class EtsyListingPublisher:
         """
         if not listing_id:
             raise ValueError("upload_images requires a non-empty listing_id")
-        if not tmpl.image_1920:
+        if not tmpl.sudo().image_1920:
             return []
         # `image_1920` is stored base64-encoded; decode for the multipart body.
         try:
-            payload_bytes = base64.b64decode(tmpl.image_1920)
+            payload_bytes = base64.b64decode(tmpl.sudo().image_1920)
         except Exception as exc:  # noqa: BLE001 — defensive only
             raise ValueError(
                 "Could not decode product image for template %r: %s"
@@ -201,6 +204,75 @@ class EtsyListingPublisher:
         }
         response = client.post_multipart(path, files=files)
         return [response] if response else []
+
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-PUBLISH T025 — PATCH /listings/{id} state='active'
+    # ------------------------------------------------------------------
+    def publish(self, listing_id, shop):
+        if not listing_id:
+            raise ValueError("publish requires a non-empty listing_id")
+        client = EtsyApiClient(shop)
+        return client.patch(
+            "listings/%s" % listing_id, json={'state': 'active'},
+        )
+
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-PUBLISH T026 — orchestrator
+    # ------------------------------------------------------------------
+    def run(self, tmpl, shop):
+        """Run the full publish chain: create_draft → upload_images →
+        push_inventory → publish.
+
+        Resumable: if a `product.channel.status` row already exists with an
+        `external_ref`, skip `create_draft` and reuse that listing_id.
+
+        On failure: write `product.channel.status.state='error'` +
+        `last_sync_error` and re-raise. Caller is responsible for transaction
+        boundary; the durable error write happens via the standard ORM (the
+        orchestrator's invoker — wizard — runs in its own savepoint and the
+        wizard's UI surfaces last_sync_error to the operator).
+        """
+        Channel = self.env.ref('multichannel_hub_core.channel_etsy')
+        Status = self.env['product.channel.status'].sudo()
+        existing = Status.search([
+            ('product_tmpl_id', '=', tmpl.id),
+            ('channel_id', '=', Channel.id),
+        ], limit=1)
+        listing_id = existing.external_ref if existing else None
+        result = {}
+        try:
+            if not listing_id:
+                draft_response = self.create_draft(tmpl, shop)
+                listing_id = draft_response.get('listing_id')
+                if not listing_id:
+                    raise ValueError("create_draft returned no listing_id")
+                # create_draft just wrote the status row; refresh
+                existing = Status.search([
+                    ('product_tmpl_id', '=', tmpl.id),
+                    ('channel_id', '=', Channel.id),
+                ], limit=1)
+                result['listing_id'] = listing_id
+            else:
+                result['listing_id'] = int(listing_id) if str(listing_id).isdigit() else listing_id
+
+            self.upload_images(tmpl, listing_id, shop)
+            self.push_inventory(tmpl, listing_id, shop)
+            self.publish(listing_id, shop)
+            existing.write({
+                'state': 'published',
+                'last_sync_error': False,
+            })
+            return result
+        except Exception as exc:
+            # Best-effort durable error capture on the status row. If the
+            # status row doesn't exist yet (create_draft failed before
+            # writing one), there's nothing to update.
+            if existing:
+                existing.write({
+                    'state': 'error',
+                    'last_sync_error': (str(exc) or '')[:4000],
+                })
+            raise
 
     def _sync_inventory_snapshot(self, shop, listing_id, response):
         """Update etsy.listing.product rows from the PUT response (T020)."""

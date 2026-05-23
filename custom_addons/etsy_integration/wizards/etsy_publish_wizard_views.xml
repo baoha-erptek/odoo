@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_publish_wizard_form" model="ir.ui.view">
+        <field name="name">etsy.publish.wizard.form</field>
+        <field name="model">etsy.publish.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Publish to Etsy">
+                <sheet>
+                    <group>
+                        <field name="product_tmpl_id" readonly="1"/>
+                        <field name="shop_id"
+                               options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_run_publish" type="object"
+                            string="Publish (full)" class="btn-primary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button name="action_run_inventory_only" type="object"
+                            string="Re-push Inventory Only" class="btn-secondary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_etsy_publish_wizard" model="ir.actions.act_window">
+        <field name="name">Publish to Etsy</field>
+        <field name="res_model">etsy.publish.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

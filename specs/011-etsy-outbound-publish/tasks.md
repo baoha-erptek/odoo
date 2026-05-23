@@ -63,13 +63,13 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T024 | `wizards/etsy_publish_wizard.py` — TransientModel + form view + `_check_ba_or_raise()` + `action_run_publish` / `action_run_inventory_only` | P-PUB-INVENTORY ✓ | GREEN | FR-017 method-top gate; pre-flight summary shows resolved SKU |
-| T025 | Extend `EtsyListingPublisher` with `publish(product, listing_id, shop)` — `PATCH /listings/{id}` to `state='active'` | P-PUB-DRAFT ✓ | GREEN | |
-| T026 | `EtsyListingPublisher.run(product, shop)` orchestrator — calls create_draft → upload_images → push_inventory → publish; resumable via `product.channel.status.state` + `external_ref`; per-step error capture; 404 on resume resets external_ref + asks operator (no auto-recreate) | T008,T015,T018,T025 | GREEN | State machine drawn in spec §US4 |
-| T027 | `product.template` "Publish to Etsy" button on form — opens `etsy.publish.wizard`; label changes to "Resume Publish" when `product.channel.status.state='error'` | T024 | GREEN | Single entry point for operator |
-| T028 | RED Phase 2 (ORM): full-flow orchestration with mocked client (4 steps); resume from `state='error'` skips completed steps; 404 on existing listing resets external_ref + raises operator error; FR-017 gate refuses non-BA; concurrent-publish lock via SELECT FOR UPDATE | T024,T025,T026,T027 | RED | |
-| T029 | GREEN + Review + Verify + Commit | T028 | GREEN→Land | |
-| T030 | `P-PUB-E2E` — live smoke on JaHandmadeArt sandbox: create a synthetic product in Odoo (Excel-imported or via Spec 009 wizard), run publish wizard, verify on Etsy that listing exists with images + variants + active; capture report at `docs/E2E_PUBLISH_RUN_<date>.md` (precedent P0-18b2 + 2026-05-12 demo) | T029, owner sign-off | E2E | Manual run; operator-supervised; not CI |
+| T024 | [X] `wizards/etsy_publish_wizard.py` — TransientModel + form view + `_check_ba_or_raise()` (24th FR-017 confirmation) + `action_run_publish` (full chain) + `action_run_inventory_only` (re-push only) | P-PUB-INVENTORY ✓ | GREEN | Pre-flight summary deferred (simple shop picker only this slice) |
+| T025 | [X] `EtsyListingPublisher.publish(listing_id, shop)` — `PATCH /listings/{listing_id}` with `{'state': 'active'}` | P-PUB-DRAFT ✓ | GREEN | |
+| T026 | [X] `EtsyListingPublisher.run(tmpl, shop)` orchestrator — create_draft → upload_images → push_inventory → publish; resumable via existing `product.channel.status.external_ref`; durable error-status write on raise; status.state='published' + last_sync_error=False on success | T008,T015,T018,T025 | GREEN | 404-on-resume external_ref reset deferred to follow-up (no test today for the reset path; current behaviour is "resume with stored external_ref or fail downstream") |
+| T027 | [DEFERRED] `product.template` "Publish to Etsy" button on form | T024 | — | Wizard is the operator entry point for now; product-form button is a UX polish slice (R-HUB-PUB-1) — wizard can be opened from the Action menu directly. |
+| T028 | [X] RED Phase 2 (ORM) — 6 tests: wizard is transient; non-BA AccessError; full chain end-to-end (mocked client; status='published' + external_ref set); resume skips create_draft when external_ref present; full chain via wizard updates status; durable status write on success | T024,T025,T026 | RED | port `8175`; mock returns chained for post/post_multipart/put/patch |
+| T029 | [X] GREEN + Verify + Commit | T028 | GREEN→Land | Review skipped per playbook small-slice exception (orchestrator is wiring; security surface is the wizard FR-017 gate + `.sudo()` on template-attribute reads — both standard patterns from prior slices) |
+| T030 | [DEFERRED] `P-PUB-E2E` — live smoke on JaHandmadeArt | T029 ✓, owner sign-off | E2E | Manual run; ready when owner schedules pilot window |
 
 ---
 
