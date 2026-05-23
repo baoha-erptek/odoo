@@ -50,3 +50,5 @@ from . import test_phase1_hub_wizard_db
 from . import test_phase2_hub_wizard_orm
 from . import test_phase1_hub_sku_drift_db
 from . import test_phase2_hub_sku_drift_orm
+from . import test_phase1_hub_status_view_db
+from . import test_phase2_hub_status_view_orm

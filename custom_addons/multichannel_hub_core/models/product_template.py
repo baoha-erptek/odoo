@@ -82,12 +82,36 @@ class ProductTemplate(models.Model):
     x_sku_legacy = fields.Char(
         help="Archive of prior default_code after canonicalisation wizard run",
     )
+    x_published_channel_count = fields.Integer(
+        compute='_compute_x_published_channel_count',
+        store=True,
+        help="Number of channels where this product is currently published",
+    )
+
+    @api.depends('x_sales_channel_status_ids.state')
+    def _compute_x_published_channel_count(self):
+        for rec in self:
+            rec.x_published_channel_count = sum(
+                1 for s in rec.x_sales_channel_status_ids
+                if s.state == 'published'
+            )
 
     # ------------------------------------------------------------------
     # Extension point for per-channel SKU push (P-HUB-SKU-DRIFT mhc-half).
     # ------------------------------------------------------------------
     # Default no-op; etsy_integration overrides this to call the Etsy
     # publisher when channel_code == 'etsy' (lands with Spec 011 P-PUB-CLIENT).
+    def action_open_channel_statuses(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Channel Statuses',
+            'res_model': 'product.channel.status',
+            'view_mode': 'list,form',
+            'domain': [('product_tmpl_id', '=', self.id)],
+            'target': 'current',
+        }
+
     def _push_sku_to_channel(self, channel_code):
         """Push current `default_code` to the named channel.
 

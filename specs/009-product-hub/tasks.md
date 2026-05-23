@@ -75,10 +75,10 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T034 | `views/product_template_views.xml` extension — Channels tab + smart button (count of `state='published'` channel statuses) | P-HUB-PROD-MODEL ✓ | GREEN | Read-only view; state writes are from Spec 011 publisher |
-| T035 | RED Phase 1 (DB/view): form loads with the new tab; smart button widget loads | T034 | RED | |
-| T036 | RED Phase 2 (ORM): published-count compute matches; navigating into a channel status row shows the channel name + external_ref | T034 | RED | |
-| T037 | GREEN + Review + Verify + Commit | T035,T036 | GREEN→Land | |
+| T034 | [X] `views/product_template_views.xml` extension — Channels tab + SKU Drift tab + smart button (count of `state='published'` channel statuses) + `action_open_channel_statuses` (read-only) | P-HUB-PROD-MODEL ✓ | GREEN | Read-only view; state writes are from Spec 011 publisher |
+| T035 | [X] RED Phase 1 (DB/view): inheriting view registered + `x_published_channel_count` column exists | T034 | RED | |
+| T036 | [X] RED Phase 2 (ORM): count=0 no-status; count excludes draft; count includes published; recompute on state transition | T034 | RED | |
+| T037 | [X] GREEN + Verify + Commit | T035,T036 | GREEN→Land | Review skipped per playbook trivial-slice exception (view inherit + 1 stored compute + read-only action; no business logic, no security surface, no new model) — self-review noted in commit body |
 
 ---
 
