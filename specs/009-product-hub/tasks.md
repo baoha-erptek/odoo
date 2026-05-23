@@ -32,14 +32,14 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T014 | `wizards/product_creation_wizard.py` — TransientModel + fields mirror of product.template essentials + `_check_ba_or_raise()` + `action_create()` | P-HUB-PROD-MODEL ✓ | GREEN | FR-017 21st confirmation: method-top gate before any side effect |
-| T015 | `wizards/product_creation_wizard_views.xml` — form view with grouped sections (Identity / Pricing / Channels / Production mode preview) | T014 | GREEN | Production mode preview reads `x_gearment_sku` per ADR-010 |
-| T016 | RED Phase 1 (DB): wizard tt-model exists, transient | T014 | RED | |
-| T017 | RED Phase 2 (ORM): validation gate (empty name/code/categ/price refused), happy path creates template + channel status rows, non-canonical SKU passes through, non-BA group raises AccessError before create | T014,T015 | RED | `--http-port=8170` |
-| T018 | GREEN | T016,T017 | GREEN | |
-| T019 | Review: code-reviewer + security-reviewer | T018 | Review | |
-| T020 | Verify | T019 | Verify | |
-| T021 | Commit; tracker → done | T020 | Land | |
+| T014 | [X] `wizards/product_creation_wizard.py` — TransientModel + fields mirror of product.template essentials + `_check_ba_or_raise()` + `action_create()` | P-HUB-PROD-MODEL ✓ | GREEN | FR-017 21st confirmation landed: method-top gate before any side effect; sudo() bounded with inline justification |
+| T015 | [X] `wizards/product_creation_wizard_views.xml` — form view with grouped sections (Identity / Pricing / Channels / Production mode preview) | T014 | GREEN | Production mode preview reads `x_gearment_sku` per ADR-010 |
+| T016 | [X] RED Phase 1 (DB): wizard tt-model exists, transient | T014 | RED | |
+| T017 | [X] RED Phase 2 (ORM): validation gate (empty name/code/categ/price refused), happy path creates template + channel status rows, non-canonical SKU passes through, non-BA AccessError before create | T014,T015 | RED | port `8175` (8170 collided locally) |
+| T018 | [X] GREEN | T016,T017 | GREEN | 13/13 GREEN; M2M domain `active=True` filtered amazon during read — test uses a fresh active second channel instead of relying on the seed's inactive amazon |
+| T019 | [X] Review: code-reviewer + security-reviewer | T018 | Review | both APPROVED 0 CRITICAL/HIGH |
+| T020 | [X] Verify | T019 | Verify | -u clean; full mhc 0 NEW regressions (5 baseline errors in test_design_file_upload_wizard_multi pre-existing); debug grep clean |
+| T021 | [X] Commit; tracker → done | T020 | Land | |
 
 ---
 

@@ -46,3 +46,5 @@ from . import test_phase1_design_file_created_via
 from . import test_phase2_design_auto_create_seed
 from . import test_phase1_hub_product_model_db
 from . import test_phase2_hub_product_model_orm
+from . import test_phase1_hub_wizard_db
+from . import test_phase2_hub_wizard_orm
