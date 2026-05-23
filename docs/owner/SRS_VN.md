@@ -490,7 +490,8 @@
 | 4. Vận chuyển & tracking | 9 | 7 | 0 | 0 | 2 |
 | 5. Tin nhắn khách hàng | 6 | 3 | 0 | 2 | 1 |
 | 6. Báo cáo & quản trị | 10 | 5 | 0 | 0 | 5 |
-| **Tổng** | **48** | **33 (69%)** | **1** | **3** | **11** |
+| 7. Trung tâm sản phẩm + xuất kênh | 7 | 5 | 1 | 0 | 1 |
+| **Tổng** | **55** | **38 (69%)** | **2** | **3** | **12** |
 
 ---
 
@@ -548,6 +549,85 @@
 | 6.8 | (cross-cutting) | P1-07 |
 | 6.9 | Spec 002, P0-11..13 | P0-11, P0-12, P0-13, P0-19 |
 | 6.10 | — | (chưa có slice) |
+| 7.1 | Spec 009 (Hub) | P-HUB-PROD-MODEL |
+| 7.2 | Spec 009 US3 | P-HUB-WIZARD |
+| 7.3 | Spec 009 US4 | P-HUB-SKU-DRIFT (cả hai checkpoint) |
+| 7.4 | Spec 009 US6 | P-HUB-BACKFILL |
+| 7.5 | Spec 009 US5 | P-HUB-STATUS-VIEW |
+| 7.6 | Spec 010 | P-HUB-XLS-PARSE-MODELS + P-HUB-XLS-INGEST core + P-HUB-XLS-PARSE-SERVICE (đang triển khai) |
+| 7.7 | Spec 011 | P-PUB-CLIENT, P-PUB-DRAFT, P-PUB-IMAGES (B), P-PUB-INVENTORY, P-PUB-PUBLISH + nút trên form |
+
+---
+
+## EPIC 7 — Trung tâm sản phẩm + xuất kênh (Central Product Hub + Outbound Publish) _(thêm 2026-05-23)_
+
+**Mục tiêu:** Đảo ngược trạng thái "chỉ đọc" của các kênh bán. Đưa Odoo lên thành **bản gốc duy nhất** của danh mục sản phẩm đa kênh. Excel vẫn là nguồn canonical hiện tại (đồng bộ định kỳ chứ không phải migration một lần). Kênh đầu tiên xuất ra: Etsy. Amazon + Website chờ Phase 5.
+
+### Story 7.1 — Mô hình sản phẩm thống nhất
+
+- **Mô tả:** Một bản sản phẩm duy nhất với các kênh áp dụng (Etsy / Amazon / Website…). Mỗi kênh có trạng thái riêng (Nháp / Đã đăng / Đã lưu trữ / Lỗi). Hệ thống SKU mới (v2) hoạt động song song với SKU cũ; BA có quyền giữ SKU cũ cho từng sản phẩm.
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P0
+- **Tiêu chí nghiệm thu:**
+  - Bản gốc sản phẩm có trường "Các kênh áp dụng"
+  - Mỗi cặp (sản phẩm, kênh) có một dòng trạng thái riêng
+  - Mã SKU đang dùng + Mã chuẩn v2 + Trạng thái drift hiển thị rõ
+  - Danh sách 3 kênh được tạo sẵn (Etsy bật, Amazon + Website tắt chờ Phase 5)
+
+### Story 7.2 — Wizard tạo sản phẩm
+
+- **Mô tả:** Wizard có gate BA, bắt buộc Tên + SKU + Nhóm + Giá > 0 + ≥1 kênh. Hiển thị preview mã SKU chuẩn + chế độ sản xuất (in nội bộ / Dropship Gearment) trước khi lưu.
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P0
+- **Tiêu chí nghiệm thu:**
+  - Người không phải BA không thấy nút Tạo
+  - Trường rỗng → báo lỗi, không tạo
+  - Lưu xong tạo đủ dòng trạng thái cho từng kênh đã chọn (mặc định "Nháp")
+
+### Story 7.3 — Wizard chuẩn hoá SKU
+
+- **Mô tả:** BA xem danh sách sản phẩm có mã SKU không khớp v2 → chọn "Giữ mã cũ" (pin lại + không tự đổi nữa) hoặc "Chấp nhận mã chuẩn" (đổi mã + lưu trữ mã cũ + tự gửi cập nhật lên Etsy).
+- **Trạng thái:** ✅ Xong (cả hai checkpoint) | **Ưu tiên:** P1
+- **Tiêu chí nghiệm thu:**
+  - Khi chấp nhận canonical → mã default_code = mã v2, mã cũ vào x_sku_legacy
+  - Etsy push thất bại → rollback toàn bộ (không thay mã + lưu lỗi audit)
+  - Sản phẩm đã pin "Giữ mã cũ" → đổi tên không bị tự tính lại
+
+### Story 7.4 — Backfill listing Etsy hiện có
+
+- **Mô tả:** Đọc các listing Etsy đã có trong hệ thống (đã pull từ trước) + tạo bản sản phẩm + dòng trạng thái kênh cho từng variant đã match SKU. Variant chưa match → liệt kê để BA quyết định.
+- **Trạng thái:** ✅ Xong (read-only, không tự tạo bản sản phẩm cho variant chưa match) | **Ưu tiên:** P1
+- **Tiêu chí nghiệm thu:**
+  - Chạy lại 2 lần không tạo dòng trạng thái trùng
+  - Không xoá kênh BA đã chọn thủ công
+  - Variant chưa match → liệt kê trong báo cáo, không tự tạo
+
+### Story 7.5 — Tab Kênh + nút Đăng lên Etsy trên form sản phẩm
+
+- **Mô tả:** Form sản phẩm thêm tab "Kênh" (M2M kênh áp dụng + danh sách dòng trạng thái) + tab "Drift mã SKU" + nút "Đăng lên Etsy" trên header (BA-only).
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P1
+- **Tiêu chí nghiệm thu:**
+  - Smart button hiển thị số kênh đã publish
+  - Bấm nút mở wizard Đăng lên Etsy
+
+### Story 7.6 — Đồng bộ định kỳ từ file Excel
+
+- **Mô tả:** File Excel danh mục đặt lên Google Drive → hệ thống đọc + đối chiếu hàng đêm (mặc định 02h). Excel thắng các trường Tên / Mô tả / Nhóm / Giá / SKU; Odoo thắng "Các kênh áp dụng" (BA-chọn không bị xoá bởi Excel). Mỗi sheet có vân tay (fingerprint) cột; thay đổi cột bất ngờ → cần admin duyệt trước.
+- **Trạng thái:** 🔄 Đang triển khai | **Ưu tiên:** P0
+- **Tiêu chí nghiệm thu:**
+  - File >200MB → từ chối với thông báo rõ
+  - Sheet với cột mới → từ chối + báo admin
+  - Một dòng lỗi không làm hỏng toàn bộ run
+  - Có báo cáo lỗi/thành công cuối run gửi BA
+  - **Trạng thái hiện tại:** mô hình dữ liệu staging + nhanh chóng upsert đã xong; parser openpyxl + cron + tải ảnh đang triển khai
+
+### Story 7.7 — Xuất lên Etsy (Outbound Publish)
+
+- **Mô tả:** Wizard "Đăng lên Etsy" thực hiện chuỗi 4 bước: tạo draft → upload ảnh → đẩy inventory (mảng toàn bộ) → publish (state='active'). BA-only. Resumable: nếu publish thất bại ở bước 2, lần chạy lại bỏ qua bước 1 + tiếp tục từ bước 2. Tự rollback nếu Etsy báo lỗi.
+- **Trạng thái:** ✅ Xong (chờ smoke test E2E trên shop JaHandmadeArt) | **Ưu tiên:** P0
+- **Tiêu chí nghiệm thu:**
+  - Bốn bước chạy đúng thứ tự
+  - Lỗi Etsy ở bước nào → dừng tại đó + lưu trạng thái 'error' + thông báo lỗi cho BA
+  - BA chạy lại → tiếp tục từ điểm lỗi
+  - Người không phải BA không bấm được nút
 
 ---
 
