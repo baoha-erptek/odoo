@@ -20,6 +20,8 @@ import json
 import logging
 from datetime import timedelta
 
+from markupsafe import escape
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
@@ -235,6 +237,77 @@ class SaleOrder(models.Model):
         raise AccessError(_(
             "Only BA Shipping operators can fetch a Gearment quote."
         ))
+
+    @api.model
+    def action_gearment_bulk_push_all_pending(self):
+        """P4-01b — server-action recovery: bulk-quote ALL eligible
+        Gearment-POD orders in `state='sale'` + `x_gearment_outbound_state='draft'`
+        that have at least one Gearment-eligible line. Used when the
+        background cron is paused and the operator needs a manual catch-up.
+
+        FR-017 13th confirmation — `_check_ba_shipping_or_raise()` runs
+        before the search; the per-order quote method gates again on
+        each row as defense-in-depth.
+
+        Per-order savepoint isolates failures: a single 4xx on order N
+        does not roll back orders 1..N-1 that already quoted. Bus
+        notifications fire per order so the operator sees progress.
+
+        Returns a summary dict — used by the wizard form's notification.
+        """
+        # FR-017 method-top gate (inlined for @api.model classmethod context).
+        if not (
+            self.env.user.has_group('multichannel_hub_fulfillment.group_ba_shipping')
+            or self.env.user.has_group('base.group_system')
+        ):
+            raise AccessError(_(
+                "Only BA Shipping operators can run the bulk Gearment push."
+            ))
+        candidates = self.search([
+            ('state', 'in', ('sale', 'done')),
+            ('x_gearment_outbound_state', '=', 'draft'),
+        ])
+        # Filter to those with Gearment-eligible lines (can't push via
+        # SQL; cheap-enough since "draft" pool is bounded).
+        eligible = candidates.filtered(lambda o: o._has_gearment_eligible_lines())
+        succeeded = self.env['sale.order']
+        failed_msgs = []
+        Bus = self.env['bus.bus']
+        channel = (self.env.cr.dbname, 'res.partner', self.env.user.partner_id.id)
+        for order in eligible:
+            try:
+                with self.env.cr.savepoint(flush=True):
+                    order.action_get_gearment_quote()
+                succeeded |= order
+                Bus._sendone(channel, 'gearment.bulk.push.all', {
+                    'order': order.name,
+                    'state': order.x_gearment_outbound_state,
+                    'status': 'quoted',
+                })
+            except Exception as exc:  # noqa: BLE001 — per-order isolation
+                _logger.warning(
+                    "Bulk Gearment push-all failed for %s: %s",
+                    order.name, exc,
+                )
+                failed_msgs.append(f"{order.name}: {exc}")
+                Bus._sendone(channel, 'gearment.bulk.push.all', {
+                    'order': order.name,
+                    'state': 'failed',
+                    'status': 'failed',
+                    'error': escape(str(exc)),
+                })
+        Bus._sendone(channel, 'gearment.bulk.push.all', {
+            'summary': True,
+            'eligible': len(eligible),
+            'succeeded': len(succeeded),
+            'failed': len(failed_msgs),
+            'failed_msgs': failed_msgs,
+        })
+        return {
+            'eligible': len(eligible),
+            'succeeded': len(succeeded),
+            'failed': len(failed_msgs),
+        }
 
     def action_get_gearment_quote(self):
         """Fetch a price quote from Gearment and store on the order.
