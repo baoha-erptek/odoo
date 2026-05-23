@@ -12,6 +12,7 @@ Per Spec 011 §50: refuses to start when any of the 3 shop default IDs
 by Etsy's createListing endpoint.
 """
 
+import base64
 import logging
 
 from .etsy_api_client import EtsyApiClient
@@ -164,6 +165,42 @@ class EtsyListingPublisher:
         response = client.put(path, json={'products': products_payload})
         self._sync_inventory_snapshot(shop, listing_id, response)
         return response
+
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-IMAGES (option B / MVP) — single-image, no diff (T015)
+    # ------------------------------------------------------------------
+    # Odoo 19 CE has no `product.image` model (Enterprise-only). MVP scope:
+    # upload the template's `image_1920` per publish, no manifest diff, no
+    # DELETE path. Multi-image-per-listing + diff is a follow-up slice.
+    def upload_images(self, tmpl, listing_id, shop):
+        """POST /listings/{listing_id}/images for the template's main image.
+
+        Returns the list of response payloads (one per successful upload).
+        Templates with no `image_1920` set are a no-op (returns []).
+        """
+        if not listing_id:
+            raise ValueError("upload_images requires a non-empty listing_id")
+        if not tmpl.image_1920:
+            return []
+        # `image_1920` is stored base64-encoded; decode for the multipart body.
+        try:
+            payload_bytes = base64.b64decode(tmpl.image_1920)
+        except Exception as exc:  # noqa: BLE001 — defensive only
+            raise ValueError(
+                "Could not decode product image for template %r: %s"
+                % (tmpl.name, exc)
+            ) from exc
+        client = EtsyApiClient(shop)
+        path = "listings/%s/images" % listing_id
+        files = {
+            'image': (
+                (tmpl.default_code or 'image') + '.jpg',
+                payload_bytes,
+                'image/jpeg',
+            ),
+        }
+        response = client.post_multipart(path, files=files)
+        return [response] if response else []
 
     def _sync_inventory_snapshot(self, shop, listing_id, response):
         """Update etsy.listing.product rows from the PUT response (T020)."""

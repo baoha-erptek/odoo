@@ -38,11 +38,11 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T013 | `product.image.x_image_sha256_cache` Char field + on-read compute + on-write clear hook | P-PUB-CLIENT ✓ | GREEN | mhc-side (product domain); ACL inherited |
-| T014 | `etsy.listing.image_hash_manifest` Text JSON field; system-group ACL | P-PUB-CLIENT ✓ | GREEN | |
-| T015 | Extend `EtsyListingPublisher` with `upload_images(product, listing_id, shop)` — diff new/changed/removed against manifest; upload changed (multipart); DELETE removed; update manifest | T008,T013,T014 | GREEN | TokenBucket(rate=2, burst=10) |
-| T016 | RED Phase 2 (ORM): first-publish uploads all; second-publish with one image changed → 1 upload + 0 delete; image removed in Odoo → DELETE call; manifest persists across publishes; image upload 4xx writes error row but doesn't kill orchestrator | T013,T014,T015 | RED | Mock multipart `requests.Session.post` |
-| T017 | GREEN + Review + Verify + Commit | T016 | GREEN→Land | |
+| T013 | [DEFERRED] `product.image.x_image_sha256_cache` — Odoo 19 CE has no `product.image` model (Enterprise-only). Slice re-scoped to option B (no manifest, no per-image cache). | P-PUB-CLIENT ✓ | — | Findings P-PUB-IMAGES STOP-and-escalate. |
+| T014 | [DEFERRED] `etsy.listing.image_hash_manifest` — dropped per option B. | — | — | Re-introduce if multi-image-per-listing surfaces as real need. |
+| T015 | [X] (option B) `EtsyListingPublisher.upload_images(tmpl, listing_id, shop)` — single-image MVP: POSTs multipart with template's `image_1920` (base64-decoded); no-op when image not set; returns response list | T008 ✓ | GREEN | |
+| T016 | [X] RED Phase 2 (ORM) — 3 tests: no-image → no call; image → 1 multipart POST with bytes payload + image/jpeg mime; returns response list | T015 | RED | port `8175` |
+| T017 | [X] GREEN + Verify + Commit | T016 | GREEN→Land | Review skipped per playbook small-slice exception. Re-scope from manifest-diff to always-upload eliminated per-image cache requirement entirely. |
 
 ---
 
