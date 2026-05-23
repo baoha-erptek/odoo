@@ -50,6 +50,13 @@
                             class="oe_stat_button"
                             icon="fa-plug"
                             groups="base.group_system"/>
+                        <button
+                            name="action_provision_enquiry_alias"
+                            type="object"
+                            string="Provision Email Alias"
+                            class="oe_stat_button"
+                            icon="fa-envelope"
+                            groups="base.group_system"/>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <div class="oe_title">
