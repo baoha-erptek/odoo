@@ -83,6 +83,20 @@ class ProductTemplate(models.Model):
         help="Archive of prior default_code after canonicalisation wizard run",
     )
 
+    # ------------------------------------------------------------------
+    # Extension point for per-channel SKU push (P-HUB-SKU-DRIFT mhc-half).
+    # ------------------------------------------------------------------
+    # Default no-op; etsy_integration overrides this to call the Etsy
+    # publisher when channel_code == 'etsy' (lands with Spec 011 P-PUB-CLIENT).
+    def _push_sku_to_channel(self, channel_code):
+        """Push current `default_code` to the named channel.
+
+        Default implementation is a no-op (returns True). Channel modules
+        override per-channel as needed. Callers must wrap in a savepoint
+        or accept full-transaction rollback on raise.
+        """
+        return True
+
     @api.depends(
         'x_listing_price',
         'standard_price',

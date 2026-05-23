@@ -47,13 +47,13 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T022 | `wizards/product_sku_canonicalise_wizard.py` — `action_keep_legacy` + `action_accept_canonical` + service hook `_push_sku_to_channel(product, channel_code)` (no-op fallback in mhc; Etsy implementation in T034 below) | P-HUB-PROD-MODEL ✓ | GREEN | Wizard is mhc; Etsy push hook is etsy_integration |
-| T023 | `views/product_sku_drift_views.xml` — tree view filtered to non-canonical statuses + server-action binding | T022 | GREEN | Filterable by `x_sku_v2_status` |
-| T024 | `etsy_integration/services/etsy_sku_pusher.py` — implements `_push_sku_to_channel(product, 'etsy')` calling `EtsyApiClient.put('/listings/{id}/inventory')` with entire-array-resubmit using existing `etsy.listing.product` snapshot; rolls back caller transaction on failure with vendor body captured (memory `feedback_capture_response_body_before_blackbox_probe`) | T022, Spec 011 P-PUB-CLIENT ✓ | GREEN | **Depends on Spec 011 P-PUB-CLIENT landing first** |
-| T025 | RED Phase 1 (DB): wizards exist, tree view loads, `x_sku_legacy` is settable | T022 | RED | |
-| T026 | RED Phase 2 (ORM): Keep-legacy transition; Accept-canonical without Etsy link (no push fires); Accept-canonical with mocked Etsy push success (`default_code` updated, audit row created); Accept-canonical with mocked push failure (rollback, durable audit row remains) | T022,T024 | RED | `--http-port=8170` |
-| T027 | GREEN | T025,T026 | GREEN | |
-| T028 | Review + Verify + Commit | T027 | Review→Land | |
+| T022 | [X] (mhc-half) `wizards/product_sku_canonicalise_wizard.py` — `action_keep_legacy` + `action_accept_canonical` + service hook `_push_sku_to_channel(channel_code)` (no-op default on product.template; Etsy override in T024 later) | P-HUB-PROD-MODEL ✓ | GREEN | Bounded sudo() after FR-017 gate; 22nd FR-017 confirmation |
+| T023 | [X] `views/product_sku_drift_views.xml` — tree view filtered to non-canonical + msc_catchall + wizard form + server-action binding via binding_model_id | T022 | GREEN | |
+| T024 | [ ] (checkpoint b) `etsy_integration/services/etsy_sku_pusher.py` — overrides `_push_sku_to_channel('etsy')` to call `EtsyApiClient.put('/listings/{id}/inventory')`; rolls back on failure with vendor body captured | T022 ✓, Spec 011 P-PUB-CLIENT | GREEN | **Waits on P-PUB-CLIENT** |
+| T025 | [X] RED Phase 1 (DB): wizard transient registered + x_sku_legacy settable via SQL | T022 | RED | |
+| T026 | [X] (mhc-half) RED Phase 2 (ORM): Keep-legacy transition + status pin against name change; Accept-canonical SKU swap + legacy archive + status recompute to matches; no-channel no-push; with-channel push hook called; rollback on push failure; FR-017 gate blocks non-BA on both actions | T022 | RED | Etsy-push success / failure with real vendor body deferred to T024 |
+| T027 | [X] GREEN — 11/11 mhc-half tests | T025,T026 | GREEN | |
+| T028 | [X] (mhc-half) Review + Verify + Commit | T027 | Review→Land | code-reviewer + security-reviewer both APPROVED 0 CRITICAL/HIGH; -u clean; full mhc 480 tests 0 NEW failures (5 pre-existing baseline) |
 
 **Note on inter-spec dep**: T024 depends on Spec 011 P-PUB-CLIENT (Etsy write methods). To preserve slice independence, P-HUB-SKU-DRIFT can land in two checkpoints: (a) mhc wizard + no-op fallback (T022, T023, T025–T028 minus the Etsy push test) lands first; (b) Etsy push hook (T024 + the relevant Phase-2 test cases) lands after Spec 011 P-PUB-CLIENT. Tracker row carries the two-checkpoint plan.
 

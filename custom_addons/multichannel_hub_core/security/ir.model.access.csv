@@ -41,3 +41,4 @@ access_multichannel_sales_channel_system,multichannel.sales.channel system write
 access_product_channel_status_user,product.channel.status user read,model_product_channel_status,base.group_user,1,0,0,0
 access_product_channel_status_system,product.channel.status system write,model_product_channel_status,base.group_system,1,1,1,1
 access_product_creation_wizard_user,product.creation.wizard user,model_product_creation_wizard,base.group_user,1,1,1,1
+access_product_sku_canonicalise_wizard_user,product.sku.canonicalise.wizard user,model_product_sku_canonicalise_wizard,base.group_user,1,1,1,1

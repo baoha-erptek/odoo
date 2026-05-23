@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Spec 009 P-HUB-SKU-DRIFT T023 — drift review list view. -->
+
+    <record id="view_product_sku_drift_list" model="ir.ui.view">
+        <field name="name">product.template.sku.drift.list</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <list string="SKU Drift Review">
+                <field name="name"/>
+                <field name="default_code"/>
+                <field name="x_sku_v2_suggested"/>
+                <field name="x_sku_v2_status"/>
+                <field name="x_sku_legacy"/>
+                <field name="categ_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_product_sku_drift" model="ir.actions.act_window">
+        <field name="name">SKU Drift Review</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_product_sku_drift_list"/>
+        <field name="domain">[('x_sku_v2_status', 'in', ['non_canonical', 'msc_catchall'])]</field>
+    </record>
+
+    <!-- Wizard form -->
+    <record id="view_product_sku_canonicalise_wizard_form" model="ir.ui.view">
+        <field name="name">product.sku.canonicalise.wizard.form</field>
+        <field name="model">product.sku.canonicalise.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Canonicalise SKU">
+                <sheet>
+                    <group>
+                        <field name="product_tmpl_id" readonly="True"/>
+                        <field name="current_default_code"/>
+                        <field name="suggested_default_code"/>
+                        <field name="current_status"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_accept_canonical" type="object"
+                            string="Accept Canonical" class="btn-primary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button name="action_keep_legacy" type="object"
+                            string="Keep Legacy" class="btn-secondary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_sku_canonicalise_wizard" model="ir.actions.act_window">
+        <field name="name">Canonicalise SKU</field>
+        <field name="res_model">product.sku.canonicalise.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+</odoo>
