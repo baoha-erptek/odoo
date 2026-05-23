@@ -60,3 +60,4 @@ from . import test_phase2_pub_images_orm
 from . import test_phase2_pub_publish_orm
 from . import test_phase2_sku_drift_etsy_orm
 from . import test_phase2_pub_publish_button_orm
+from . import test_phase2_buyer_message_orm
