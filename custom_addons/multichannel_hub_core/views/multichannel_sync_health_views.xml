@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P0-11-TILE follow-up — operations menu entry for sync health snapshots. -->
+
+    <record id="view_multichannel_sync_health_list" model="ir.ui.view">
+        <field name="name">multichannel.sync.health.list</field>
+        <field name="model">multichannel.sync.health</field>
+        <field name="arch" type="xml">
+            <list string="Sync Health" decoration-danger="status == 'error'"
+                  decoration-warning="status == 'warning'"
+                  decoration-muted="status == 'paused'">
+                <field name="channel_id"/>
+                <field name="metric_key"/>
+                <field name="status"/>
+                <field name="last_run_at"/>
+                <field name="last_success_at"/>
+                <field name="last_error_at"/>
+                <field name="rows_processed"/>
+                <field name="rows_failed"/>
+                <field name="last_error_message" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_multichannel_sync_health_search" model="ir.ui.view">
+        <field name="name">multichannel.sync.health.search</field>
+        <field name="model">multichannel.sync.health</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="metric_key"/>
+                <field name="channel_id"/>
+                <filter string="OK"      name="filter_ok"      domain="[('status','=','ok')]"/>
+                <filter string="Warning" name="filter_warning" domain="[('status','=','warning')]"/>
+                <filter string="Error"   name="filter_error"   domain="[('status','=','error')]"/>
+                <filter string="Paused"  name="filter_paused"  domain="[('status','=','paused')]"/>
+                <separator/>
+                <filter string="By Channel" name="grp_channel" context="{'group_by': 'channel_id'}"/>
+                <filter string="By Status"  name="grp_status"  context="{'group_by': 'status'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_multichannel_sync_health" model="ir.actions.act_window">
+        <field name="name">Sync Health</field>
+        <field name="res_model">multichannel.sync.health</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_multichannel_sync_health_search"/>
+        <field name="context">{'search_default_grp_channel': 1}</field>
+    </record>
+
+    <menuitem id="menu_multichannel_sync_health"
+              name="Sync Health"
+              parent="menu_operations_root"
+              action="action_multichannel_sync_health"
+              sequence="90"/>
+</odoo>
