@@ -140,6 +140,14 @@ class SaleOrder(models.Model):
             self._table,
             ['sales_channel', 'has_pending_address_change'],
         )
+        # P0-13 — composite (etsy_shop_id, etsy_last_modified DESC) for the
+        # OrderSyncer "since" cursor and dashboards that filter by shop + recency.
+        # tools.create_index has no DESC affordance; use raw SQL with
+        # CREATE INDEX IF NOT EXISTS for idempotent re-installs.
+        self.env.cr.execute("""
+            CREATE INDEX IF NOT EXISTS sale_order_etsy_shop_last_modified_idx
+                ON sale_order (etsy_shop_id, etsy_last_modified DESC)
+        """)
 
     @api.depends('etsy_order_id')
     def _compute_is_etsy_order(self):
