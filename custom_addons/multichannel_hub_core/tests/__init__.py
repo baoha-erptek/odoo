@@ -62,3 +62,4 @@ from . import test_phase2_catalog_orchestrator_orm
 from . import test_phase2_excel_image_downloader_orm
 from . import test_phase2_design_auto_archive_orm
 from . import test_phase2_catalog_gdrive_fetcher_orm
+from . import test_phase2_enquiry_mail_new_orm

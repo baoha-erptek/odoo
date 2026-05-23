@@ -289,6 +289,31 @@ class MultichannelEnquiry(models.Model):
         }
 
     # ------------------------------------------------------------------
+    # Inbound-email gateway (Spec 007 P3-LEAD-MAIL-ALIAS)
+    # ------------------------------------------------------------------
+    @api.model
+    def message_new(self, msg_dict, custom_values=None):
+        """mail.alias entry point — create an enquiry from an inbound email.
+
+        Called by mail.alias.thread_id resolution when a message arrives
+        at an alias whose alias_model is `multichannel.enquiry`. Returns
+        the newly-created enquiry recordset.
+        """
+        defaults = dict(custom_values or {})
+        defaults.setdefault('source', 'email_alias')
+        defaults.setdefault('subject', msg_dict.get('subject') or '(no subject)')
+        defaults.setdefault('partner_email', msg_dict.get('email_from') or '')
+        enquiry = super().message_new(msg_dict, custom_values=defaults)
+        # Best-effort partner resolution — _match_or_create_partner handles
+        # the empty-email + no-match cases gracefully.
+        if not enquiry.partner_id and enquiry.partner_email:
+            try:
+                enquiry._match_or_create_partner()
+            except Exception:  # noqa: BLE001 — partner-resolve is best-effort
+                pass
+        return enquiry
+
+    # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
     def _match_or_create_partner(self):

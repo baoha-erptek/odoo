@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 
 _logger = logging.getLogger(__name__)
@@ -369,6 +369,59 @@ class EtsyShop(models.Model):
             'domain': [('etsy_shop_id', '=', self.id)],
             'context': {'default_etsy_shop_id': self.id},
         }
+
+    enquiry_alias_id = fields.Many2one(
+        'mail.alias', string='Customer Enquiry Email Alias',
+        ondelete='set null',
+        help="Mail alias that routes inbound emails to multichannel.enquiry "
+             "records owned by this shop. Provisioned via "
+             "action_provision_enquiry_alias.",
+    )
+
+    def action_provision_enquiry_alias(self):
+        """Spec 007 P3-LEAD-MAIL-ALIAS — create/return a mail.alias for inbound
+        customer email routing to multichannel.enquiry.
+
+        Idempotent: returns the existing alias if already provisioned.
+        Admin-only (group_system) per spec — alias creation is an
+        infrastructure action.
+        """
+        from odoo.exceptions import AccessError
+        from odoo.tools.misc import unique
+        self.ensure_one()
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError(_(
+                "Only administrators can provision a customer enquiry email "
+                "alias for an Etsy shop."
+            ))
+        if self.enquiry_alias_id:
+            return self.enquiry_alias_id
+        Alias = self.env['mail.alias'].sudo()
+        Model = self.env['ir.model']
+        enquiry_model = Model.search([
+            ('model', '=', 'multichannel.enquiry'),
+        ], limit=1)
+        if not enquiry_model:
+            raise AccessError(_(
+                "multichannel.enquiry model is not registered; "
+                "ensure multichannel_hub_core is installed."
+            ))
+        # Slug the shop name + Etsy api shop id for uniqueness.
+        slug_base = (self.name or 'etsy-shop').lower()
+        slug = ''.join(c if c.isalnum() else '-' for c in slug_base).strip('-')
+        # Append the api_shop_id (or Odoo id) for cross-shop uniqueness.
+        suffix = self.sudo().etsy_api_shop_id or str(self.id)
+        alias_name = 'enquiry-%s-%s' % (slug or 'shop', suffix)
+        alias = Alias.create({
+            'alias_name': alias_name,
+            'alias_model_id': enquiry_model.id,
+            'alias_contact': 'everyone',
+            'alias_defaults': repr({
+                'source': 'email_alias',
+            }),
+        })
+        self.sudo().enquiry_alias_id = alias.id
+        return alias
 
     def action_authorize_etsy(self):
         """T017 — open the OAuth2 PKCE authorize flow for this shop.
