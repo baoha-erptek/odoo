@@ -71,24 +71,33 @@ class EtsyShop(models.Model):
              'fetches receipts modified after this timestamp.',
     )
 
-    # Spec 011 P-PUB-CLIENT T003 — Etsy publisher defaults per shop. The
-    # three Integer IDs are sensitive (Etsy account-side identifiers) and
-    # gated to base.group_system. The three enums are operator-editable
-    # within BA group via standard form-view ACL.
-    default_taxonomy_id = fields.Integer(
+    # Spec 011 P-PUB-CLIENT T003 — Etsy publisher defaults per shop.
+    # Char (not Integer) because real Etsy IDs are int64 — e.g.
+    # shipping_profile_id=285149016922 overflows PG int4 by 100x. Same
+    # pattern as `etsy_api_shop_id` on this model. Migration 19.0.2.15.0
+    # ALTERs the column type for envs that landed earlier versions.
+    # System-group gated; the three enums below are BA-editable.
+    default_taxonomy_id = fields.Char(
         string='Default Etsy Taxonomy ID',
         groups='base.group_system',
         help='Etsy taxonomy node id used as the default for createDraftListing.',
     )
-    default_shipping_profile_id = fields.Integer(
+    default_shipping_profile_id = fields.Char(
         string='Default Etsy Shipping Profile ID',
         groups='base.group_system',
         help='Etsy shipping profile id used as the default for createDraftListing.',
     )
-    default_return_policy_id = fields.Integer(
+    default_return_policy_id = fields.Char(
         string='Default Etsy Return Policy ID',
         groups='base.group_system',
         help='Etsy return policy id used as the default for createDraftListing.',
+    )
+    default_readiness_state_id = fields.Char(
+        string='Default Etsy Readiness State ID',
+        groups='base.group_system',
+        help='Etsy readiness-state id (processing-time profile). Required by '
+             'createDraftListing for physical listings as of the 2025 API update. '
+             'Discover via GET /shops/{shop_id}/readiness-state-definitions.',
     )
     default_who_made = fields.Selection(
         selection=[

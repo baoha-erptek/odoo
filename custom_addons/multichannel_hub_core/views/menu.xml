@@ -53,11 +53,19 @@
     <!-- Explicit deletes so env.ref() returns falsy after upgrade —
          Odoo does not auto-purge ir_model_data rows when XML is
          removed from a module's data list. -->
-    <delete model="ir.ui.menu" id="menu_order_dashboard"/>
-    <delete model="ir.ui.menu" id="menu_tracking_dashboard"/>
-    <delete model="ir.actions.act_window" id="action_order_dashboard"/>
-    <delete model="ir.actions.act_window" id="action_tracking_dashboard"/>
-    <delete model="ir.ui.view" id="order_dashboard_list_view"/>
-    <delete model="ir.ui.view" id="view_tracking_dashboard_list"/>
-    <delete model="ir.ui.view" id="view_tracking_dashboard_search"/>
+    <!-- Idempotent cleanup of legacy P1-DASH-MERGE orphans. On envs that never
+         had these xmlids (e.g. staging deployed after the merge), <delete
+         id="..."> raises; search+unlink is a no-op on empty recordsets. -->
+    <function name="unlink" model="ir.model.data">
+      <function name="search" model="ir.model.data">
+        <value eval="[('module', '=', 'multichannel_hub_core'),
+                      ('name', 'in', ['menu_order_dashboard',
+                                      'menu_tracking_dashboard',
+                                      'action_order_dashboard',
+                                      'action_tracking_dashboard',
+                                      'order_dashboard_list_view',
+                                      'view_tracking_dashboard_list',
+                                      'view_tracking_dashboard_search'])]"/>
+      </function>
+    </function>
 </odoo>

@@ -47,20 +47,27 @@ class EtsyListingPublisher:
         # tmpl.sudo() — read attributes regardless of caller's stock-read ACL;
         # the wizard's FR-017 gate proved BA membership upstream.
         s = tmpl.sudo()
-        return {
+        sh = shop.sudo()
+        payload = {
             'sku': self._resolve_sku(s),
             'title': s.name or '',
             'description': (s.description_sale or s.name or ''),
             'price': float(s.x_listing_price or 0.0),
             'quantity': max(int(s.qty_available or 0), 1),
-            'who_made': shop.sudo().default_who_made or 'i_did',
-            'when_made': shop.sudo().default_when_made or 'made_to_order',
-            'is_supply': bool(shop.sudo().default_is_supply),
-            'taxonomy_id': int(shop.sudo().default_taxonomy_id or 0),
-            'shipping_profile_id': int(shop.sudo().default_shipping_profile_id or 0),
-            'return_policy_id': int(shop.sudo().default_return_policy_id or 0),
+            'who_made': sh.default_who_made or 'i_did',
+            'when_made': sh.default_when_made or 'made_to_order',
+            'is_supply': bool(sh.default_is_supply),
+            'taxonomy_id': int(sh.default_taxonomy_id or 0),
+            'shipping_profile_id': int(sh.default_shipping_profile_id or 0),
+            'return_policy_id': int(sh.default_return_policy_id or 0),
             'state': 'draft',
         }
+        # Etsy 2025 API update requires readiness_state_id on physical listings.
+        # Include only when set on the shop; older sandbox shops without it would
+        # otherwise 400 the legacy 'processing_min/max' path which is gone.
+        if sh.default_readiness_state_id:
+            payload['readiness_state_id'] = int(sh.default_readiness_state_id)
+        return payload
 
     # ------------------------------------------------------------------
     # Shop default validation
@@ -122,12 +129,24 @@ class EtsyListingPublisher:
             'quantity': payload['quantity'],
             'state': 'inactive',  # createDraft → Etsy state is 'draft'; we mirror as inactive until publish step
         })
-        self.env['product.channel.status'].sudo().create({
-            'product_tmpl_id': tmpl.id,
-            'channel_id': Channel.id,
-            'state': 'draft',
-            'external_ref': str(listing_id),
-        })
+        # The wizard (product.creation.wizard.action_create) seeds the status row
+        # at draft / no external_ref. Update-or-create so re-publish after wizard
+        # creation doesn't collide on the (product_tmpl_id, channel_id) UNIQUE
+        # constraint.
+        Status = self.env['product.channel.status'].sudo()
+        existing_status = Status.search([
+            ('product_tmpl_id', '=', tmpl.id),
+            ('channel_id', '=', Channel.id),
+        ], limit=1)
+        status_vals = {'state': 'draft', 'external_ref': str(listing_id)}
+        if existing_status:
+            existing_status.write(status_vals)
+        else:
+            Status.create(dict(
+                status_vals,
+                product_tmpl_id=tmpl.id,
+                channel_id=Channel.id,
+            ))
         return response
 
     # ------------------------------------------------------------------
@@ -151,17 +170,20 @@ class EtsyListingPublisher:
         # True per-variant overrides aren't in scope for this slice; revisit if
         # multi-variant publish surfaces a real divergence.
         sku = self._resolve_sku(tmpl.sudo())
+        # Etsy 2025 API requires readiness_state_id on every offering.
+        readiness = shop.sudo().default_readiness_state_id
         for variant in tmpl.sudo().product_variant_ids:
+            offering = {
+                'quantity': max(int(variant.sudo().qty_available or 0), 1),
+                'price': float(tmpl.sudo().x_listing_price or 0.0),
+                'is_enabled': True,
+            }
+            if readiness:
+                offering['readiness_state_id'] = int(readiness)
             products_payload.append({
                 'sku': sku,
                 'property_values': [],
-                'offerings': [
-                    {
-                        'quantity': max(int(variant.sudo().qty_available or 0), 1),
-                        'price': float(tmpl.sudo().x_listing_price or 0.0),
-                        'is_enabled': True,
-                    },
-                ],
+                'offerings': [offering],
             })
         client = EtsyApiClient(shop)
         path = "listings/%s/inventory" % listing_id
