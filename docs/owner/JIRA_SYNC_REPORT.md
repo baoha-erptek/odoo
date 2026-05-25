@@ -150,17 +150,19 @@ CDA copy JQL vào ô tìm kiếm trên Jira board để áp dụng filter.
 
 ### Epic 7 — Trung tâm sản phẩm + xuất kênh (mới)
 
-Epic + 7 Story con đẩy lên Jira trong lần delta này. Keys sẽ được điền sau khi script chạy xong.
+Epic + 7 Story con đẩy lên Jira ngày 2026-05-25.
 
-| Story (SRS §) | Trạng thái | Jira key (TBD) |
-|---------------|------------|----------------|
-| 7.1 Mô hình sản phẩm thống nhất | ✅ Xong | — |
-| 7.2 Wizard tạo sản phẩm | ✅ Xong | — |
-| 7.3 Wizard chuẩn hoá SKU | ✅ Xong | — |
-| 7.4 Backfill listing Etsy hiện có | ✅ Xong | — |
-| 7.5 Tab Kênh + nút Đăng lên Etsy | ✅ Xong | — |
-| 7.6 Đồng bộ định kỳ từ file Excel | 🔄 Đang triển khai | — |
-| 7.7 Xuất lên Etsy (Outbound Publish) | ✅ Xong (smoke test JaHandmadeArt thành công 2026-05-25) | — |
+**Epic 7 — [ESTY-174](https://erptek.atlassian.net/browse/ESTY-174) — In Review**
+
+| Story (SRS §) | Trạng thái | Jira key |
+|---------------|------------|----------|
+| 7.1 Mô hình sản phẩm thống nhất | ✅ Xong | [ESTY-175](https://erptek.atlassian.net/browse/ESTY-175) |
+| 7.2 Wizard tạo sản phẩm | ✅ Xong | [ESTY-176](https://erptek.atlassian.net/browse/ESTY-176) |
+| 7.3 Wizard chuẩn hoá SKU | ✅ Xong | [ESTY-177](https://erptek.atlassian.net/browse/ESTY-177) |
+| 7.4 Backfill listing Etsy hiện có | ✅ Xong | [ESTY-178](https://erptek.atlassian.net/browse/ESTY-178) |
+| 7.5 Tab Kênh + nút Đăng lên Etsy | ✅ Xong | [ESTY-179](https://erptek.atlassian.net/browse/ESTY-179) |
+| 7.6 Đồng bộ định kỳ từ file Excel | 🔄 Đang triển khai | [ESTY-180](https://erptek.atlassian.net/browse/ESTY-180) |
+| 7.7 Xuất lên Etsy (Outbound Publish) | ✅ Xong (smoke test JaHandmadeArt thành công 2026-05-25) | [ESTY-181](https://erptek.atlassian.net/browse/ESTY-181) |
 
 ### Tổng kết lại
 
