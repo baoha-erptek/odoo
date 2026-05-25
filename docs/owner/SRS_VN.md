@@ -94,7 +94,7 @@
 ### Story 1.7 — Đồng bộ danh sách sản phẩm và tồn kho từ Etsy
 
 - **Mô tả:** Tải danh sách sản phẩm và số lượng tồn kho từ Etsy về hệ thống. Chỉ đọc, không sửa được.
-- **Trạng thái:** 🟡 Đang làm | **Ưu tiên:** P1 | **ETA:** tuần đầu tháng 6/2026
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P1 | **ETA:** đã go-live 2026-05-23
 - **Tiêu chí nghiệm thu:**
   - Mỗi shop xem được số sản phẩm và tồn kho hiện tại
   - Có cảnh báo khi tồn kho lệch >10% giữa Etsy và hệ thống
@@ -168,7 +168,7 @@
 ### Story 2.6 — Tự lưu trữ file đã in
 
 - **Mô tả:** File đã in xong và đơn đã giao thì tự chuyển sang trạng thái "Đã lưu trữ" để không hiển thị trong danh sách hàng ngày, tránh rối mắt.
-- **Trạng thái:** ⏳ Sắp làm | **Ưu tiên:** P2 | **ETA:** cuối tháng 5/2026
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P2 | **ETA:** đã go-live 2026-05-23
 - **Tiêu chí nghiệm thu:**
   - File tự ẩn sau 30 ngày kể từ ngày đơn giao
   - Có filter "Xem cả file đã lưu trữ" để xem lại
@@ -367,7 +367,7 @@
 ### Story 5.4 — Mail alias gom phản hồi khách
 
 - **Mô tả:** Tạo email alias riêng cho từng shop. Khi khách trả lời, hệ thống tự gom vào CRM lead tương ứng.
-- **Trạng thái:** ⏳ Sắp làm | **Ưu tiên:** P2 | **ETA:** tháng 7/2026
+- **Trạng thái:** ✅ Xong | **Ưu tiên:** P2 | **ETA:** đã go-live 2026-05-24
 - **Tiêu chí nghiệm thu:**
   - Email reply gom đúng lead
   - Không trùng (1 email = 1 entry)
@@ -622,7 +622,7 @@
 ### Story 7.7 — Xuất lên Etsy (Outbound Publish)
 
 - **Mô tả:** Wizard "Đăng lên Etsy" thực hiện chuỗi 4 bước: tạo draft → upload ảnh → đẩy inventory (mảng toàn bộ) → publish (state='active'). BA-only. Resumable: nếu publish thất bại ở bước 2, lần chạy lại bỏ qua bước 1 + tiếp tục từ bước 2. Tự rollback nếu Etsy báo lỗi.
-- **Trạng thái:** ✅ Xong (chờ smoke test E2E trên shop JaHandmadeArt) | **Ưu tiên:** P0
+- **Trạng thái:** ✅ Xong (smoke test E2E trên shop JaHandmadeArt thành công 2026-05-25) | **Ưu tiên:** P0
 - **Tiêu chí nghiệm thu:**
   - Bốn bước chạy đúng thứ tự
   - Lỗi Etsy ở bước nào → dừng tại đó + lưu trạng thái 'error' + thông báo lỗi cho BA

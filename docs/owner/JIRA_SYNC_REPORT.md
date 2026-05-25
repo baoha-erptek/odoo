@@ -136,6 +136,54 @@ CDA copy JQL vào ô tìm kiếm trên Jira board để áp dụng filter.
 
 ---
 
+## Delta sync 2026-05-25
+
+**Sự kiện:** sau 4 ngày kể từ sync gốc (2026-05-21), 3 Story đã hoàn thành + 1 Epic mới (Epic 7) được thêm vào SRS với 7 Story con. Lần này BA chạy delta sync (chỉ những thay đổi).
+
+### Story chuyển sang Done (3)
+
+| Jira key | Story | Bằng chứng |
+|----------|-------|------------|
+| [ESTY-132](https://erptek.atlassian.net/browse/ESTY-132) | 1.7 Đồng bộ sản phẩm + tồn kho | Backfill listing Etsy + bản sản phẩm + dòng trạng thái kênh (2026-05-23) |
+| [ESTY-140](https://erptek.atlassian.net/browse/ESTY-140) | 2.6 Tự lưu trữ file đã in | Soft-archive sibling design files (2026-05-23) |
+| [ESTY-161](https://erptek.atlassian.net/browse/ESTY-161) | 5.4 Mail alias gom phản hồi khách | Email alias provisioning + form button (2026-05-24) |
+
+### Epic 7 — Trung tâm sản phẩm + xuất kênh (mới)
+
+Epic + 7 Story con đẩy lên Jira trong lần delta này. Keys sẽ được điền sau khi script chạy xong.
+
+| Story (SRS §) | Trạng thái | Jira key (TBD) |
+|---------------|------------|----------------|
+| 7.1 Mô hình sản phẩm thống nhất | ✅ Xong | — |
+| 7.2 Wizard tạo sản phẩm | ✅ Xong | — |
+| 7.3 Wizard chuẩn hoá SKU | ✅ Xong | — |
+| 7.4 Backfill listing Etsy hiện có | ✅ Xong | — |
+| 7.5 Tab Kênh + nút Đăng lên Etsy | ✅ Xong | — |
+| 7.6 Đồng bộ định kỳ từ file Excel | 🔄 Đang triển khai | — |
+| 7.7 Xuất lên Etsy (Outbound Publish) | ✅ Xong (smoke test JaHandmadeArt thành công 2026-05-25) | — |
+
+### Tổng kết lại
+
+| Hạng mục | Số lượng |
+|----------|----------|
+| Epic tổng cộng | 7 (+1 Epic 7) |
+| Story tổng cộng | 55 (+7 Epic 7) |
+| Story Done | 42 (33 cũ + 3 transition + 6 Epic 7) |
+| Story To Do / Đang làm | 13 |
+| Story bị chặn (CDA action) | 3 (1.8, 5.5, 5.6) |
+
+**Mới đạt mốc:** Tiến độ coding **76%** (so với 73% ngày 2026-05-21).
+
+### Hành động cần CDA
+
+CDA chọn 1 trong 3 nhánh ưu tiên sắp tới (xem `STATUS_VN.md` mục "Sắp làm"):
+
+- **Nhánh A** — Hoàn thiện Phase 7 (Excel cron + tải ảnh)
+- **Nhánh B** — Hậu mãi & tài chính (Bulk-send Gearment + hoàn/refund)
+- **Nhánh C** — Bổ trợ vận hành (Việt hoá UI + dashboard tài chính + 18 shop API)
+
+---
+
 ## Bảo trì sau sync
 
 ### Quy ước cập nhật

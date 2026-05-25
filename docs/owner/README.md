@@ -11,12 +11,15 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 | File | Đọc trong | Ai đọc | Mục đích |
 |------|-----------|--------|----------|
 | **[BRD_VN.md](BRD_VN.md)** | 10 phút | Chủ dự án (ký) | Bức tranh kinh doanh: vấn đề, tầm nhìn, lợi ích, phạm vi, lộ trình, tiêu chí thành công, rủi ro |
-| **[SRS_VN.md](SRS_VN.md)** | 30 phút | CDA + BA | Chi tiết 48 chức năng (Story) trong 6 phase, mỗi chức năng có trạng thái, ưu tiên, ngày dự kiến |
+| **[SRS_VN.md](SRS_VN.md)** | 30 phút | CDA + BA | Chi tiết 55 chức năng (Story) trong 7 phase, mỗi chức năng có trạng thái, ưu tiên, ngày dự kiến |
 | **[STATUS_VN.md](STATUS_VN.md)** | 2 phút | CDA (hàng tuần) | Dashboard nhanh: % xong, đang làm gì, cần CDA xử lý gì |
 | **[JIRA_SYNC_PLAN.md](JIRA_SYNC_PLAN.md)** | (BA tham khảo) | BA | Kế hoạch đẩy 6 Epic + 48 Story lên Jira ESTY |
 | **[JIRA_SYNC_REPORT.md](JIRA_SYNC_REPORT.md)** | 3 phút | CDA + BA | Báo cáo sau khi sync — Epic/Story key, link Jira, filter quick-links |
 
-> **Đã sync lên Jira ngày 2026-05-21.** Board: https://erptek.atlassian.net/jira/software/projects/ESTY/board — xem `JIRA_SYNC_REPORT.md` để biết chi tiết keys.
+> **Đã sync lên Jira ngày 2026-05-21** (lần đầu) **+ delta sync 2026-05-25** (3 Story Done + Epic 7).
+> **Board Jira:** https://erptek.atlassian.net/jira/software/projects/ESTY/board
+> **Confluence (bản tài liệu đầy đủ):** https://erptek.atlassian.net/wiki/spaces/HEP
+> Xem `JIRA_SYNC_REPORT.md` để biết chi tiết keys.
 
 ---
 
@@ -56,6 +59,7 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 | Phiên bản | Ngày | Người soạn | Thay đổi chính |
 |-----------|------|-------------|-----------------|
 | 1.0 | 2026-05-21 | BA Consultant | Tài liệu khởi tạo — 4 file owner-readable, chuẩn bị sync Jira |
+| 1.1 | 2026-05-25 | BA Consultant | Delta sync — 3 Story Done, Epic 7 (Trung tâm sản phẩm + xuất kênh) thêm 7 Story, mirror lên Confluence space HEP |
 
 ---
 
