@@ -120,6 +120,31 @@ Coexists with `product.creation.wizard` for one sprint (D-V2-3); legacy sunsets 
 
 ---
 
+### Slice — P-UAT-SKU-BUILDER-EXTEND  (UAT-only; no Odoo code)
+
+UAT extension after `P-HUB-SKU-BUILDER` (mhc 19.0.1.0.52) shipped. Decoupled from blocked `P-HUB-V2-VALIDATE-ON-CREATE` per owner D8 (2026-05-26). Respects D7 end-user doc-refresh constraint (no FLOW/HUONG_DAN updates this slice).
+
+| Task | Status | Description | Depends on | Phase | Notes |
+|---|---|---|---|---|---|
+| T054 | [X] | Deploy mhc `19.0.1.0.52` to staging: rsync `custom_addons/multichannel_hub_core/` → `ubuntu@129.150.63.207:/odoo/esty19/custom_addons/`; `sudo docker exec esty19_odoo odoo -d esty_odoo19 -u multichannel_hub_core --stop-after-init`; `sudo docker restart esty19_odoo`; verify in-container manifest version reads `19.0.1.0.52` | — | Deploy | Per `reference_staging_ssh_deploy` — NEVER `--delete`; secrets bind-mount already configured; staging DB = `esty_odoo19` per `reference_staging_db_name`. |
+| T055 | [X] | Rerun existing `tests/e2e/tests/uat_huong_dan_tao_san_pham.spec.ts` against staging; capture results to `tests/e2e/reports/uat-2026-05-26-rerun/`; baseline vs morning run (4 PASS / 3 SKIP / 1 finding F1 resolved); document any regressions in `specs/009-product-hub/findings.md` | T054 | Verify | If TC-001/002/007 now fail → triage as P-UAT-REGRESSION; SKU-BUILDER landed should NOT regress legacy wizard (D-V2-3 coexist policy). |
+| T056 | [X] | Author `tests/e2e/page-objects/product_sku_builder_wizard.ts` — page object for new 4-step builder wizard: step navigation via statusbar, `fillStep1Name(name)`, `assertAutoSuggestedFamily(code)`, `overrideFamily(code)`, `fillStep2Material(matCode)`, `fillStep3Size({namespace, value, rectW, rectH})`, `fillStep4Color(colorCode)`, `assertPreviewSku(expected)`, `submitCreate()`, `assertAccessDeniedBefore`/`After` patterns | T054 | Implement | Mirror style of existing `product_creation_wizard.ts`; selectors per `wizards/product_sku_builder_wizard_views.xml` (statusbar widget). |
+| T057 | [X] | Extend `uat_huong_dan_tao_san_pham.spec.ts` with 5 new test cases — TC-008 BA Lead builds MUG-CR-F11 happy path (mug 11oz → `default_code='MUG-CR-F11'`); TC-009 BA Lead builds MUG-CR-F15-BK (mug 15oz + VAR2 color black → suffix `-BK`); TC-010 BA Lead builds APR-TX-AM (apparel size M → step 3 family-gates to apparel-size namespace only); TC-011 BA Lead builds DMT-TX-R30X18 (doormat 30×18 rectangular → rect_w/rect_h drive `R30X18` segment); TC-012 BA User attempts builder → AccessError BEFORE product.template create (assert `product.template.search_count` unchanged via separate ORM xmlrpc probe — FR-017 24th browser-side confirmation) | T056 | Implement | Reuse `loginAsBaLead` / `loginAsBaUser` from `fixtures/odoo-auth`; cleanup via existing `cleanup_uat_data.py` extended for `mhc.sku.builder.wizard` test artifacts (if any persist — wizard is TransientModel so should not). |
+| T058 | [X] | Run new TC-008..TC-012 against staging; capture pass/fail/screenshots to `tests/e2e/reports/`; triage failures (fix simple selectors inline; escalate functional failures as new P-UAT-DEFECT slices) | T057 | Verify | Soft gate: 5/5 GREEN = best case; 4/5 acceptable with defect logged; ≤3/5 = STOP and escalate per playbook "When the playbook breaks". |
+| T059 | [X] | Document outcomes in `specs/009-product-hub/findings.md` §"P-UAT-SKU-BUILDER-EXTEND" (last-run results + any regressions or defects + memory-worthy surprises); create companion artifact `docs/UAT_RESULTS_2026-05-26_SKU_BUILDER.md` (engineering, not owner-facing — D7 constraint) | T058 | Document | Owner-facing doc refresh waits for P-HUB-V2-VALIDATE-ON-CREATE + P-HUB-MISSING-INFO-WIZARD ship per D7. |
+| T060 | [X] | Commits: (a) `[multichannel_hub_core] test(P-UAT-SKU-BUILDER-EXTEND): Playwright TC-008..TC-012 + page object` for Playwright additions; (b) `docs(P-UAT-SKU-BUILDER-EXTEND): findings + tracker state→done` for docs. Update tracker P-UAT-SKU-BUILDER-EXTEND state→done with results summary | T059 | Land | Two commits per scope split (test vs docs). LEARN insight: capture any new browser-side selector patterns or staging deploy gotchas. |
+
+**Exit (P-UAT-SKU-BUILDER-EXTEND)**: all T054–T060 `[X]`; staging running mhc `19.0.1.0.52`; existing 7 TC results baselined; new TC-008..TC-012 results captured; findings.md updated; tracker state→done.
+
+**Acceptable shortcuts applied (per playbook §"Acceptable shortcuts")**: skip Phase 1 planner (UAT-only, scope is clear), skip Phase 2 RED ORM tests (no Odoo code), skip Phase 4 code-reviewer (no Python/XML changes — Playwright TS only). Phase 5 Verify and Phase 6 Commit are NOT skipped.
+
+**Out of scope**:
+- Update `FLOW_TAO_SAN_PHAM_VN.md` / `HUONG_DAN_TAO_SAN_PHAM_VN.md` (D7 constraint — refresh after all 3 SKU-v2 features ship).
+- Test `P-HUB-V2-VALIDATE-ON-CREATE` behaviour (slice not shipped yet).
+- Test `P-HUB-MISSING-INFO-WIZARD` behaviour (slice not shipped yet).
+
+---
+
 ## Dependency Graph
 
 ```

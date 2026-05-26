@@ -1,5 +1,48 @@
 # Findings — Spec 009 (Central Product Hub)
 
+## P-UAT-SKU-BUILDER-EXTEND — 2026-05-26
+
+**Slice goal**: Deploy mhc 19.0.1.0.52 to staging + rerun existing UAT (TC-001..TC-007) + extend with TC-008..TC-012 covering the new 4-step `product.sku.builder.wizard`. Decoupled from blocked P-HUB-V2-VALIDATE-ON-CREATE per owner D8.
+
+**Final result**: 8 PASS / 4 SKIP / 0 FAIL (12 total). Cleanup archived 17 UAT product templates + the auto-seeded BA User. Run time: 1m12s end-to-end. No regression from SKU-BUILDER landing on the legacy `product.creation.wizard` flow.
+
+**Per-TC outcomes**:
+
+| TC | Outcome | Notes |
+|---|---|---|
+| TC-001 | PASS | Legacy wizard, BA Lead, Mug + Etsy channel |
+| TC-002 | PASS | Legacy wizard, Gearment SKU → Dropship flag |
+| TC-003 | SKIP | Pre-existing — needs seeded non_canonical product |
+| TC-004 | SKIP | Pre-existing — needs Etsy API + published product |
+| TC-005 | SKIP | Pre-existing — Etsy draft creation chained from TC-001 |
+| TC-006 | PASS | BA User can see Publish-to-Etsy button (designed behaviour; doc mismatch F1 deferred) |
+| TC-007 | PASS | Legacy wizard zero-price → "Listing Price must be greater than 0" |
+| TC-008 | PASS | NEW — MUG-CR-F11 happy path (mug 11oz, Ceramic + Chrome) |
+| TC-009 | PASS | NEW — MUG-CR-F15-BK (mug 15oz + VAR2 Black color) |
+| TC-010 | PASS | NEW — APR-TX-AM (Apron, Textile, Medium apparel size, family-gated) |
+| TC-011 | PASS | NEW — DMT-TX-R30X18 (Doormat, Textile, 30×18 rectangular) |
+| TC-012 | SKIP | NEW — FR-017 24th browser stub. Negative path covered at correct layer by `tests/test_phase2_hub_sku_builder_orm.py::test_non_ba_user_blocked_before_template_create`. Browser promotion deferred to P-UAT-FR017-BUILDER-BROWSER (needs plain-user fixture). |
+
+**Memory-worthy surprises** (added during this slice):
+
+- **Container path ≠ host bind-mount source.** Memory `reference_staging_ssh_deploy` line 22 *does* state `/odoo/esty19/custom_addons/` is bind-mounted to `/mnt/extra-addons` inside the container — but the deploy-verify SSH probe used the host path against `docker exec` and got `No such file or directory`. Quick fix once spotted; flagging here so the deploy runbook explicitly contrasts the two paths.
+- **Staging public URL not previously recorded in memory.** `https://odoo.hatafax.com` → HTTP 200 in 0.4s; default `STAGING_BASE_URL` in `tests/e2e/fixtures/env.ts` already pointed at it correctly, but nginx vhost grep against `8169` / `esty19` / hostname returned empty (vhost is in `default` site, no greppable `server_name`). Adding to `reference_staging_server.md`.
+- **UAT credential model** confirmed for this slice: `STAGING_ADMIN_LOGIN=admin / STAGING_ADMIN_PASSWORD=admin` (owner directive 2026-05-26), `STAGING_BA_LEAD_LOGIN=STAGING_BA_LEAD_PASSWORD=admin` as substitute, BA_USER auto-seeded fresh each run via `seed_ba_user.py`. Real BA_LEAD seeding deferred to operator-manual UAT.
+- **Seed display-name ≠ code drift** caused 3 RED iterations on the first browser run. Display names in `data/sku_attribute_seed.xml` differ from the canonical x_code strings used in SKU previews and docs:
+  - `F11` ↔ display **"11 oz"** (not "11 fl oz")
+  - `F15` ↔ display **"15 oz"** (not "15 fl oz")
+  - `AM` ↔ display **"Medium"** (not "M" — autocomplete on "M" alone matches any record containing M)
+  - `CR` ↔ display **"Ceramic + Chrome"** (NOT plain "Ceramic" — that's CE). SKU_GRAMMAR.md row 30 confirms canonical mug material is "ceramic+chrome combo". Easy mistake: doc abbreviation hides the seed long-form.
+
+  Test fix: search by full display name, never abbreviation. Pattern applies to all M2O autocompletes against product.attribute.value, since the field has no domain restriction and the unsegmented dropdown fuzzy-matches across all attributes.
+
+- **Color m2o needs explicit blur after pick** to settle the `preview_sku` compute. Without `await press('Tab') + waitForTimeout(300)`, the next `getPreviewSku()` read returned `MUG-CR-F15` (no `-BK` suffix) despite the autocomplete suggestion being clicked. Fix landed in `page-objects/product_sku_builder_wizard.ts::fillStep4Color`. The other M2O fields (family/material/size) don't need this because the explicit `clickNext()` already blurs them as part of the step transition — color is in the last step so there's no Next to trigger the blur.
+- **JSON-RPC > XML-RPC for Playwright cross-checks.** The new TC verify the `default_code` actually landed in the DB by POSTing to `/web/session/authenticate` then `/web/dataset/call_kw/product.template/search_count`. Cleaner than mixing Python `xmlrpc.client` shell-outs into the JS test runner. Pattern is reusable for future Playwright slices that need to inspect DB state.
+
+**Doc constraint honoured** (per D7): owner-facing `docs/owner/FLOW_TAO_SAN_PHAM_VN.md` + `HUONG_DAN_TAO_SAN_PHAM_VN.md` deliberately NOT updated this slice — refresh happens in a single clean pass after P-HUB-V2-VALIDATE-ON-CREATE + P-HUB-MISSING-INFO-WIZARD also ship.
+
+**Bonus deploy verification** captured: mhc `19.0.1.0.52` running in container `esty19_odoo` on staging, all 103 modules loaded clean in 4.79s on `-u multichannel_hub_core --stop-after-init`. Pre-existing warnings (sql_constraints deprecation in Odoo 19, duplicate-label across etsy_integration + multichannel_hub_core) unchanged — consistent with memory item 138.
+
 ## P-HUB-SKU-BUILDER — 2026-05-26
 
 - **Odoo 19 index naming uses double underscore.** `index=True` on `mhc.sku.family.code` produces `mhc_sku_family__code_index` (double underscore between table and column), not `mhc_sku_family_code_index` as one would guess from older Odoo conventions. Phase-1 DB test originally asserted the single-underscore name and failed. Fix: tighten the assertion to a regex-tolerant `pg_indexes` lookup that just proves *some* btree index covers the `code` column. Memory candidate — same trap will recur on every new `index=True` field. Cheapest verification: `docker exec ... psql ... -c "SELECT indexname FROM pg_indexes WHERE tablename = ..."`.
