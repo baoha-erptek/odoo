@@ -41,9 +41,10 @@ SKU Grammar v2.1 defines the canonical SKU format for the multichannel product h
 
 | Component | Spec | Implementation | Status |
 |---|---|---|---|
-| Family classifier `evaluate(name) -> FAM3` | §2 | `custom_addons/multichannel_hub_core/services/sku_grammar_v2.py` lines 29-52 | ✅ Working |
+| Family classifier `evaluate(name) -> FAM3` | §2 | `custom_addons/multichannel_hub_core/services/sku_grammar_v2.py` lines 29-52 | ✅ Working (frozen tuple — to be DB-driven per §2.5) |
 | Wizard preview `sku_v2_suggested_preview` | §1 | `product_creation_wizard.py` lines 71-78 | ✅ Working (FAM3 only) |
 | Per-product canonicalise wizard (legacy ↔ v2) | §6 | `product.sku.canonicalise.wizard` | ✅ Working (per-product drift fix) |
+| Managed taxonomy models (Family + variant attributes) | §2.5 | Not built | ⚠️ MP006 slice `P-HUB-SKU-BUILDER` (todo) — foundational data layer for the wizard |
 | `<FAM3>-<MAT2>-<SIZE>` builder wizard (multi-step) | §1 | Not built | ⚠️ MP006 slice `P-HUB-SKU-BUILDER` (todo) |
 | Validator on create | §7 | Not built | ⚠️ MP006 slice `P-HUB-V2-VALIDATE-ON-CREATE` (todo) |
 | Missing-info handler | §8 | Not built | ⚠️ MP006 slice `P-HUB-MISSING-INFO-WIZARD` (todo) |
@@ -85,6 +86,73 @@ Apply regex rules in order; **first match wins**.
 | 23 | MSC | Misc (fallback)      | anything not matching above                                | tbd      | MX |
 
 Machine-readable copy: `.0temp/deliverables/D1_product_taxonomy_SKU.xlsx` sheet `family_rules` (canonical when out of sync with this table — owner edits Excel first, then propagates here).
+
+---
+
+## 2.5 Managed taxonomy (CRUD models)
+
+**Decision D-V2-6 (2026-05-26)**: replace the hardcoded Python tuple in `services/sku_grammar_v2.py` with **DB-managed taxonomy** so BA / operations can add/edit/retire families and variant codes without a code release.
+
+**Hybrid architecture** — Family gets a dedicated model (carries regex + route + default-material metadata that doesn't fit a generic attribute); Material / Shape / Size / Fluid oz / Apparel size / Color reuse Odoo's stock `product.attribute` + `product.attribute.value` (per §8) with a small `x_code` field added via `_inherit`.
+
+| Segment | Model | Stock or new? | CRUD location |
+|---|---|---|---|
+| FAM3 (Family) | `mhc.sku.family` | NEW (mhc) | Settings → SKU → Families (custom list + form) |
+| MAT2 (Material) | `product.attribute` "Material" + values | stock + 1 inherit field | Inventory → Products → Attributes |
+| Shape | `product.attribute` "Shape" + values | stock + 1 inherit field | same |
+| Size (dim) | `product.attribute` "Size" + values | stock + 1 inherit field | same |
+| Fluid oz | `product.attribute` "Fluid oz" + values | stock + 1 inherit field | same |
+| Apparel size | `product.attribute` "Apparel size" + values | stock + 1 inherit field | same |
+| VAR2 (Color) | `product.attribute` "Color" + values | stock + 1 inherit field | same |
+
+### `mhc.sku.family` fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `code` | Char(3), required, indexed, UNIQUE (`init()` mirror per `project_sql_constraints_drift`) | e.g. `MUG`, `APR`, `RDS` |
+| `name` | Char, required | Display name, e.g. "Mug" |
+| `priority` | Integer, required, default 100 | Lower = matched first; mirrors §2 priority column |
+| `regex_pattern` | Char, required | Stored uncompiled; compiled lazily on read |
+| `default_route` | Selection [`in_house`, `gearment`, `tbd`] | Per §6 routing table |
+| `default_material_id` | Many2one `product.attribute.value` (domain on Material attr) | Default MAT2 hint for builder wizard |
+| `active` | Boolean, default True | Standard Odoo soft-delete |
+| `_order` | `'priority, code'` | Stable ordering for evaluate() |
+
+### `product.attribute.value` inherit (additive)
+
+| Field | Type | Applies to | Notes |
+|---|---|---|---|
+| `x_code` | Char(6), indexed | all SKU-bearing attribute values | The 2-letter / 6-char code used in SKU (e.g. `CE`, `F11`, `R30X18`). Empty for non-SKU attributes. |
+| `x_namespace` | Selection [`shape`, `dim`, `rect`, `fluid_oz`, `apparel`] | Size-family attribute values | Per §4. Used by SIZE parser to disambiguate. |
+| `x_applicable_family_ids` | Many2many `mhc.sku.family` | Size-family attribute values | Family-gating per §4. Empty = applies to all. |
+
+### Refactor of `services/sku_grammar_v2.py`
+
+```
+def evaluate(name: str, env) -> tuple[str, str]:
+    families = env['mhc.sku.family'].sudo().search([], order='priority, code')
+    for fam in families:
+        if re.search(fam.regex_pattern, name, re.IGNORECASE):
+            return (fam.code, fam.code)
+    return ('MSC', 'MSC')
+```
+
+Compiled-regex cache keyed by `(family.id, family.write_date)` to avoid recompiling on every call. Frozen tuple in source becomes the seed data only.
+
+### Seeds
+
+- `data/sku_family_seed.xml` (`noupdate=1`) — 22 rows from §2 table, priorities 1–22.
+- `data/sku_attribute_seed.xml` (`noupdate=1`) — 7 `product.attribute` rows (Family-tag, Material, Shape, Size, Fluid oz, Apparel size, Color) + ~55 `product.attribute.value` rows (codes from §3 / §4 / §5).
+
+Owner edits via UI persist (`noupdate=1`). Seed only re-applies on `--init`.
+
+### CRUD ACL
+
+| Group | Read | Write | Notes |
+|---|---|---|---|
+| `base.group_user` | ✅ | ❌ | All users can see the taxonomy |
+| `multichannel_hub_core.group_ba_user` | ✅ | ✅ | BA can add new families / codes |
+| `base.group_system` | ✅ | ✅ | Admin override |
 
 ---
 
@@ -320,9 +388,10 @@ Auto-creates the page on first push, updates on subsequent runs.
 |---|---|---|---|
 | D-V2-1 | DSGN registry needed? | ❌ Skip per v2.1 amendment | **DECIDED 2026-05-26** |
 | D-V2-2 | Validator default mode | Soft-warn (backwards-compat) | Pending |
-| D-V2-3 | `product.sku.builder.wizard` vs current `product.creation.wizard`: replace or coexist? | Coexist 1 sprint, then sunset legacy | Pending |
-| D-V2-4 | Family override UI in builder wizard | Dropdown of 22 families | Pending |
+| D-V2-3 | `product.sku.builder.wizard` vs current `product.creation.wizard`: replace or coexist? | Coexist 1 sprint, then sunset legacy | **DECIDED 2026-05-26** |
+| D-V2-4 | Family override UI in builder wizard | Dropdown of all active `mhc.sku.family` rows (ordered by priority) | **DECIDED 2026-05-26** |
 | D-V2-5 | (Originally about design code timing — voided by v2.1 amendment) | N/A | Voided |
+| D-V2-6 | FAM3 / MAT2 / SIZE storage: hardcoded vs DB-managed? | Hybrid — `mhc.sku.family` dedicated model + `product.attribute` reuse for MAT/Shape/Size/Color (§2.5) | **DECIDED 2026-05-26** |
 
 ---
 
