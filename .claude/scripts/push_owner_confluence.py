@@ -285,6 +285,16 @@ PAGES = [
     ("SRS_VN.md", "SRS — 7 Epic / 55 Story", False),
     ("STATUS_VN.md", "Dashboard tình hình dự án", False),
     ("JIRA_SYNC_REPORT.md", "Báo cáo sync Jira", False),
+    # Flow docs (nghiệp vụ tổng quan)
+    ("FLOW_TAO_SAN_PHAM_VN.md", "Quy trình — Tạo sản phẩm mới", False),
+    ("FLOW_DON_HANG_ETSY_VN.md", "Quy trình — Tiếp nhận đơn hàng Etsy", False),
+    ("FLOW_GIAO_HANG_VN.md", "Quy trình — Giao hàng (MTO + Dropship)", False),
+    ("FLOW_HAU_MAI_VN.md", "Quy trình — Hậu mãi", False),
+    # User Guides (hướng dẫn sử dụng từng bước + UAT checklist)
+    ("HUONG_DAN_TAO_SAN_PHAM_VN.md", "Hướng dẫn sử dụng — Tạo sản phẩm mới", False),
+    ("HUONG_DAN_DON_HANG_ETSY_VN.md", "Hướng dẫn sử dụng — Tiếp nhận đơn hàng Etsy", False),
+    ("HUONG_DAN_GIAO_HANG_VN.md", "Hướng dẫn sử dụng — Giao hàng (MTO + Dropship)", False),
+    ("HUONG_DAN_HAU_MAI_VN.md", "Hướng dẫn sử dụng — Hậu mãi", False),
 ]
 
 
