@@ -85,7 +85,7 @@ Nếu không thấy menu **Sản phẩm → Tạo sản phẩm mới (Wizard)** 
 | Trường | Bắt buộc | Ví dụ | Ghi chú |
 |---|---|---|---|
 | **Tên sản phẩm** | ✅ | `Custom Coffee Mug 11oz` | Tiếng Anh; hiển thị trên Etsy |
-| **Mã SKU nội bộ** | ✅ | `MUG-CE-S35-D0001` | Hệ thống gợi ý FAM3; BA gõ phần còn lại |
+| **Mã SKU nội bộ** | ✅ | `MUG-CR-F11` | Hệ thống gợi ý FAM3 (`MUG`); BA gõ phần còn lại theo grammar v2.1 (xem §8) |
 | **Nhóm sản phẩm** | ✅ | `All` (an toàn) hoặc nhóm cụ thể | Chọn từ dropdown |
 | **Giá niêm yết (USD)** | ✅ | `19.99` | Giá bán Etsy; phải `> 0` |
 | **Phí vận chuyển nội bộ (VND)** | ✅ | `25000` | Ước tính chi phí ship trong nước |
