@@ -387,7 +387,7 @@ Auto-creates the page on first push, updates on subsequent runs.
 | # | Decision | Default proposal | Status |
 |---|---|---|---|
 | D-V2-1 | DSGN registry needed? | ❌ Skip per v2.1 amendment | **DECIDED 2026-05-26** |
-| D-V2-2 | Validator default mode | Soft-warn (backwards-compat) | Pending |
+| D-V2-2 | Validator default mode | Soft-warn (backwards-compat) | **DECIDED 2026-05-26** — Soft-warn confirmed. ICP `multichannel_hub.sku_v2_enforce_mode='soft'` ships as default; operator can flip to `'hard'` post-rollout once catalog has been canonicalised (P-HUB-BULK-CANONICALISE follow-up). Rationale: existing catalog has many legacy-format SKUs; hard-fail would block BA from creating any product until they pick v2 names. Soft-warn preserves throughput while flagging drift; legacy SKUs auto-tag as `x_sku_v2_status='ba_approved_legacy'`. |
 | D-V2-3 | `product.sku.builder.wizard` vs current `product.creation.wizard`: replace or coexist? | Coexist 1 sprint, then sunset legacy | **DECIDED 2026-05-26** |
 | D-V2-4 | Family override UI in builder wizard | Dropdown of all active `mhc.sku.family` rows (ordered by priority) | **DECIDED 2026-05-26** |
 | D-V2-5 | (Originally about design code timing — voided by v2.1 amendment) | N/A | Voided |

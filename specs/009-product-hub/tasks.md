@@ -114,7 +114,7 @@ Coexists with `product.creation.wizard` for one sprint (D-V2-3); legacy sunsets 
 **Exit (P-HUB-SKU-BUILDER)**: all `[X]`; tests ≥ 80% changed lines; module installs clean; UNIQUE constraint mirrored in `init()`; `mhc.sku.family` ACL defined; FR-017 24th confirmation captured.
 
 **Out of scope (deferred to sibling slices)**:
-- v2.1 regex validator on `default_code` write → `P-HUB-V2-VALIDATE-ON-CREATE`
+- v2.1 regex validator on `default_code` write → `P-HUB-V2-VALIDATE-ON-CREATE` (T061–T069 enumerated 2026-05-26 below; D-V2-2 = soft-warn DECIDED)
 - Step 1 family-classifier-misclassified + Step 3 size-unparseable fallbacks → `P-HUB-MISSING-INFO-WIZARD`
 - Sunset of legacy `product.creation.wizard` → follow-up after one sprint UAT (per D-V2-3)
 
@@ -145,6 +145,31 @@ UAT extension after `P-HUB-SKU-BUILDER` (mhc 19.0.1.0.52) shipped. Decoupled fro
 
 ---
 
+### Slice — P-HUB-V2-VALIDATE-ON-CREATE  (~80 LOC, regex validator on both wizards)
+
+v2.1 regex validator + soft/hard mode (D-V2-2 = soft default, DECIDED 2026-05-26). Hooks into both `product.creation.wizard._validate()` and `product.sku.builder.wizard._validate()`. Legacy SKUs preserved via existing `x_sku_v2_status='ba_approved_legacy'` opt-out path. See `docs/owner/SKU_GRAMMAR.md` §7.
+
+| Task | Status | Description | Depends on | Phase | Notes |
+|---|---|---|---|---|---|
+| T061 | [ ] | `data/sku_v2_enforce_mode_seed.xml` (`noupdate=1`) — single `ir.config_parameter` row `multichannel_hub.sku_v2_enforce_mode` = `'soft'`. Manifest bump 19.0.1.0.52 → **19.0.1.0.53** + add data file to `data` list. | — | Implement | ICP only; no model changes. |
+| T062 | [ ] | `services/sku_grammar_v2.py` — add `_VALIDATOR_REGEX = re.compile(r'^[A-Z]{3}-[A-Z]{2}-(SQ|HT|OV|LSQ|WV|AR|BW|RD|S\d+|F\d+|A[A-Z]+|R\d+X\d+)(-[A-Z]{2})?$')` + `validate_v2_sku(default_code: str) -> bool` (compile-once module-level constant + length 8–14 check before regex). Add module-level docstring linking to SKU_GRAMMAR.md §7.1. | — | Implement | Pure function; no env needed. Length check first (cheaper fail). |
+| T063 | [ ] | `wizards/product_creation_wizard.py` — extend `_validate()` to call helper BEFORE existing field checks. Pseudo: `mode = env['ir.config_parameter'].sudo().get_param('multichannel_hub.sku_v2_enforce_mode', 'soft'); ok = sku_grammar_v2.validate_v2_sku(self.default_code); if not ok: if mode == 'hard': raise UserError(_("SKU does not match v2.1 grammar...")); else: _logger.warning(...) + flag `_v2_validation_soft_warning = True` so action_create can set x_sku_v2_status='ba_approved_legacy' on the created template.` | T062 | Implement | Legacy SKUs that already have x_sku_v2_status='ba_approved_legacy' are NEVER touched (they bypass via existing compute logic in product_template.py:151). |
+| T064 | [ ] | `wizards/product_sku_builder_wizard.py` — extend `_validate()` to call helper BEFORE existing field checks. Same soft/hard branching as T063. Note: builder wizard *constructs* SKUs from controlled segments (FAM3-MAT2-SIZE[-VAR2]), so it should NEVER produce a non-v2 SKU. The validate call is defense-in-depth — guards against a future broken seed or DB corruption producing an invalid family code etc. | T062 | Implement | Same pattern as T063. |
+| T065 | [ ] | RED Phase 1 (DB): assert `ir.config_parameter` row with key `multichannel_hub.sku_v2_enforce_mode` exists post-install AND has value `'soft'`. | T061 | RED | Register in `tests/__init__.py` per `feedback_tdd_guide_init_py_imports`. |
+| T066 | [ ] | RED Phase 2 (ORM): 8 cases — (1) `validate_v2_sku('MUG-CR-F11')` returns True; (2) `validate_v2_sku('mug-cr-f11')` returns False (lowercase); (3) `validate_v2_sku('MUG-CR-X99')` returns False (bad size token); (4) `validate_v2_sku('M')` returns False (too short); (5) legacy wizard soft mode + non-v2 SKU → product created + `x_sku_v2_status='ba_approved_legacy'` + warning logged; (6) legacy wizard hard mode + non-v2 SKU → UserError before any side effect; (7) builder wizard soft mode + canonical SKU → no warning, normal `non_canonical`→`matches` compute path; (8) BOTH modes: existing product with `x_sku_v2_status='ba_approved_legacy'` is preserved through validate (compute logic in `product_template.py:151` skips ba_approved_legacy — re-verify via O.M.C. `product.template.x_sku_v2_status` after a write). | T063,T064 | RED | Use `--http-port=8175` (8170 collides per memory item 134). Tests parametrise mode via `env['ir.config_parameter'].sudo().set_param('multichannel_hub.sku_v2_enforce_mode', 'hard')` then `.set_param('soft')` in `tearDown` to restore. |
+| T067 | [ ] | GREEN — make T065/T066 pass | T065,T066 | GREEN | Orchestrator runs `--test-tags /multichannel_hub_core --http-port=8175 --stop-after-init` and reads tail. |
+| T068 | [ ] | Review — code-reviewer + security-reviewer parallel (single message, two Agent calls per `agents.md`) | T067 | Review | Block on CRITICAL/HIGH. Verify reviewer findings against `git diff --stat HEAD` per `feedback_reviewer_agent_diff_hallucination`. Security-reviewer specifically: confirm ICP read path uses `.sudo()` (BA may not have read access on ir.config_parameter), confirm UserError message doesn't leak ICP value to non-system users. |
+| T069 | [ ] | Verify — `-u multichannel_hub_core --stop-after-init` exit 0; full mhc `--test-tags` 0 NEW failures (5 pre-existing baseline confirmed via P-HUB-PROD-MODEL log); ruff if available; grep `_logger.info` / `print(` clean. Then commit (conventional, cite T061–T069); tracker P-HUB-V2-VALIDATE-ON-CREATE → done; LEARN insight to memory (ICP gating pattern for behavioural toggles + service-layer regex helper reuse across multiple wizards). | T068 | Land/Verify | One commit if review clean; multiple per checkpoint if mid-slice WIP. |
+
+**Exit (P-HUB-V2-VALIDATE-ON-CREATE)**: all T061–T069 `[X]`; tests ≥ 80% changed lines; module installs clean (mhc 19.0.1.0.53); ICP `multichannel_hub.sku_v2_enforce_mode` row present with default `'soft'`; both wizards' `_validate()` calls helper BEFORE field checks (verify via grep); legacy SKU opt-out (`x_sku_v2_status='ba_approved_legacy'`) preserved through validate.
+
+**Out of scope (deferred)**:
+- Re-run UAT TC-008..TC-012 with validator hot — separate `P-UAT-V2-VALIDATE-EXTEND` slice will rerun + add TC-013/TC-014 covering soft/hard mode behaviour visible in browser.
+- Bulk re-canonicalise existing catalog legacy SKUs to v2 → `P-HUB-BULK-CANONICALISE` follow-up (not in 006 critical path).
+- ICP flip from soft → hard in production → operator decision post-rollout, no code change needed.
+
+---
+
 ## Dependency Graph
 
 ```
@@ -155,7 +180,8 @@ P-HUB-SPEC (this planning slice)
         → P-HUB-BACKFILL (T029–T033)
         → P-HUB-STATUS-VIEW (T034–T037)
         → P-HUB-SKU-BUILDER (T038–T053) [data layer + 4-step wizard]
-            → P-HUB-V2-VALIDATE-ON-CREATE (T054–TBD, todo)  [parallel-eligible after T043 lands]
+            → P-HUB-V2-VALIDATE-ON-CREATE (T061–T069, todo, ready 2026-05-26 — D-V2-2 DECIDED soft-warn)
+            → P-UAT-SKU-BUILDER-EXTEND   (T054–T060, done 2026-05-26)
             → P-HUB-MISSING-INFO-WIZARD   (T0??–TBD, todo)  [parallel-eligible after T045 lands]
     P-HUB-SKU-DRIFT etsy-half (T024 + sub-tests)
         ← waits on Spec 011 P-PUB-CLIENT
