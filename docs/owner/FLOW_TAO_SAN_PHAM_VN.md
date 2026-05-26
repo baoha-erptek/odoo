@@ -33,7 +33,7 @@ Và một cách tự động:
 
 ### Các bước
 
-1. Mở **Sản phẩm → Tạo sản phẩm mới (Wizard)**.
+1. Truy cập Wizard cũ qua URL `/odoo/action-multichannel_hub_core.action_product_creation_wizard` (hôm nay chưa có menu — sẽ thêm trong slice follow-up `P-HUB-WIZARD-MENU`).
 2. Điền các ô bắt buộc:
    - **Tên sản phẩm** — ví dụ "Custom Coffee Mug 11oz"
    - **Mã SKU nội bộ** — BA tự gõ. Hệ thống chỉ gợi ý phần Family (3 ký tự đầu); phần còn lại BA tự dựng.
@@ -63,7 +63,7 @@ Và một cách tự động:
 
 ### Các bước
 
-1. Mở **Operations → Configuration → SKU Builder Wizard**.
+1. Mở **Operations → Configuration → Build SKU & Create Product**.
 2. **Bước 1 — Family**: gõ tên sản phẩm tiếng Anh. Hệ thống tự nhận biết family (Mug, Apron, Doormat…). Nếu sai, BA chỉnh thủ công.
 3. **Bước 2 — Material**: chọn chất liệu (Ceramic, Wood, Textile, Metal…).
 4. **Bước 3 — Size**: chọn kích thước. Wizard chỉ hiện các size hợp lệ cho family đó (mug → fluid oz, apron → S/M/L, doormat → rect W×H…).

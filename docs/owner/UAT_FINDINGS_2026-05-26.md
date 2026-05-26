@@ -125,6 +125,40 @@ Step 5: cleanup — archive created product.templates
 
 ---
 
+## New findings during owner manual run on staging (2026-05-26 evening)
+
+After v1.1 docs landed, owner did a manual walkthrough on staging (`esty_odoo19` mhc 19.0.1.0.52) and surfaced 2 new findings:
+
+### F4 — Wizard cũ has no menu
+
+**Symptom:** Owner couldn't find menu "Tạo sản phẩm mới (Wizard)" mentioned in `HUONG_DAN_TAO_SAN_PHAM_VN.md` v1.1 §4.1.
+
+**Investigation:**
+- Grep `custom_addons/multichannel_hub_core/wizards/product_creation_wizard_views.xml` — only contains `<record id="action_product_creation_wizard">`, **no `<menuitem>`**.
+- Staging XML-RPC `ir.ui.menu.search` for `action_product_creation_wizard` → empty.
+- Conclusion: classic Creation Wizard was never wired to a menu. Reachable only via URL action.
+
+**Doc-vs-code mismatch**: I (assistant) invented the menu name in v1.1 §4.1 without grepping. v1.0 also had the same wrong line — neither version was empirically validated against staging.
+
+**Resolution:**
+- **Doc fix (immediate):** HUONG_DAN §4.1 + FLOW + WALKTHROUGH updated to point at the URL action `/odoo/action-multichannel_hub_core.action_product_creation_wizard`. §2 "Nếu không thấy menu" line rewritten.
+- **Code follow-up:** new tracker slice `P-HUB-WIZARD-MENU` (todo) — add the missing `<menuitem>` under Operations → Configuration → Create Product (Classic Wizard).
+
+### F5 — `x_sku_v2_suggested` returns FAM3 only, not full v2 SKU
+
+**Symptom:** Owner created "UAT-TAOSP Mug 2026" and observed `X Sku V2 Suggested = MUG` on the product form, not `MUG-CR-F11` as they expected.
+
+**Investigation:**
+- `custom_addons/multichannel_hub_core/models/product_template.py:140-160` `_compute_x_sku_v2` calls `sku_grammar_v2.evaluate(name)` which returns FAM3 + family_code only.
+- `SKU_GRAMMAR.md` §1 implementation status table confirms: "Wizard preview `sku_v2_suggested_preview` | … | ✅ Working **(FAM3 only)**".
+- So today's behavior IS the design.
+
+**Resolution:**
+- **Doc clarification (immediate):** HUONG_DAN §3 wizard comparison table + §4.4 "Kiểm tra ngay sau khi tạo" now explicitly state that the field is FAM3-only and a callout note explains why.
+- **Code follow-up:** new tracker slice `P-HUB-V2-SUGGEST-FULL` (todo) — upgrade the compute to read `mhc.sku.family.default_material_id` + parse SIZE from variant attributes when populated, fall back to FAM3-only otherwise. ~100-150 LOC + RED tests.
+
+---
+
 ## Follow-up items (NOT blockers for this UAT closure)
 
 1. **R-UAT-SEED-DRIFT-DATA** (suggested slice): add `fixtures/seed_uat_data.py` for TC-003 (non_canonical SP) + TC-004 (published-on-Etsy SP). Wire into Playwright globalSetup. Estimated < 50 LOC.

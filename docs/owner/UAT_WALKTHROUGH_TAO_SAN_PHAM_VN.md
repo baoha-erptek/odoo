@@ -36,9 +36,7 @@
 
 **Các bước**
 
-1. Trong Odoo, mở menu **Sản phẩm** (thanh trên cùng).
-2. Chọn **Tạo sản phẩm mới (Wizard)**.
-   - _Nếu không thấy menu này:_ chạy `URL /odoo/action-multichannel_hub_core.action_product_creation_wizard` trực tiếp.
+1. Wizard cũ chưa có menu — truy cập URL `/odoo/action-multichannel_hub_core.action_product_creation_wizard` trực tiếp (follow-up slice `P-HUB-WIZARD-MENU` sẽ thêm menu).
 3. Form Wizard mở ra. Điền:
    - **Name:** `UAT-TAOSP Mug 2026 <date>` (ví dụ `UAT-TAOSP Mug 2026 0526a`)
    - **Internal Reference (SKU):** `UAT-MUG-001-<date>` (ví dụ `UAT-MUG-001-0526a`)
@@ -223,7 +221,7 @@
 
 **Các bước**
 
-1. Mở menu **Operations → Configuration → SKU Builder Wizard** (hoặc URL `/odoo/action-multichannel_hub_core.action_product_sku_builder_wizard`).
+1. Mở menu **Operations → Configuration → Build SKU & Create Product** (hoặc URL `/odoo/action-multichannel_hub_core.action_product_sku_builder_wizard`).
 2. Form 4 bước hiển thị với statusbar trên đầu.
 3. **Bước 1 — Family:**
    - **Product Name:** `UAT-SKU-BUILDER Mug 11oz <date>`

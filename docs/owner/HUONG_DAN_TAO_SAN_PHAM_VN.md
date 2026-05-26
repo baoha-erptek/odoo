@@ -52,7 +52,7 @@
 
 > **Lưu ý quan trọng (đã sửa từ v1.0):** Mọi user thuộc tier **BA** (User / Lead / Manager) đều có quyền đăng sản phẩm lên Etsy. Cổng kiểm tra (`group_ba_user`) được dùng nhất quán ở 26 chỗ trong code — đây là thiết kế chính thức (defense-in-depth: view + method-top gate). Tài liệu v1.0 ghi "BA User ❌ Đăng Etsy" là **sai** — đã sửa.
 
-Nếu không thấy menu **Sản phẩm → Tạo sản phẩm mới (Wizard)** hoặc **Sản phẩm → SKU Builder Wizard**, hãy liên hệ Admin để cấp quyền `group_ba_user`.
+Nếu không thấy menu **Operations → Configuration → Build SKU & Create Product** (đó là SKU Builder Wizard), hãy liên hệ Admin để cấp quyền `group_ba_user`. Wizard cũ (Cách 1A) hôm nay chưa có menu — truy cập qua URL action (xem §4.1).
 
 ---
 
@@ -62,7 +62,8 @@ Nếu không thấy menu **Sản phẩm → Tạo sản phẩm mới (Wizard)** 
 |---|---|---|
 | **Khi nào dùng** | Đã biết chính xác SKU muốn dùng (legacy hoặc v2 tự gõ) | Tạo SP mới muốn hệ thống tự dựng SKU v2 đúng grammar |
 | **Số bước** | 1 form duy nhất | 4 bước có statusbar (Family → Material → Size → Preview) |
-| **Tự gợi ý SKU?** | Có (chỉ FAM3) | Có (đầy đủ FAM3-MAT2-SIZE[-VAR2]) |
+| **Tự gợi ý SKU?** | Chỉ FAM3 — ví dụ "Mug 11oz" → suggested = `MUG`. BA gõ phần MAT2-SIZE còn lại tay. | Đầy đủ FAM3-MAT2-SIZE[-VAR2] dựng theo bước |
+| **Field `x_sku_v2_suggested` trên form SP** | Sau khi tạo, field này CHỈ hiện FAM3 (ví dụ `MUG`), KHÔNG phải full SKU | Sau khi tạo, field này vẫn chỉ là FAM3 (compute dùng chung) — nhưng `default_code` đã là full v2 SKU đúng grammar |
 | **Có hỏi thiếu thông tin?** | Không — báo lỗi cho BA tự sửa | Có — sub-form bổ sung size khi tên SP không đủ thông tin |
 | **Validator v2** | Có (soft/hard) — kiểm tra `default_code` BA gõ | Có (soft/hard) — preview SKU luôn hợp lệ vì hệ thống dựng |
 | **Tốc độ với SP đơn giản** | Nhanh hơn (1 click Create) | Chậm hơn 1-2 click (Next/Next/Next/Create) |
@@ -77,8 +78,9 @@ Nếu không thấy menu **Sản phẩm → Tạo sản phẩm mới (Wizard)** 
 ### 4.1 Mở Wizard
 
 1. Đăng nhập Odoo (mặc định: `https://odoo.hatafax.com`).
-2. Mở menu **Sản phẩm** ở thanh trên cùng.
-3. Chọn **Tạo sản phẩm mới (Wizard)**.
+2. Truy cập trực tiếp URL action: `/odoo/action-multichannel_hub_core.action_product_creation_wizard`.
+
+> ⚠️ **Hiện chưa có menu cho Wizard cũ** — chỉ vào được bằng URL. Slice follow-up `P-HUB-WIZARD-MENU` sẽ thêm menu **Operations → Configuration → Create Product (Classic Wizard)** trong phiên bản kế tiếp.
 
 ### 4.2 Điền các trường bắt buộc
 
@@ -114,6 +116,8 @@ Trên form sản phẩm mới, kiểm tra:
 - [ ] Tab **SKU Drift**: nếu hệ thống gợi ý mã khác → BA quyết định giữ cũ hay đổi (xem mục 8).
 - [ ] Nút **"Publish to Etsy"** xuất hiện ở header form (mọi BA tier đều thấy).
 
+> ℹ️ **Lưu ý về `x_sku_v2_suggested`** (field trên form SP sau khi tạo): Hôm nay field này CHỈ trả về **FAM3** (ví dụ `MUG`), không phải full v2 SKU như `MUG-CR-F11`. Đó là design có chủ ý vì compute trên `product.template` không có đủ thông tin material/size/color để dựng full SKU. Nếu muốn xem full v2 SKU **trước khi tạo**, hãy dùng SKU Builder Wizard (Cách 1B). Slice follow-up `P-HUB-V2-SUGGEST-FULL` sẽ nâng cấp compute này để dựng full SKU từ `product.attribute.value` của variant — chờ owner ưu tiên.
+
 ---
 
 ## 5. Cách 1B — SKU Builder Wizard (4 bước)
@@ -122,8 +126,9 @@ Trên form sản phẩm mới, kiểm tra:
 
 ### 5.1 Mở Wizard
 
-1. Menu **Operations → Configuration → SKU Builder Wizard** (hoặc URL action `multichannel_hub_core.action_product_sku_builder_wizard`).
-2. Form 4 bước hiển thị; statusbar trên đầu chỉ bước hiện tại (Family → Material → Size → Preview).
+1. Menu **Operations → Configuration → Build SKU & Create Product** (xác nhận từ `sku_family_views.xml:82`).
+2. Hoặc URL action: `/odoo/action-multichannel_hub_core.action_product_sku_builder_wizard`.
+3. Form 4 bước hiển thị; statusbar trên đầu chỉ bước hiện tại (Family → Material → Size → Preview).
 
 ### 5.2 Bước 1 — Family (Nhóm sản phẩm)
 
