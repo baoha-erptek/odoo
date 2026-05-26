@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Spec 009 §2.5 P-HUB-SKU-BUILDER T044/T047.
+    CRUD pages for the managed SKU taxonomy + menu bindings.
+-->
+<odoo>
+
+    <!-- ============================================================== -->
+    <!-- mhc.sku.family list + form                                      -->
+    <!-- ============================================================== -->
+
+    <record id="view_mhc_sku_family_list" model="ir.ui.view">
+        <field name="name">mhc.sku.family.list</field>
+        <field name="model">mhc.sku.family</field>
+        <field name="arch" type="xml">
+            <list string="SKU Families" editable="bottom">
+                <field name="priority"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="regex_pattern"/>
+                <field name="default_route"/>
+                <field name="default_material_id" options="{'no_create': True}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mhc_sku_family_form" model="ir.ui.view">
+        <field name="name">mhc.sku.family.form</field>
+        <field name="model">mhc.sku.family</field>
+        <field name="arch" type="xml">
+            <form string="SKU Family">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived"
+                            bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <group>
+                        <group string="Identity">
+                            <field name="code" placeholder="3-letter code (MUG / APR / RDS)"/>
+                            <field name="name"/>
+                            <field name="priority"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Routing &amp; Defaults">
+                            <field name="default_route"/>
+                            <field name="default_material_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group string="Regex (case-insensitive, anchored on \b word boundaries)">
+                        <field name="regex_pattern" nolabel="1"
+                               placeholder="\bmug\b"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mhc_sku_family" model="ir.actions.act_window">
+        <field name="name">SKU Families</field>
+        <field name="res_model">mhc.sku.family</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Menu: Operations -> Configuration -> {SKU Families, Build SKU}  -->
+    <!-- ============================================================== -->
+
+    <menuitem id="menu_operations_config"
+              name="Configuration"
+              parent="menu_operations_root"
+              sequence="80"
+              groups="multichannel_hub_core.group_ba_user"/>
+
+    <menuitem id="menu_sku_families"
+              name="SKU Families"
+              parent="menu_operations_config"
+              action="action_mhc_sku_family"
+              sequence="10"
+              groups="multichannel_hub_core.group_ba_user"/>
+
+    <menuitem id="menu_sku_builder_wizard"
+              name="Build SKU &amp; Create Product"
+              parent="menu_operations_config"
+              action="action_product_sku_builder_wizard"
+              sequence="20"
+              groups="multichannel_hub_core.group_ba_user"/>
+
+</odoo>

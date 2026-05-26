@@ -84,7 +84,7 @@ class ProductCreationWizard(models.TransientModel):
     @api.depends('name', 'default_code')
     def _compute_sku_v2_preview(self):
         for rec in self:
-            suggested, family_code = sku_grammar_v2.evaluate(rec.name or '')
+            suggested, family_code = sku_grammar_v2.evaluate(rec.name or '', self.env)
             rec.sku_v2_suggested_preview = suggested
             if family_code == 'MSC':
                 rec.sku_v2_status_preview = 'msc_catchall'

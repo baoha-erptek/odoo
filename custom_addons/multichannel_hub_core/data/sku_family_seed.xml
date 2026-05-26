@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SKU Family seed — 22 priority-ordered families per SKU_GRAMMAR.md §2.
+
+    noupdate="1" so admin edits persist across module upgrades.
+    Patterns verbatim from previously frozen tuple in
+    services/sku_grammar_v2.py (P-HUB-PROD-MODEL T005).
+
+    Spec 009 §2.5 P-HUB-SKU-BUILDER T040.
+-->
+<odoo noupdate="1">
+    <record id="mhc_sku_family_rds" model="mhc.sku.family">
+        <field name="code">RDS</field>
+        <field name="name">Ring Dish</field>
+        <field name="priority">1</field>
+        <field name="regex_pattern">\bring\b.{0,20}\b(dish|holder|tray)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_trk" model="mhc.sku.family">
+        <field name="code">TRK</field>
+        <field name="name">Trinket Tray/Box</field>
+        <field name="priority">2</field>
+        <field name="regex_pattern">\b(trinket|keepsake)\s+(tray|box|dish|holder)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_jwd" model="mhc.sku.family">
+        <field name="code">JWD</field>
+        <field name="name">Jewelry Dish</field>
+        <field name="priority">3</field>
+        <field name="regex_pattern">\bjewel(ry|lery)\s+(dish|holder|tray|box)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_phf" model="mhc.sku.family">
+        <field name="code">PHF</field>
+        <field name="name">Photo/Memorial Frame</field>
+        <field name="priority">4</field>
+        <field name="regex_pattern">\b(photo|picture|memorial)\s+frame\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_cbd" model="mhc.sku.family">
+        <field name="code">CBD</field>
+        <field name="name">Cutting Board</field>
+        <field name="priority">5</field>
+        <field name="regex_pattern">\b(cutting\s+board|charcuterie)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_wch" model="mhc.sku.family">
+        <field name="code">WCH</field>
+        <field name="name">Wind Chime</field>
+        <field name="priority">6</field>
+        <field name="regex_pattern">\bwind\s*chime\b|\bchime\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_mug" model="mhc.sku.family">
+        <field name="code">MUG</field>
+        <field name="name">Mug</field>
+        <field name="priority">7</field>
+        <field name="regex_pattern">\bmug\b</field>
+        <field name="default_route">tbd</field>
+    </record>
+    <record id="mhc_sku_family_tum" model="mhc.sku.family">
+        <field name="code">TUM</field>
+        <field name="name">Tumbler</field>
+        <field name="priority">8</field>
+        <field name="regex_pattern">\btumbler\b</field>
+        <field name="default_route">tbd</field>
+    </record>
+    <record id="mhc_sku_family_tat" model="mhc.sku.family">
+        <field name="code">TAT</field>
+        <field name="name">Temporary Tattoo</field>
+        <field name="priority">9</field>
+        <field name="regex_pattern">\btemporary\b.*\btattoo\b|\btattoo(s)?\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_dmt" model="mhc.sku.family">
+        <field name="code">DMT</field>
+        <field name="name">Doormat</field>
+        <field name="priority">10</field>
+        <field name="regex_pattern">\b(doormat|door\s+mat)\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_rug" model="mhc.sku.family">
+        <field name="code">RUG</field>
+        <field name="name">Rug</field>
+        <field name="priority">11</field>
+        <field name="regex_pattern">(?&lt;!door[\s-])\brug(s)?\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_orn" model="mhc.sku.family">
+        <field name="code">ORN</field>
+        <field name="name">Ornament</field>
+        <field name="priority">12</field>
+        <field name="regex_pattern">\bornament(s)?\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_hkf" model="mhc.sku.family">
+        <field name="code">HKF</field>
+        <field name="name">Handkerchief</field>
+        <field name="priority">13</field>
+        <field name="regex_pattern">\bhand(ker)?chief\b|\bhankie\b|\bhanky\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_apr" model="mhc.sku.family">
+        <field name="code">APR</field>
+        <field name="name">Apron</field>
+        <field name="priority">14</field>
+        <field name="regex_pattern">\bapron(s)?\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_pil" model="mhc.sku.family">
+        <field name="code">PIL</field>
+        <field name="name">Pillow/Cushion</field>
+        <field name="priority">15</field>
+        <field name="regex_pattern">\b(pillow|cushion|pillowcase)\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_bag" model="mhc.sku.family">
+        <field name="code">BAG</field>
+        <field name="name">Bag/Tote/Bandana</field>
+        <field name="priority">16</field>
+        <field name="regex_pattern">\b(tote|canvas\s+bag|bandana|backpack|duffel)\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_sgn" model="mhc.sku.family">
+        <field name="code">SGN</field>
+        <field name="name">Sign/Flag</field>
+        <field name="priority">17</field>
+        <field name="regex_pattern">\b(metal\s+sign|wood(en)?\s+sign|yard\s+sign|flag|banner)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_kch" model="mhc.sku.family">
+        <field name="code">KCH</field>
+        <field name="name">Kitchen Ware</field>
+        <field name="priority">18</field>
+        <field name="regex_pattern">\b(recipe\s+dish|recipe\s+holder|spoon\s+holder|kitchen\s+towel)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_app" model="mhc.sku.family">
+        <field name="code">APP</field>
+        <field name="name">Apparel</field>
+        <field name="priority">19</field>
+        <field name="regex_pattern">\b(t-?shirt|hoodie|tank\s+top|sweatshirt|tee|sleep\s*shirt|sleepshirt|sweater)\b</field>
+        <field name="default_route">gearment</field>
+    </record>
+    <record id="mhc_sku_family_ksk" model="mhc.sku.family">
+        <field name="code">KSK</field>
+        <field name="name">Generic Keepsake</field>
+        <field name="priority">20</field>
+        <field name="regex_pattern">\b(keepsake|wedding\s+gift|proposal\s+gift|sympathy\s+gift|memorial\s+gift)\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_cds" model="mhc.sku.family">
+        <field name="code">CDS</field>
+        <field name="name">Ceramic Dish</field>
+        <field name="priority">21</field>
+        <field name="regex_pattern">\bceramic\s+(dish|plate|bowl)\b|\bceramic\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+    <record id="mhc_sku_family_wds" model="mhc.sku.family">
+        <field name="code">WDS</field>
+        <field name="name">Wooden Dish</field>
+        <field name="priority">22</field>
+        <field name="regex_pattern">\bwooden\s+(dish|plate|bowl)\b|\bwood(en)?\b</field>
+        <field name="default_route">in_house</field>
+    </record>
+</odoo>

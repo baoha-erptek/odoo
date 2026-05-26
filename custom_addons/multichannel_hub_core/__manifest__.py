@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.51',
+    'version': '19.0.1.0.52',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -41,6 +41,8 @@ fulfillment delegation landed:
         'security/ir.model.access.csv',
         'data/shipping_carrier_data.xml',
         'data/multichannel_sales_channel_seed.xml',
+        'data/sku_family_seed.xml',
+        'data/sku_attribute_seed.xml',
         'data/product_catalog_sequence.xml',
         'data/product_catalog_config_parameters.xml',
         'data/product_catalog_cron.xml',
@@ -62,9 +64,11 @@ fulfillment delegation landed:
         'views/sale_order_form.xml',
         'wizards/multichannel_enquiry_close_wizard_views.xml',
         'wizards/product_creation_wizard_views.xml',
+        'wizards/product_sku_builder_wizard_views.xml',
         'wizards/catalog_import_run_wizard_views.xml',
         'views/product_sku_drift_views.xml',
         'views/product_template_views.xml',
+        'views/sku_family_views.xml',
         'views/multichannel_enquiry_views.xml',
     ],
     'post_init_hook': 'post_init_hook',

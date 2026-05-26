@@ -150,7 +150,7 @@ class ProductTemplate(models.Model):
         for rec in self:
             if rec.x_sku_v2_status == 'ba_approved_legacy':
                 continue  # operator-pinned; never auto-overwrite
-            suggested, family_code = sku_grammar_v2.evaluate(rec.name or '')
+            suggested, family_code = sku_grammar_v2.evaluate(rec.name or '', self.env)
             rec.x_sku_v2_suggested = suggested
             if family_code == 'MSC':
                 rec.x_sku_v2_status = 'msc_catchall'

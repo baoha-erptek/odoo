@@ -75,12 +75,15 @@ class TestPhase1HubSkuBuilderDB(TransactionCase):
         )
 
     def test_index_on_sku_family_code(self):
-        """Odoo's index=True on code should create mhc_sku_family_code_index."""
+        """Odoo's index=True on code creates a btree index — name format varies
+        across Odoo versions (single vs double underscore). Just assert one
+        exists that references the code column."""
         self.env.cr.execute("""
             SELECT 1 FROM pg_indexes
             WHERE schemaname = 'public'
               AND tablename = 'mhc_sku_family'
-              AND indexname = 'mhc_sku_family_code_index'
+              AND indexdef ILIKE '%(code)%'
+              AND indexname != 'uniq_mhc_sku_family_code'
         """)
         self.assertIsNotNone(
             self.env.cr.fetchone(),

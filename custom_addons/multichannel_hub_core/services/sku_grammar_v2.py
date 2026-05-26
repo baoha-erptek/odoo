@@ -1,22 +1,30 @@
-"""SKU grammar v2 — frozen family rules.
+"""SKU grammar v2.1 — DB-driven family classifier.
 
-Module-load precompiled regex tuple. Evaluates a product name against
-the priority-ordered family list from `.0temp/deliverables/A3_grammar_v2_frozen.md`
-(canonical source: D1_product_taxonomy_SKU.xlsx `family_rules` sheet).
+Reads `mhc.sku.family` rows ordered by priority and runs each row's
+regex against the input name. First match wins; no match → ('MSC', 'MSC').
 
-Returns `(suggested_sku, family_code)` where:
-- `suggested_sku` is the 3-letter family code on a match
-- `family_code` is the same 3-letter code (`MSC` on fallback)
+Per-cursor compile cache keyed by (family.id, write_date.timestamp()) so
+edits to regex_pattern invalidate the cached compiled pattern on the next
+call. Cache is cursor-local (not process-global), which naturally isolates
+multi-worker deployments.
 
-The DSGN registry (D#### sequential design code) and MAT2/SIZE encoding
-are not in scope for P-HUB-PROD-MODEL — they will be derived in later
-slices when the publisher service needs full SKU strings.
+A family with a malformed regex_pattern is logged at WARNING level and
+skipped — evaluation continues with the remaining families. This way one
+bad BA edit does not break the whole classifier.
 
-Spec 009 — P-HUB-PROD-MODEL T005. Source: A3_grammar_v2_frozen.md §1.
+Spec 009 §2.5 P-HUB-SKU-BUILDER T043. Replaces the frozen Python tuple
+that landed in P-HUB-PROD-MODEL T005.
 """
 
+import logging
 import re
 from typing import NamedTuple
+
+_logger = logging.getLogger(__name__)
+
+
+# Sentinel for the "no family matched" outcome.
+_MSC = ('MSC', 'MSC')
 
 
 class FamilyRule(NamedTuple):
@@ -24,47 +32,85 @@ class FamilyRule(NamedTuple):
     pattern: re.Pattern
 
 
-# Priority-ordered: most-specific first. First-match wins.
-# Source: .0temp/deliverables/A3_grammar_v2_frozen.md §1 (table, priorities 1-22).
-_RAW_RULES: tuple[tuple[str, str], ...] = (
-    ('RDS', r'\bring\b.{0,20}\b(dish|holder|tray)\b'),
-    ('TRK', r'\b(trinket|keepsake)\s+(tray|box|dish|holder)\b'),
-    ('JWD', r'\bjewel(ry|lery)\s+(dish|holder|tray|box)\b'),
-    ('PHF', r'\b(photo|picture|memorial)\s+frame\b'),
-    ('CBD', r'\b(cutting\s+board|charcuterie)\b'),
-    ('WCH', r'\bwind\s*chime\b|\bchime\b'),
-    ('MUG', r'\bmug\b'),
-    ('TUM', r'\btumbler\b'),
-    ('TAT', r'\btemporary\b.*\btattoo\b|\btattoo(s)?\b'),
-    ('DMT', r'\b(doormat|door\s+mat)\b'),
-    ('RUG', r'(?<!door[\s-])\brug(s)?\b'),
-    ('ORN', r'\bornament(s)?\b'),
-    ('HKF', r'\bhand(ker)?chief\b|\bhankie\b|\bhanky\b'),
-    ('APR', r'\bapron(s)?\b'),
-    ('PIL', r'\b(pillow|cushion|pillowcase)\b'),
-    ('BAG', r'\b(tote|canvas\s+bag|bandana|backpack|duffel)\b'),
-    ('SGN', r'\b(metal\s+sign|wood(en)?\s+sign|yard\s+sign|flag|banner)\b'),
-    ('KCH', r'\b(recipe\s+dish|recipe\s+holder|spoon\s+holder|kitchen\s+towel)\b'),
-    ('APP', r'\b(t-?shirt|hoodie|tank\s+top|sweatshirt|tee|sleep\s*shirt|sleepshirt|sweater)\b'),
-    ('KSK', r'\b(keepsake|wedding\s+gift|proposal\s+gift|sympathy\s+gift|memorial\s+gift)\b'),
-    ('CDS', r'\bceramic\s+(dish|plate|bowl)\b|\bceramic\b'),
-    ('WDS', r'\bwooden\s+(dish|plate|bowl)\b|\bwood(en)?\b'),
-)
-
-FAMILY_RULES: tuple[FamilyRule, ...] = tuple(
-    FamilyRule(code=code, pattern=re.compile(pattern, re.IGNORECASE))
-    for code, pattern in _RAW_RULES
-)
+# Per-cursor compiled-regex cache.
+# Stored on the cursor object so it lives exactly as long as the cursor;
+# Odoo's transaction lifecycle bounds it naturally.
+_CACHE_ATTR = '_sku_grammar_v2_cache'
 
 
-def evaluate(name: str) -> tuple[str, str]:
+def _get_cache(cr):
+    cache = getattr(cr, _CACHE_ATTR, None)
+    if cache is None:
+        cache = {}
+        try:
+            setattr(cr, _CACHE_ATTR, cache)
+        except (AttributeError, TypeError):
+            # Cursor proxy in some test contexts disallows attribute writes;
+            # fall back to a per-call dict — slower but always correct.
+            cache = {}
+    return cache
+
+
+def _compile_family(family) -> FamilyRule | None:
+    """Compile a family's regex; return None if the pattern is malformed."""
+    try:
+        return FamilyRule(
+            code=family.code,
+            pattern=re.compile(family.regex_pattern, re.IGNORECASE),
+        )
+    except re.error as exc:
+        _logger.warning(
+            "SKU family %s has malformed regex %r — skipping (error: %s)",
+            family.code, family.regex_pattern, exc,
+        )
+        return None
+
+
+def _load_rules(env) -> list[FamilyRule]:
+    """Return compiled rules for all active families, in (priority, code) order.
+
+    Uses a per-cursor cache keyed by (family.id, write_date_ts) so a BA edit
+    invalidates the entry on the next call.
+    """
+    # sudo() is intentional and bounded to a read: the family taxonomy is
+    # conceptually public (ACL grants read to base.group_user) and drives
+    # x_sku_v2_suggested on every product.template compute call, so any
+    # signed-in user must be able to read it via the classifier.
+    families = env['mhc.sku.family'].sudo().search([])
+    cache = _get_cache(env.cr)
+    rules: list[FamilyRule] = []
+    for family in families:
+        wd = family.write_date or family.create_date
+        wd_ts = wd.timestamp() if wd else 0.0
+        cache_key = (family.id, wd_ts)
+        cached = cache.get(cache_key)
+        if cached is None:
+            compiled = _compile_family(family)
+            if compiled is None:
+                # Negative-cache the failure so we don't recompile every call,
+                # but only for the duration of the cursor (write_date moves on
+                # next edit and invalidates the negative entry).
+                cache[cache_key] = False
+                continue
+            cache[cache_key] = compiled
+            cached = compiled
+        elif cached is False:
+            continue
+        rules.append(cached)
+    return rules
+
+
+def evaluate(name: str, env) -> tuple[str, str]:
     """Return (suggested_sku, family_code) for the given product name.
 
-    Empty or no-match → ('MSC', 'MSC').
+    `env` is the Odoo Environment used to read `mhc.sku.family` rows.
+    Empty name or no match → ('MSC', 'MSC').
+
+    Spec 009 §2.5: DB-driven; replaces the frozen tuple landed in T005.
     """
     if not name:
-        return ('MSC', 'MSC')
-    for rule in FAMILY_RULES:
+        return _MSC
+    for rule in _load_rules(env):
         if rule.pattern.search(name):
             return (rule.code, rule.code)
-    return ('MSC', 'MSC')
+    return _MSC
