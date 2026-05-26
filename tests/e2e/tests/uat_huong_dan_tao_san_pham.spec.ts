@@ -19,12 +19,47 @@
 import { test, expect } from '@playwright/test';
 import { loginAsBaLead, loginAsBaUser } from '../fixtures/odoo-auth';
 import { ProductCreationWizardPage } from '../page-objects/product_creation_wizard';
+import { ProductSkuBuilderWizardPage } from '../page-objects/product_sku_builder_wizard';
+import { CONFIG } from '../fixtures/env';
 
 const UAT_NAME_PREFIX = 'UAT-TAOSP';
 const UAT_SKU_PREFIX = 'UAT-MUG';
+const UAT_BUILDER_PREFIX = 'UAT-SKU-BUILDER';
 
 function uniqueSku(stem: string): string {
   return `${UAT_SKU_PREFIX}-${stem}-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+}
+
+/**
+ * Query staging via Odoo JSON-RPC for product.template rows matching the
+ * supplied default_code. Authenticates as admin. Used to verify the new
+ * SKU-builder wizard created (or did NOT create) a template after submit.
+ */
+async function countProductsBySku(
+  request: import('@playwright/test').APIRequestContext,
+  defaultCode: string,
+): Promise<number> {
+  const auth = await request.post(`${CONFIG.BASE_URL}/web/session/authenticate`, {
+    data: {
+      jsonrpc: '2.0',
+      params: { db: CONFIG.DB, login: CONFIG.ADMIN_LOGIN, password: CONFIG.ADMIN_PASSWORD },
+    },
+  });
+  if (!auth.ok()) throw new Error(`session/authenticate failed: HTTP ${auth.status()}`);
+  const res = await request.post(`${CONFIG.BASE_URL}/web/dataset/call_kw/product.template/search_count`, {
+    data: {
+      jsonrpc: '2.0',
+      params: {
+        model: 'product.template',
+        method: 'search_count',
+        args: [[['default_code', '=', defaultCode]]],
+        kwargs: {},
+      },
+    },
+  });
+  const body = await res.json();
+  if (body?.error) throw new Error(`search_count error: ${JSON.stringify(body.error)}`);
+  return body?.result ?? 0;
 }
 
 test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN UAT', () => {
@@ -174,5 +209,133 @@ test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN UAT', () => {
     expect(errText.toLowerCase()).toMatch(/listing price must be greater than 0|listing price phải/i);
     // Form should still be open (no redirect)
     await expect(wiz.form).toBeVisible();
+  });
+
+  // --------------------------------------------------------------------------
+  // TC-008..TC-012 — New 4-step SKU Builder Wizard (P-HUB-SKU-BUILDER landed
+  // 2026-05-26, mhc 19.0.1.0.52). Added by P-UAT-SKU-BUILDER-EXTEND slice
+  // 2026-05-26. Each TC walks all 4 steps end-to-end, asserts the assembled
+  // SKU in the preview, submits, then JSON-RPC confirms the product.template
+  // exists with the expected default_code.
+  //
+  // Cleanup: globalTeardown already archives any UAT_BUILDER_PREFIX products
+  // via fixtures/cleanup_uat_data.py search pattern.
+  // --------------------------------------------------------------------------
+
+  test('TC-008 — Build MUG-CR-F11 (mug 11oz happy path)', async ({ page, request }) => {
+    await loginAsBaLead(page);
+    const wiz = new ProductSkuBuilderWizardPage(page);
+    await wiz.open();
+
+    const productName = `${UAT_BUILDER_PREFIX} Mug 11oz ${Date.now().toString(36).slice(-4).toUpperCase()}`;
+    // Step 1: Family (auto MUG from "Mug 11oz")
+    await wiz.fillStep1Name(productName);
+    await wiz.clickNext();
+    // Step 2: Material — Ceramic (CR)
+    await wiz.fillStep2Material('Ceramic + Chrome');
+    await wiz.clickNext();
+    // Step 3: Size — 11 oz (F11). Seed display name is "11 oz" not "11 fl oz".
+    await wiz.fillStep3Size({ size: '11 oz' });
+    await wiz.clickNext();
+    // Step 4: Preview, no color
+    const preview = await wiz.getPreviewSku();
+    expect(preview).toBe('MUG-CR-F11');
+    await wiz.clickCreate();
+
+    // After create, wizard closes — give server a moment, then JSON-RPC verify
+    await page.waitForTimeout(1500);
+    const count = await countProductsBySku(request, 'MUG-CR-F11');
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('TC-009 — Build MUG-CR-F15-BK (mug 15oz + VAR2 black)', async ({ page, request }) => {
+    await loginAsBaLead(page);
+    const wiz = new ProductSkuBuilderWizardPage(page);
+    await wiz.open();
+
+    const productName = `${UAT_BUILDER_PREFIX} Mug 15oz Black ${Date.now().toString(36).slice(-4).toUpperCase()}`;
+    await wiz.fillStep1Name(productName);
+    await wiz.clickNext();
+    await wiz.fillStep2Material('Ceramic + Chrome');
+    await wiz.clickNext();
+    await wiz.fillStep3Size({ size: '15 oz' });
+    await wiz.clickNext();
+    await wiz.fillStep4Color('Black');
+    const preview = await wiz.getPreviewSku();
+    expect(preview).toBe('MUG-CR-F15-BK');
+    await wiz.clickCreate();
+
+    await page.waitForTimeout(1500);
+    const count = await countProductsBySku(request, 'MUG-CR-F15-BK');
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('TC-010 — Build APR-TX-AM (apron M, apparel-size-gated)', async ({ page, request }) => {
+    await loginAsBaLead(page);
+    const wiz = new ProductSkuBuilderWizardPage(page);
+    await wiz.open();
+
+    const productName = `${UAT_BUILDER_PREFIX} Cotton Apron M ${Date.now().toString(36).slice(-4).toUpperCase()}`;
+    await wiz.fillStep1Name(productName);
+    await wiz.clickNext();
+    await wiz.fillStep2Material('Textile');
+    await wiz.clickNext();
+    // APR family-gates size step to apparel namespace — picking 'Medium' resolves to AM code.
+    // Seed display name is "Medium" not "M" (avoids autocomplete ambiguity with Mug/etc).
+    await wiz.fillStep3Size({ size: 'Medium' });
+    await wiz.clickNext();
+    const preview = await wiz.getPreviewSku();
+    expect(preview).toBe('APR-TX-AM');
+    await wiz.clickCreate();
+
+    await page.waitForTimeout(1500);
+    const count = await countProductsBySku(request, 'APR-TX-AM');
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('TC-011 — Build DMT-TX-R30X18 (doormat rectangular)', async ({ page, request }) => {
+    await loginAsBaLead(page);
+    const wiz = new ProductSkuBuilderWizardPage(page);
+    await wiz.open();
+
+    const productName = `${UAT_BUILDER_PREFIX} Doormat 30x18 ${Date.now().toString(36).slice(-4).toUpperCase()}`;
+    await wiz.fillStep1Name(productName);
+    await wiz.clickNext();
+    await wiz.fillStep2Material('Textile');
+    await wiz.clickNext();
+    // Rectangular sizing via rect_w/rect_h (no size_id pick)
+    await wiz.fillStep3Size({ rectW: 30, rectH: 18 });
+    await wiz.clickNext();
+    const preview = await wiz.getPreviewSku();
+    expect(preview).toBe('DMT-TX-R30X18');
+    await wiz.clickCreate();
+
+    await page.waitForTimeout(1500);
+    const count = await countProductsBySku(request, 'DMT-TX-R30X18');
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('TC-012 — FR-017 24th: non-BA user blocked at action_create (covered in mhc unit test)', async ({ page }) => {
+    /**
+     * Browser-level FR-017 gate test is intentionally SKIPPED.
+     *
+     * Why: the gate (`_check_ba_or_raise` in wizards/product_sku_builder_wizard.py:216)
+     * requires a user WITHOUT multichannel_hub_core.group_ba_user. The auto-seeded
+     * BA User HAS that group → not a valid test subject. To browser-test the
+     * negative path we'd need a fresh "plain" user (only base.group_user) seeded
+     * via fixture — additional plumbing for a behaviour already proven at the
+     * correct layer.
+     *
+     * Where the assertion IS covered:
+     *   custom_addons/multichannel_hub_core/tests/test_phase2_hub_sku_builder_orm.py:292
+     *   test_non_ba_user_blocked_before_template_create — asserts AccessError
+     *   raised AND product.template.search_count unchanged. Last GREEN: 2026-05-26.
+     *
+     * To promote to browser test in a future slice (P-UAT-FR017-BUILDER-BROWSER):
+     *   - Add fixtures/seed_plain_user.py (base.group_user only)
+     *   - Login as plain user → navigate to wizard URL → expect AccessError modal
+     *   - JSON-RPC search_count before/after to assert no template created
+     */
+    test.skip(true, 'FR-017 24th gate is method-level — covered by mhc unit test test_non_ba_user_blocked_before_template_create. Browser stub kept for traceability.');
   });
 });

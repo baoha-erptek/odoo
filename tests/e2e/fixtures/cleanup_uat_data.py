@@ -1,7 +1,9 @@
 """Clean up UAT artifacts on staging after a Playwright suite.
 
 Archives:
-  - product.template records with default_code LIKE 'UAT-%'
+  - product.template records with default_code LIKE 'UAT-%' (legacy wizard TC-001..007)
+  - product.template records with name LIKE 'UAT-SKU-BUILDER%' (builder wizard TC-008..011 —
+    these have deterministic SKUs like 'MUG-CR-F11' that we don't want to filter on)
   - res.users with login = uat_ba_user@hatafax.demo
 
 Does NOT delete:
@@ -22,6 +24,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("cleanup_uat")
 
 UAT_SKU_PREFIX = "UAT-"
+UAT_BUILDER_NAME_PREFIX = "UAT-SKU-BUILDER"
 BA_USER_LOGIN = "uat_ba_user@hatafax.demo"
 
 
@@ -33,11 +36,15 @@ def main():
 
     s = connect(base_url=args.base_url, db=args.db)
 
-    # 1. Archive UAT products
+    # 1. Archive UAT products — OR domain: legacy SKU prefix OR builder name prefix
     pids = s.call(
         "product.template",
         "search",
-        [[("default_code", "=like", f"{UAT_SKU_PREFIX}%")]],
+        [[
+            "|",
+            ("default_code", "=like", f"{UAT_SKU_PREFIX}%"),
+            ("name", "=like", f"{UAT_BUILDER_NAME_PREFIX}%"),
+        ]],
         {"context": {"active_test": False}},
     )
     if pids:
