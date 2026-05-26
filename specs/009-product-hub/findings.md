@@ -111,3 +111,36 @@
 ## E2E surfacing (live)
 
 _(none yet — implementation not started)_
+
+---
+
+## P-HUB-MISSING-INFO-WIZARD — 2026-05-26
+
+**Slice landed mhc 19.0.1.0.53 → 19.0.1.0.54.** Spec 009 tasks.md T070–T078 all `[X]`. RED 16 → GREEN; full mhc 590 tests 0 NEW failures (5 baseline pre-existing).
+
+### Findings
+
+- **Planner discovery: case (a) was already done.** Tracker scope read "Step 1 family classifier returns MSC + BA confirms wrong → wizard offers 22-family dropdown override" — but reading `wizards/product_sku_builder_wizard.py:60-73` showed `family_id_auto` (computed) + `family_id` (BA-writable dropdown) + `_onchange_product_name_default_family` already implemented in P-HUB-SKU-BUILDER T045. The "missing-info" angle for case (a) was just surfacing it visually when `evaluate()` returns MSC. Real new work was case (b) size-fallback. Lesson: **planner Phase 1 must read the actual extension target file before scoping** (mirrors memory `feedback_phase1_spec_drift_check`); the tracker description was authored from intent, not from current code state.
+
+- **FR-017 26th confirmation by REUSE, not by new gate.** This slice does not add a new `action_*` method — it extends `_validate()` which is already called from the existing `action_create()` AFTER `_check_ba_or_raise()`. New pattern recorded: defense-in-depth doesn't always require duplicating the BA gate at every new method; reusing an existing pre-side-effect choke point counts. Memory `feedback_fr017_write_defense_in_depth.md` gets a 26th entry framed as "gate reuse" vs "gate duplication".
+
+- **tdd-guide skipped running the suite (again).** Per memory `feedback_tdd_guide_init_py_imports.md` 2nd bullet, the agent declared "RED confirmed" by inspection only — and shipped one test using `field.relation` (correct in older Odoo, `AttributeError` in Odoo 19; canonical is `field.comodel_name`). Orchestrator's own RED run caught it. Discipline: orchestrator MUST run `--test-tags` itself even after the agent says RED.
+
+- **Apparel-pattern `medium|large` false-positive — investigated and dismissed.** Code-reviewer flagged the apparel regex matching common words "medium" / "large" in non-apparel product names (e.g. "Large Custom Mug" with MUG family). Investigation: `_compute_is_size_extractable` is **family-gated** via `_FAMILY_NAMESPACE_MAP` — for MUG family namespaces = `{'fluid_oz'}`, so the apparel pattern is never consulted. False positive impossible by construction. Pattern was kept as-is.
+
+- **No new sudo paths.** Slice reuses the existing `Template.sudo().create(...)` in `action_create`. Security-reviewer flagged a hypothetical negative-`rect_*_manual` gap; verified Python's `and` short-circuits at `1 <= -5` (False), so the existing range check `1 <= rwm <= 999 and 1 <= rhm <= 999` correctly rejects negatives without an explicit `> 0` check.
+
+- **Heuristic regex confidence is family-narrow.** Test corpus picks single canonical no-token phrases ("Stainless Steel Mug", "Apron", "Beautiful Dish", "Color Changing Beverage"). Real catalog will contain edge cases — e.g. "Mug 10oz" (decimal-less but with `oz`) → matches; "Mug 1l" (1 liter, not "1oz") → does NOT match → `_is_size_extractable=False` → fallback shown. Acceptable: fallback exists precisely for ambiguous-naming products, and BA can always override.
+
+- **Owner-facing docs deliberately NOT touched** per D7 directive. `docs/owner/FLOW_TAO_SAN_PHAM_VN.md` + `HUONG_DAN_TAO_SAN_PHAM_VN.md` will be refreshed in one clean pass after all SKU-v2 features ship and the `P-UAT-MISSING-INFO-EXTEND` follow-up confirms browser behaviour matches the spec.
+
+### Unblocks
+
+- `P-UAT-MISSING-INFO-EXTEND` (browser TC for the 2 fallback paths against staging mhc 19.0.1.0.54).
+- Final owner-doc refresh pass (D7-gated; awaits UAT-EXTEND).
+
+### Memory hits
+
+- `feedback_fr017_write_defense_in_depth.md` — 26th confirmation, gate-reuse variant.
+- `feedback_tdd_guide_init_py_imports.md` — orchestrator-runs-suite trap recurred.
+- `feedback_reviewer_agent_diff_hallucination.md` — apparel-pattern MEDIUM was framed as cross-family but compute is family-gated; verified against diff before dismissing.

@@ -26,10 +26,21 @@
 
                     <!-- Step 3: Size -->
                     <group string="Step 3 — Size" invisible="step != '3'">
+                        <field name="_is_size_extractable" invisible="1"/>
                         <field name="size_id" options="{'no_create': True}"/>
                         <separator string="OR enter rectangular dimensions (doormat/rug):"/>
                         <field name="rect_w"/>
                         <field name="rect_h"/>
+                    </group>
+                    <!-- P-HUB-MISSING-INFO-WIZARD T071 — conditional
+                         Step 3 fallback when the product name carries no
+                         token in the family's expected SIZE namespace. -->
+                    <group string="Size not detected — enter manually"
+                           invisible="step != '3' or _is_size_extractable">
+                        <field name="size_id_manual" options="{'no_create': True}"/>
+                        <separator string="OR enter rectangular dimensions manually:"/>
+                        <field name="rect_w_manual"/>
+                        <field name="rect_h_manual"/>
                     </group>
 
                     <!-- Step 4: Preview -->

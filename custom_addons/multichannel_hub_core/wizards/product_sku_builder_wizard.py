@@ -36,6 +36,30 @@ _FAMILY_NAMESPACE_MAP = {
 }
 _DEFAULT_NAMESPACES = {'shape', 'dim', 'rect'}
 
+# P-HUB-MISSING-INFO-WIZARD §2.6 T070 — heuristics for detecting whether
+# the product_name carries a size token aligned with the family's expected
+# namespace. Used by `_is_size_extractable` to decide whether to surface
+# the Step-3 fallback fields.
+_NAME_OZ_PATTERN = re.compile(r'\b\d+\s*oz\b', re.IGNORECASE)
+_NAME_APPAREL_PATTERN = re.compile(
+    r'\b(?:xs|xxl|xl|small|medium|large|size\s+[sml])\b',
+    re.IGNORECASE,
+)
+_NAME_RECT_PATTERN = re.compile(r'\b\d+\s*[x×]\s*\d+\b', re.IGNORECASE)
+_NAME_SHAPE_PATTERN = re.compile(
+    r'\b(?:square|heart|oval|wave|arch|bowl|round|rectangle)\b',
+    re.IGNORECASE,
+)
+_NAME_DIM_PATTERN = re.compile(r'\b\d+\s*(?:cm|inch|in|mm)\b', re.IGNORECASE)
+
+_NAMESPACE_TO_NAME_PATTERN = {
+    'fluid_oz': _NAME_OZ_PATTERN,
+    'apparel': _NAME_APPAREL_PATTERN,
+    'rect': _NAME_RECT_PATTERN,
+    'shape': _NAME_SHAPE_PATTERN,
+    'dim': _NAME_DIM_PATTERN,
+}
+
 
 class ProductSkuBuilderWizard(models.TransientModel):
     _name = 'product.sku.builder.wizard'
@@ -97,6 +121,34 @@ class ProductSkuBuilderWizard(models.TransientModel):
         help="Rectangular size height. See rect_w.",
     )
 
+    # --- Step 3 fallback (P-HUB-MISSING-INFO-WIZARD T070):
+    # Surfaced via conditional view group when `_is_size_extractable` is
+    # False (i.e. product_name carries no token in the family's expected
+    # SIZE namespace). BA fills these manually; segment helper consults
+    # them when primary `size_id` / `rect_w` / `rect_h` are empty.
+    size_id_manual = fields.Many2one(
+        'product.attribute.value',
+        string='Size (manual fallback)',
+        help="Manual size pick when the product name cannot be auto-parsed.",
+    )
+    rect_w_manual = fields.Integer(
+        string='Width (inches, manual)',
+        default=0,
+        help="Manual rectangular width fallback (1-999) — used when no "
+             "rect token appears in the product name.",
+    )
+    rect_h_manual = fields.Integer(
+        string='Height (inches, manual)',
+        default=0,
+        help="Manual rectangular height fallback. See rect_w_manual.",
+    )
+    _is_size_extractable = fields.Boolean(
+        compute='_compute_is_size_extractable',
+        store=False,
+        help="True iff the product name carries a token in the family's "
+             "expected SIZE namespace; False surfaces the manual fallback.",
+    )
+
     # --- Step 4
     var2_color_id = fields.Many2one(
         'product.attribute.value',
@@ -119,10 +171,31 @@ class ProductSkuBuilderWizard(models.TransientModel):
             _suggested, code = sku_grammar_v2.evaluate(rec.product_name or '', self.env)
             rec.family_id_auto = Family.search([('code', '=', code)], limit=1)
 
-    @api.depends('family_id', 'material_id', 'size_id', 'rect_w', 'rect_h', 'var2_color_id')
+    @api.depends(
+        'family_id', 'material_id', 'size_id', 'rect_w', 'rect_h',
+        'var2_color_id', 'size_id_manual', 'rect_w_manual', 'rect_h_manual',
+    )
     def _compute_preview_sku(self):
         for rec in self:
             rec.preview_sku = rec._build_sku_or_blank()
+
+    @api.depends('product_name', 'family_id')
+    def _compute_is_size_extractable(self):
+        for rec in self:
+            name = rec.product_name or ''
+            if not name or not rec.family_id:
+                rec._is_size_extractable = False
+                continue
+            namespaces = _FAMILY_NAMESPACE_MAP.get(
+                rec.family_id.code, _DEFAULT_NAMESPACES,
+            )
+            matched = False
+            for ns in namespaces:
+                pattern = _NAMESPACE_TO_NAME_PATTERN.get(ns)
+                if pattern and pattern.search(name):
+                    matched = True
+                    break
+            rec._is_size_extractable = matched
 
     @api.onchange('product_name')
     def _onchange_product_name_default_family(self):
@@ -156,7 +229,12 @@ class ProductSkuBuilderWizard(models.TransientModel):
         return '-'.join(parts)
 
     def _size_segment_or_blank(self) -> str:
-        """Resolve the SIZE segment from size_id or rect_w/rect_h."""
+        """Resolve the SIZE segment from size_id / rect_w / rect_h, then
+        fall back to the manual P-HUB-MISSING-INFO-WIZARD fields.
+
+        Primary path (size_id, then rect_w/rect_h) takes precedence over
+        manual fallback so a BA who fills both keeps the primary value.
+        """
         self.ensure_one()
         if self.size_id and self.size_id.x_code:
             return self.size_id.x_code
@@ -164,12 +242,19 @@ class ProductSkuBuilderWizard(models.TransientModel):
             if not (_RECT_PATTERN.match(str(self.rect_w)) and _RECT_PATTERN.match(str(self.rect_h))):
                 return ''
             return 'R%dX%d' % (self.rect_w, self.rect_h)
+        if self.size_id_manual and self.size_id_manual.x_code:
+            return self.size_id_manual.x_code
+        if self.rect_w_manual > 0 and self.rect_h_manual > 0:
+            if not (_RECT_PATTERN.match(str(self.rect_w_manual)) and _RECT_PATTERN.match(str(self.rect_h_manual))):
+                return ''
+            return 'R%dX%d' % (self.rect_w_manual, self.rect_h_manual)
         return ''
 
     def _check_size_namespace_matches_family(self):
         """Family-gated size validation per SKU_GRAMMAR §4.
 
-        Two layers of guard:
+        Two layers of guard, applied to whichever Size attribute-value the
+        BA picked — primary `size_id` first, fallback `size_id_manual` next:
         1. Explicit `x_applicable_family_ids` on the size value (e.g. F11
            is only applicable to MUG and TUM). If non-empty, the chosen
            family must be in the set.
@@ -182,29 +267,32 @@ class ProductSkuBuilderWizard(models.TransientModel):
         set that excludes it.
         """
         self.ensure_one()
-        if not self.size_id or not self.family_id:
+        if not self.family_id:
+            return
+        size = self.size_id or self.size_id_manual
+        if not size:
             return
         # Layer 1: explicit per-value family allowlist
-        allowed = self.size_id.x_applicable_family_ids
+        allowed = size.x_applicable_family_ids
         if allowed and self.family_id not in allowed:
             raise UserError(_(
                 "Size '%(size)s' is not valid for family '%(family)s'. "
                 "Pick a size from a compatible namespace.",
-                size=self.size_id.name,
+                size=size.name,
                 family=self.family_id.code,
             ))
         # Layer 2: namespace ↔ family map (SKU_GRAMMAR §4)
-        if self.size_id.x_namespace:
+        if size.x_namespace:
             allowed_ns = _FAMILY_NAMESPACE_MAP.get(
                 self.family_id.code,
                 _DEFAULT_NAMESPACES,
             )
-            if self.size_id.x_namespace not in allowed_ns:
+            if size.x_namespace not in allowed_ns:
                 raise UserError(_(
                     "Size '%(size)s' uses namespace '%(ns)s', which is "
                     "not valid for family '%(family)s'. Allowed: %(ok)s.",
-                    size=self.size_id.name,
-                    ns=self.size_id.x_namespace,
+                    size=size.name,
+                    ns=size.x_namespace,
                     family=self.family_id.code,
                     ok=', '.join(sorted(allowed_ns)),
                 ))
@@ -265,8 +353,27 @@ class ProductSkuBuilderWizard(models.TransientModel):
                 raise UserError(_("Pick a family in step 1."))
             if not rec.material_id:
                 raise UserError(_("Pick a material in step 2."))
+            # P-HUB-MISSING-INFO-WIZARD T074 — range-check manual rect
+            # fallback BEFORE the catch-all "no size" error so the BA
+            # gets a precise dimension message rather than a generic one.
+            rwm, rhm = rec.rect_w_manual, rec.rect_h_manual
+            if (rwm or rhm) and not (
+                rwm and rhm and 1 <= rwm <= 999 and 1 <= rhm <= 999
+            ):
+                raise UserError(_(
+                    "Dimensions must be 1-999 inches (both width and height)."
+                ))
             size = rec._size_segment_or_blank()
             if not size:
+                # All size sources empty → surface the manual-fallback hint.
+                if not (
+                    rec.size_id or rec.size_id_manual
+                    or rec.rect_w or rec.rect_h
+                    or rec.rect_w_manual or rec.rect_h_manual
+                ):
+                    raise UserError(_(
+                        "Size or manual fallback required in step 3."
+                    ))
                 raise UserError(_(
                     "Pick a size (or rectangular dimensions) in step 3."
                 ))

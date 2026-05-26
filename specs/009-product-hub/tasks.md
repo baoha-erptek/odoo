@@ -170,6 +170,34 @@ v2.1 regex validator + soft/hard mode (D-V2-2 = soft default, DECIDED 2026-05-26
 
 ---
 
+### Slice — P-HUB-MISSING-INFO-WIZARD  (~85 LOC: 20 model, 30 view, 35 tests)
+
+Extend `product.sku.builder.wizard` with conditional sub-steps when SKU build hits missing info:
+(a) Step 1 family classifier returns MSC + BA confirms it's wrong → 22-family dropdown override (already UI-present via `family_id` vs `family_id_auto` from T045; this slice adds detection + help text surfacing the override is needed).
+(b) Step 3 size parser fails (e.g. "Color Changing Beverage" classified MUG has no oz token) → wizard shows fallback sub-form asking for oz/dim/shape via `size_id_manual` dropdown or `rect_w_manual` / `rect_h_manual` inputs.
+Auto-propagates resolved attributes to `product.template` storage per SKU_GRAMMAR §8 taxonomy. Per v2.1 amendment: registry-miss case voided (no DSGN). Simplified from 3 cases → 2.
+
+| Task | Status | Description | Depends on | Phase | Notes |
+|---|---|---|---|---|---|
+| T070 | [X] | `wizards/product_sku_builder_wizard.py` — add `size_id_manual` M2O `product.attribute.value` (Size domain, family-gated via x_applicable_family_ids), `rect_w_manual` / `rect_h_manual` Integer, `_is_size_extractable` Boolean (computed, stored=False); helper `_extract_size_token_if_present(family, product_name) -> str \| None` that regex-matches expected SIZE namespace tokens in product_name | — | Implement | Pure string matching; no ORM in helper. If family is shape-only (RDS/SQR/etc.) without explicit SIZE need, returns True trivially. |
+| T071 | [X] | `wizards/product_sku_builder_wizard_views.xml` — add Step 3 conditional sub-form group `invisible="step != '3' or _is_size_extractable"` with help text "Size not detected in product name. Enter manually:"; fields `size_id_manual` + `rect_w_manual` + `rect_h_manual`. Extend existing Step 3 group, do NOT xpath-replace it. | T070 | Implement | Conditional visibility cascades correctly with existing `invisible="step != '3'"` via boolean OR. |
+| T072 | [X] | Extend `product_sku_builder_wizard.py::_size_segment_or_blank()` — accept `use_manual=False`; when True and `size_id` empty, fall back to `size_id_manual` then to `rect_w_manual`/`rect_h_manual` for R{W}X{H}. Backward-compatible (default False). | T070 | Implement | Internal only; no public interface change. |
+| T073 | [X] | Extend `product_sku_builder_wizard.py::_build_sku_or_blank()` — call `_size_segment_or_blank(use_manual=True)` so preview renders correctly when Step 3 fallback is used. | T072 | Implement | |
+| T074 | [X] | Extend `product_sku_builder_wizard.py::_validate()` — after existing `_check_size_namespace_matches_family()`, add: if `size_id` empty AND `size_id_manual` empty AND (`rect_w_manual==0` OR `rect_h_manual==0`) → UserError "Size or manual fallback required in step 3."; rect_*_manual must be 1–999 if provided (regex/range guard). FR-017 method-top BA gate stays as-is (existing `_check_ba_or_raise()` covers all action_* — no NEW action_* method added). | T070 | Implement | 26th FR-017 reuse, not new gate; flagged in memory feedback_fr017_write_defense_in_depth as defense-already-present. |
+| T075 | [X] | RED Phase 1 (DB): assert wizard `size_id_manual`, `rect_w_manual`, `rect_h_manual`, `_is_size_extractable` fields registered on TransientModel `product.sku.builder.wizard`; view form `product_sku_builder_wizard_view_form` parses cleanly (no XML error on conditional invisible attr) | T070,T071 | RED | Register test file in `tests/__init__.py` per `feedback_tdd_guide_init_py_imports`. |
+| T076 | [X] | RED Phase 2 (ORM): 8 cases — (1) MUG + "Stainless Steel Mug" (no oz) → `_is_size_extractable=False` + manual size_id_manual=F11 → preview `MUG-CR-F11`; (2) APR + "Apron" (no size letter) → fallback + size_id_manual=AM → preview `APR-TX-AM`; (3) DMT + "Color Changing Beverage" → evaluate returns MSC → BA override to DMT → no rect tokens → fallback rect_w_manual=30 rect_h_manual=18 → preview `DMT-TX-R30X18`; (4) RDS + "Square Ring Dish" → no shape token detected → fallback size_id_manual=SQ → preview `RDS-CE-SQ`; (5) HAPPY-PATH REGRESSION: MUG + "11oz Mug" → `_is_size_extractable=True` + no fallback needed + auto F11 → `MUG-CR-F11`; (6) FR-017 reuse: non-BA via manual-fallback flow → AccessError BEFORE any product.template create (assert `search_count` unchanged); (7) empty size_id + empty manual fields → UserError "Size or manual fallback required"; (8) rect_w_manual=0 + rect_h_manual=10 → UserError "Dimensions must be 1–999 inches" | T072,T073,T074 | RED | `--http-port=8175`. Wrap assertRaises in savepoint per memory item 140. |
+| T077 | [X] | GREEN — make T075/T076 pass; manifest bump 19.0.1.0.53 → **19.0.1.0.54** | T075,T076 | GREEN | Orchestrator runs `--test-tags /multichannel_hub_core --http-port=8175 --stop-after-init` and reads tail. |
+| T078 | [X] | Review — code-reviewer + security-reviewer parallel (single message, two Agent calls per `agents.md`); Verify — `-u multichannel_hub_core --stop-after-init` exit 0; full mhc 0 NEW failures (5 baseline pre-existing); ruff clean; grep `_logger.info` / `print(` clean. Commit (conventional, cite T070–T078); tracker → done; LEARN insight (conditional sub-form visibility pattern for fallback user input; SIZE token regex extraction from product names). | T077 | Review/Verify/Land | Block on CRITICAL/HIGH. Verify reviewer findings vs `git diff --stat HEAD` per `feedback_reviewer_agent_diff_hallucination`. |
+
+**Exit (P-HUB-MISSING-INFO-WIZARD)**: all T070–T078 `[X]`; tests ≥ 80 % changed lines; module installs clean (mhc 19.0.1.0.54); both missing-info cases handled gracefully within existing 4-step wizard via conditional sub-form + fallback fields + validation; no new models, no new ACLs, no new menus, no new seed data; FR-017 gate reused (no new method).
+
+**Out of scope (deferred)**:
+- UAT TC-013/014 for missing-info paths → `P-UAT-MISSING-INFO-EXTEND` follow-up (browser rerun on staging mhc 19.0.1.0.54).
+- Update owner-facing `FLOW_TAO_SAN_PHAM_VN.md` / `HUONG_DAN_TAO_SAN_PHAM_VN.md` — D7 constraint, one clean pass after all SKU-v2 features ship.
+- Sunset legacy `product.creation.wizard` (per D-V2-3).
+
+---
+
 ## Dependency Graph
 
 ```
@@ -182,7 +210,7 @@ P-HUB-SPEC (this planning slice)
         → P-HUB-SKU-BUILDER (T038–T053) [data layer + 4-step wizard]
             → P-HUB-V2-VALIDATE-ON-CREATE (T061–T069, todo, ready 2026-05-26 — D-V2-2 DECIDED soft-warn)
             → P-UAT-SKU-BUILDER-EXTEND   (T054–T060, done 2026-05-26)
-            → P-HUB-MISSING-INFO-WIZARD   (T0??–TBD, todo)  [parallel-eligible after T045 lands]
+            → P-HUB-MISSING-INFO-WIZARD   (T070–T078, todo, enumerated 2026-05-26)
     P-HUB-SKU-DRIFT etsy-half (T024 + sub-tests)
         ← waits on Spec 011 P-PUB-CLIENT
 ```
