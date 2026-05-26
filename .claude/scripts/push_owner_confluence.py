@@ -295,6 +295,8 @@ PAGES = [
     ("HUONG_DAN_DON_HANG_ETSY_VN.md", "Hướng dẫn sử dụng — Tiếp nhận đơn hàng Etsy", False),
     ("HUONG_DAN_GIAO_HANG_VN.md", "Hướng dẫn sử dụng — Giao hàng (MTO + Dropship)", False),
     ("HUONG_DAN_HAU_MAI_VN.md", "Hướng dẫn sử dụng — Hậu mãi", False),
+    # Engineering planning (NOT end-user; for Architect + Dev team reference on Confluence)
+    ("FEATURE_GAPS_SKU_V2_2026-05-26.md", "Feature Gaps — SKU Grammar v2 (2026-05-26)", False),
 ]
 
 
