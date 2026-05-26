@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SKU Grammar v2.1 enforce-mode ICP (P-HUB-V2-VALIDATE-ON-CREATE T061).
+
+    Gates whether the v2.1 validator in `services.sku_grammar_v2.validate_v2_sku`
+    raises UserError (mode='hard') or only logs a WARNING and auto-marks the
+    new product.template as `x_sku_v2_status='ba_approved_legacy'` (mode='soft').
+
+    Default 'soft' per D-V2-2 (SKU_GRAMMAR.md §12, decided 2026-05-26).
+    Owners flip to 'hard' once legacy catalogue has been canonicalised.
+
+    noupdate=1 so an operator switch to 'hard' is not reverted on module update.
+-->
+<odoo noupdate="1">
+    <record id="icp_sku_v2_enforce_mode" model="ir.config_parameter">
+        <field name="key">multichannel_hub.sku_v2_enforce_mode</field>
+        <field name="value">soft</field>
+    </record>
+</odoo>

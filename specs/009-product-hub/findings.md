@@ -1,5 +1,32 @@
 # Findings — Spec 009 (Central Product Hub)
 
+## P-HUB-V2-VALIDATE-ON-CREATE — 2026-05-26
+
+**Status**: landed on `feature/006-master-plan-coding`. mhc 19.0.1.0.52 → **19.0.1.0.53**. Tasks T061–T069 all `[X]`.
+
+**Scope delivered**:
+- `services/sku_grammar_v2.py`: module-level `ICP_ENFORCE_MODE_KEY` constant, compile-once `_VALIDATOR_REGEX`, pure `validate_v2_sku(default_code) -> bool` (length 8-14 fast-fail, then regex match).
+- `data/sku_v2_enforce_mode_seed.xml` (`noupdate=1`): `ir.config_parameter` row `multichannel_hub.sku_v2_enforce_mode` = `'soft'` (D-V2-2 default).
+- `wizards/product_creation_wizard.py` (legacy): `_validate()` runs v2 grammar check **before** existing field checks; returns `bool` soft-warn flag; `action_create()` consumes flag and pins `x_sku_v2_status='ba_approved_legacy'` in the `Template.create({...})` payload so the compute bypass at `product_template.py:151` leaves the new template alone.
+- `wizards/product_sku_builder_wizard.py` (builder): same pattern as defense-in-depth — even though the wizard composes SKUs from controlled taxonomy segments, the validator catches future broken family seeds.
+- `tests/test_phase1_hub_v2_validator_db.py` (1 case) + `tests/test_phase2_hub_v2_validator_orm.py` (8 cases) — RED→GREEN. Full mhc suite 574 tests, 0 NEW failures (5 baseline errors in `test_design_file_upload_wizard_multi` unchanged).
+- `tests/test_phase2_hub_wizard_orm.py`: 1 assertion updated (`test_action_create_non_canonical_sku_passes_through`) from `non_canonical` → `ba_approved_legacy` to reflect the slice's contract change for legacy-wizard non-v2 SKUs under soft mode.
+
+**Decisions exercised**: D-V2-2 (soft default — operator pins legacy), D-V2-3 (legacy + builder coexist, same contract).
+
+**Reviews**: code-reviewer APPROVE 0 CRITICAL/HIGH; security-reviewer APPROVE 0 CRITICAL/HIGH (2 LOW: ReDoS residual capped by 14-char fast-fail; ICP read sudo justified). Both verified against `git diff --stat HEAD` per `feedback_reviewer_agent_diff_hallucination`.
+
+**Surprises / memory hits**:
+- `feedback_fr017_write_defense_in_depth` — 25th confirmation. The v2 validator sits inside `_validate()` (called AFTER the method-top `_check_ba_or_raise()` gate but BEFORE any `Template.create()`). Phase 2 case 6 asserts `product.template.search_count` unchanged after hard-mode UserError — the canonical FR-017 assertion.
+- **Slice-contract test fallout**: P-HUB-WIZARD's `test_action_create_non_canonical_sku_passes_through` asserted `x_sku_v2_status='non_canonical'` for legacy SKUs. Slice changed that to `ba_approved_legacy` under soft mode (the new contract). The test update is part of the slice scope, not a regression mask — docstring updated to call out D-V2-2 contract.
+- **Empty-SKU builder short-circuit**: builder's v2 check is gated `if assembled and not validate_v2_sku(assembled)` — without the `assembled` truthiness guard the validator returns False on empty string and triggers a false soft-warn for incomplete wizard state (caught at code-design time by reasoning).
+
+**No new patterns** worth a global memory file beyond the FR-017 25th tick. ICP gating for behavioural toggles is now common enough across mhc (`multichannel_hub.large_file_threshold_bytes`, `multichannel_hub.sku_v2_enforce_mode`) that it's no longer surprising — it's the standard "feature-flag without a feature-flag library" idiom.
+
+**Unblocks**: P-HUB-MISSING-INFO-WIZARD can build on the soft/hard contract; `P-UAT-V2-VALIDATE-EXTEND` (browser rerun + add TC-013/014 for soft/hard mode behaviour) is the natural follow-up but is deferred.
+
+---
+
 ## P-UAT-SKU-BUILDER-EXTEND — 2026-05-26
 
 **Slice goal**: Deploy mhc 19.0.1.0.52 to staging + rerun existing UAT (TC-001..TC-007) + extend with TC-008..TC-012 covering the new 4-step `product.sku.builder.wizard`. Decoupled from blocked P-HUB-V2-VALIDATE-ON-CREATE per owner D8.

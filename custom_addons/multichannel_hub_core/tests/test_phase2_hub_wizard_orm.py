@@ -115,7 +115,13 @@ class TestHubWizardORM(TransactionCase):
             self.assertEqual(status.state, 'draft')
 
     def test_action_create_non_canonical_sku_passes_through(self):
-        """Non-canonical SKU saves; surfaces non_canonical status — no block."""
+        """Non-canonical SKU saves under D-V2-2 soft mode — no block, auto-pinned legacy.
+
+        Slice P-HUB-V2-VALIDATE-ON-CREATE introduced auto-marking
+        ``x_sku_v2_status='ba_approved_legacy'`` on any non-v2 SKU in soft mode
+        (ICP ``multichannel_hub.sku_v2_enforce_mode='soft'``). The no-block
+        contract from D-V2-3 still holds; what changed is the status pinning.
+        """
         w = self.Wizard.with_user(self.ba_user).create(self._base_vals(
             name='Custom Ring Dish 3.5"',
             default_code='LEGACY-RING-001',
@@ -123,7 +129,7 @@ class TestHubWizardORM(TransactionCase):
         action = w.action_create()
         tmpl = self.Template.browse(action['res_id'])
         self.assertEqual(tmpl.default_code, 'LEGACY-RING-001')
-        self.assertEqual(tmpl.x_sku_v2_status, 'non_canonical')
+        self.assertEqual(tmpl.x_sku_v2_status, 'ba_approved_legacy')
 
     # ------------------------------------------------------------------
     # FR-017 method-top gate

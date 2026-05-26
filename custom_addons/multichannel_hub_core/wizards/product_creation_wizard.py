@@ -116,7 +116,37 @@ class ProductCreationWizard(models.TransientModel):
             ))
 
     def _validate(self):
+        """Validate wizard inputs.
+
+        Runs the v2.1 grammar check on ``default_code`` BEFORE existing field
+        checks. Soft mode logs a WARNING and signals the caller (via the
+        returned flag) to auto-mark the new template ``x_sku_v2_status``
+        as ``ba_approved_legacy``; hard mode raises UserError before any
+        side effect (FR-017 defense-in-depth pattern, 25th confirmation).
+
+        Returns:
+            bool: True iff at least one record failed v2.1 validation in
+            soft mode (caller should set ``x_sku_v2_status='ba_approved_legacy'``
+            on the created template).
+        """
+        soft_warn = False
         for rec in self:
+            if not sku_grammar_v2.validate_v2_sku(rec.default_code or ''):
+                mode = self.env['ir.config_parameter'].sudo().get_param(
+                    sku_grammar_v2.ICP_ENFORCE_MODE_KEY, 'soft',
+                )
+                if mode == 'hard':
+                    raise UserError(_(
+                        "SKU does not match v2.1 grammar "
+                        "(<FAM3>-<MAT2>-<SIZE>[-<VAR2>], 8-14 chars). "
+                        "See SKU_GRAMMAR.md §7.1."
+                    ))
+                _logger.warning(
+                    "v2.1 grammar soft-warn: default_code=%r does not match; "
+                    "auto-marking new template as ba_approved_legacy.",
+                    rec.default_code or '',
+                )
+                soft_warn = True
             if not (rec.name or '').strip():
                 raise UserError(_("Product name is required."))
             if not (rec.default_code or '').strip():
@@ -129,10 +159,11 @@ class ProductCreationWizard(models.TransientModel):
                 raise UserError(_("Shipping Fees cannot be negative."))
             if not rec.x_channel_applicability_ids:
                 raise UserError(_("Select at least one channel."))
+        return soft_warn
 
     def action_create(self):
         self._check_ba_or_raise()  # FR-017 — before any write
-        self._validate()
+        soft_warn = self._validate()
         # sudo() is intentional and bounded: the FR-017 gate above proved BA
         # membership; BA group does not include the platform-level
         # `product.group_product_manager`, but ADR-014 §6 says product creation
@@ -145,7 +176,7 @@ class ProductCreationWizard(models.TransientModel):
         # (e.g. test contexts) still land in the M2M; the form picker's domain
         # is the operator-side guard and remains effective.
         channel_ids = self.with_context(active_test=False).x_channel_applicability_ids.ids
-        tmpl = Template.create({
+        tmpl_vals = {
             'name': self.name,
             'default_code': self.default_code,
             'categ_id': self.categ_id.id,
@@ -155,7 +186,12 @@ class ProductCreationWizard(models.TransientModel):
             'standard_price': self.standard_price,
             'x_gearment_sku': self.x_gearment_sku or False,
             'x_channel_applicability_ids': [(6, 0, channel_ids)],
-        })
+        }
+        if soft_warn:
+            # v2.1 soft mode: pin the template so the compute bypass at
+            # product_template._compute_x_sku_v2 line 151 leaves it alone.
+            tmpl_vals['x_sku_v2_status'] = 'ba_approved_legacy'
+        tmpl = Template.create(tmpl_vals)
         Status.create([
             {'product_tmpl_id': tmpl.id, 'channel_id': ch_id, 'state': 'draft'}
             for ch_id in channel_ids

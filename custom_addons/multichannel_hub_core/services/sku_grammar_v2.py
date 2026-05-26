@@ -27,6 +27,34 @@ _logger = logging.getLogger(__name__)
 _MSC = ('MSC', 'MSC')
 
 
+# --- v2.1 SKU shape validator (SKU_GRAMMAR.md §7.1) ----------------------
+# Public ICP key gating soft vs hard enforce mode (D-V2-2 default 'soft').
+ICP_ENFORCE_MODE_KEY = 'multichannel_hub.sku_v2_enforce_mode'
+
+# Compile-once. Format: <FAM3>-<MAT2>-<SIZE>[-<VAR2>] where SIZE is one of
+# the shape tokens (SQ|HT|OV|LSQ|WV|AR|BW|RD), fluid_oz Fn, apparel A...,
+# generic size Sn, or rectangular RnXn. Total length 8-14 chars.
+_VALIDATOR_REGEX = re.compile(
+    r'^[A-Z]{3}-[A-Z]{2}-(SQ|HT|OV|LSQ|WV|AR|BW|RD|S\d+|F\d+|A[A-Z]+|R\d+X\d+)(-[A-Z]{2})?$'
+)
+
+
+def validate_v2_sku(default_code: str) -> bool:
+    """Return True iff ``default_code`` matches SKU Grammar v2.1.
+
+    Length check (8-14 chars) fast-fails before regex. See SKU_GRAMMAR.md §7.1.
+    Used by `product.creation.wizard` and `product.sku.builder.wizard` at
+    `_validate()` time; soft/hard enforcement is gated by
+    `ir.config_parameter` key `ICP_ENFORCE_MODE_KEY`.
+    """
+    if not default_code:
+        return False
+    n = len(default_code)
+    if n < 8 or n > 14:
+        return False
+    return bool(_VALIDATOR_REGEX.match(default_code))
+
+
 class FamilyRule(NamedTuple):
     code: str
     pattern: re.Pattern

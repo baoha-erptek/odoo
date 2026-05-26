@@ -225,7 +225,40 @@ class ProductSkuBuilderWizard(models.TransientModel):
             ))
 
     def _validate(self):
+        """Validate wizard state.
+
+        Defense-in-depth v2.1 grammar check on the assembled SKU BEFORE the
+        existing step-by-step field checks. Soft mode logs a WARNING and
+        returns ``True`` to signal the caller; hard mode raises UserError
+        (FR-017 25th confirmation — defense-in-depth even though the wizard
+        composes the SKU from controlled segments, in case a future broken
+        family seed produces an invalid family code).
+
+        Returns:
+            bool: True iff the assembled SKU failed v2.1 validation in soft
+            mode (caller should set ``x_sku_v2_status='ba_approved_legacy'``
+            on the created template).
+        """
+        soft_warn = False
         for rec in self:
+            assembled = rec._build_sku_or_blank()
+            if assembled and not sku_grammar_v2.validate_v2_sku(assembled):
+                mode = self.env['ir.config_parameter'].sudo().get_param(
+                    sku_grammar_v2.ICP_ENFORCE_MODE_KEY, 'soft',
+                )
+                if mode == 'hard':
+                    raise UserError(_(
+                        "Assembled SKU does not match v2.1 grammar "
+                        "(<FAM3>-<MAT2>-<SIZE>[-<VAR2>], 8-14 chars). "
+                        "See SKU_GRAMMAR.md §7.1."
+                    ))
+                _logger.warning(
+                    "v2.1 grammar soft-warn (builder wizard): "
+                    "assembled SKU=%r does not match; "
+                    "auto-marking new template as ba_approved_legacy.",
+                    assembled,
+                )
+                soft_warn = True
             if not (rec.product_name or '').strip():
                 raise UserError(_("Product name is required."))
             if not rec.family_id:
@@ -238,6 +271,7 @@ class ProductSkuBuilderWizard(models.TransientModel):
                     "Pick a size (or rectangular dimensions) in step 3."
                 ))
             rec._check_size_namespace_matches_family()
+        return soft_warn
 
     def action_next(self):
         self.ensure_one()
@@ -262,7 +296,7 @@ class ProductSkuBuilderWizard(models.TransientModel):
     def action_create(self):
         # FR-017 24th — must fire BEFORE any side effect / write / search.
         self._check_ba_or_raise()
-        self._validate()
+        soft_warn = self._validate()
         self.ensure_one()
         sku = self._build_sku_or_blank()
         if not sku:
@@ -272,10 +306,16 @@ class ProductSkuBuilderWizard(models.TransientModel):
         # but ADR-014 §6 grants BA the product-creation responsibility. The
         # write surface is exactly the assembled SKU + name — no smuggling.
         Template = self.env['product.template'].sudo()
-        tmpl = Template.create({
+        tmpl_vals = {
             'name': self.product_name,
             'default_code': sku,
-        })
+        }
+        if soft_warn:
+            # Defense-in-depth: assembled SKU somehow failed v2.1 validation
+            # in soft mode. Pin the template so the compute bypass at
+            # product_template._compute_x_sku_v2 line 151 leaves it alone.
+            tmpl_vals['x_sku_v2_status'] = 'ba_approved_legacy'
+        tmpl = Template.create(tmpl_vals)
         _logger.debug(
             "SKU builder wizard created product.template id=%s default_code=%s",
             tmpl.id, sku,
