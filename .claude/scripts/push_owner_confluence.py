@@ -296,15 +296,43 @@ PAGES = [
     ("HUONG_DAN_GIAO_HANG_VN.md", "Hướng dẫn sử dụng — Giao hàng (MTO + Dropship)", False),
     ("HUONG_DAN_HAU_MAI_VN.md", "Hướng dẫn sử dụng — Hậu mãi", False),
     # Engineering planning (NOT end-user; for Architect + Dev team reference on Confluence)
-    ("FEATURE_GAPS_SKU_V2_2026-05-26.md", "Feature Gaps — SKU Grammar v2 (2026-05-26)", False),
+    ("SKU_GRAMMAR.md", "SKU Grammar — Canonical Specification", False),
 ]
+
+
+MAPPING_FILE = REPO / ".docs/tasks/_owner_confluence_2026-05-25.json"
+
+
+def _content_hash(title: str, xhtml: str) -> str:
+    """Stable hash of (title, body) — invalidate cache if either changes."""
+    import hashlib
+    return hashlib.sha1(f"{title}\n{xhtml}".encode()).hexdigest()
+
+
+def _load_prior_mapping() -> dict:
+    """Return {filename: {id, version, hash, url, title}} from previous sync, or {}."""
+    if not MAPPING_FILE.exists():
+        return {}
+    try:
+        data = json.loads(MAPPING_FILE.read_text())
+    except json.JSONDecodeError:
+        return {}
+    by_file: dict[str, dict] = {}
+    for entry in data.get("pages", []):
+        fname = entry.get("file")
+        if fname:
+            by_file[fname] = entry
+    return by_file
 
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    force = "--force" in sys.argv  # bypass hash-skip
     print("=" * 60)
     print(f"Confluence sync → space {SPACE_KEY}")
     print(f"Base: {CONFLUENCE_BASE}")
+    if force:
+        print("--force passed: hash-skip disabled, pushing every page")
     print("=" * 60)
 
     if dry_run:
@@ -315,7 +343,7 @@ def main():
             print(f"\n--- {fname} → '{title}' ({'root' if is_root else 'child'}) ---")
             print(f"  md bytes:    {len(md)}")
             print(f"  xhtml bytes: {len(xhtml)}")
-            print(f"  xhtml head:  {xhtml[:200]!r}")
+            print(f"  hash:        {_content_hash(title, xhtml)[:12]}")
         return
 
     space_id = get_space_id(SPACE_KEY)
@@ -324,8 +352,10 @@ def main():
         sys.exit(2)
     print(f"Space {SPACE_KEY} → id {space_id}")
 
+    prior = _load_prior_mapping()
     results = {"space_id": space_id, "pages": []}
     root_id: str | None = None
+    skipped_count = 0
 
     for fname, title, is_root in PAGES:
         path = DOCS / fname
@@ -334,6 +364,21 @@ def main():
             continue
         md = path.read_text()
         xhtml = md_to_storage(md)
+        new_hash = _content_hash(title, xhtml)
+        prior_entry = prior.get(fname, {})
+        prior_hash = prior_entry.get("hash")
+
+        # Hash-skip: identical content + we have a prior page id → no-op
+        if not force and prior_hash == new_hash and prior_entry.get("id"):
+            print(f"\n--- {fname} → '{title}'  (unchanged, skipping; hash={new_hash[:12]}) ---")
+            entry = dict(prior_entry)
+            entry["action"] = "skipped"
+            results["pages"].append(entry)
+            if is_root:
+                root_id = entry["id"]
+            skipped_count += 1
+            continue
+
         print(f"\n--- {fname} → '{title}'  ({len(xhtml)} bytes XHTML) ---")
         existing = find_page(space_id, title)
         if existing:
@@ -346,7 +391,7 @@ def main():
                     root_id = page_id
                 results["pages"].append({
                     "file": fname, "title": title, "id": page_id,
-                    "version": ver + 1, "action": "updated",
+                    "version": ver + 1, "action": "updated", "hash": new_hash,
                     "url": f"{CONFLUENCE_BASE}/spaces/{SPACE_KEY}/pages/{page_id}",
                 })
         else:
@@ -359,19 +404,22 @@ def main():
                     root_id = page_id
                 results["pages"].append({
                     "file": fname, "title": title, "id": page_id,
-                    "version": 1, "action": "created",
+                    "version": 1, "action": "created", "hash": new_hash,
                     "url": f"{CONFLUENCE_BASE}/spaces/{SPACE_KEY}/pages/{page_id}",
                 })
         time.sleep(0.3)
 
-    out_path = REPO / ".docs/tasks/_owner_confluence_2026-05-25.json"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False))
-    print(f"\nMapping saved to {out_path}")
+    MAPPING_FILE.parent.mkdir(parents=True, exist_ok=True)
+    MAPPING_FILE.write_text(json.dumps(results, indent=2, ensure_ascii=False))
+    print(f"\nMapping saved to {MAPPING_FILE}")
+    if skipped_count:
+        pushed = len(results["pages"]) - skipped_count
+        print(f"({skipped_count} unchanged skipped, {pushed} pushed)")
 
     print("\nPage URLs:")
     for p in results["pages"]:
-        print(f"  {p['file']:25s} → {p['url']}")
+        marker = " [skip]" if p.get("action") == "skipped" else ""
+        print(f"  {p['file']:33s} → {p['url']}{marker}")
 
     print("\nDONE.")
 

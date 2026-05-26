@@ -286,6 +286,21 @@ bugfix/short-description
 | **Stop** | `check-debug-statements.sh` | Scan modified `.py` for `print()` / `_logger.info` |
 | **PreToolUse** (Bash) | Inline | Git push review reminder |
 
+### Git hooks (`.githooks/`)
+
+Versioned git hooks for cross-team automation. **Activate once per clone:**
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/*
+```
+
+| Hook | Trigger | Action |
+|---|---|---|
+| `post-commit` | After every commit | Auto-push `docs/owner/**/*.md` changes to Confluence space HEP (background, hash-skip optimised). Bypass: `SKIP_CONFLUENCE_SYNC=1` or `[skip-confluence]` in commit message. |
+
+See `.githooks/README.md` for full details + bypass options.
+
 ---
 
 ## Tools & MCP Servers

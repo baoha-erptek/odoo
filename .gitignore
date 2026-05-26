@@ -54,6 +54,10 @@ package.json
 !tests/e2e/tsconfig.json
 !tests/e2e/playwright.config.ts
 
+# Versioned git hooks (cross-team automation; activate via core.hooksPath)
+!.githooks/
+!.githooks/**
+
 # various virtualenv
 /bin/
 /build/
