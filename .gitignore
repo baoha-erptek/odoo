@@ -48,6 +48,12 @@ package-lock.json
 package.json
 .husky
 
+# Project E2E test infrastructure overrides the upstream Odoo CE ignores
+!tests/e2e/package.json
+!tests/e2e/package-lock.json
+!tests/e2e/tsconfig.json
+!tests/e2e/playwright.config.ts
+
 # various virtualenv
 /bin/
 /build/

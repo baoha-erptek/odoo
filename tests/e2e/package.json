@@ -1,0 +1,23 @@
+{
+  "name": "odoo19-esty-uat-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright browser UAT for HUONG_DAN_*_VN.md user guides (ESTY-183..186)",
+  "scripts": {
+    "test:tao-san-pham": "playwright test uat_huong_dan_tao_san_pham.spec.ts",
+    "test:don-hang-etsy": "playwright test uat_huong_dan_don_hang_etsy.spec.ts",
+    "test:giao-hang": "playwright test uat_huong_dan_giao_hang.spec.ts",
+    "test:hau-mai": "playwright test uat_huong_dan_hau_mai.spec.ts",
+    "test:all": "playwright test",
+    "report": "playwright show-report reports/html",
+    "seed:ba-user": "python3 fixtures/seed_ba_user.py",
+    "seed:uat-data": "python3 fixtures/seed_uat_data.py"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.48.0",
+    "@types/node": "20.11.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
