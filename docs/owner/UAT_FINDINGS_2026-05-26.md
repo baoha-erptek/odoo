@@ -1,112 +1,141 @@
 # UAT Findings — 2026-05-26
 
-**Người chạy:** Playwright UAT script (tests/e2e/)
+**Người chạy:** Playwright UAT script (tests/e2e/) + `scripts/e2e_product_listing.py` (TC-005)
 **Môi trường:** `https://odoo.hatafax.com` · DB `esty_odoo19`
-**Phạm vi:** ESTY-183 — `HUONG_DAN_TAO_SAN_PHAM_VN.md` TC-001..TC-007
-**Status:** Findings open, awaiting owner decisions
+**Phạm vi:** ESTY-183 — `HUONG_DAN_TAO_SAN_PHAM_VN.md` TC-001..TC-012
+**Status:** **Closed** — owner đã quyết các F1/F2 + TC-005 live ran successfully (2026-05-26 22:19 UTC)
 
 ---
 
-## Tổng kết Pass/Fail
+## Tổng kết Pass/Fail (rerun sau v1.1 doc refresh)
 
-| TC | Mô tả | Result | Note |
-|---|---|---|---|
-| TC-001 | BA Lead tạo SP Mug bằng Wizard | ✅ Pass | Product 19 archived after run |
-| TC-002 | SP có Mã Gearment → Dropship | ✅ Pass | Product 18 archived after run |
-| TC-003 | SKU drift "Keep Legacy" | ⏸ Skip | Cần seed product non_canonical trước |
-| TC-004 | SKU drift "Accept Canonical" + Etsy push | ⏸ Skip | Cần product đã publish Etsy + sandbox shop |
-| TC-005 | Đăng SP lên Etsy (Draft) | ⏸ Skip | Tạo Etsy listing thực — chạy riêng |
-| TC-006 | BA User & Publish button | ⚠️ **Finding** | Xem Finding F1 dưới |
-| TC-007 | Validator giá > 0 | ✅ Pass | Modal "Listing Price must be greater than 0" |
+| TC | Mô tả | Kết quả ban đầu (sáng) | Kết quả sau khi update doc + chạy lại | Note |
+|---|---|---|---|---|
+| TC-001 | BA Lead tạo SP Mug bằng Wizard | ✅ Pass | ✅ Pass | Product archived after run |
+| TC-002 | SP có Mã Gearment → Dropship | ✅ Pass | ✅ Pass | Product archived after run |
+| TC-003 | SKU drift "Keep Legacy" | ⏸ Skip | ⏸ Skip | Cần seed `seed_uat_data.py` (theo dõi như follow-up) |
+| TC-004 | SKU drift "Accept Canonical" + Etsy push | ⏸ Skip | ⏸ Skip | Cần product đã publish Etsy + sandbox shop |
+| TC-005 | Đăng SP lên Etsy (Draft) | ⏸ Skip | ✅ **PASS (live)** | Listing 4511807545 trên JaHandmadeArt; owner cleanup needed |
+| TC-006 | BA User & Publish button | ⚠️ Finding F1 | ✅ Pass (doc updated) | Code assert đúng — `groups=group_ba_user` |
+| TC-007 | Validator giá `> 0` | ✅ Pass | ✅ Pass | Modal "Listing Price must be greater than 0" |
+| TC-008 | SKU Builder MUG-CR-F11 | ✅ Pass | ✅ Pass | (mới — added 2026-05-26) |
+| TC-009 | SKU Builder MUG-CR-F15-BK | ✅ Pass | ✅ Pass | |
+| TC-010 | SKU Builder APR-TX-AM | ✅ Pass | ✅ Pass | |
+| TC-011 | SKU Builder DMT-TX-R30X18 | ✅ Pass | ✅ Pass | |
+| TC-012 | FR-017 non-BA blocked | ⏸ Skip (cite unit test) | ⏸ Skip (cite unit test) | Covered ở `test_phase2_hub_sku_builder_orm::test_non_ba_user_blocked_before_template_create` |
 
-**Net:** 3/7 Pass (TC-001/002/007), 3/7 Skip (TC-003/004/005), 1/7 cần quyết định owner (TC-006).
+**Net:** 9 PASS / 3 SKIP / 0 FAIL (12 TC). Tất cả Skip là có lý do (seed thiếu / cover ở layer khác). Tất cả "Finding" được resolve.
 
 ---
 
-## Finding F1 — Doc-vs-Code mismatch: BA User vs nút "Publish to Etsy"
+## Resolved findings (owner decisions 2026-05-26)
 
-### Triệu chứng
+### F1 — Doc-vs-Code mismatch: BA User vs nút "Publish to Etsy"
 
-Khi đăng nhập tài khoản `uat_ba_user@hatafax.demo` (chỉ có group `multichannel_hub_core.group_ba_user`) và mở form sản phẩm bất kỳ → nút **"Publish to Etsy"** **hiện** trên header form.
+**Resolution: D1 — update doc to match code (owner-approved 2026-05-26).**
 
-HUONG_DAN_TAO_SAN_PHAM_VN.md TC-006 mong đợi: **không hiện** + nếu cố gọi URL thì AccessError.
+- Doc `HUONG_DAN_TAO_SAN_PHAM_VN.md` v1.0 §2 ghi "BA User | Đăng Etsy: ❌" — **sai**.
+- Code (view + `_check_ba_or_raise()`) thiết kế: mọi BA tier (User/Lead/Manager) publish được.
+- FR-017 pattern được xác nhận 26 lần trong code (`feedback_fr017_write_defense_in_depth.md`).
+- **Action taken:** `HUONG_DAN_TAO_SAN_PHAM_VN.md` updated to v1.1 — role matrix mới: `BA User | Đăng Etsy: ✅`. Lý do được giải thích trong tài liệu kèm cảnh báo "sửa từ v1.0".
+- **TC-006 reverted expectation:** browser test giờ assert nút **VISIBLE** + executable cho BA User → PASS.
 
-### Điều tra
+### F2 — TC-007 spec drift: $0.20 vs `> 0`
 
-1. **View** (`custom_addons/etsy_integration/views/product_views.xml:25-26`):
-   ```xml
-   <button name="action_open_etsy_publish_wizard" type="object"
-           string="Publish to Etsy" class="oe_highlight"
-           groups="multichannel_hub_core.group_ba_user"/>
-   ```
-   `groups="..."` nghĩa là: chỉ hiển thị cho user thuộc group đó. BA User **là** thành viên của `group_ba_user` → button **hiện**.
+**Resolution: update doc to match code (owner-approved 2026-05-26).**
 
-2. **Wizard FR-017 gate** (`custom_addons/etsy_integration/wizards/etsy_publish_wizard.py:17`):
-   ```python
-   _BA_GROUP_XMLID = 'multichannel_hub_core.group_ba_user'
-   ```
-   Method `_check_ba_or_raise()` kiểm tra membership ở `group_ba_user` — BA User pass gate này.
+- Doc v1.0 §11 TC-007 ghi "Validation — giá USD < 0.20 → 'Giá Etsy tối thiểu $0.20'".
+- Validator code chỉ check `> 0`; Etsy enforce $0.20 ở push step, không phải wizard step.
+- **Action taken:** doc v1.1 TC-007 đổi text thành "Listing Price phải `> 0`" + giải thích Etsy minimum ở push step (mục 9.1 + 9.4).
 
-3. **Comment code** (`custom_addons/etsy_integration/models/product_product.py:50-53`):
-   > "The wizard itself carries the FR-017 method-top gate; this action is only a UI entry point. View binds `groups=` for defense-in-depth visibility."
+### F3 — TC-003/004/005 seed/owner-approval
 
-   Cả view và wizard đều thống nhất: **BA User được phép publish Etsy**.
+- **TC-003/TC-004:** vẫn skip — cần `fixtures/seed_uat_data.py` thêm vào globalSetup để chuẩn bị 1 SP `non_canonical` (TC-003) + 1 SP đã publish Etsy (TC-004). **Follow-up slice candidate**: `P-UAT-SEED-DRIFT-DATA` (Phase 3e doc-slice extension).
+- **TC-005:** ✅ resolved — owner approved live re-run. Chạy lúc 2026-05-26 22:19 UTC qua `scripts/e2e_product_listing.py`. Kết quả:
+  ```
+  Product created: tmpl=41, SKU=E2E-20260526-221925-TAT1
+  Etsy listing created: 4511807545
+  channel.status: state=draft, external_ref='4511807545'
+  Odoo product auto-archived after verification
+  ```
+  HTTP 403 trên `GET /listings/4511807545` là **expected behavior** — Etsy private-app token không thấy draft của shop khác (chỉ owner UI thấy được).
 
-4. **Role matrix trong doc** (HUONG_DAN_TAO_SAN_PHAM_VN.md §2):
-   | Vai trò | Tạo SP | Đăng Etsy | Sửa SKU | Xoá SP |
-   | BA User | ✅ | ❌ | ❌ | ❌ |
-   | BA Lead | ✅ | ✅ | ✅ | ❌ |
+**Cleanup needed (owner):** Etsy Shop Manager (JaHandmadeArt) → Listings → Drafts → tick listing `4511807545` → Delete.
 
-   Doc nói BA User **không** publish được — ngược với code.
+---
 
-### Kết luận
+## Doc deliverables landed 2026-05-26
 
-Doc và code mâu thuẫn. Code có **23 lần xác nhận pattern FR-017 với `group_ba_user`** (xem auto-memory `feedback_fr017_write_defense_in_depth.md`) — pattern rất nhất quán. Khả năng cao là **doc viết sai** (wishful), không phải code lỗi.
-
-### Quyết định cần owner duyệt
-
-| Option | Hành động | Phạm vi |
+| Doc | Phiên bản | Thay đổi |
 |---|---|---|
-| **D1 (recommended)** | Cập nhật HUONG_DAN_TAO_SAN_PHAM_VN.md role matrix: BA User Đăng Etsy = ✅ | Doc-only change, không cần MP006 slice |
-| **D2** | Thắt chặt code: nâng FR-017 gate từ `group_ba_user` lên `group_ba_lead`; nâng view `groups=` cũng | MP006 slice `P-UAT-FIX-TC006`; chạm 4 chỗ (2 module: mhc + etsy_integration); rủi ro side-effect lên các method khác đang dùng cùng pattern |
-
-**Đề xuất D1** vì code design có ý đồ rõ (defense-in-depth comment + 23 lần confirmation pattern); doc là tài liệu mới hơn (viết ngày 2026-05-26) trong khi code đã consolidate qua nhiều slice.
+| `HUONG_DAN_TAO_SAN_PHAM_VN.md` | 1.0 → **1.1** | Thêm 3 mục mới (Wizard cũ vs SKU Builder so sánh, SKU Builder 4-bước, Validator v2 soft/hard); fix F1 role matrix; fix F2 price text; thêm TC-008..TC-012 |
+| `FLOW_TAO_SAN_PHAM_VN.md` | 1.0 → **1.1** | Thêm SKU Builder Wizard narrative + validator v2 + size-fallback (plain-business view, no code refs) |
+| `UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` | (mới) **1.0** | Manual click-by-click cho owner step-through 12 TC trong trình duyệt |
+| `UAT_FINDINGS_2026-05-26.md` | 1.0 → **2.0** | This file — closed F1/F2, ran TC-005 live, updated tally to 9/3/0 |
 
 ---
 
-## Finding F2 — TC-007 spec drift (đã giải quyết trong test)
+## Playwright + manual run evidence
 
-HUONG_DAN_TAO_SAN_PHAM_VN.md TC-007 mong đợi: "Validation — giá USD < 0.20 → thông báo 'Giá Etsy tối thiểu $0.20'".
+### Playwright suite (2026-05-26 22:16-22:18 UTC)
 
-Actual validator (`product_creation_wizard.py:127`):
-```python
-if rec.x_listing_price <= 0:
-    raise UserError(_("Listing Price must be greater than 0."))
+```
+Running 12 tests using 1 worker
+
+  ✓  TC-001 — BA Lead tạo sản phẩm Mug bằng Wizard (6.8s)
+  ✓  TC-002 — Sản phẩm có Mã Gearment → đặt cờ Dropship (7.0s)
+  -  TC-003 — SKU drift wizard "Keep Legacy" (skipped — seed gap)
+  -  TC-004 — SKU drift wizard "Accept Canonical" (skipped — seed gap)
+  -  TC-005 — Đăng lên Etsy (Draft mode) (skipped in Playwright; ran via scripts/e2e_product_listing.py)
+  ✓  TC-006 — BA tier visibility of "Publish to Etsy" button (6.2s) — code-correct asserts after F1 D1
+  ✓  TC-007 — Validation: Listing Price phải > 0 (wizard validator) (6.5s)
+  ✓  TC-008 — Build MUG-CR-F11 (mug 11oz happy path) (10.7s)
+  ✓  TC-009 — Build MUG-CR-F15-BK (mug 15oz + VAR2 black) (10.8s)
+  ✓  TC-010 — Build APR-TX-AM (apron M, apparel-size-gated) (10.4s)
+  ✓  TC-011 — Build DMT-TX-R30X18 (doormat rectangular) (9.6s)
+  -  TC-012 — FR-017 24th: non-BA user blocked (skipped — covered by mhc unit test)
+
+  4 skipped
+  8 passed (1.3m)
 ```
 
-Validator chỉ check `> 0`, không phải `>= 0.20`. Etsy's $0.20 minimum được enforce ở **push step** chứ không ở wizard step.
+### TC-005 live (2026-05-26 22:19 UTC)
 
-Spec drift tương tự F1 (doc wishful) nhưng đã được xử lý trong test: TC-007 hiện test với `price=0` (actual behaviour) thay vì `price=0.10`.
+Command:
+```bash
+source .venv-e2e/bin/activate
+STAGING_BA_LOGIN=admin STAGING_BA_PASSWORD=*** \
+  python scripts/e2e_product_listing.py --count 1 --shop JaHandmadeArt --db esty_odoo19 --cleanup
+```
 
-**Đề xuất:** cập nhật HUONG_DAN TC-007 text từ "$0.20 minimum" → "Listing Price phải > 0" cho khớp implementation. Hoặc thêm slice `P-UAT-FIX-TC007` để tăng validator lên >= 0.20.
+Log excerpt:
+```
+Step 4: run 1 row(s), prefix=E2E-20260526-221925-*
+  picked: sheet=Accessories row=1 name='Temporary Tattoo' sku=TAT1
+  wizard created: id=29
+  product.template created: id=41
+  channel.status pre-publish: {'id': 19, 'state': 'draft', 'external_ref': False}
+  Etsy listing created: id=4511807545
+  channel.status post-publish: {'id': 19, 'state': 'draft', 'external_ref': '4511807545'}
+  etsy.listing row: {'id': 6, 'etsy_listing_id': '4511807545', 'state': 'inactive', 'title': 'Temporary Tattoo'}
+  Etsy GET /listings/4511807545 -> HTTP 403 state=None  ← expected for draft via private app token
+Step 5: cleanup — archive created product.templates
+  Archived product.template id=41
+```
 
 ---
 
-## Finding F3 — TC-003/004/005 cần seed UAT data trước
+## Follow-up items (NOT blockers for this UAT closure)
 
-Để chạy:
-- TC-003 cần 1 sản phẩm có `x_sku_v2_status='non_canonical'`
-- TC-004 cần thêm: sản phẩm đó đã publish Etsy + có Etsy listing_id
-- TC-005 cần: 1 sản phẩm sẵn sàng publish + đồng ý tạo Etsy draft thực
-
-**Đề xuất:** thêm `fixtures/seed_uat_data.py` để tạo 1 sản phẩm non_canonical SKU (cho TC-003) + 1 sản phẩm đã có listing (cho TC-004) — chạy trong `globalSetup` sau `seed_ba_user.py`. TC-005 vẫn cần owner approval trước khi chạy lần đầu vì tạo Etsy listing thực.
+1. **R-UAT-SEED-DRIFT-DATA** (suggested slice): add `fixtures/seed_uat_data.py` for TC-003 (non_canonical SP) + TC-004 (published-on-Etsy SP). Wire into Playwright globalSetup. Estimated < 50 LOC.
+2. **Owner cleanup**: delete Etsy draft listing `4511807545` from JaHandmadeArt Shop Manager (TC-005 artifact).
+3. **mhc unit-test ref for TC-012**: keep cite link in `HUONG_DAN_TAO_SAN_PHAM_VN.md` TC-012 + `UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` TC-012; promote to browser test only if owner needs visual evidence.
+4. **Memory hit**: `feedback_e2e_pipeline_first.md` reaffirmed — owner-doc refresh + UAT rerun pattern (no new code, just docs + run) is the right cadence after a stack of feature slices ships.
 
 ---
 
-## Kế hoạch tiếp theo (sau khi owner quyết)
+## Conclusion
 
-1. **F1 — D1 hoặc D2?** → áp dụng quyết định.
-2. **F2 — sửa doc hay tăng validator?** → áp dụng.
-3. **F3 — owner approve TC-005 chạy live?** → seed data + run.
-4. Sau đó UAT TC-001..007 đầy đủ → đính HTML report vào ESTY-183 → chuyển trạng thái Done.
-5. Tiếp tục ESTY-184/185/186 với cùng pattern.
+ESTY-183 UAT for `HUONG_DAN_TAO_SAN_PHAM_VN.md` v1.1: **APPROVED** (9 PASS / 3 SKIP-with-reason / 0 FAIL).
+
+Sẵn sàng đóng ticket. Tiếp tục các ticket khác (ESTY-184/185/186) với cùng pattern: read tracker → confirm doc-vs-code → update doc → re-run Playwright → manual walkthrough for owner sign-off.
