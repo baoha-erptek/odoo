@@ -52,7 +52,7 @@ class EtsyListingPublisher:
             'sku': self._resolve_sku(s),
             'title': s.name or '',
             'description': (s.description_sale or s.name or ''),
-            'price': float(s.x_listing_price or 0.0),
+            'price': float(s.list_price or 0.0),
             'quantity': max(int(s.qty_available or 0), 1),
             'who_made': sh.default_who_made or 'i_did',
             'when_made': sh.default_when_made or 'made_to_order',

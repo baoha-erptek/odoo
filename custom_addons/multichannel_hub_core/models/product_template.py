@@ -45,9 +45,8 @@ class ProductTemplate(models.Model):
         string='Channel Statuses',
     )
     x_listing_price = fields.Float(
-        digits='Product Price',
-        default=0.0,
-        help="Excel 'Price USD' bookkeeping — NOT the sale-order pricing source",
+        compute='_compute_x_listing_price',
+        help="Deprecated: maps to list_price. Use list_price directly.",
     )
     x_shipping_price_internal = fields.Float(
         digits='Product Price',
@@ -121,8 +120,14 @@ class ProductTemplate(models.Model):
         """
         return True
 
+    @api.depends('list_price')
+    def _compute_x_listing_price(self):
+        """Backward compatibility shim: x_listing_price now maps to list_price."""
+        for rec in self:
+            rec.x_listing_price = rec.list_price or 0.0
+
     @api.depends(
-        'x_listing_price',
+        'list_price',
         'standard_price',
         'x_shipping_price_internal',
         'x_additional_cost',
@@ -130,7 +135,7 @@ class ProductTemplate(models.Model):
     def _compute_unit_margin(self):
         for rec in self:
             rec.x_unit_margin = (
-                (rec.x_listing_price or 0.0)
+                (rec.list_price or 0.0)
                 - (rec.standard_price or 0.0)
                 - (rec.x_shipping_price_internal or 0.0)
                 - (rec.x_additional_cost or 0.0)

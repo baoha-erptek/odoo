@@ -78,11 +78,11 @@ def _excel_vals(line):
         'name': (line.name or line.sku or '').strip(),
         'default_code': (line.sku or '').strip(),
     }
-    # Pricing trio — Excel "Price USD" → x_listing_price; shipping_fee →
+    # Pricing trio — Excel "Price USD" → list_price; shipping_fee →
     # x_shipping_price_internal; CAD/EU/VND remain operator-side until
     # the pricelist-seed helper (deferred T011).
     if line.price_usd is not None:
-        vals['x_listing_price'] = float(line.price_usd or 0.0)
+        vals['list_price'] = float(line.price_usd or 0.0)
     if line.shipping_fee is not None:
         vals['x_shipping_price_internal'] = float(line.shipping_fee or 0.0)
     return vals

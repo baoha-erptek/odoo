@@ -121,13 +121,20 @@ class TestHubProductModelORM(TransactionCase):
 
     def test_unit_margin_zero_when_all_zero(self):
         tmpl = self._make_template()
+        # Reset all pricing fields to zero
+        tmpl.write({
+            'list_price': 0.0,
+            'standard_price': 0.0,
+            'x_shipping_price_internal': 0.0,
+            'x_additional_cost': 0.0,
+        })
         self.assertEqual(tmpl.x_unit_margin, 0.0)
 
     def test_unit_margin_formula(self):
         tmpl = self._make_template()
         tmpl.standard_price = 50.0
         tmpl.write({
-            'x_listing_price': 100.0,
+            'list_price': 100.0,
             'x_shipping_price_internal': 10.0,
             'x_additional_cost': 5.0,
         })
@@ -136,10 +143,10 @@ class TestHubProductModelORM(TransactionCase):
 
     def test_unit_margin_recompute_on_price_change(self):
         tmpl = self._make_template()
-        tmpl.write({'x_listing_price': 100.0})
+        tmpl.write({'list_price': 100.0})
         tmpl.standard_price = 20.0
         first = tmpl.x_unit_margin
-        tmpl.write({'x_listing_price': 200.0})
+        tmpl.write({'list_price': 200.0})
         self.assertNotEqual(tmpl.x_unit_margin, first)
         self.assertAlmostEqual(tmpl.x_unit_margin, 180.0, places=4)
 
