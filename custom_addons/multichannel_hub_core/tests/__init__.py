@@ -77,3 +77,4 @@ from . import test_phase2_pub_tags_validator_orm
 from . import test_phase1_product_image_gallery_db
 from . import test_phase1_pub_personalization_db
 from . import test_phase2_pub_personalization_validator_orm
+from . import test_phase1_pub_per_product_defaults_db

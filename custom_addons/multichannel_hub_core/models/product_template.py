@@ -91,6 +91,45 @@ class ProductTemplate(models.Model):
         help="Channel-agnostic: buyer instructions for personalization. "
              "Sent as personalization_instructions when x_is_personalizable is True.",
     )
+    x_taxonomy_id = fields.Char(
+        help="Channel-agnostic per-product Etsy taxonomy override. "
+             "Leave blank to use the shop default. Stored as Char because "
+             "Etsy taxonomy IDs can exceed PG int4 range.",
+    )
+    x_who_made = fields.Selection(
+        selection=[
+            ('i_did', 'I did'),
+            ('someone_else', 'Someone else'),
+            ('collective', 'A member of my shop'),
+        ],
+        help="Channel-agnostic per-product override; blank = use shop default. "
+             "Maps to Etsy who_made enum.",
+    )
+    x_when_made = fields.Selection(
+        selection=[
+            ('made_to_order', 'Made to order'),
+            ('2020_2026', '2020 – 2026'),
+            ('2010_2019', '2010 – 2019'),
+            ('2003_2009', '2003 – 2009'),
+            ('before_2004', 'Before 2004'),
+            ('2000_2003', '2000 – 2003'),
+            ('1990s', '1990s'),
+            ('1980s', '1980s'),
+            ('1970s', '1970s'),
+            ('1960s', '1960s'),
+            ('1950s', '1950s'),
+            ('1940s', '1940s'),
+            ('1930s', '1930s'),
+            ('1920s', '1920s'),
+            ('1910s', '1910s'),
+            ('1900s', '1900s'),
+            ('1800s', '1800s'),
+            ('1700s', '1700s'),
+            ('before_1700', 'Before 1700'),
+        ],
+        help="Channel-agnostic per-product override; blank = use shop default. "
+             "Maps to Etsy when_made enum.",
+    )
     x_unit_margin = fields.Float(
         digits='Product Price',
         compute='_compute_unit_margin',

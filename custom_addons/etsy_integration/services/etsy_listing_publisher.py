@@ -54,10 +54,13 @@ class EtsyListingPublisher:
             'description': (s.description_sale or s.name or ''),
             'price': float(s.list_price or 0.0),
             'quantity': max(int(s.qty_available or 0), 1),
-            'who_made': sh.default_who_made or 'i_did',
-            'when_made': sh.default_when_made or 'made_to_order',
+            # Spec 011 P-PUB-PER-PRODUCT-DEFAULTS — per-product override wins
+            # over shop default; falls back to hardcoded legacy default when
+            # both are blank. is_supply stays shop-wide (not in override scope).
+            'who_made': s.x_who_made or sh.default_who_made or 'i_did',
+            'when_made': s.x_when_made or sh.default_when_made or 'made_to_order',
             'is_supply': bool(sh.default_is_supply),
-            'taxonomy_id': int(sh.default_taxonomy_id or 0),
+            'taxonomy_id': int(s.x_taxonomy_id or sh.default_taxonomy_id or 0),
             'shipping_profile_id': int(sh.default_shipping_profile_id or 0),
             'return_policy_id': int(sh.default_return_policy_id or 0),
             'state': 'draft',

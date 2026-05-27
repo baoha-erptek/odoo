@@ -57,6 +57,16 @@
                            invisible="not x_is_personalizable"
                            placeholder="e.g., 'Enter recipient name for engraving'"/>
                 </page>
+                <page string="Listing Defaults" name="hub_listing_defaults">
+                    <group>
+                        <field name="x_taxonomy_id"
+                               placeholder="Leave blank to use shop default"/>
+                        <field name="x_who_made"
+                               placeholder="Leave blank to use shop default"/>
+                        <field name="x_when_made"
+                               placeholder="Leave blank to use shop default"/>
+                    </group>
+                </page>
                 <page string="Extra Images" name="hub_extra_images">
                     <field name="x_extra_image_ids">
                         <list editable="bottom">
