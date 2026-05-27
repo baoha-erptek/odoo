@@ -180,7 +180,7 @@ class ProductCreationWizard(models.TransientModel):
             'name': self.name,
             'default_code': self.default_code,
             'categ_id': self.categ_id.id,
-            'x_listing_price': self.x_listing_price,
+            'list_price': self.x_listing_price,
             'x_shipping_price_internal': self.x_shipping_price_internal,
             'x_additional_cost': self.x_additional_cost,
             'standard_price': self.standard_price,

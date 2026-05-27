@@ -60,7 +60,7 @@ class TestPubPublishORM(TransactionCase):
         return self.Template.create({
             'name': 'Custom Coffee Mug',
             'default_code': code,
-            'x_listing_price': 19.99,
+            'list_price': 19.99,
             'image_1920': base64.b64encode(_PNG),
         })
 

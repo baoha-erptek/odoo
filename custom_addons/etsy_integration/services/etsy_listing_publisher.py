@@ -175,7 +175,7 @@ class EtsyListingPublisher:
         for variant in tmpl.sudo().product_variant_ids:
             offering = {
                 'quantity': max(int(variant.sudo().qty_available or 0), 1),
-                'price': float(tmpl.sudo().x_listing_price or 0.0),
+                'price': float(tmpl.sudo().list_price or 0.0),
                 'is_enabled': True,
             }
             if readiness:

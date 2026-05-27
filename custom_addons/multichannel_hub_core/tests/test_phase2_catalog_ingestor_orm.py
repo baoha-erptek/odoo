@@ -48,7 +48,7 @@ class TestCatalogIngestorORM(TransactionCase):
         run = self._make_run()
         existing = self.Template.create({
             'name': 'Old name', 'default_code': 'UPD-1',
-            'x_listing_price': 10.0,
+            'list_price': 10.0,
         })
         line = self._make_line(run, sku='UPD-1', name='Excel name', price_usd=99.99)
         upsert(self.env, run, line)
@@ -76,7 +76,7 @@ class TestCatalogIngestorORM(TransactionCase):
         run = self._make_run()
         self.Template.create({
             'name': 'Same name', 'default_code': 'UNCH-1',
-            'x_listing_price': 5.0, 'x_shipping_price_internal': 1.0,
+            'list_price': 5.0, 'x_shipping_price_internal': 1.0,
         })
         line = self._make_line(run, sku='UNCH-1', name='Same name',
                                 price_usd=5.0, shipping=1.0)

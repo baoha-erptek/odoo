@@ -61,9 +61,15 @@ def migrate(cr, version):
 
     env.cr.commit()
 
-    # Log summary
-    _logger.info(
-        'P-HUB-SKU-AUTODERIVE: seeded x_sku_family_id on %d categories. '
-        'Unmatched: %d category IDs %s. Manual review needed for unmatched rows.',
-        matched, len(unmatched), unmatched,
-    )
+    if matched:
+        _logger.info(
+            'P-HUB-SKU-AUTODERIVE: seeded x_sku_family_id on %d categories '
+            '(%d unmatched, manual review needed)',
+            matched, len(unmatched),
+        )
+    elif unmatched:
+        _logger.warning(
+            'P-HUB-SKU-AUTODERIVE: 0 categories matched any mhc.sku.family code; '
+            '%d unmatched, manual review needed',
+            len(unmatched),
+        )

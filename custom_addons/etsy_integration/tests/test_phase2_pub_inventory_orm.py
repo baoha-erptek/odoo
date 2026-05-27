@@ -59,7 +59,7 @@ class TestPubInventoryORM(TransactionCase):
         tmpl = self.Template.create({
             'name': 'Custom Coffee Mug',
             'default_code': code,
-            'x_listing_price': 19.99,
+            'list_price': 19.99,
         })
         listing = self.Listing.create({
             'shop_id': shop.id,

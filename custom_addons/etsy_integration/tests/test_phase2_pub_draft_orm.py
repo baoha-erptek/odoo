@@ -68,7 +68,7 @@ class TestPubDraftORM(TransactionCase):
         return self.Template.create({
             'name': name,
             'default_code': code,
-            'x_listing_price': listing_price,
+            'list_price': listing_price,
             'description_sale': 'Beautiful ring dish for engagement gifts.',
         })
 

@@ -40,7 +40,7 @@ class TestSkuDriftEtsyOverride(TransactionCase):
         tmpl = self.Template.create({
             'name': 'Custom Coffee Mug',
             'default_code': 'LEGACY-MUG',
-            'x_listing_price': 19.99,
+            'list_price': 19.99,
         })
         self.env['etsy.listing'].create({
             'shop_id': shop.id,
