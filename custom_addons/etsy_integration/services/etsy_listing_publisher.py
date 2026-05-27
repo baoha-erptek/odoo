@@ -14,6 +14,7 @@ by Etsy's createListing endpoint.
 
 import base64
 import logging
+import re
 
 from .etsy_api_client import EtsyApiClient
 
@@ -39,6 +40,47 @@ class EtsyListingPublisher:
         ):
             return tmpl.x_sku_v2_suggested
         return tmpl.default_code or ''
+
+    # ------------------------------------------------------------------
+    # Spec 011 P-PUB-MATERIALS — template Material values → materials[]
+    # ------------------------------------------------------------------
+    # Etsy materials[] is listing-level (one array per listing), not
+    # per-variant — so we walk the template's attribute lines, not a
+    # specific variant. This also sidesteps the `create_variant='dynamic'`
+    # case where `variant.product_template_attribute_value_ids` is empty
+    # until a buyer picks a combination. Reuses existing product.attribute
+    # seed data; no new model, no new field.
+    ETSY_MAX_MATERIALS = 13
+
+    @staticmethod
+    def _collect_materials(tmpl):
+        """Pick Material attribute values off the template's attribute lines.
+
+        Selects values whose attribute is named `Material` OR whose value
+        carries `x_namespace='MAT2'` (future-proofing for namespace-based
+        families). Each value name is charset-cleaned per Etsy's letters/
+        numbers/whitespace whitelist, deduplicated preserving order, and
+        capped at 13.
+
+        Returns: list[str]. Empty when no Material values found or all
+        clean to empty strings.
+        """
+        seen = []
+        for line in tmpl.attribute_line_ids:
+            line_is_material = (
+                line.attribute_id.name == 'Material'
+                or any(v.x_namespace == 'MAT2' for v in line.value_ids)
+            )
+            if not line_is_material:
+                continue
+            for v in line.value_ids:
+                cleaned = re.sub(r'[^a-zA-Z0-9\s]', ' ', v.name or '')
+                cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+                if cleaned and cleaned not in seen:
+                    seen.append(cleaned)
+                if len(seen) >= EtsyListingPublisher.ETSY_MAX_MATERIALS:
+                    return seen
+        return seen
 
     # ------------------------------------------------------------------
     # Payload builder
@@ -81,6 +123,12 @@ class EtsyListingPublisher:
             payload['personalization_is_required'] = bool(s.x_personalization_required)
             payload['personalization_char_count_max'] = int(s.x_personalization_char_count or 256)
             payload['personalization_instructions'] = s.x_personalization_instructions or ''
+        # Spec 011 P-PUB-MATERIALS — emit materials only when the variant
+        # carries Material attribute values. Matches tags-block "empty
+        # omitted" pattern; Etsy treats absence as "no materials".
+        materials = self._collect_materials(s)
+        if materials:
+            payload['materials'] = materials
         return payload
 
     # ------------------------------------------------------------------
