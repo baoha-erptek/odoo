@@ -62,3 +62,4 @@ from . import test_phase2_sku_drift_etsy_orm
 from . import test_phase2_pub_publish_button_orm
 from . import test_phase2_buyer_message_orm
 from . import test_phase2_enquiry_alias_orm
+from . import test_phase2_pub_tags_payload_orm

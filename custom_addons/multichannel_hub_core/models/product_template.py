@@ -11,12 +11,19 @@ Spec 009 â€” P-HUB-PROD-MODEL. Data model: specs/009-product-hub/data-model.md Â
 """
 
 import logging
+import re
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 from ..services import sku_grammar_v2
 
 _logger = logging.getLogger(__name__)
+
+
+_ETSY_TAG_CHARSET_RE = re.compile(r"^[A-Za-z0-9 \-']+$")
+_ETSY_TAG_MAX_COUNT = 13
+_ETSY_TAG_MAX_LEN = 20
 
 
 SKU_V2_STATUS_VALUES = [
@@ -264,3 +271,27 @@ class ProductTemplate(models.Model):
             rec.default_code = suggested
 
         return records
+
+    @api.constrains('product_tag_ids')
+    def _check_etsy_tag_rules(self):
+        """Enforce Etsy listing-tag rules on standard product.tag M2M.
+
+        Rules: <=13 tags total, each tag <=20 chars, charset is
+        [A-Za-z0-9 -'] only. Fires on create and write.
+        """
+        for rec in self:
+            tag_names = rec.product_tag_ids.mapped('name')
+            if len(tag_names) > _ETSY_TAG_MAX_COUNT:
+                raise ValidationError(_(
+                    "A product may carry at most %(max)d tags (got %(count)d).",
+                ) % {'max': _ETSY_TAG_MAX_COUNT, 'count': len(tag_names)})
+            for name in tag_names:
+                if len(name) > _ETSY_TAG_MAX_LEN:
+                    raise ValidationError(_(
+                        "Tag %(tag)r exceeds %(max)d characters.",
+                    ) % {'tag': name, 'max': _ETSY_TAG_MAX_LEN})
+                if not _ETSY_TAG_CHARSET_RE.match(name):
+                    raise ValidationError(_(
+                        "Tag %(tag)r has invalid characters; allowed: "
+                        "letters, digits, spaces, hyphens, apostrophes.",
+                    ) % {'tag': name})

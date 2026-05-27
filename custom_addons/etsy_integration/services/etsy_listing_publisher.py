@@ -67,6 +67,9 @@ class EtsyListingPublisher:
         # otherwise 400 the legacy 'processing_min/max' path which is gone.
         if sh.default_readiness_state_id:
             payload['readiness_state_id'] = int(sh.default_readiness_state_id)
+        tag_names = s.product_tag_ids.mapped('name')[:13]
+        if tag_names:
+            payload['tags'] = tag_names
         return payload
 
     # ------------------------------------------------------------------

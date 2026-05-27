@@ -73,3 +73,4 @@ from . import test_phase1_hub_v2_validator_db
 from . import test_phase2_hub_v2_validator_orm
 from . import test_phase1_pub_pricing_standardise_db
 from . import test_phase2_pub_pricing_standardise_orm
+from . import test_phase2_pub_tags_validator_orm

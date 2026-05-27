@@ -38,6 +38,13 @@
                         <field name="x_sku_legacy" readonly="True"/>
                     </group>
                 </page>
+                <page string="Listing Tags" name="hub_listing_tags">
+                    <group>
+                        <field name="product_tag_ids" widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               help="Up to 13 tags, each &lt;=20 chars, charset [A-Za-z0-9 -']. Used by Etsy publisher."/>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
