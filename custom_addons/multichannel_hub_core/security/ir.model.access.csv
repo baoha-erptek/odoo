@@ -55,3 +55,6 @@ access_mhc_sku_family_user,mhc.sku.family user read,model_mhc_sku_family,base.gr
 access_mhc_sku_family_ba_user,mhc.sku.family ba write,model_mhc_sku_family,multichannel_hub_core.group_ba_user,1,1,1,1
 access_mhc_sku_family_system,mhc.sku.family system,model_mhc_sku_family,base.group_system,1,1,1,1
 access_product_sku_builder_wizard_user,product.sku.builder.wizard user,model_product_sku_builder_wizard,base.group_user,1,1,1,1
+access_multichannel_product_image_user,multichannel.product.image user,model_multichannel_product_image,base.group_user,1,0,0,0
+access_multichannel_product_image_product_manager,multichannel.product.image product manager,model_multichannel_product_image,product.group_product_manager,1,1,1,1
+access_multichannel_product_image_system,multichannel.product.image system,model_multichannel_product_image,base.group_system,1,1,1,1

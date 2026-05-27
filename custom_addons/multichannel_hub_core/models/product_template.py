@@ -65,6 +65,13 @@ class ProductTemplate(models.Model):
         default=0.0,
         help="Excel 'Other costs' bookkeeping",
     )
+    x_extra_image_ids = fields.One2many(
+        'multichannel.product.image',
+        'product_tmpl_id',
+        string='Extra Images',
+        help="Gallery rows beyond image_1920 for multi-image publishing "
+             "(Etsy iterates main image + these, capped at 10).",
+    )
     x_unit_margin = fields.Float(
         digits='Product Price',
         compute='_compute_unit_margin',

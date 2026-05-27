@@ -195,40 +195,68 @@ class EtsyListingPublisher:
         return response
 
     # ------------------------------------------------------------------
-    # Spec 011 P-PUB-IMAGES (option B / MVP) — single-image, no diff (T015)
+    # Spec 011 P-PUB-IMAGES + P-PUB-MULTI-IMAGE (MP006 2026-05-27)
     # ------------------------------------------------------------------
-    # Odoo 19 CE has no `product.image` model (Enterprise-only). MVP scope:
-    # upload the template's `image_1920` per publish, no manifest diff, no
-    # DELETE path. Multi-image-per-listing + diff is a follow-up slice.
+    # Original MVP: single image_1920. Multi-image pivot 2026-05-27:
+    # iterate main image_1920 first, then multichannel.product.image
+    # gallery rows sorted by sequence; cap at Etsy's 10-image limit;
+    # per-image upload failure logs WARNING and continues to the next.
+    ETSY_MAX_IMAGES = 10
+
     def upload_images(self, tmpl, listing_id, shop):
-        """POST /listings/{listing_id}/images for the template's main image.
+        """POST /listings/{listing_id}/images for main + gallery images.
 
         Returns the list of response payloads (one per successful upload).
-        Templates with no `image_1920` set are a no-op (returns []).
+        Returns [] if neither main image nor gallery rows are present.
         """
         if not listing_id:
             raise ValueError("upload_images requires a non-empty listing_id")
-        if not tmpl.sudo().image_1920:
+        t = tmpl.sudo()
+        candidates = []
+        if t.image_1920:
+            candidates.append(('main', t.image_1920))
+        for row in t.x_extra_image_ids.sorted('sequence'):
+            if row.image_1920:
+                candidates.append(('gallery', row.image_1920))
+        if not candidates:
             return []
-        # `image_1920` is stored base64-encoded; decode for the multipart body.
-        try:
-            payload_bytes = base64.b64decode(tmpl.sudo().image_1920)
-        except Exception as exc:  # noqa: BLE001 — defensive only
-            raise ValueError(
-                "Could not decode product image for template %r: %s"
-                % (tmpl.name, exc)
-            ) from exc
         client = EtsyApiClient(shop)
         path = "listings/%s/images" % listing_id
-        files = {
-            'image': (
-                (tmpl.default_code or 'image') + '.jpg',
-                payload_bytes,
-                'image/jpeg',
-            ),
-        }
-        response = client.post_multipart(path, files=files)
-        return [response] if response else []
+        sku = tmpl.default_code or 'image'
+        results = []
+        for idx, (origin, raw) in enumerate(candidates, start=1):
+            if idx > self.ETSY_MAX_IMAGES:
+                _logger.warning(
+                    "Skipping image %d for listing %s: Etsy cap at %d",
+                    idx, listing_id, self.ETSY_MAX_IMAGES,
+                )
+                continue
+            try:
+                payload_bytes = base64.b64decode(raw)
+            except Exception as exc:  # noqa: BLE001 — defensive only
+                _logger.warning(
+                    "Skipping %s image %d for listing %s — decode failed: %s",
+                    origin, idx, listing_id, exc,
+                )
+                continue
+            files = {
+                'image': (
+                    '%s_%d.jpg' % (sku, idx),
+                    payload_bytes,
+                    'image/jpeg',
+                ),
+            }
+            try:
+                response = client.post_multipart(path, files=files)
+            except Exception as exc:  # noqa: BLE001 — partial-failure resilience
+                _logger.warning(
+                    "Etsy image upload failed for listing %s image %d: %s",
+                    listing_id, idx, exc,
+                )
+                continue
+            if response:
+                results.append(response)
+        return results
 
     # ------------------------------------------------------------------
     # Spec 011 P-PUB-PUBLISH T025 — PATCH /listings/{id} state='active'

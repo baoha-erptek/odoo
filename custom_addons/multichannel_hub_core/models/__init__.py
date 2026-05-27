@@ -26,3 +26,4 @@ from . import product_catalog_import_run
 from . import product_catalog_import_line
 from . import product_catalog_sheet_fingerprint
 from . import multichannel_sync_health
+from . import multichannel_product_image

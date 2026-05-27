@@ -1,9 +1,11 @@
-"""Phase 2 ORM tests for P-PUB-IMAGES (Spec 011 T016) — option B (MVP).
+"""Phase 2 ORM tests for P-PUB-IMAGES + P-PUB-MULTI-IMAGE (Spec 011, MP006).
 
-Scoped down per finding 2026-05-23: Odoo 19 CE has no `product.image`
-model. This slice uploads the template's `image_1920` (single image) per
-publish; no manifest diff, no DELETE path. Multi-image-per-listing + diff
-deferred to a follow-up slice when business value surfaces.
+Original slice (P-PUB-IMAGES T016): single-image upload via image_1920.
+Multi-image slice (P-PUB-MULTI-IMAGE 2026-05-27): iterates a custom
+`multichannel.product.image` gallery (chosen over website_sale's
+product.image to avoid pulling 10+ unwanted modules — Standard-Odoo-First
+escalation 2026-05-27). Main image_1920 first, then gallery rows sorted
+by sequence; cap at Etsy's 10-image limit; per-image failures continue.
 """
 
 import base64
@@ -101,3 +103,131 @@ class TestPubImagesORM(TransactionCase):
             results = publisher.upload_images(tmpl, 'LST-1', shop)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].get('listing_image_id'), 42)
+
+    # ------------------------------------------------------------------
+    # P-PUB-MULTI-IMAGE (2026-05-27) — multi-image iteration tests
+    # ------------------------------------------------------------------
+
+    def _add_gallery(self, tmpl, sequences):
+        Gallery = self.env['multichannel.product.image']
+        rows = []
+        for seq in sequences:
+            rows.append(Gallery.create({
+                'product_tmpl_id': tmpl.id,
+                'sequence': seq,
+                'image_1920': base64.b64encode(_PNG),
+            }))
+        return Gallery.browse([r.id for r in rows])
+
+    def test_upload_main_plus_gallery_in_sequence_order(self):
+        shop = self._make_shop()
+        tmpl = self.Template.create({
+            'name': 'gallery order',
+            'default_code': 'GO-1',
+            'image_1920': base64.b64encode(_PNG),
+        })
+        self._add_gallery(tmpl, [30, 10, 20])
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.post_multipart.return_value = {'listing_image_id': 1}
+            results = publisher.upload_images(tmpl, 'LST-1', shop)
+        self.assertEqual(client.post_multipart.call_count, 4)
+        self.assertEqual(len(results), 4)
+
+    def test_upload_exactly_ten_images_no_skip_log(self):
+        shop = self._make_shop()
+        tmpl = self.Template.create({
+            'name': 'exactly ten',
+            'default_code': 'X10-1',
+            'image_1920': base64.b64encode(_PNG),
+        })
+        self._add_gallery(tmpl, [10 * i for i in range(1, 10)])
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.post_multipart.return_value = {'listing_image_id': 1}
+            results = publisher.upload_images(tmpl, 'LST-1', shop)
+        self.assertEqual(len(results), 10)
+        self.assertEqual(client.post_multipart.call_count, 10)
+
+    def test_upload_eleven_capped_at_ten_with_info_log(self):
+        shop = self._make_shop()
+        tmpl = self.Template.create({
+            'name': 'eleven try',
+            'default_code': 'X11-1',
+            'image_1920': base64.b64encode(_PNG),
+        })
+        self._add_gallery(tmpl, [10 * i for i in range(1, 11)])  # 10 gallery + 1 main = 11
+        # Sanity: confirm fixture actually persisted 10 gallery rows w/ images.
+        self.assertEqual(len(tmpl.x_extra_image_ids), 10)
+        self.assertTrue(all(r.image_1920 for r in tmpl.x_extra_image_ids))
+        self.assertTrue(bool(tmpl.image_1920))
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.post_multipart.return_value = {'listing_image_id': 1}
+            with self.assertLogs(
+                'odoo.addons.etsy_integration.services.etsy_listing_publisher',
+                level='WARNING',
+            ) as cm:
+                results = publisher.upload_images(tmpl, 'LST-1', shop)
+        self.assertEqual(len(results), 10)
+        self.assertEqual(client.post_multipart.call_count, 10)
+        self.assertTrue(
+            any('cap' in m.lower() or 'skip' in m.lower() for m in cm.output),
+            f"expected cap/skip WARNING log, got: {cm.output}",
+        )
+
+    def test_upload_gallery_only_no_main(self):
+        shop = self._make_shop()
+        tmpl = self.Template.create({
+            'name': 'no main',
+            'default_code': 'NM-1',
+        })
+        self._add_gallery(tmpl, [10, 20, 30])
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.post_multipart.return_value = {'listing_image_id': 1}
+            results = publisher.upload_images(tmpl, 'LST-1', shop)
+        self.assertEqual(len(results), 3)
+        self.assertEqual(client.post_multipart.call_count, 3)
+
+    def test_upload_per_image_failure_continues(self):
+        shop = self._make_shop()
+        tmpl = self.Template.create({
+            'name': 'partial fail',
+            'default_code': 'PF-1',
+            'image_1920': base64.b64encode(_PNG),
+        })
+        self._add_gallery(tmpl, [10, 20])  # 1 main + 2 gallery = 3 attempts
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.post_multipart.side_effect = [
+                {'listing_image_id': 1},
+                RuntimeError('400 Bad Request'),
+                {'listing_image_id': 3},
+            ]
+            with self.assertLogs(
+                'odoo.addons.etsy_integration.services.etsy_listing_publisher',
+                level='WARNING',
+            ) as cm:
+                results = publisher.upload_images(tmpl, 'LST-1', shop)
+        self.assertEqual(client.post_multipart.call_count, 3)
+        self.assertEqual(len(results), 2)  # 1st + 3rd succeeded
+        self.assertTrue(
+            any('400' in m or 'Bad Request' in m for m in cm.output),
+            f"expected failure WARNING log, got: {cm.output}",
+        )
