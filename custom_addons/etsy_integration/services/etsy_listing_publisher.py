@@ -83,6 +83,42 @@ class EtsyListingPublisher:
         return seen
 
     # ------------------------------------------------------------------
+    # Spec 011 P-PUB-VARIANT-PROPERTIES — variant attribute axes →
+    # products[].property_values[] per push_inventory offering
+    # ------------------------------------------------------------------
+    # Per-axis gated by product.attribute.x_publish_as_property (default
+    # True). property_id comes from product.attribute.x_etsy_property_id;
+    # when empty, falls back to the attribute name and logs WARNING so
+    # the BA can spot un-mapped axes in the Odoo log.
+    #
+    # Walks variant.product_template_attribute_value_ids (per-variant
+    # M2M). For dynamic-variant axes (e.g. Color in our seed), the M2M
+    # stays empty until a buyer picks a combination — return [] in that
+    # case, which Etsy already accepts at line 247's prior baseline.
+    @staticmethod
+    def _collect_property_values(variant):
+        properties = []
+        for ptav in variant.product_template_attribute_value_ids:
+            axis = ptav.attribute_id
+            if not axis.x_publish_as_property:
+                continue
+            raw = axis.x_etsy_property_id
+            if not raw:
+                _logger.warning(
+                    "product.attribute id=%s name=%r missing "
+                    "x_etsy_property_id; falling back to attribute name",
+                    axis.id, axis.name,
+                )
+                prop_id = axis.name
+            else:
+                prop_id = int(raw) if raw.isdigit() else raw
+            properties.append({
+                'property_id': prop_id,
+                'values': [ptav.product_attribute_value_id.name],
+            })
+        return properties
+
+    # ------------------------------------------------------------------
     # Payload builder
     # ------------------------------------------------------------------
     def _build_create_draft_payload(self, tmpl, shop):
@@ -244,7 +280,7 @@ class EtsyListingPublisher:
                 offering['readiness_state_id'] = int(readiness)
             products_payload.append({
                 'sku': sku,
-                'property_values': [],
+                'property_values': self._collect_property_values(variant),
                 'offerings': [offering],
             })
         client = EtsyApiClient(shop)

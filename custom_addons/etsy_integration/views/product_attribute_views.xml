@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P-PUB-VARIANT-PROPERTIES — expose Etsy taxonomy mapping fields on
+         product.attribute form. Restricted to system administrators so
+         BAs cannot accidentally remap Etsy property IDs and corrupt
+         live listings. -->
+    <record id="product_attribute_view_form_etsy_extension" model="ir.ui.view">
+        <field name="name">product.attribute.form.etsy</field>
+        <field name="model">product.attribute</field>
+        <field name="inherit_id" ref="product.product_attribute_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='main_fields']" position="after">
+                <group string="Etsy Publisher Settings" groups="base.group_system">
+                    <field name="x_publish_as_property"/>
+                    <field name="x_etsy_property_id"
+                           invisible="not x_publish_as_property"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    P-PUB-VARIANT-PROPERTIES (Spec 011 MP006) — opt-in seed.
+
+    Field x_publish_as_property defaults False; this seed flips True for
+    the known variant-attribute axes the publisher should emit as Etsy
+    property_values[]. Family stays False because it is `no_variant` and
+    therefore never appears in variant.product_template_attribute_value_ids
+    anyway — keeping the explicit row makes intent visible.
+
+    noupdate="1" so admin edits via the form persist across upgrades.
+-->
+<odoo noupdate="1">
+    <record id="multichannel_hub_core.attribute_material" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_shape" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_size" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_fluid_oz" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_apparel_size" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_color" model="product.attribute">
+        <field name="x_publish_as_property">True</field>
+    </record>
+    <record id="multichannel_hub_core.attribute_family_tag" model="product.attribute">
+        <field name="x_publish_as_property">False</field>
+    </record>
+</odoo>
