@@ -185,6 +185,30 @@ Located in `.claude/agents/`:
 
 ---
 
+## Standard-Odoo-First (MANDATORY, 2026-05-27)
+
+**Before adding any new field, model, view, or service: search standard Odoo first.**
+Reuse existing modules, fields, and patterns. If a standard solution exists
+(e.g., `product.tag`, `list_price`, `product_template_image_ids`,
+`product.attribute.value`, partner merge wizard, MRP routes), use it.
+
+**Never reinvent**:
+- Custom Float when `list_price` (Monetary) exists.
+- Custom tag model when `product.tag` ships in 19 CE.
+- Custom image gallery when `product_template_image_ids` exists.
+- Custom merge logic when `base.partner.merge.automatic.wizard` ships.
+- Custom routing when Dropship/MTO routes can be layered.
+
+**Process when you think a custom field/model is needed**:
+1. Grep `addons/` and `odoo/addons/` for the concept (`grep -rn "list_price" addons/product/`).
+2. Check the Odoo 19 developer skill (`.claude/skills/odoo-19-developer/`).
+3. If standard exists → use it; cite the standard source in commit body.
+4. If standard does NOT exist or doesn't fit → **STOP and ping the owner via Telegram/AskUserQuestion** with: (a) the standard option considered, (b) why it doesn't fit, (c) the custom alternative proposed. Do NOT implement custom until owner confirms.
+
+This rule overrides "run to completion" — owner approval is the only valid path to a new custom field/model. Documented in memory `feedback_standard_odoo_first.md`.
+
+---
+
 ## Master Plan 006 — Execution Contract (MANDATORY)
 
 When implementing any slice from `.claude/plans/006-master-plan-tracking.md`,
