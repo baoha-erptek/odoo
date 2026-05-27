@@ -45,6 +45,18 @@
                                help="Up to 13 tags, each &lt;=20 chars, charset [A-Za-z0-9 -']. Used by Etsy publisher."/>
                     </group>
                 </page>
+                <page string="Listing Options" name="hub_listing_options">
+                    <group>
+                        <field name="x_is_personalizable"/>
+                        <field name="x_personalization_required"
+                               invisible="not x_is_personalizable"/>
+                        <field name="x_personalization_char_count"
+                               invisible="not x_is_personalizable"/>
+                    </group>
+                    <field name="x_personalization_instructions"
+                           invisible="not x_is_personalizable"
+                           placeholder="e.g., 'Enter recipient name for engraving'"/>
+                </page>
                 <page string="Extra Images" name="hub_extra_images">
                     <field name="x_extra_image_ids">
                         <list editable="bottom">

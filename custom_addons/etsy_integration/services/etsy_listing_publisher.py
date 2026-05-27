@@ -70,6 +70,14 @@ class EtsyListingPublisher:
         tag_names = s.product_tag_ids.mapped('name')[:13]
         if tag_names:
             payload['tags'] = tag_names
+        # Spec 011 P-PUB-PERSONALIZATION — emit personalization keys only when
+        # the feature is enabled. Etsy treats absence as "feature off"; do NOT
+        # send is_personalizable=False (matches tags-block "empty omitted" pattern).
+        if s.x_is_personalizable:
+            payload['is_personalizable'] = True
+            payload['personalization_is_required'] = bool(s.x_personalization_required)
+            payload['personalization_char_count_max'] = int(s.x_personalization_char_count or 256)
+            payload['personalization_instructions'] = s.x_personalization_instructions or ''
         return payload
 
     # ------------------------------------------------------------------

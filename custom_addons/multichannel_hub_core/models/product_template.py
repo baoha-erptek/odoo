@@ -72,6 +72,25 @@ class ProductTemplate(models.Model):
         help="Gallery rows beyond image_1920 for multi-image publishing "
              "(Etsy iterates main image + these, capped at 10).",
     )
+    x_is_personalizable = fields.Boolean(
+        default=False,
+        help="Channel-agnostic: listing supports buyer personalization. "
+             "Etsy publisher emits is_personalizable + 3 companion keys when True.",
+    )
+    x_personalization_required = fields.Boolean(
+        default=False,
+        help="Channel-agnostic: personalization is mandatory for purchase. "
+             "Only meaningful when x_is_personalizable is True.",
+    )
+    x_personalization_char_count = fields.Integer(
+        default=256,
+        help="Channel-agnostic: max characters of buyer personalization text. "
+             "Valid range 1-1024 when x_is_personalizable is True.",
+    )
+    x_personalization_instructions = fields.Text(
+        help="Channel-agnostic: buyer instructions for personalization. "
+             "Sent as personalization_instructions when x_is_personalizable is True.",
+    )
     x_unit_margin = fields.Float(
         digits='Product Price',
         compute='_compute_unit_margin',
@@ -278,6 +297,23 @@ class ProductTemplate(models.Model):
             rec.default_code = suggested
 
         return records
+
+    @api.constrains('x_is_personalizable', 'x_personalization_char_count')
+    def _check_personalization_char_count(self):
+        """Enforce 1-1024 char_count range when personalization is on.
+
+        Inert when x_is_personalizable is False — the feature is off and
+        char_count value is irrelevant.
+        """
+        for rec in self:
+            if not rec.x_is_personalizable:
+                continue
+            cc = rec.x_personalization_char_count
+            if cc < 1 or cc > 1024:
+                raise ValidationError(_(
+                    "Personalization char count must be between 1 and 1024 "
+                    "(got %(value)s).",
+                ) % {'value': cc})
 
     @api.constrains('product_tag_ids')
     def _check_etsy_tag_rules(self):
