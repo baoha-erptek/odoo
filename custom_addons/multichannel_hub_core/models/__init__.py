@@ -21,6 +21,7 @@ from . import product_channel_status
 from . import sku_family
 from . import product_attribute_value
 from . import product_template
+from . import product_product
 from . import product_catalog_import_run
 from . import product_catalog_import_line
 from . import product_catalog_sheet_fingerprint

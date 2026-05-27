@@ -158,3 +158,104 @@ class ProductTemplate(models.Model):
                 rec.x_sku_v2_status = 'matches'
             else:
                 rec.x_sku_v2_status = 'non_canonical'
+
+    @api.onchange('categ_id', 'attribute_line_ids')
+    def _onchange_auto_fill_default_code(self):
+        """Auto-derive default_code from categ_id + attribute_line_ids.
+
+        Per P-HUB-SKU-AUTODERIVE (Spec 009):
+        - If default_code is blank, populate via SKU grammar.
+        - If default_code matches prior auto-suggestion (looks auto-generated),
+          update to new suggestion when categ_id changes.
+        - If default_code was manually edited (dirty-flag), preserve it.
+        - Never auto-update legacy products (x_sku_v2_status='ba_approved_legacy').
+        """
+        for rec in self:
+            # Never auto-update legacy products
+            if rec.x_sku_v2_status == 'ba_approved_legacy':
+                continue
+
+            # Skip if category has no family (no suggestion available)
+            if not rec.categ_id:
+                continue
+
+            cat_family = rec.categ_id._get_sku_family_chain()
+            if not cat_family:
+                continue
+
+            # Build attribute_values dict from attribute_line_ids
+            attr_values = {}
+            for attr_line in rec.attribute_line_ids:
+                if attr_line.attribute_id and attr_line.value_ids:
+                    # For onchange, just take the first value (variants are created later)
+                    first_value = attr_line.value_ids[0]
+                    attr_values[attr_line.attribute_id.name] = first_value.x_code or first_value.name
+
+            # Evaluate: categ_id + attributes → full SKU
+            suggested = sku_grammar_v2.evaluate(
+                name=rec.name or '',
+                env=self.env,
+                categ_id=rec.categ_id.id,
+                attribute_values=attr_values if attr_values else None,
+            )
+
+            # Ensure suggested is a string (not tuple)
+            if isinstance(suggested, tuple):
+                suggested = suggested[0]
+
+            # Auto-fill decision:
+            # 1. If default_code is blank, populate
+            # 2. If it matches the old suggestion (auto-generated), update
+            # 3. If it's different (manual edit), preserve it
+            if not rec.default_code:
+                # Blank: always populate
+                rec.default_code = suggested
+            elif rec.x_sku_v2_status in ('matches', 'non_canonical'):
+                # Was auto-suggested before; if user hasn't manually edited,
+                # we can safely update to the new suggestion.
+                # (In a full implementation, we'd track the prior suggested value,
+                # but for onchange simplicity: update if the code starts with the old family code
+                # and is changing families. For now: update unconditionally if it was suggested.)
+                if rec.x_sku_v2_suggested and rec.default_code == rec.x_sku_v2_suggested:
+                    rec.default_code = suggested
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override to auto-fill default_code last-chance.
+
+        After super().create(), if default_code is still blank and categ_id
+        is set, populate via SKU grammar (Spec 009).
+        """
+        records = super().create(vals_list)
+
+        for rec in records:
+            # Skip if default_code is already set
+            if rec.default_code:
+                continue
+
+            # Skip if legacy status
+            if rec.x_sku_v2_status == 'ba_approved_legacy':
+                continue
+
+            # Skip if no category
+            if not rec.categ_id:
+                continue
+
+            cat_family = rec.categ_id._get_sku_family_chain()
+            if not cat_family:
+                continue
+
+            # Auto-fill from category
+            suggested = sku_grammar_v2.evaluate(
+                name=rec.name or '',
+                env=self.env,
+                categ_id=rec.categ_id.id,
+                attribute_values=None,  # No variant attributes at create time
+            )
+
+            if isinstance(suggested, tuple):
+                suggested = suggested[0]
+
+            rec.default_code = suggested
+
+        return records

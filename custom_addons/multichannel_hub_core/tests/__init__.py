@@ -48,6 +48,8 @@ from . import test_phase1_hub_product_model_db
 from . import test_phase2_hub_product_model_orm
 from . import test_phase1_hub_wizard_db
 from . import test_phase2_hub_wizard_orm
+from . import test_phase1_hub_sku_autoderive_db
+from . import test_phase2_hub_sku_autoderive_orm
 from . import test_phase1_hub_sku_drift_db
 from . import test_phase2_hub_sku_drift_orm
 from . import test_phase1_hub_status_view_db

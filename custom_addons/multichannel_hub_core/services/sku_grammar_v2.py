@@ -128,17 +128,60 @@ def _load_rules(env) -> list[FamilyRule]:
     return rules
 
 
-def evaluate(name: str, env) -> tuple[str, str]:
-    """Return (suggested_sku, family_code) for the given product name.
+def evaluate(
+    name: str,
+    env,
+    categ_id=None,
+    attribute_values=None,
+) -> tuple[str, str] | str:
+    """Return (suggested_sku, family_code) or full SKU for the given product.
 
-    `env` is the Odoo Environment used to read `mhc.sku.family` rows.
-    Empty name or no match → ('MSC', 'MSC').
+    Args:
+        name: Product name (for legacy name-regex fallback).
+        env: Odoo Environment to read `mhc.sku.family` and variants.
+        categ_id: product.category.id. If provided, use its SKU family (priority).
+        attribute_values: dict {attribute_name: code_value, ...} for variants
+                         (e.g., {'Material': 'CR', 'Size': 'F11'}).
+                         Used with categ_id to build full SKU like 'MUG-CR-F11'.
 
-    Spec 009 §2.5: DB-driven; replaces the frozen tuple landed in T005.
+    Returns:
+        If categ_id + attribute_values: full SKU string (e.g., 'MUG-CR-F11').
+        Otherwise: (family_code, family_code) tuple.
+        No match or empty inputs → ('MSC', 'MSC').
+
+    Spec 009 §2.6 P-HUB-SKU-AUTODERIVE: categ_id wins over name-regex;
+    name fallback retained for Excel ingestor with no categ_id.
     """
-    if not name:
-        return _MSC
-    for rule in _load_rules(env):
-        if rule.pattern.search(name):
-            return (rule.code, rule.code)
-    return _MSC
+    # Priority 1: categ_id + family chain
+    family_code = None
+    if categ_id:
+        cat = env['product.category'].browse(categ_id)
+        if cat and cat.exists():
+            sku_family = cat._get_sku_family_chain()
+            if sku_family:
+                family_code = sku_family.code
+
+    # Priority 2: name-regex fallback (legacy)
+    if not family_code:
+        if not name:
+            return _MSC
+        for rule in _load_rules(env):
+            if rule.pattern.search(name):
+                family_code = rule.code
+                break
+        if not family_code:
+            return _MSC
+
+    # If attribute_values provided, build full SKU
+    if attribute_values and isinstance(attribute_values, dict):
+        # family_code-MAT2-SIZE[-VAR2] pattern
+        segments = [family_code]
+        # Collect attribute codes in order (Material, Size, Color, etc.)
+        for attr_name in sorted(attribute_values.keys()):
+            attr_code = attribute_values[attr_name]
+            if attr_code:
+                segments.append(attr_code)
+        full_sku = '-'.join(segments)
+        return full_sku
+
+    return (family_code, family_code)
