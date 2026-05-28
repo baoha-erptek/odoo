@@ -246,3 +246,26 @@ publisher source values are unemitted vocabulary, so a new one would be dead too
 Tests: `test_phase2_pub_personalization_endpoints_orm.py` — 8 Phase 2 ORM cases, GREEN; full
 publish+personalization suites 17/17. Module installs clean. etsy_integration → 19.0.2.26.0.
 DELETE-on-toggle-off is out of scope (no-op when False); revisit if operators need stale-removal.
+
+## R-UAT-TAOSP-TC013-014-TESTSIDE — 2026-05-28 (Playwright test-side fixes)
+
+Both failures from the 2026-05-28 batched live re-run were **test-side**, not Etsy payload bugs
+(the publish path created real drafts for both — see Stage B above). Root causes:
+
+- **TC-014 (`fillWeight` 15s timeout):** `weight` lives on the standard product form's **Inventory
+  tab** (Logistics group), which Odoo 19 **lazy-renders**. `ProductFormPage.fillWeight` filled
+  `[name="weight"] input` without first activating that tab, so the locator was never
+  visible/actionable → `locator.fill` timed out before publish. Fix: `fillWeight` now `openTab(/Inventory|Tồn kho|Logistics|Hậu cần/)`
+  + `waitFor({state:'visible'})` before fill (mirrors the `openGeneralTab` pattern the other
+  field helpers already use).
+- **TC-013 (`external_ref` assertion race):** the shared `channelStatus` helper read
+  `product.channel.status.external_ref` **once** immediately after `publishDraftOnly()` returned;
+  the listing id is not necessarily committed/propagated to the status row by then → intermittent
+  `toBeTruthy()` failure despite a successful publish. Fix: new `pollExternalRef(request, code, 15000)`
+  re-queries every 1s until `external_ref` is truthy (or timeout); TC-013 + TC-014 now use it.
+
+No Odoo module code changed (test harness only): `tests/e2e/page-objects/product_form.ts`
+(`fillWeight`) + `tests/e2e/tests/uat_huong_dan_tao_san_pham.spec.ts` (`pollExternalRef` + the two
+assertions). Verified via `playwright test --list` (clean compile + collection, 15/15 listed); no
+local `tsc`/typescript dep in `tests/e2e` (Playwright transpiles at runtime). The live
+`RUN_ETSY_PUBLISH=1` green re-run on JaHandmadeArt is queued for an owner-scheduled Etsy window.

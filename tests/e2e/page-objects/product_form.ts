@@ -121,6 +121,11 @@ export class ProductFormPage {
   }
 
   async fillWeight(kg: number): Promise<void> {
+    // `weight` lives on the Inventory tab (Logistics group), lazy-rendered in
+    // Odoo 19 — fill before activating that tab and the locator never becomes
+    // actionable (15s timeout). Open the tab and wait for visibility first.
+    await this.openTab(/Inventory|Tồn kho|Logistics|Hậu cần/);
+    await this.weightInput.waitFor({ state: 'visible', timeout: 8000 });
     await this.weightInput.fill(String(kg));
     await this.weightInput.press('Tab');
   }

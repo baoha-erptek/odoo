@@ -62,6 +62,27 @@ async function channelStatus(
   return rows?.[0] ?? null;
 }
 
+/**
+ * Poll channel.status until `external_ref` is populated. The publish RPC returns
+ * before the listing id is necessarily committed/propagated to the status row, so
+ * a single read races (intermittent TC-013 failure). Re-query until truthy or
+ * timeout, then return the last row for assertion.
+ */
+async function pollExternalRef(
+  request: import('@playwright/test').APIRequestContext,
+  defaultCode: string,
+  timeoutMs = 15000,
+): Promise<{ state: string; external_ref: string | false } | null> {
+  const deadline = Date.now() + timeoutMs;
+  let last: { state: string; external_ref: string | false } | null = null;
+  do {
+    last = await channelStatus(request, defaultCode);
+    if (last?.external_ref) return last;
+    await new Promise((r) => setTimeout(r, 1000));
+  } while (Date.now() < deadline);
+  return last;
+}
+
 test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN v1.2 (standard form)', () => {
 
   test('TC-001 — Tạo Mug bằng form chuẩn; SKU tự sinh MUG-CR-F11', async ({ page }) => {
@@ -231,7 +252,7 @@ test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN v1.2 (standard form)', () 
     await f.save();
     const code = await f.readSku();
     await f.publishDraftOnly();
-    const st = await channelStatus(request, code);
+    const st = await pollExternalRef(request, code);
     expect(st?.external_ref, 'listing id present').toBeTruthy();
   });
 
@@ -252,7 +273,7 @@ test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN v1.2 (standard form)', () 
     await f.save();
     const code = await f.readSku();
     await f.publishDraftOnly();
-    const st = await channelStatus(request, code);
+    const st = await pollExternalRef(request, code);
     expect(st?.external_ref, 'listing id present').toBeTruthy();
     // Etsy-side item_weight/item_length/item_width verified manually.
   });
