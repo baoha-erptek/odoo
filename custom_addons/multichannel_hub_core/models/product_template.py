@@ -153,6 +153,12 @@ class ProductTemplate(models.Model):
     x_sku_legacy = fields.Char(
         help="Archive of prior default_code after canonicalisation wizard run",
     )
+    x_sku_auto_value = fields.Char(
+        copy=False,
+        help="Last system-derived default_code. Lets the auto-fill onchange tell a "
+             "still-auto SKU from a manual BA edit, so incremental category/variant "
+             "changes keep re-deriving until the BA types a custom code.",
+    )
     x_published_channel_count = fields.Integer(
         compute='_compute_x_published_channel_count',
         store=True,
@@ -280,21 +286,14 @@ class ProductTemplate(models.Model):
             if isinstance(suggested, tuple):
                 suggested = suggested[0]
 
-            # Auto-fill decision:
-            # 1. If default_code is blank, populate
-            # 2. If it matches the old suggestion (auto-generated), update
-            # 3. If it's different (manual edit), preserve it
-            if not rec.default_code:
-                # Blank: always populate
+            # Overwrite only while the SKU is still system-managed: blank, or
+            # exactly equal to the value we last auto-derived. A manual BA edit
+            # makes default_code diverge from x_sku_auto_value -> preserve it.
+            # This lets incremental category/variant changes keep re-deriving
+            # (MUG -> MUG-CR -> MUG-CR-F11) instead of freezing after the first.
+            if not rec.default_code or rec.default_code == (rec.x_sku_auto_value or ''):
                 rec.default_code = suggested
-            elif rec.x_sku_v2_status in ('matches', 'non_canonical'):
-                # Was auto-suggested before; if user hasn't manually edited,
-                # we can safely update to the new suggestion.
-                # (In a full implementation, we'd track the prior suggested value,
-                # but for onchange simplicity: update if the code starts with the old family code
-                # and is changing families. For now: update unconditionally if it was suggested.)
-                if rec.x_sku_v2_suggested and rec.default_code == rec.x_sku_v2_suggested:
-                    rec.default_code = suggested
+                rec.x_sku_auto_value = suggested
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -334,8 +333,41 @@ class ProductTemplate(models.Model):
                 suggested = suggested[0]
 
             rec.default_code = suggested
+            rec.x_sku_auto_value = suggested
 
+        records._sync_channel_statuses()
         return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'x_channel_applicability_ids' in vals:
+            self._sync_channel_statuses()
+        return res
+
+    def _sync_channel_statuses(self):
+        """Ensure a draft product.channel.status row exists per applicable channel.
+
+        Mirrors the retired product.creation.wizard.action_create side effect so
+        the standard product form fully replaces the wizard (v1.2 flow): saving a
+        product with x_channel_applicability_ids seeds the 'Etsy - Draft' status.
+        Additive only — never removes or clobbers rows, so a channel already
+        Published/Error is preserved.
+        """
+        # sudo: product.channel.status writes are gated to publisher/BA roles, but
+        # a BA saving a product must be able to seed its draft rows. Bounded to
+        # creating only the missing rows.
+        Status = self.env['product.channel.status'].sudo()
+        for rec in self:
+            if not rec.id or not rec.x_channel_applicability_ids:
+                continue
+            existing = Status.search([('product_tmpl_id', '=', rec.id)])
+            have = set(existing.mapped('channel_id').ids)
+            missing = [c.id for c in rec.x_channel_applicability_ids if c.id not in have]
+            if missing:
+                Status.create([
+                    {'product_tmpl_id': rec.id, 'channel_id': cid, 'state': 'draft'}
+                    for cid in missing
+                ])
 
     @api.constrains('x_is_personalizable', 'x_personalization_char_count')
     def _check_personalization_char_count(self):

@@ -60,6 +60,22 @@ class FamilyRule(NamedTuple):
     pattern: re.Pattern
 
 
+# Grammar segment order for variant-driven SKUs: <FAM3>-<MAT2>-<SIZE>[-<VAR2>].
+# Variant attributes map to a grammar ROLE, not their alphabetical name, so the
+# composed SKU follows the grammar regardless of attribute display name. The
+# four SIZE-namespace attributes (Shape/Size/Fluid oz/Apparel Size) all fill the
+# single SIZE slot (a product normally carries exactly one of them). Unknown
+# attributes sort last, stably by name, so they never displace canonical slots.
+# Keyed by attribute display name to match attr_values built in
+# product_template._onchange_auto_fill_default_code (keyed by attribute.name).
+_ATTR_ROLE_ORDER = {
+    'Material': 1,
+    'Shape': 2, 'Size': 2, 'Fluid oz': 2, 'Apparel Size': 2,
+    'Color': 3,
+}
+_DEFAULT_ROLE_ORDER = 99
+
+
 # Per-cursor compiled-regex cache.
 # Stored on the cursor object so it lives exactly as long as the cursor;
 # Odoo's transaction lifecycle bounds it naturally.
@@ -174,14 +190,18 @@ def evaluate(
 
     # If attribute_values provided, build full SKU
     if attribute_values and isinstance(attribute_values, dict):
-        # family_code-MAT2-SIZE[-VAR2] pattern
+        # Compose <FAM3>-<MAT2>-<SIZE>[-<VAR2>] by grammar ROLE, not by the
+        # attribute's alphabetical name. Without this, e.g. {Material: CR,
+        # 'Fluid oz': F11} would sort 'Fluid oz' before 'Material' and yield
+        # MUG-F11-CR instead of MUG-CR-F11.
+        def _role_rank(attr_name):
+            return (_ATTR_ROLE_ORDER.get(attr_name, _DEFAULT_ROLE_ORDER), attr_name)
+
         segments = [family_code]
-        # Collect attribute codes in order (Material, Size, Color, etc.)
-        for attr_name in sorted(attribute_values.keys()):
+        for attr_name in sorted(attribute_values.keys(), key=_role_rank):
             attr_code = attribute_values[attr_name]
             if attr_code:
                 segments.append(attr_code)
-        full_sku = '-'.join(segments)
-        return full_sku
+        return '-'.join(segments)
 
     return (family_code, family_code)

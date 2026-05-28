@@ -295,6 +295,73 @@ class TestProductTemplateOnchangeAutofill(TransactionCase):
             "default_code should still be populated after category switch",
         )
 
+    def test_evaluate_orders_segments_by_grammar_role(self):
+        """evaluate() must compose FAM-MAT-SIZE-VAR2 by ROLE, not attribute name.
+
+        Reproduces HUONG_DAN_TAO_SAN_PHAM_VN TC-001: Material + Fluid oz.
+        'Fluid oz' sorts before 'Material' alphabetically, so a naive sorted()
+        would yield MUG-F11-CR; grammar-role ordering must yield MUG-CR-F11.
+        Color (VAR2) must trail the SIZE slot.
+        """
+        from odoo.addons.multichannel_hub_core.services import sku_grammar_v2
+
+        cat = self.Category.create({
+            'name': 'Mugs Ordering',
+            'x_sku_family_id': self.fam_mug.id if self.fam_mug else None,
+        })
+        if not self.fam_mug:
+            self.skipTest("seeded MUG family missing")
+
+        self.assertEqual(
+            sku_grammar_v2.evaluate(
+                name='X', env=self.env, categ_id=cat.id,
+                attribute_values={'Material': 'CR', 'Fluid oz': 'F11'},
+            ),
+            'MUG-CR-F11',
+            "Material must precede the SIZE-slot (Fluid oz) regardless of name sort",
+        )
+        self.assertEqual(
+            sku_grammar_v2.evaluate(
+                name='X', env=self.env, categ_id=cat.id,
+                attribute_values={'Material': 'CR', 'Fluid oz': 'F11', 'Color': 'BK'},
+            ),
+            'MUG-CR-F11-BK',
+            "Color (VAR2) must trail the SIZE slot",
+        )
+
+    def test_onchange_incremental_preserves_manual_edit(self):
+        """A manual SKU edit must survive a later attribute change.
+
+        Guards the dirty-flag: once the BA types a custom code, adding/removing
+        variants must NOT overwrite it.
+        """
+        from odoo.tests.common import Form
+
+        Attribute = self.env['product.attribute']
+        AttributeValue = self.env['product.attribute.value']
+        mat_attr = Attribute.search([('name', '=', 'Material')], limit=1)
+        mat_cr = AttributeValue.search(
+            [('attribute_id', '=', mat_attr.id), ('x_code', '=', 'CR')], limit=1)
+        if not (self.fam_mug and mat_attr and mat_cr):
+            self.skipTest("seeded MUG family / Material attribute missing")
+
+        cat = self.Category.create({
+            'name': 'Mugs Manual',
+            'x_sku_family_id': self.fam_mug.id,
+        })
+
+        with Form(self.Template) as f:
+            f.name = 'Custom Mug Manual'
+            f.categ_id = cat
+            f.default_code = 'KEEP-THIS-001'
+            with f.attribute_line_ids.new() as line:
+                line.attribute_id = mat_attr
+                line.value_ids.add(mat_cr)
+            self.assertEqual(
+                f.default_code, 'KEEP-THIS-001',
+                "Manual SKU edit must not be overwritten by attribute changes",
+            )
+
 
 @tagged('post_install', '-at_install')
 class TestProductTemplateCreateAutofill(TransactionCase):
@@ -478,6 +545,42 @@ class TestLegacyProductSkip(TransactionCase):
             'ba_approved_legacy',
             "x_sku_v2_status should remain ba_approved_legacy",
         )
+
+
+@tagged('post_install', '-at_install')
+class TestChannelStatusSyncOnSave(TransactionCase):
+    """Standard-form save must seed product.channel.status from applicability."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        cls.Template = cls.env['product.template']
+        cls.Status = cls.env['product.channel.status']
+        cls.etsy = cls.env.ref('multichannel_hub_core.channel_etsy', raise_if_not_found=False)
+
+    def test_create_with_applicability_seeds_draft_status(self):
+        if not self.etsy:
+            self.skipTest("channel_etsy not present")
+        tmpl = self.Template.create({
+            'name': 'Channel Sync Create',
+            'list_price': 5.0,
+            'x_channel_applicability_ids': [(6, 0, [self.etsy.id])],
+        })
+        rows = self.Status.search([
+            ('product_tmpl_id', '=', tmpl.id), ('channel_id', '=', self.etsy.id)])
+        self.assertEqual(len(rows), 1, "one Etsy status row expected")
+        self.assertEqual(rows.state, 'draft')
+
+    def test_write_applicability_seeds_status_and_is_idempotent(self):
+        if not self.etsy:
+            self.skipTest("channel_etsy not present")
+        tmpl = self.Template.create({'name': 'Channel Sync Write', 'list_price': 5.0})
+        tmpl.write({'x_channel_applicability_ids': [(6, 0, [self.etsy.id])]})
+        tmpl.write({'x_channel_applicability_ids': [(6, 0, [self.etsy.id])]})  # re-save
+        rows = self.Status.search([
+            ('product_tmpl_id', '=', tmpl.id), ('channel_id', '=', self.etsy.id)])
+        self.assertEqual(len(rows), 1, "sync must be additive/idempotent (no duplicates)")
 
 
 @tagged('post_install', '-at_install')

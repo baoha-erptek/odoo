@@ -36,6 +36,10 @@
                         <field name="x_sku_v2_suggested" readonly="True"/>
                         <field name="x_sku_v2_status" readonly="True"/>
                         <field name="x_sku_legacy" readonly="True"/>
+                        <!-- Tracks the last system-derived code so the auto-fill
+                             onchange can tell auto from manual. Must be in the arch
+                             (invisible) to round-trip across onchange calls. -->
+                        <field name="x_sku_auto_value" invisible="1"/>
                     </group>
                 </page>
                 <page string="Listing Tags" name="hub_listing_tags">
