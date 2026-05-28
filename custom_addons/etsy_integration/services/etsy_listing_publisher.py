@@ -214,20 +214,11 @@ class EtsyListingPublisher:
         tag_names = s.product_tag_ids.mapped('name')[:13]
         if tag_names:
             payload['tags'] = tag_names
-        # Spec 011 P-PUB-PERSONALIZATION — emission GATED OFF (R-PUB-RESPONSE-BODY-
-        # DIAGNOSE 2026-05-28). Etsy deprecated the four inline personalization
-        # fields on createListing; sending them now 400s ("Use the dedicated
-        # personalization endpoints instead"). The Odoo fields/UI are preserved
-        # (data intact) — a follow-up slice will integrate Etsy's dedicated
-        # personalization-migration endpoints. Until then we do NOT emit these
-        # keys, and log so the deferred feature is visible in ops.
-        if s.x_is_personalizable:
-            _logger.warning(
-                "Etsy personalization is enabled on template %s but inline "
-                "personalization fields are deprecated by Etsy; skipping "
-                "emission on createListing (pending dedicated-endpoint slice).",
-                s.id,
-            )
+        # Spec 011 personalization is NOT emitted on createListing — Etsy
+        # deprecated the four inline fields in 2026 (they now 400). It is sent
+        # as a separate orchestrator step via push_personalization() against
+        # the dedicated /personalization endpoint (R-PUB-PERSONALIZATION-
+        # ENDPOINTS), the same way inventory and images are separate steps.
         # Spec 011 P-PUB-MATERIALS — emit materials only when the variant
         # carries Material attribute values. Matches tags-block "empty
         # omitted" pattern; Etsy treats absence as "no materials".
@@ -380,6 +371,55 @@ class EtsyListingPublisher:
         return response
 
     # ------------------------------------------------------------------
+    # Spec 011 R-PUB-PERSONALIZATION-ENDPOINTS — dedicated personalization
+    # endpoint (inline createListing fields deprecated by Etsy 2026).
+    # ------------------------------------------------------------------
+    # Etsy's 2026 migration-period contract accepts exactly ONE text_input
+    # question per listing. `x_personalization_char_count` is already pinned
+    # to 1-1024 by the mhc `_check_personalization_char_count` constraint, so
+    # it passes straight through. `x_personalization_instructions` is an
+    # unbounded Text field, so it is truncated here to Etsy's 256-char ceiling
+    # (API-boundary validation, not an impossible-state guard).
+    ETSY_PERSONALIZATION_INSTRUCTIONS_MAX = 256
+
+    def push_personalization(self, tmpl, listing_id, shop):
+        """POST /shops/{shop_id}/listings/{listing_id}/personalization.
+
+        No-op (returns {}) when the template is not personalizable. Builds a
+        single text_input question from the preserved product.template fields.
+        """
+        if not listing_id:
+            raise ValueError(
+                "push_personalization requires a non-empty listing_id"
+            )
+        # sudo: read personalization fields regardless of the caller's
+        # stock/product-read ACL; the wizard's FR-017 gate proved BA upstream.
+        t = tmpl.sudo()
+        if not t.x_is_personalizable:
+            return {}
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            raise ValueError(
+                "Etsy shop %r missing etsy_api_shop_id; cannot push "
+                "personalization." % shop.name
+            )
+        instructions = (t.x_personalization_instructions or '')[
+            :self.ETSY_PERSONALIZATION_INSTRUCTIONS_MAX
+        ]
+        payload = {
+            'personalization_questions': [{
+                'question_type': 'text_input',
+                'question_text': 'Personalization',
+                'instructions': instructions,
+                'required': bool(t.x_personalization_required),
+                'max_allowed_characters': int(t.x_personalization_char_count or 256),
+            }],
+        }
+        client = EtsyApiClient(shop)
+        path = "shops/%s/listings/%s/personalization" % (api_shop_id, listing_id)
+        return client.post(path, json=payload)
+
+    # ------------------------------------------------------------------
     # Spec 011 P-PUB-IMAGES + P-PUB-MULTI-IMAGE (MP006 2026-05-27)
     # ------------------------------------------------------------------
     # Original MVP: single image_1920. Multi-image pivot 2026-05-27:
@@ -492,6 +532,18 @@ class EtsyListingPublisher:
                 result['listing_id'] = listing_id
             else:
                 result['listing_id'] = int(listing_id) if str(listing_id).isdigit() else listing_id
+
+            # R-PUB-PERSONALIZATION-ENDPOINTS: set personalization via the
+            # dedicated endpoint (inline createListing fields deprecated by
+            # Etsy 2026). Best-effort — a personalization failure must not
+            # block the listing from publishing; log and continue.
+            try:
+                self.push_personalization(tmpl, listing_id, shop)
+            except Exception as exc:  # noqa: BLE001 — personalization is non-fatal
+                _logger.warning(
+                    "Etsy personalization push failed for listing %s: %s; "
+                    "continuing with publish chain", listing_id, exc,
+                )
 
             self.upload_images(tmpl, listing_id, shop)
             self.push_inventory(tmpl, listing_id, shop)

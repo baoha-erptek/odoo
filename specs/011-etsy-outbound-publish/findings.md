@@ -183,3 +183,66 @@ Operability: JaHandmadeArt is a **VND** shop (Etsy min ~5,043 VND) — live TCs 
 `LIVE_PRICE=250000`; standard form lazy-renders notebook pages (re-open General tab before
 reading `default_code`); bare-family SKU triggers Odoo's "Internal Reference already exists"
 Note dialog (auto-dismissed). Owner UAT findings: `docs/owner/UAT_FINDINGS_2026-05-28.md`.
+
+## R-PUB-PERSONALIZATION-ENDPOINTS — endpoint contract research (2026-05-28)
+
+Source: https://developers.etsy.com/documentation/tutorials/personalization-migration/ +
+.../personalization/endpoint-migration. Inline createListing fields deprecated 2026-02-06,
+removed 2026-04-09. Replacement is a dedicated per-listing personalization endpoint suite.
+
+**Endpoints (migration period):**
+- `GET /v3/application/listings/{listing_id}/personalization` — read; returns
+  `personalization_questions[]` (empty when none).
+- `POST /v3/application/shops/{shop_id}/listings/{listing_id}/personalization` — create/update;
+  **fully replaces** existing personalization. Body `personalization_questions[]` must contain
+  **exactly one** question object during the migration period (multi-question + dropdown +
+  file-upload types come later in 2026).
+- `DELETE /v3/application/shops/{shop_id}/listings/{listing_id}/personalization` — removes
+  personalization and sets `is_personalizable=false`.
+
+**POST body (single text_input, migration period):**
+```json
+{"personalization_questions": [{
+  "question_type": "text_input",
+  "question_text": "Personalization",
+  "instructions": "<=256 chars",
+  "required": true,
+  "max_allowed_characters": 256   // int, valid 1-1024
+}]}
+```
+
+**Sequencing:** POST/DELETE need a `listing_id` → must run AFTER `create_draft` in the publisher
+`run()` chain (same lifecycle slot as `push_inventory`). Uses `shop.etsy_api_shop_id` for the
+`{shop_id}` path segment (same field the other publisher calls use).
+
+**Odoo → Etsy field mapping** (fields on `product.template`, defined in `multichannel_hub_core`):
+
+| Odoo field (mhc) | type / default | → Etsy POST key |
+|---|---|---|
+| `x_is_personalizable` | Boolean / False | gate: True → POST one question; False → DELETE (or no-op on fresh draft) |
+| `x_personalization_required` | Boolean / False | `required` |
+| `x_personalization_char_count` | Integer / 256 | `max_allowed_characters` (clamp to 1-1024) |
+| `x_personalization_instructions` | Text / — | `instructions` (truncate to ≤256 chars) |
+
+No Odoo field maps to `question_text`/`question_type` → constants `"Personalization"` / `"text_input"`.
+Scopes: `listings_w` (write listings) — same scope set already used by createListing/inventory.
+
+### Implementation outcome (landed)
+`EtsyListingPublisher.push_personalization(tmpl, listing_id, shop)` — no-op returns `{}` when
+`x_is_personalizable` is False; otherwise POSTs one `text_input` question. Wired into `run()`
+**after** create_draft/resume, **before** `upload_images`, in a **non-fatal** `try/except` (a
+personalization failure logs a WARNING and the listing still publishes). createListing payload
+no longer emits the deprecated inline keys (and the obsolete "pending slice" WARNING is removed).
+
+**Design correction vs. the research note above** (caught at RED, the planner could not know it):
+`max_allowed_characters` is **NOT clamped** in the publisher — `product.template` already carries
+`@api.constrains _check_personalization_char_count` (mhc `product_template.py`) pinning
+`x_personalization_char_count` to 1-1024 whenever personalization is on, so out-of-range is an
+impossible state at the ORM boundary; clamping would be dead code (dropped per "no validation for
+impossible scenarios"). `instructions` IS truncated to 256 (the Text field is unbounded — genuine
+API-boundary validation). The `etsy.api.log` source enum was deliberately NOT extended: the sibling
+publisher source values are unemitted vocabulary, so a new one would be dead too.
+
+Tests: `test_phase2_pub_personalization_endpoints_orm.py` — 8 Phase 2 ORM cases, GREEN; full
+publish+personalization suites 17/17. Module installs clean. etsy_integration → 19.0.2.26.0.
+DELETE-on-toggle-off is out of scope (no-op when False); revisit if operators need stale-removal.
