@@ -79,13 +79,27 @@ class TestPubImagesORM(TransactionCase):
             publisher.upload_images(tmpl, 'LST-IMG', shop)
         self.assertEqual(client.post_multipart.call_count, 1)
         args, kwargs = client.post_multipart.call_args
-        self.assertEqual(args[0], 'listings/LST-IMG/images')
+        # Etsy's uploadListingImage endpoint is shop-scoped (the bare
+        # listings/{id}/images path 404s — UAT 2026-05-28).
+        self.assertEqual(args[0], 'shops/66666666/listings/LST-IMG/images')
         files = kwargs.get('files') or {}
         self.assertIn('image', files)
         # files['image'] is (filename, bytes, mime)
         filename, payload, mime = files['image']
         self.assertEqual(mime, 'image/jpeg')
         self.assertTrue(payload)  # non-empty bytes
+
+    def test_upload_images_raises_when_shop_id_missing(self):
+        shop = self._make_shop()
+        shop.etsy_api_shop_id = False
+        tmpl = self.Template.create({
+            'name': 'No shop id product',
+            'default_code': 'NOSID-1',
+            'image_1920': base64.b64encode(_PNG),
+        })
+        publisher = EtsyListingPublisher(self.env)
+        with self.assertRaises(ValueError):
+            publisher.upload_images(tmpl, 'LST-1', shop)
 
     def test_upload_images_returns_response_list(self):
         shop = self._make_shop()

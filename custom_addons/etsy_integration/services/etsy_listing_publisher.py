@@ -429,7 +429,11 @@ class EtsyListingPublisher:
     ETSY_MAX_IMAGES = 10
 
     def upload_images(self, tmpl, listing_id, shop):
-        """POST /listings/{listing_id}/images for main + gallery images.
+        """POST /shops/{shop_id}/listings/{listing_id}/images for main + gallery.
+
+        Etsy's uploadListingImage endpoint is shop-scoped; the bare
+        listings/{id}/images path 404s (surfaced by the real-product UAT
+        2026-05-28 — every upload silently failed via the per-image WARNING).
 
         Returns the list of response payloads (one per successful upload).
         Returns [] if neither main image nor gallery rows are present.
@@ -445,8 +449,14 @@ class EtsyListingPublisher:
                 candidates.append(('gallery', row.image_1920))
         if not candidates:
             return []
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            raise ValueError(
+                "Etsy shop %r missing etsy_api_shop_id; cannot upload images."
+                % shop.name
+            )
         client = EtsyApiClient(shop)
-        path = "listings/%s/images" % listing_id
+        path = "shops/%s/listings/%s/images" % (api_shop_id, listing_id)
         sku = tmpl.default_code or 'image'
         results = []
         for idx, (origin, raw) in enumerate(candidates, start=1):

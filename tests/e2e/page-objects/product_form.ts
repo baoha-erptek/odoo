@@ -153,12 +153,15 @@ export class ProductFormPage {
   // --- variants (Attributes & Variants tab) ------------------------------
 
   /**
-   * Add one attribute line with a single value. Type the FULL display name
-   * from sku_attribute_seed.xml ("Ceramic + Chrome", "11 oz", "Medium") — NOT
-   * the x_code abbreviation (autocomplete has no domain filter; abbreviations
-   * silently pick the wrong value — see memory feedback_attribute_value_display_name_drift).
+   * Add one attribute line. Pass a single value or an array of values (the
+   * latter yields multiple product variants on that axis). Type the FULL
+   * display name from sku_attribute_seed.xml ("Ceramic + Chrome", "11 oz",
+   * "Medium", "Black") — NOT the x_code abbreviation (autocomplete has no
+   * domain filter; abbreviations silently pick the wrong value — see memory
+   * feedback_attribute_value_display_name_drift).
    */
-  async addVariantAttribute(attributeName: string, valueName: string): Promise<void> {
+  async addVariantAttribute(attributeName: string, valueName: string | string[]): Promise<void> {
+    const values = Array.isArray(valueName) ? valueName : [valueName];
     await this.openTab(/Attributes|Variants|Thuộc tính|Biến thể/);
     const linesField = this.page.locator('[name="attribute_line_ids"]').first();
     await linesField.locator('.o_field_x2many_list_row_add a').first().click();
@@ -173,9 +176,13 @@ export class ProductFormPage {
     await this.page.locator('.o-autocomplete--dropdown-item', { hasText: attributeName }).first().click();
     await this.page.waitForTimeout(300); // value_ids domain re-filters on attribute pick
     const valInput = row.locator('[name="value_ids"] input');
-    await valInput.click();
-    await valInput.fill(valueName);
-    await this.page.locator('.o-autocomplete--dropdown-item', { hasText: valueName }).first().click();
+    for (const v of values) {
+      await valInput.click();
+      await valInput.fill(v);
+      await this.page.locator('.o-autocomplete--dropdown-item', { hasText: v }).first().click();
+      await this.page.waitForTimeout(300); // tag commits; input clears for the next value
+    }
+    await valInput.press('Escape'); // blur the m2m input (Color needs explicit blur)
     await this.page.waitForTimeout(400); // let onchange('attribute_line_ids') re-derive SKU
   }
 

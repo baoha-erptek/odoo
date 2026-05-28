@@ -54,6 +54,10 @@ package.json
 !tests/e2e/tsconfig.json
 !tests/e2e/playwright.config.ts
 
+# UAT image fixtures — regenerate from the catalog xlsx via
+# tests/e2e/fixtures/extract_catalog_images.py (do not commit ~1MB base64 photos)
+tests/e2e/fixtures/assets/*.b64
+
 # Versioned git hooks (cross-team automation; activate via core.hooksPath)
 !.githooks/
 !.githooks/**

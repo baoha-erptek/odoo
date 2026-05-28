@@ -292,3 +292,34 @@ Two drifts surfaced while inventorying the building blocks (cross-checked agains
 
 No RED/GREEN — verification was cross-reference resolution: 8 building-block paths + 10 npm
 scripts + the SSH key all resolve; skill registers and is discoverable in the skill list.
+
+## R-PUB-IMAGE-SHOP-SCOPED-PATH (real-product UAT, 2026-05-28)
+
+Real-catalog-apron UAT (`tests/e2e/tests/uat_real_apron_publish.spec.ts`, TC-R01) created an
+Etsy draft with **0 photos** despite both images being set on the Odoo product
+(`image_1920` + one `x_extra_image_ids` row).
+
+**Root cause:** `EtsyListingPublisher.upload_images` posted to `listings/{id}/images`. Etsy's
+`uploadListingImage` endpoint is **shop-scoped** — `shops/{shop_id}/listings/{id}/images` — so
+every upload returned **404**, swallowed by the per-image `except ... WARNING; continue` guard.
+`create_draft` and `push_personalization` were already shop-scoped; `upload_images` was the
+lone miss. Direct `post_multipart('listings/{id}/images')` → 404; `shops/{shop_id}/listings/...`
+→ 200 (`listing_image_id` returned).
+
+**Fix** (etsy 19.0.2.26.0 → 19.0.2.27.0): resolve `shop.sudo().etsy_api_shop_id` (raise if
+missing, mirroring create_draft) + shop-scoped path. Phase-2 test path assertion updated +
+new `test_upload_images_raises_when_shop_id_missing`. 9/9 image tests pass; live re-run draft
+`4512579307` has 2 photos. The silent-404 was only catchable because the UAT verified the
+listing's image count via the Etsy API — the per-image WARNING masked it from the publish flow
+(matches memory `feedback_capture_response_body_before_blackbox_probe`).
+
+## Variant property_values not pushed for dynamic-only axes (real-product UAT, 2026-05-28)
+
+The apron used **Color** (a `create_variant='dynamic'` seed attribute) as a variant axis.
+Dynamic-only axes don't materialise `product.product` variants, so `push_inventory` emitted
+the **no-variants fallback offering** (single offering, bare SKU `APR`, empty `property_values`)
+rather than per-color Etsy variations. This is the documented fallback (memory #152), not a
+regression. `materials=['Textile']` still propagated (derived from the template attribute line,
+independent of variant materialisation). For true Etsy variations with per-variant SKUs, the
+product needs materialised variants (an `always`-create axis, or a materialise-before-publish
+step). Candidate follow-up: a `R-PUB-VARIANT-MATERIALIZE` slice — owner decision.
