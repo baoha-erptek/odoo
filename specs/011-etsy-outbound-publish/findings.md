@@ -269,3 +269,26 @@ No Odoo module code changed (test harness only): `tests/e2e/page-objects/product
 assertions). Verified via `playwright test --list` (clean compile + collection, 15/15 listed); no
 local `tsc`/typescript dep in `tests/e2e` (Playwright transpiles at runtime). The live
 `RUN_ETSY_PUBLISH=1` green re-run on JaHandmadeArt is queued for an owner-scheduled Etsy window.
+
+---
+
+## P-UAT-AUTOMATION-SKILL — UAT loop packaged as `run-uat` skill (2026-05-28)
+
+Tooling/doc-only slice (no module code). Created `.claude/skills/run-uat/SKILL.md` —
+a procedure skill that sequences the existing building blocks: reset staging products
+→ rsync+docker module deploy+restart → seed → Playwright suite → report.
+
+Two drifts surfaced while inventorying the building blocks (cross-checked against current code):
+
+- **Live-price env var is `E2E_LISTING_PRICE`, not `LIVE_PRICE`.** The spec
+  (`tests/uat_huong_dan_tao_san_pham.spec.ts:29`) reads
+  `Number(process.env.E2E_LISTING_PRICE || 250000)` into a local const named `LIVE_PRICE`.
+  Prior tracker/notes shorthand ("VND price", "LIVE_PRICE") refers to the const, not the
+  env var operators must export. Skill documents `E2E_LISTING_PRICE=250000`.
+- **Staging DB is `esty_odoo19`, not `demo_esty`.** The `reference_staging_ssh_deploy`
+  memory (6 days old) still says `demo_esty`; the live contract (`package.json` reset scripts,
+  `_xmlrpc_session.connect`, `env.ts` defaults) is `esty_odoo19`. Skill pins `esty_odoo19` and
+  flags the stale name.
+
+No RED/GREEN — verification was cross-reference resolution: 8 building-block paths + 10 npm
+scripts + the SSH key all resolve; skill registers and is discoverable in the skill list.
