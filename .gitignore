@@ -12,6 +12,8 @@ _build/
 !.claude/
 # per-machine permissions — keep out of version control
 .claude/settings.local.json
+# runtime lock for /loop scheduled tasks
+.claude/scheduled_tasks.lock
 # compiled python files
 *.py[co]
 __pycache__/
@@ -46,6 +48,20 @@ package-lock.json
 package.json
 .husky
 
+# Project E2E test infrastructure overrides the upstream Odoo CE ignores
+!tests/e2e/package.json
+!tests/e2e/package-lock.json
+!tests/e2e/tsconfig.json
+!tests/e2e/playwright.config.ts
+
+# UAT image fixtures — regenerate from the catalog xlsx via
+# tests/e2e/fixtures/extract_catalog_images.py (do not commit ~1MB base64 photos)
+tests/e2e/fixtures/assets/*.b64
+
+# Versioned git hooks (cross-team automation; activate via core.hooksPath)
+!.githooks/
+!.githooks/**
+
 # various virtualenv
 /bin/
 /build/
@@ -68,3 +84,13 @@ secrets/
 # claude-mem auto-generated activity trackers
 custom_addons/**/CLAUDE.md
 specs/**/CLAUDE.md
+
+# Host-specific TFV parallel-deployment configs (separate Odoo instance, not part of esty repo)
+deployment/*.tfv.*
+deployment/scripts/deploy-tfv.sh
+deployment/docker-compose.tfv.yml
+deployment/nginx-tfv.*.conf
+
+# Vendor module zips (download fresh from upstream, do not commit)
+*.zip
+!enterprise.zip

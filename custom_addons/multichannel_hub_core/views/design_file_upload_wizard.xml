@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- design.file.upload.wizard form view -->
+    <record id="design_file_upload_wizard_form" model="ir.ui.view">
+        <field name="name">design.file.upload.wizard form</field>
+        <field name="model">design.file.upload.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="order_id" readonly="1" />
+                        <field name="storage_mode" />
+                        <field name="file_name" />
+                    </group>
+
+                    <group string="Files" invisible="storage_mode == 'url'">
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+
+                    <group string="File Content" invisible="storage_mode != 'small' or attachment_ids">
+                        <field name="file_blob" filename="file_name" />
+                    </group>
+
+                    <group string="URL Mode" invisible="storage_mode != 'url'">
+                        <field name="file_url" />
+                    </group>
+
+                    <group string="GDrive Mode" invisible="storage_mode != 'gdrive'">
+                        <field name="gdrive_folder_id" />
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button
+                        name="action_upload"
+                        type="object"
+                        string="Upload"
+                        class="btn-primary"
+                    />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open wizard -->
+    <record id="design_file_upload_wizard_action" model="ir.actions.act_window">
+        <field name="name">Upload Design File</field>
+        <field name="res_model">design.file.upload.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

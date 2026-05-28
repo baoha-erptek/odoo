@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_etsy_listing_product_list" model="ir.ui.view">
+        <field name="name">etsy.listing.product.list</field>
+        <field name="model">etsy.listing.product</field>
+        <field name="arch" type="xml">
+            <list string="Etsy Listing Variants"
+                  decoration-warning="qty_drift != 0"
+                  decoration-muted="not is_active">
+                <field name="listing_id"/>
+                <field name="etsy_product_id"/>
+                <field name="sku"/>
+                <field name="quantity"/>
+                <field name="odoo_qty"/>
+                <field name="qty_drift"/>
+                <field name="price"/>
+                <field name="product_id"/>
+                <field name="is_active"/>
+                <field name="last_synced_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_listing_product_search" model="ir.ui.view">
+        <field name="name">etsy.listing.product.search</field>
+        <field name="model">etsy.listing.product</field>
+        <field name="arch" type="xml">
+            <search string="Etsy Listing Variants">
+                <field name="sku"/>
+                <field name="etsy_product_id"/>
+                <field name="listing_id"/>
+                <field name="product_id"/>
+                <filter name="active" string="Active"
+                        domain="[('is_active', '=', True)]"/>
+                <filter name="unlinked" string="Unlinked"
+                        domain="[('product_id', '=', False),
+                                 ('is_active', '=', True)]"/>
+                <filter name="group_listing" string="Listing"
+                        context="{'group_by': 'listing_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_etsy_listing_products" model="ir.actions.act_window">
+        <field name="name">Etsy Listing Variants</field>
+        <field name="res_model">etsy.listing.product</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id"
+               ref="view_etsy_listing_product_search"/>
+    </record>
+
+    <menuitem
+        id="menu_etsy_listing_products"
+        name="Listing Variants"
+        parent="menu_etsy_root"
+        action="action_etsy_listing_products"
+        sequence="30"/>
+
+</odoo>

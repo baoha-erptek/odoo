@@ -312,6 +312,90 @@ Operational follow-through:
 - Add `order.pipeline.transition.log` to the Process Dashboard tile area for debugging stuck orders.
 - Operations runbook: "An order is stuck in stage X — what to check" page references this ADR §6 + §7.
 
+## Amendment 2026-05-03 — Hybrid with standard Odoo dropship + MTO routes
+
+**Status:** Accepted (Owner direction 2026-05-03 — Path B chosen via `AskUserQuestion`).
+**Affects:** `multichannel_hub_core` + `multichannel_hub_fulfillment` manifests, P1-DROP-* and P1-MTO-* slice family in [`.claude/plans/006-master-plan-tracking.md`](../../../.claude/plans/006-master-plan-tracking.md).
+**Does NOT supersede** the §Decision sections above — the configurable pipeline machinery, the 17 VN seed stages, the versioning semantics, and FR-017 write-defense remain canonical.
+
+### What changed
+
+The 2026-04-26 §Decision rejected three uses of standard Odoo MRP/Purchase plumbing (alternatives 1–3, lines 245–248). On 2026-05-03 the owner re-cited the Odoo 19 docs for [Dropshipping](https://github.com/odoo/documentation/blob/19.0/content/applications/inventory_and_mrp/inventory/shipping_receiving/daily_operations/dropshipping.rst) and [MTO replenishment](https://github.com/odoo/documentation/blob/19.0/content/applications/inventory_and_mrp/inventory/warehouses_storage/replenishment/mto.rst) and asked whether the project should follow them instead. After re-evaluation the answer is **partial yes**: the inventory/financial leg should adopt standard Odoo, but the workflow leg should keep the configurable pipeline.
+
+### What we are now layering on top of the configurable pipeline
+
+1. **Gearment-POD pipeline gets standard Dropshipping plumbing.**
+   - Add `stock_dropshipping` to `multichannel_hub_core` depends. (`stock_dropshipping` transitively brings `purchase` + `sale_purchase_stock`. The amendment text below originally said *"add `purchase`"* as shorthand; the actual dep is `stock_dropshipping` because it is the module that defines the Dropship `stock.route` (`route_drop_shipping`) and the dropship `stock.picking.type` that the rest of this section relies on. Clarified 2026-05-03 during P1-DROP-DEPS dispatch — see `findings.md` §"P1-DROP-DEPS dep clarification".)
+   - Seed Gearment as a `res.partner` with `supplier_rank=1`. Products with `x_gearment_sku` set get the Dropship route on their Inventory tab and Gearment in `seller_ids`.
+   - SO confirmation now auto-creates a real `purchase.order` (vendor = Gearment) and a `stock.picking` of type Dropship (Partners/Vendors → Partners/Customers).
+   - The `gearment_adapter.push_order()` REST call relocates from `_write_pipeline_state` hook (`multichannel_hub_fulfillment/models/sale_order.py:63-115`) to a new `purchase.order._inherit` extension's `action_confirm` override. PO confirm → Gearment REST → stamp `x_gearment_outbound_ref` on the SO + advance `order.pipeline.state` to `Pushed`. Dropship picking done → advance pipeline to `Fulfilled`.
+   - The `order.pipeline` "Gearment POD" stays as a thin **status overlay** driven by hooks on the standard PO/picking, NOT a parallel state machine.
+
+2. **`vn_internal_production` pipeline gets standard MTO plumbing.**
+   - Add `mrp` to `multichannel_hub_core` depends.
+   - Enable MTO route on products on `vn_internal_production`. Each gets a minimal pass-through BOM (1 finished good ← 1 phantom component) — auto-created via wizard to avoid master-data bloat.
+   - SO confirmation auto-creates `mrp.production`. New `multichannel_hub_core/models/mrp_production.py` (`_inherit = 'mrp.production'`) syncs the SO's `order.pipeline.state` at boundaries only: MO `confirmed` → pipeline=`CHỜ FILE`; MO `done` → pipeline=`VN-Fulfilled`.
+   - **The 17 VN PD/BA workflow stages (CHỜ DUYỆT, ĐÃ GỬI PROOF, VN-Dish, VN-Dish NG, [Fix]VN-Dish, VN-SP mới, VN-Apron, VN-Handkerchief, VN-Packed, VN-Packed 1, …) remain in `order.pipeline` and are advanced manually through the existing UI.** `mrp.production`'s 6-state model (draft/confirmed/progress/to_close/done/cancel) cannot represent them — the flexibility argument from the original §Decision still holds for these stages.
+
+### Why this does not contradict the original Owner direction
+
+Owner direction 2026-04-26 was *"Don't use `mrp.production` yet. Build a configurable pipeline that users define and attach to products."* — emphasis on **yet** and on **user-configurable workflow**. The amendment honors both:
+
+- The configurable pipeline remains the source of truth for workflow state. The 17-stage VN pipeline is unchanged. Pipeline-versioning, transition-log audit, per-stage resource assignment, FR-017 write-defense — all unchanged.
+- `mrp.production` enters the picture only as a **lifecycle anchor** at two boundary points (initial / terminal), not as the workflow engine the original ADR rejected.
+- Alternative 1 from the original §Decision (hardcoded `mrp.production.x_substate` enum) is still rejected — the 17 VN stages stay editable seed data, not Python enums.
+
+### Why this is worth doing now (and was wrong to skip earlier)
+
+- **Inventory dashboards.** The standard Odoo Inventory Overview's "Dropship" card and Manufacturing Overview's "To Process" card become accurate. The custom Operations Dashboard (P1-DASH-MERGE) does not need to re-implement these.
+- **Accounting integration.** Standard PO confirmation books the COGS journal entry on Gearment dropships. MO `done` books WIP→FG on internal production. Without these, the accounting team must back-fill manually for every order.
+- **Stock moves audit.** Dropship `stock.picking` (Vendors→Customers) gives a real audit row for every Gearment fulfillment that the custom `sale.order.fulfillment.tracking_state` field cannot.
+- **Upgrade safety.** When Odoo 20 ships, standard routes / `purchase.order` / `mrp.production` are guaranteed-supported migration paths. The custom-only design has no such guarantee.
+- **Cost was over-estimated in the original ADR.** "Couples to MRP infrastructure that isn't otherwise warranted" (alt 2/3 rejection) reads now as conflating *mrp.production-as-lifecycle-anchor* with *mrp.routing+workcenter-as-workflow-engine*. The first is cheap; only the second is heavy. The amendment uses the first only.
+
+### Cost we are accepting
+
+- **Two state machines per order.** `mrp.production.state` + `order.pipeline.state` for internal-production orders; `purchase.order.state` + `stock.picking.state` + `order.pipeline.state` for Gearment-POD orders. Sync logic lives in two new `_inherit` extensions and must be kept correct via tests (P1-DROP-CALLSITE, P1-MTO-SYNC).
+- **In-flight order migration.** Existing Gearment-POD orders with `x_gearment_outbound_ref` set predate the dropship-route change. The new code path checks the field first and treats those as "already pushed, skip PO creation." Documented in P1-DROP-CALLSITE.
+- **Test surface widens.** Existing P1 tests that assert "PO is not created" / "MO does not exist" must be updated. Estimated ~10–15 test changes across `multichannel_hub_*/tests/`.
+- **BOM seed-data surface.** Every `vn_internal_production` product needs a BOM. Pass-through BOM is acceptable; auto-creation wizard mitigates master-data bloat.
+
+### Slice plan
+
+The 6 code slices (`P1-DROP-DEPS` → `P1-DROP-SEED` → `P1-DROP-CALLSITE` → `P1-MTO-DEPS` → `P1-MTO-SEED` → `P1-MTO-SYNC`) plus this doc-only prep slice (`P1-DROP-MTO-DOC`) live in [`.claude/plans/006-master-plan-tracking.md`](../../../.claude/plans/006-master-plan-tracking.md) Phase 1 §"P1 Hybrid dropship + MTO re-architect." Each runs the standard MP006 9-phase loop. Sequence: dropship branch first (smaller scope, isolated to mhf), then MTO branch.
+
+### Re-evaluation trigger documented
+
+Verbatim 2026-05-03 owner prompt: *"About current Fulfillment pipelines, let check for current implemented approaches and these documents: for gearment_pod — [dropshipping.rst]; For internal_production — [mto.rst]. Seem we need to follow this already supported by Odoo instead of create something new. Recheck for these."* — captured in [`specs/006-master-plan/findings.md`](../findings.md) §Re-evaluation 2026-05-03.
+
+### Clarifications 2026-05-04 (P1-DROP-CALLSITE pre-implementation)
+
+Three contradictions surfaced during P1-DROP-CALLSITE Phase 0 dispatch. Resolved without superseding the amendment.
+
+**1. Stage-code alias for `gearment_pod` pipeline.** §1 above prescribes advancing pipeline to `Pushed` (after PO confirm) and `Fulfilled` (after dropship picking done). The actual seed (`multichannel_hub_core/data/order_pipeline_state_seed.xml:67-99`) ships `draft → quoted → confirmed → shipped`; no `pushed`/`fulfilled` codes exist. ADR-010 §9 (line 207, original) had named them `Awaiting Push → Pushed → Awaiting Tracking → Fulfilled` but the seed drifted before this slice.
+
+   - **Resolution:** treat `confirmed` ≡ ADR's `Pushed`, `shipped` ≡ ADR's `Fulfilled` for P1-DROP-CALLSITE. No seed change in this slice. The configurable-pipeline machinery remains canonical — admins can rename the stages later via the standard pipeline UI (which auto-versions per §5).
+   - **Future cleanup:** if/when the team wants the ADR-prescribed labels, file a separate `P1-DROP-PIPELINE-RENAME` slice. Code that hardcodes the codes (`models/sale_order.py` cron domain; `gearment_payload_builder` if it switches on state) is the migration surface.
+
+**2. Push-failure semantics under PO `action_confirm`.** Existing pre-amendment code (`models/sale_order.py:149-165`) caught the exception inside a savepoint, set `x_gearment_status='failed'`, rolled the SO pipeline back to `quoted`, and let the cron retry. Under PO confirm, the call site is now an `action_confirm` override.
+
+   - **Resolution:** raise `UserError` on push failure. PO confirm aborts; the entire transaction rolls back, including any SO pipeline writes in the same `action_confirm` call. PO stays in `draft`; SO stays in `confirmed` (one stage before Pushed). Operator re-clicks Confirm on the PO to retry. Chatter messages must be posted on the SO via a savepoint that commits even on the outer-transaction rollback (use `self.env.cr.savepoint(flush=False)` then `message_post`, then re-raise) so the failure is auditable.
+   - **Why not silent-catch + advance:** silent catch creates two-state-machine drift — PO would be `purchase` but SO Gearment-state would be `failed`. The amendment §"Cost we are accepting" already calls out this drift risk; UserError keeps the two state machines aligned at every commit boundary.
+   - **Cron retry replaced.** The existing `_cron_retry_stalled_gearment_pushes` is retired in this slice (see §3 below).
+
+**3. Legacy cleanup scope.** The slice description in `.claude/plans/006-master-plan-tracking.md` row `P1-DROP-CALLSITE` says only "Relocate `gearment_adapter.push_order` from `_write_pipeline_state` hook." After relocation these become orphans:
+
+   - `_write_pipeline_state` override (`models/sale_order.py:63-78`) — gearment-only logic. Strip the gearment branch; the override itself can be removed if no other branch remains.
+   - `_gearment_push_should_fire` (`:79-93`) — only callsite was the override above.
+   - `_enqueue_gearment_push` (`:95-115`) — only callsite was the override above.
+   - `action_push_to_gearment` (`:120-165`) — kept and called from the new `purchase.order.action_confirm` override (the actual push logic does not change; only the trigger does).
+   - `_cron_retry_stalled_gearment_pushes` (`:170-190`) — domain filters on SO pipeline state `confirmed` + missing ref; no SO ever sits in that combination after relocation. Cron XML row in `data/ir_cron_gearment_retry.xml` also removed.
+
+   - **Resolution:** P1-DROP-CALLSITE removes all five orphans in the same commit. Slice scope unchanged from the tracker row (still relocation-driven); cleanup is a strict consequence of the relocation, not a separate refactor. Single conventional commit, ~600-700 LOC including tests + deletions.
+
 ## Revision history
 
 - **2026-04-26**: Initial authoring. Accepted same day. Combines former state-machine ADR-010 + WC-reassignment ADR-011 per Owner direction "WC reassignment should follow the same approach." Recommended answers from `state-machine-questions.md` v2 Q1-Q9 and `wc-reassign-governance-questions.md` v2 Q1-Q5 are baked in (Owner accepted recommendations: "Go with your recommendation first, we'll comeback if thing changed or have issues").
+- **2026-05-03**: Amendment "Hybrid with standard Odoo dropship + MTO routes" appended. Accepted same day via `AskUserQuestion`. Adds `stock_dropshipping` (transitively `purchase`) + `mrp` to mhc deps; layers standard PO/MO/Dropship plumbing under the configurable pipeline as a lifecycle anchor; pipeline machinery, 17 VN seed stages, versioning, and FR-017 write-defense remain canonical. Authorizes P1-DROP-* and P1-MTO-* slice family.
+- **2026-05-03 (clarification)**: Section "What we are now layering on top of the configurable pipeline" §1 updated to name `stock_dropshipping` explicitly as the dep instead of `purchase`. Caught during P1-DROP-DEPS dispatch when the slice exit criterion ("Dropship route exists") could not be satisfied by `purchase` alone — the route lives in `stock_dropshipping/data/stock_data.xml`. No semantic change to the amendment; the actual install-time effect is identical (dependency closure includes purchase + sale + stock + stock_dropshipping). See `findings.md` §"P1-DROP-DEPS dep clarification".
+- **2026-05-04 (clarifications)**: Appended §"Clarifications 2026-05-04 (P1-DROP-CALLSITE pre-implementation)" with three resolutions: (1) stage-code alias `confirmed` ≡ Pushed and `shipped` ≡ Fulfilled — no seed change in this slice; future rename is a separate `P1-DROP-PIPELINE-RENAME`; (2) push-failure raises `UserError` under `purchase.order.action_confirm` (PO stays `draft`, txn rolls back, chatter posted via flush=False savepoint); (3) legacy cleanup scope — `_write_pipeline_state` override / `_gearment_push_should_fire` / `_enqueue_gearment_push` / `_cron_retry_stalled_gearment_pushes` + cron XML are all removed in P1-DROP-CALLSITE same commit. Caught during Phase 0 dispatch; no semantic change to the amendment. See `findings.md` §"P1-DROP-CALLSITE pre-implementation reconciliation".

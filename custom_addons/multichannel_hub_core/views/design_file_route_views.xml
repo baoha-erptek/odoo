@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- design.file.route form view with chatter. -->
+  <record id="view_design_file_route_form" model="ir.ui.view">
+    <field name="name">design.file.route.form</field>
+    <field name="model">design.file.route</field>
+    <field name="arch" type="xml">
+      <form string="Design File Route">
+        <sheet>
+          <group>
+            <group>
+              <field name="design_file_id"/>
+              <field name="recipient_type"/>
+              <field name="recipient_partner_id"/>
+            </group>
+            <group>
+              <field name="delivery_method"/>
+              <field name="state"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="created_at"/>
+              <field name="sent_at"/>
+            </group>
+            <group>
+              <field name="recipient_user_id"/>
+            </group>
+          </group>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+</odoo>

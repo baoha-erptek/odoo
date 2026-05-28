@@ -16,6 +16,16 @@
                     <field name="is_etsy_product" invisible="1"/>
                 </group>
             </xpath>
+            <!-- Spec 011 P-PUB-PUBLISH T027 — Publish to Etsy entry point on
+                 the product form header. The button opens the publish wizard
+                 which carries the FR-017 gate; this is UI-side defense-in-depth. -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_open_etsy_publish_wizard" type="object"
+                            string="Publish to Etsy" class="oe_highlight"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                </header>
+            </xpath>
         </field>
     </record>
 

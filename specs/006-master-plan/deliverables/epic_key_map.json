@@ -1,0 +1,14 @@
+{
+  "1. Đồng bộ đơn hàng từ Etsy": "ESTY-7",
+  "10. Hộp thư khách hàng": "ESTY-16",
+  "11. Mở rộng giai đoạn 2-3": "ESTY-17",
+  "12. Tồn kho nguyên liệu": "ESTY-18",
+  "2. Làm sạch dữ liệu đơn hàng cũ": "ESTY-8",
+  "3. Bảng điều khiển Đơn hàng": "ESTY-9",
+  "4. Bảng điều khiển Vận chuyển": "ESTY-10",
+  "5. Bảng điều khiển Sản xuất": "ESTY-11",
+  "6. Quy trình duyệt (file thiết kế / địa chỉ / ticket)": "ESTY-12",
+  "7. Nhập tracking & giao đối tác": "ESTY-13",
+  "8. Quản lý file thiết kế": "ESTY-14",
+  "9. Pipeline sản xuất có thể cấu hình": "ESTY-15"
+}

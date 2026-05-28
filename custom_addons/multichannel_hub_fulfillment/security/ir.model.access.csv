@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gearment_api_log_system,gearment.api.log system,model_gearment_api_log,base.group_system,1,1,1,1
+access_gearment_api_log_sale_manager,gearment.api.log sale manager read-only,model_gearment_api_log,sales_team.group_sale_manager,1,0,0,0
+access_tracking_import_log_ba_shipping,tracking.import.log ba shipping,model_tracking_import_log,multichannel_hub_fulfillment.group_ba_shipping,1,1,1,0
+access_tracking_import_log_ba_manager,tracking.import.log ba manager,model_tracking_import_log,multichannel_hub_fulfillment.group_ba_manager,1,1,1,1
+access_tracking_import_log_system,tracking.import.log system,model_tracking_import_log,base.group_system,1,1,1,1
+access_tracking_import_line_ba_shipping,tracking.import.line ba shipping,model_tracking_import_line,multichannel_hub_fulfillment.group_ba_shipping,1,1,1,0
+access_tracking_import_line_ba_manager,tracking.import.line ba manager,model_tracking_import_line,multichannel_hub_fulfillment.group_ba_manager,1,1,1,1
+access_tracking_import_line_system,tracking.import.line system,model_tracking_import_line,base.group_system,1,1,1,1
+access_tracking_import_wizard_ba_shipping,tracking.import.wizard ba shipping,model_tracking_import_wizard,multichannel_hub_fulfillment.group_ba_shipping,1,1,1,0
+access_tracking_import_wizard_ba_manager,tracking.import.wizard ba manager,model_tracking_import_wizard,multichannel_hub_fulfillment.group_ba_manager,1,1,1,0
+access_logistics_partner_ba_shipping,logistics.partner ba shipping read,model_logistics_partner,multichannel_hub_fulfillment.group_ba_shipping,1,0,0,0
+access_logistics_partner_ba_manager,logistics.partner ba manager read,model_logistics_partner,multichannel_hub_fulfillment.group_ba_manager,1,0,0,0
+access_logistics_partner_system,logistics.partner system,model_logistics_partner,base.group_system,1,1,1,1
+access_gearment_quote_wizard_ba_shipping,gearment.quote.wizard ba shipping,model_gearment_quote_wizard,multichannel_hub_fulfillment.group_ba_shipping,1,1,1,0
+access_gearment_quote_wizard_ba_manager,gearment.quote.wizard ba manager,model_gearment_quote_wizard,multichannel_hub_fulfillment.group_ba_manager,1,1,1,0

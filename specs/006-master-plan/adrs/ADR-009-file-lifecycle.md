@@ -205,6 +205,67 @@ Operational follow-through:
 - Define the route-policy table per pipeline routing in admin UI (links to ADR-010 §6 — pipeline-stage resource assignment determines who gets routed)
 - Update operations runbook with "design-file stuck in pending route — what to check" page
 
+## Amendment — Sibling-archive on approval (P1-DESIGN-MULTI-DOC, 2026-05-08)
+
+**Context**: P1-DESIGN-MULTI-UPLOAD (landed 2026-05-08, commit `cd5b58fe75d`) made the upload wizard accept N files in one run, so a single `sale.order.line` (or order, when line is null) can now have multiple `design.file` rows in the `pending` state at the same time. P1-DESIGN-AUTO-ARCHIVE (next slice in family) introduces an `active=fields.Boolean(default=True, tracking=True)` flag and the auto-archive rule below to keep the kanban readable.
+
+**Rule** (binding for P1-DESIGN-AUTO-ARCHIVE):
+
+When a `design.file` row's `state` writes to `'approved'`, the system sweeps **sibling rows** on the same `order_line_id` (or the same `order_id` when `order_line_id` is NULL) and writes `active=False` on every sibling whose `state != 'approved'`. The newly-approved row keeps `active=True`. The `state` field itself is NOT touched — sibling rows in `pending` stay `pending` (audit-trail preserved), they just leave the default-search visible set.
+
+**Why a separate `active` flag rather than transitioning state to a hypothetical `archived`**: Odoo's standard `active=False` semantics are well-understood by every kanban / list / search view (default domain `[('active','=',True)]` already filters). A new `state='archived'` would require updating every view's domain and would conflict with the simplified 3-state machine (`pending / approved / rejected`) that P1-02a MVP locked in. The 5-state machine sketched in §2 of this ADR was not implemented; the amendment recognises the simplification.
+
+**Migration / one-time backfill**: existing `state='rejected'` rows from before this rule lands are kept `active=True` to preserve operator visibility into past rejections. Only future `state='approved'` writes trigger sibling sweep. (Effectively: no retroactive archival.)
+
+**Interaction with `design.file.route`**: no-op. Routes are dispatched only for `design.file` rows with `state='approved'` (see `sale.order._after_confirm_routing` filter `lambda f: f.state == 'approved'`). Non-approved siblings have no `route_ids` to begin with; archiving them via `active=False` doesn't strand any route. The approved file (which keeps `active=True`) keeps its routes intact.
+
+**Tests required** (P1-DESIGN-AUTO-ARCHIVE Phase 2 ORM):
+- 3 files uploaded → approve middle one → other two `active=False`, middle stays `active=True`.
+- Approved file's `route_ids` untouched after the sibling sweep.
+- Existing `state='rejected'` row from a fixture before any approval stays `active=True` until a sibling approval triggers it (then it flips because rejected != approved).
+- Sibling scope: line-level files only sweep among the same `order_line_id`; order-level files (line is null) sweep among the same `order_id`.
+
+**Out of scope for this amendment**: re-introducing the 5-state machine. If the operator workflow ever needs `awaiting_approval` / `needs_revision` distinct from `pending`, file a separate ADR-009 successor.
+
+## Amendment — Provenance (`created_via`) field (2026-05-10, P1-DESIGN-AUTO-CREATE-FROM-EMAIL)
+
+To distinguish `design.file` rows by **how** they came into existence (email
+ingest auto-create vs. API ingest auto-create vs. operator wizard upload vs.
+historical migration backfill), `design.file` carries a new
+`created_via` Selection field with four values:
+
+| Value             | Meaning                                                    | Set by                                              |
+|-------------------|------------------------------------------------------------|-----------------------------------------------------|
+| `migration_seed`  | Backfilled from historical `etsy_design_link_*` columns    | `_seed_from_historical_lines` (P1-02a) + post-migrate script for legacy operator-wizard rows |
+| `email_ingest`    | Auto-seeded by `OrderCreator.process_parse_result`         | Email-path order creation when parsed `design_link_front`/`back` is non-empty |
+| `api_ingest`      | Auto-seeded by `OrderCreator.process_etsy_payload`         | API-path order creation when `EtsyLineItemPayload.design_link_*` is non-empty |
+| `operator_wizard` | Created via the design upload wizard UI (P1-09)            | Operator manual upload; default for any `create()` that doesn't set the field |
+
+The post-install migration in `multichannel_hub_core/migrations/19.0.1.0.35/`
+backfills existing rows: `is_seed=True` → `'migration_seed'`; everything else →
+`'operator_wizard'`. New rows default to `'operator_wizard'` so any code path
+that does not explicitly set provenance (most operator flows, the upload
+wizard, or any manual data fix) is correctly classified.
+
+Auto-seeded rows always start at `state='pending'` (the operator approval gate
+before Gearment push remains the same). Provenance is **not** a state and does
+**not** branch the lifecycle — it's purely an audit dimension that lets RCA on
+empty `data.line_items` failures distinguish "no email parsed a link" from
+"adapter never extracted a link" from "operator never uploaded".
+
+`tracking=True` on the field — chatter on `design.file` records the provenance
+on create. The field is `index=True` because RCA queries filter design.file by
+`(order_id, created_via)` to count "how many auto-created vs. operator-uploaded
+files for this order" before pushing to Gearment.
+
+**Out of scope**: branching the lifecycle by provenance. Auto-seeded rows go
+through the same `pending → approved/rejected` flow as operator-uploaded rows.
+A future slice may surface "seeded automatically — please confirm URL is the
+correct asset" UI in the kanban for `email_ingest` / `api_ingest` rows; that's
+UX, not lifecycle.
+
 ## Revision history
 
 - **2026-04-26**: Initial authoring. Accepted same day with Owner-recommended design (flexible, internal-Odoo, leverages GDrive primary + Discord/local fallback per ADR-006/012).
+- **2026-05-08**: Amendment — sibling-archive-on-approve rule (`active=False` on non-approved siblings) added to support multi-file uploads from P1-DESIGN-MULTI-UPLOAD. Doc-only change in P1-DESIGN-MULTI-DOC slice; behaviour lands in P1-DESIGN-AUTO-ARCHIVE.
+- **2026-05-10**: Amendment — `created_via` provenance field added (P1-DESIGN-AUTO-CREATE-FROM-EMAIL). Required for RCA distinguishing auto-seed vs. operator-upload origins after Defect-2026-05-11-01 (empty Gearment line_items because no design.file rows linked).

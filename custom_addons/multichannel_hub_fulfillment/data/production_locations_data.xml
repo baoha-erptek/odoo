@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- P2-03: production-locations ICP default. Operators populate the
+         mapping per warehouse zone via Settings → Technical → Parameters →
+         System Parameters. Schema:
+         {"vn": {"src": "<xmlid>", "dst": "<xmlid>"},
+          "us": {"src": "<xmlid>", "dst": "<xmlid>"}}
+         Empty default → hook fails open (no UserError, no move) per FR-018. -->
+    <record id="production_locations_icp" model="ir.config_parameter">
+        <field name="key">multichannel_hub_fulfillment.production_locations</field>
+        <field name="value">{}</field>
+    </record>
+</odoo>

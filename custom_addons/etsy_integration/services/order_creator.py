@@ -261,6 +261,21 @@ class OrderCreator:
             'etsy_discount_code': getattr(parse_result, 'discount_code', '') or '',
             'etsy_subtotal': parse_result.subtotal or 0.0,
             'etsy_email_log_id': email_log_id,
+            # Multichannel foundation (mhc FR-024). Without these, Operations
+            # Dashboard etsy filters skip the order and Gearment auto-push
+            # never fires. Surfaced 2026-05-08 staging E2E run.
+            'sales_channel': 'etsy',
+            'channel_order_ref': parse_result.order_id,
+            # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror parsed values into
+            # channel-agnostic shadows so the unified Operations Dashboard
+            # (model sale.order.line, related-shadows on order) shows values
+            # for email-ingested orders. Coexist with etsy_* twins per
+            # p1-01b-plan.md DECISION 1 (cleanup deferred).
+            'gift_message': getattr(parse_result, 'gift_message', '') or '',
+            'processing_time': getattr(parse_result, 'processing_time', '') or '',
+            'discount_code': getattr(parse_result, 'discount_code', '') or '',
+            'shipping_service_label': parse_result.shipping_service or '',
+            'shipping_cost': str(parse_result.shipping_cost or ''),
             'order_line': [],
         }
         if currency:
@@ -306,6 +321,12 @@ class OrderCreator:
         _logger.info(
             'Created sale.order %s (Etsy #%s) with %d lines',
             order.name, parse_result.order_id, len(order.order_line))
+        # P1-DESIGN-AUTO-CREATE-FROM-EMAIL: seed design.file rows from parsed
+        # design_link_front/back so Gearment push has approved-design candidates
+        # rather than an empty line_items array. State stays 'pending' — the
+        # operator still reviews via the upload wizard before push.
+        self._env['design.file']._seed_design_files_from_lines(
+            order, created_via='email_ingest')
         return order
 
     # ------------------------------------------------------------------
@@ -480,17 +501,210 @@ class OrderCreator:
             [('etsy_order_id', '=', str(order_id))], limit=1))
 
     # ------------------------------------------------------------------
+    # API-channel ingestion (Spec 005 P0-16b1)
+    # ------------------------------------------------------------------
+
+    def process_etsy_payload(self, payload, shop):
+        """Create a `sale.order` from a canonical `EtsyOrderPayload`.
+
+        Peer entry point to `process_parse_result`: same write logic
+        (partner-dedup, product creation, xmlid resolution, shipping
+        line) but the input shape is the canonical payload instead of
+        an email-derived `ParseResult`. Caller is `EtsyOrderIngestor`
+        (P0-16b1) or any future channel that emits `EtsyOrderPayload`.
+
+        Returns the created `sale.order` record, or `None` if the
+        receipt is already in Odoo (dedup by `etsy_order_id`).
+
+        Note: status-only re-sync (FR-009) is NOT implemented here —
+        when an existing order is re-ingested the call is a no-op
+        returning None. The syncer (P0-16c) will add the
+        update-on-existing path in a follow-up slice.
+        """
+        if self.is_duplicate_order(payload.etsy_order_id):
+            _logger.info(
+                'Skipping duplicate order %s (api ingest)',
+                payload.etsy_order_id,
+            )
+            return None
+
+        partner = self._payload_partner(payload)
+        currency = self._get_currency(payload.currency)
+        pricelist = self._get_pricelist(payload.currency)
+        fiscal_position = self._get_fiscal_position()
+        payment_term = self._get_payment_term()
+        sales_team = self._get_sales_team()
+
+        order_vals = {
+            'partner_id': partner.id,
+            'date_order': payload.order_date or odoo_fields.Datetime.now(),
+            'etsy_order_id': payload.etsy_order_id,
+            'etsy_shop_id': shop.id if shop else False,
+            'etsy_note_from_buyer': payload.buyer_message or '',
+            'etsy_gift_message': payload.gift_message or '',
+            'etsy_shipping_cost': payload.shipping_total or 0.0,
+            'sync_source': payload.source,
+            'etsy_raw_source_id': payload.raw_source_id,
+            'payment_status': payload.payment_status or False,
+            'etsy_last_modified': payload.last_modified or False,
+            # P0-22 — channel-agnostic fields lifted onto sale.order so both
+            # ingest paths produce identical orders. Adapters set None when
+            # the source channel doesn't carry the value; write False so the
+            # column stays unset rather than empty-string.
+            'etsy_shipping_service': payload.shipping_service or '',
+            'etsy_processing_time': payload.processing_time or '',
+            'etsy_discount_code': payload.discount_code or '',
+            'etsy_subtotal': payload.subtotal or 0.0,
+            # Multichannel foundation (mhc FR-024) — see process_parse_result
+            # for rationale. Both ingest paths must stamp these consistently.
+            'sales_channel': 'etsy',
+            'channel_order_ref': payload.etsy_order_id,
+            # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror channel-agnostic
+            # shadows for the unified Operations Dashboard. See email-path
+            # comment for rationale.
+            'gift_message': payload.gift_message or '',
+            'processing_time': payload.processing_time or '',
+            'discount_code': payload.discount_code or '',
+            'shipping_service_label': payload.shipping_service or '',
+            'shipping_cost': str(payload.shipping_total or ''),
+            'order_line': [],
+        }
+        if currency:
+            order_vals['currency_id'] = currency.id
+        if pricelist:
+            order_vals['pricelist_id'] = pricelist.id
+        if fiscal_position:
+            order_vals['fiscal_position_id'] = fiscal_position.id
+        if payment_term:
+            order_vals['payment_term_id'] = payment_term.id
+        if sales_team:
+            order_vals['team_id'] = sales_team.id
+
+        for item in payload.line_items:
+            if self.is_duplicate_transaction(item.transaction_id):
+                _logger.info(
+                    'Skipping duplicate transaction %s (api ingest)',
+                    item.transaction_id,
+                )
+                continue
+            product = self.find_or_create_product(item.title, '')
+            line_vals = {
+                'product_id': product.id,
+                'product_uom_qty': item.quantity or 1,
+                'price_unit': item.unit_price or 0.0,
+                'etsy_transaction_id': str(item.transaction_id),
+                'etsy_personalisation': item.personalisation or '',
+                'etsy_sku': item.sku or '',
+                # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10) — channel-agnostic
+                # shadows so api-ingested lines render in the dashboard.
+                'transaction_id': str(item.transaction_id),
+                'personalisation': item.personalisation or '',
+                # P1-DESIGN-AUTO-CREATE-FROM-EMAIL — channel-agnostic design
+                # URLs feed `design.file._seed_design_files_from_lines` after
+                # order create. EtsyLineItemPayload defaults to '' until a
+                # future Etsy API adapter slice extracts them from receipts.
+                'design_link_front': getattr(item, 'design_link_front', '') or '',
+                'design_link_back': getattr(item, 'design_link_back', '') or '',
+            }
+            # P0-22 — when the adapter supplied a custom display name (email
+            # path uses the buyer-facing product_name with rendered options),
+            # honour it. None means "use product.display_name" (default).
+            if getattr(item, 'name_override', None):
+                line_vals['name'] = item.name_override
+            order_vals['order_line'].append((0, 0, line_vals))
+
+        if not order_vals['order_line']:
+            _logger.warning(
+                'Order %s has no new transaction lines; skipping (api ingest).',
+                payload.etsy_order_id,
+            )
+            return None
+
+        shipping_total = payload.shipping_total or 0.0
+        shipping_product = self._get_shipping_product()
+        if shipping_total > 0 and shipping_product:
+            order_vals['order_line'].append((0, 0, {
+                'product_id': shipping_product.id,
+                'product_uom_qty': 1.0,
+                'price_unit': shipping_total,
+                'name': shipping_product.display_name,
+            }))
+
+        order = self._env['sale.order'].create(order_vals)
+        _logger.info(
+            'Created sale.order %s (Etsy #%s, source=api) with %d lines',
+            order.name, payload.etsy_order_id, len(order.order_line),
+        )
+        # P1-DESIGN-AUTO-CREATE-FROM-EMAIL: mirror seeding on the API path so
+        # API-ingested orders also get design.file rows when the payload carried
+        # design_link_front/back (populated by _build_line_vals at line 704-705).
+        self._env['design.file']._seed_design_files_from_lines(
+            order, created_via='api_ingest')
+        return order
+
+    def _payload_partner(self, payload):
+        """Map `EtsyOrderPayload.shipping_address` into the namespace
+        shape that `find_or_create_partner` already accepts.
+
+        This adapter is intentionally local: `find_or_create_partner`
+        is currently coupled to an email-shaped duck-typed object
+        (attributes `email`, `address1`, `country_code`, ...). Rather
+        than refactor the email path in this slice, we adapt at the
+        boundary. A future slice can normalize `find_or_create_partner`
+        to take explicit kwargs and drop this shim.
+
+        Gap noted: `EtsyAddressPayload` does not carry `phone` or
+        `country_name`. We pass empty strings; the partner record
+        will have no phone, and country resolution falls back to ISO
+        alpha-2 only. Phone is rarely critical for fulfillment via
+        Gearment (carriers use the address); add to the payload schema
+        only when an operator workflow surfaces the need.
+
+        Trust boundary: the `payload` MUST be either (a) hand-crafted
+        in test code, or (b) emitted by an adapter that has fetched it
+        from a trusted source (Etsy receipt API in P0-16b2; webhook
+        validator in P1). Webhook payloads must be validated against a
+        receipt re-fetch BEFORE calling `process_etsy_payload` —
+        `_payload_partner` does NOT re-validate the payload contents.
+        """
+        from types import SimpleNamespace
+        addr = payload.shipping_address
+        return self.find_or_create_partner(
+            SimpleNamespace(
+                email=payload.buyer_email or '',
+                name=addr.name,
+                address1=addr.street_1,
+                address2=addr.street_2 or '',
+                city=addr.city,
+                zipcode=addr.zip,
+                phone='',
+                country_code=addr.country_code,
+                country_name='',
+                state=addr.state or '',
+            ),
+            payload.buyer_name,
+        )
+
+    # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
     def _build_line_vals(self, txn, product):
-        """Build a dict of vals for a sale.order.line."""
+        """Build a dict of vals for a sale.order.line.
+
+        P1-01b-FIX-DASHBOARD-GAPS (2026-05-10): mirror parsed line values
+        into channel-agnostic shadow fields on sale.order.line so the
+        Operations Dashboard renders values for email-ingested lines.
+        Channel-agnostic fields coexist with etsy_* twins per p1-01b-plan.md
+        DECISION 1 (UAT cleanup deferred).
+        """
+        personalisation = getattr(txn, 'personalisation', '') or ''
         return {
             'product_id': product.id,
             'product_uom_qty': txn.quantity or 1,
             'price_unit': txn.price or 0.0,
             'etsy_transaction_id': str(txn.transaction_id),
-            'etsy_personalisation': getattr(txn, 'personalisation', '') or '',
+            'etsy_personalisation': personalisation,
             'etsy_sku': getattr(txn, 'sku', '') or '',
             'etsy_option': getattr(txn, 'option', '') or '',
             'etsy_color': getattr(txn, 'color', '') or '',
@@ -500,6 +714,19 @@ class OrderCreator:
             'etsy_image_url': getattr(txn, 'image_url', '') or '',
             'etsy_design_link_front': getattr(txn, 'design_link_front', '') or '',
             'etsy_design_link_back': getattr(txn, 'design_link_back', '') or '',
+            # Channel-agnostic shadows for unified Operations Dashboard.
+            'transaction_id': str(txn.transaction_id),
+            'personalisation': personalisation,
+            'image_url': getattr(txn, 'image_url', '') or '',
+            'design_link_front': getattr(txn, 'design_link_front', '') or '',
+            'design_link_back': getattr(txn, 'design_link_back', '') or '',
+            # Variant-label manual overrides — written here so dashboard shows
+            # values immediately without waiting for the inverse compute path.
+            'option_label_manual': getattr(txn, 'option', '') or '',
+            'color_manual': getattr(txn, 'color', '') or '',
+            'size_manual': getattr(txn, 'size', '') or '',
+            'side_manual': getattr(txn, 'side', '') or '',
+            'face_mask_size_manual': getattr(txn, 'face_mask_size', '') or '',
         }
 
     def _resolve_country(self, code, name):

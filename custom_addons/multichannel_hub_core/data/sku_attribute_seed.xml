@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SKU variant-attribute seed per SKU_GRAMMAR.md §8 + §3/§4/§5.
+
+    7 product.attribute rows + values with x_code populated. Size values
+    carry x_namespace + x_applicable_family_ids xml-id refs (§4 gating).
+
+    noupdate="1" so admin edits persist.
+    Spec 009 §2.5 P-HUB-SKU-BUILDER T041.
+-->
+<odoo noupdate="1">
+
+    <!-- ============================================================== -->
+    <!-- Attributes (7)                                                  -->
+    <!-- ============================================================== -->
+
+    <record id="attribute_family_tag" model="product.attribute">
+        <field name="name">Family</field>
+        <field name="create_variant">no_variant</field>
+        <field name="display_type">radio</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="attribute_material" model="product.attribute">
+        <field name="name">Material</field>
+        <field name="create_variant">always</field>
+        <field name="display_type">select</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="attribute_shape" model="product.attribute">
+        <field name="name">Shape</field>
+        <field name="create_variant">always</field>
+        <field name="display_type">select</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="attribute_size" model="product.attribute">
+        <field name="name">Size</field>
+        <field name="create_variant">always</field>
+        <field name="display_type">select</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="attribute_fluid_oz" model="product.attribute">
+        <field name="name">Fluid oz</field>
+        <field name="create_variant">always</field>
+        <field name="display_type">select</field>
+        <field name="sequence">5</field>
+    </record>
+    <record id="attribute_apparel_size" model="product.attribute">
+        <field name="name">Apparel Size</field>
+        <field name="create_variant">always</field>
+        <field name="display_type">select</field>
+        <field name="sequence">6</field>
+    </record>
+    <record id="attribute_color" model="product.attribute">
+        <field name="name">Color</field>
+        <field name="create_variant">dynamic</field>
+        <field name="display_type">color</field>
+        <field name="sequence">7</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Material values (7) — §3                                        -->
+    <!-- ============================================================== -->
+
+    <record id="value_mat_ce" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Ceramic</field>
+        <field name="x_code">CE</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_mat_wd" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Wood</field>
+        <field name="x_code">WD</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_mat_pa" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Paper / Card</field>
+        <field name="x_code">PA</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="value_mat_tx" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Textile</field>
+        <field name="x_code">TX</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="value_mat_mt" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Metal</field>
+        <field name="x_code">MT</field>
+        <field name="sequence">5</field>
+    </record>
+    <record id="value_mat_cr" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Ceramic + Chrome</field>
+        <field name="x_code">CR</field>
+        <field name="sequence">6</field>
+    </record>
+    <record id="value_mat_mx" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_material"/>
+        <field name="name">Mixed / Unknown</field>
+        <field name="x_code">MX</field>
+        <field name="sequence">7</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Shape values (8) — §4 shape-class                               -->
+    <!-- ============================================================== -->
+
+    <record id="value_shape_sq" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Square</field>
+        <field name="x_code">SQ</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_shape_ht" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Heart</field>
+        <field name="x_code">HT</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_shape_ov" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Oval</field>
+        <field name="x_code">OV</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="value_shape_lsq" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Large Square</field>
+        <field name="x_code">LSQ</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="value_shape_wv" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Wave</field>
+        <field name="x_code">WV</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">5</field>
+    </record>
+    <record id="value_shape_ar" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Arrow</field>
+        <field name="x_code">AR</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">6</field>
+    </record>
+    <record id="value_shape_bw" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Bowtie</field>
+        <field name="x_code">BW</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">7</field>
+    </record>
+    <record id="value_shape_rd" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_shape"/>
+        <field name="name">Round</field>
+        <field name="x_code">RD</field>
+        <field name="x_namespace">shape</field>
+        <field name="sequence">8</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Size dim values (5 sampled) — §4 dimensional                    -->
+    <!-- ============================================================== -->
+
+    <record id="value_size_s35" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">3.5"</field>
+        <field name="x_code">S35</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_size_s41" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">4.1"</field>
+        <field name="x_code">S41</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_size_s5" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">5"</field>
+        <field name="x_code">S5</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="value_size_s6" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">6"</field>
+        <field name="x_code">S6</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="value_size_s8" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">8"</field>
+        <field name="x_code">S8</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">5</field>
+    </record>
+    <!-- Rectangular 3D size: name carries L×W×H for Etsy item_length/width/height;
+         x_code stays 2D (R30X18) so the v2.1 SKU SIZE token remains canonical
+         (<=14 chars, matches R\d+X\d+). Publisher reads the NAME for dimensions. -->
+    <record id="value_size_r30x18x2" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">R30X18X2</field>
+        <field name="x_code">R30X18</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">6</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Fluid oz values (3) — §4 fluid_oz; MUG/TUM gated                -->
+    <!-- ============================================================== -->
+
+    <record id="value_oz_f11" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_fluid_oz"/>
+        <field name="name">11 oz</field>
+        <field name="x_code">F11</field>
+        <field name="x_namespace">fluid_oz</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_mug')), (4, ref('mhc_sku_family_tum'))]"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_oz_f15" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_fluid_oz"/>
+        <field name="name">15 oz</field>
+        <field name="x_code">F15</field>
+        <field name="x_namespace">fluid_oz</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_mug')), (4, ref('mhc_sku_family_tum'))]"/>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_oz_f20" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_fluid_oz"/>
+        <field name="name">20 oz</field>
+        <field name="x_code">F20</field>
+        <field name="x_namespace">fluid_oz</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_mug')), (4, ref('mhc_sku_family_tum'))]"/>
+        <field name="sequence">3</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Apparel size values (5) — §4 apparel; APP/APR gated             -->
+    <!-- ============================================================== -->
+
+    <record id="value_apr_as" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_apparel_size"/>
+        <field name="name">Small</field>
+        <field name="x_code">AS</field>
+        <field name="x_namespace">apparel</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_app')), (4, ref('mhc_sku_family_apr'))]"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_apr_am" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_apparel_size"/>
+        <field name="name">Medium</field>
+        <field name="x_code">AM</field>
+        <field name="x_namespace">apparel</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_app')), (4, ref('mhc_sku_family_apr'))]"/>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_apr_al" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_apparel_size"/>
+        <field name="name">Large</field>
+        <field name="x_code">AL</field>
+        <field name="x_namespace">apparel</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_app')), (4, ref('mhc_sku_family_apr'))]"/>
+        <field name="sequence">3</field>
+    </record>
+    <record id="value_apr_ax" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_apparel_size"/>
+        <field name="name">X-Large</field>
+        <field name="x_code">AX</field>
+        <field name="x_namespace">apparel</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_app')), (4, ref('mhc_sku_family_apr'))]"/>
+        <field name="sequence">4</field>
+    </record>
+    <record id="value_apr_axx" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_apparel_size"/>
+        <field name="name">XX-Large</field>
+        <field name="x_code">AXX</field>
+        <field name="x_namespace">apparel</field>
+        <field name="x_applicable_family_ids" eval="[(4, ref('mhc_sku_family_app')), (4, ref('mhc_sku_family_apr'))]"/>
+        <field name="sequence">5</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Color values (12) — §5 canonical palette                        -->
+    <!-- ============================================================== -->
+
+    <record id="value_color_bk" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Black</field>
+        <field name="x_code">BK</field>
+        <field name="html_color">#000000</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="value_color_wh" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">White</field>
+        <field name="x_code">WH</field>
+        <field name="html_color">#ffffff</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="value_color_pk" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Pink</field>
+        <field name="x_code">PK</field>
+        <field name="html_color">#ffc0cb</field>
+        <field name="sequence">3</field>
+    </record>
+    <record id="value_color_bl" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Blue</field>
+        <field name="x_code">BL</field>
+        <field name="html_color">#0066cc</field>
+        <field name="sequence">4</field>
+    </record>
+    <record id="value_color_gy" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Grey</field>
+        <field name="x_code">GY</field>
+        <field name="html_color">#808080</field>
+        <field name="sequence">5</field>
+    </record>
+    <record id="value_color_nv" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Navy</field>
+        <field name="x_code">NV</field>
+        <field name="html_color">#000080</field>
+        <field name="sequence">6</field>
+    </record>
+    <record id="value_color_sl" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Silver</field>
+        <field name="x_code">SL</field>
+        <field name="html_color">#c0c0c0</field>
+        <field name="sequence">7</field>
+    </record>
+    <record id="value_color_pu" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Purple</field>
+        <field name="x_code">PU</field>
+        <field name="html_color">#800080</field>
+        <field name="sequence">8</field>
+    </record>
+    <record id="value_color_gr" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Green</field>
+        <field name="x_code">GR</field>
+        <field name="html_color">#228b22</field>
+        <field name="sequence">9</field>
+    </record>
+    <record id="value_color_rd" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Red</field>
+        <field name="x_code">RD</field>
+        <field name="html_color">#dc143c</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="value_color_or" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Orange</field>
+        <field name="x_code">OR</field>
+        <field name="html_color">#ff8c00</field>
+        <field name="sequence">11</field>
+    </record>
+    <record id="value_color_yw" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_color"/>
+        <field name="name">Yellow</field>
+        <field name="x_code">YW</field>
+        <field name="html_color">#ffd700</field>
+        <field name="sequence">12</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Family-tag values (22) — §2 + MSC fallback as a no_variant tag  -->
+    <!-- ============================================================== -->
+
+    <record id="value_fam_rds" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Ring Dish</field>
+        <field name="x_code">RDS</field>
+    </record>
+    <record id="value_fam_trk" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Trinket Tray/Box</field>
+        <field name="x_code">TRK</field>
+    </record>
+    <record id="value_fam_jwd" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Jewelry Dish</field>
+        <field name="x_code">JWD</field>
+    </record>
+    <record id="value_fam_phf" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Photo Frame</field>
+        <field name="x_code">PHF</field>
+    </record>
+    <record id="value_fam_cbd" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Cutting Board</field>
+        <field name="x_code">CBD</field>
+    </record>
+    <record id="value_fam_wch" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Wind Chime</field>
+        <field name="x_code">WCH</field>
+    </record>
+    <record id="value_fam_mug" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Mug</field>
+        <field name="x_code">MUG</field>
+    </record>
+    <record id="value_fam_tum" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Tumbler</field>
+        <field name="x_code">TUM</field>
+    </record>
+    <record id="value_fam_tat" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Tattoo</field>
+        <field name="x_code">TAT</field>
+    </record>
+    <record id="value_fam_dmt" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Doormat</field>
+        <field name="x_code">DMT</field>
+    </record>
+    <record id="value_fam_rug" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Rug</field>
+        <field name="x_code">RUG</field>
+    </record>
+    <record id="value_fam_orn" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Ornament</field>
+        <field name="x_code">ORN</field>
+    </record>
+    <record id="value_fam_hkf" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Handkerchief</field>
+        <field name="x_code">HKF</field>
+    </record>
+    <record id="value_fam_apr" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Apron</field>
+        <field name="x_code">APR</field>
+    </record>
+    <record id="value_fam_pil" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Pillow</field>
+        <field name="x_code">PIL</field>
+    </record>
+    <record id="value_fam_bag" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Bag/Tote</field>
+        <field name="x_code">BAG</field>
+    </record>
+    <record id="value_fam_sgn" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Sign/Flag</field>
+        <field name="x_code">SGN</field>
+    </record>
+    <record id="value_fam_kch" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Kitchen Ware</field>
+        <field name="x_code">KCH</field>
+    </record>
+    <record id="value_fam_app" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Apparel</field>
+        <field name="x_code">APP</field>
+    </record>
+    <record id="value_fam_ksk" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Keepsake</field>
+        <field name="x_code">KSK</field>
+    </record>
+    <record id="value_fam_cds" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Ceramic Dish</field>
+        <field name="x_code">CDS</field>
+    </record>
+    <record id="value_fam_wds" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Wooden Dish</field>
+        <field name="x_code">WDS</field>
+    </record>
+    <record id="value_fam_msc" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_family_tag"/>
+        <field name="name">Miscellaneous</field>
+        <field name="x_code">MSC</field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- Patch existing families with default_material_id refs           -->
+    <!-- ============================================================== -->
+
+    <record id="mhc_sku_family_rds" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_trk" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_jwd" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_phf" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_wd"/>
+    </record>
+    <record id="mhc_sku_family_cbd" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_wd"/>
+    </record>
+    <record id="mhc_sku_family_wch" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_mt"/>
+    </record>
+    <record id="mhc_sku_family_mug" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_cr"/>
+    </record>
+    <record id="mhc_sku_family_tum" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_mt"/>
+    </record>
+    <record id="mhc_sku_family_tat" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_pa"/>
+    </record>
+    <record id="mhc_sku_family_dmt" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_rug" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_orn" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_hkf" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_apr" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_pil" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_bag" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_sgn" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_mt"/>
+    </record>
+    <record id="mhc_sku_family_kch" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_app" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_tx"/>
+    </record>
+    <record id="mhc_sku_family_ksk" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_cds" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_ce"/>
+    </record>
+    <record id="mhc_sku_family_wds" model="mhc.sku.family">
+        <field name="default_material_id" ref="value_mat_wd"/>
+    </record>
+
+</odoo>

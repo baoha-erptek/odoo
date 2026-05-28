@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P1-01b — Operations Dashboard refactor (Owner directive D6,
+        2026-05-10). Model swapped from sale.order to sale.order.line so
+        each visible row is a line item (matches operator's daily-ops
+        Excel mental model). 34 columns lifted verbatim from the Excel
+        fixture .0temp/Esty main 2 - 15h VN 06 08 2025.xlsx sheet
+        "Trang tính1" — column ORDER is contract per owner (do NOT
+        reorder). BA/Marketing/PD columns retained at the right edge
+        via related shadows hopping through order_id (P1-05 _inherits
+        delegation makes order.label_status_id resolve transparently).
+
+        Heritage decorations from P1-01a (qty>=2, duplicate-buyer,
+        push-urgent, amazon) re-bound on the line view via shadows.
+        P1-DASH-MERGE bulk Mark-Shipped server action re-bound to lines
+        with mapped('order_id') dedupe to preserve the FR-017 silent-
+        skip + production-team RPC gate (9th confirmation).
+    -->
+
+    <record id="operations_dashboard_list_view" model="ir.ui.view">
+        <field name="name">sale.order.line.list.operations_dashboard</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <list string="Operations Dashboard"
+                  decoration-info="qty_total &gt;= 2"
+                  decoration-bf="is_duplicate_buyer"
+                  decoration-danger="order_priority in ('push','urgent')"
+                  decoration-warning="sales_channel == 'amazon'"
+                  default_order="create_date desc"
+                  multi_edit="1">
+                <!-- Hidden decoration drivers (P1-01a heritage). -->
+                <field name="qty_total" column_invisible="1"/>
+                <field name="is_duplicate_buyer" column_invisible="1"/>
+                <field name="order_priority" column_invisible="1"/>
+
+                <!-- Excel column 1: TRANSACTION_ID (channel-agnostic Char on mhc) -->
+                <field name="transaction_id" string="TRANSACTION_ID" optional="show"/>
+                <!-- Excel column 2: IMG_URL -->
+                <field name="image_url" string="IMG_URL" optional="hide"/>
+                <!-- Excel column 3: IMG (P1-IMG-LINE-WIDGET) -->
+                <field name="product_image_thumb" widget="image" string="IMG" optional="show"/>
+                <!-- Excel column 4: DATE -->
+                <field name="date_order" string="DATE" optional="show"/>
+                <!-- Excel column 5: NOTE_FROM_BUYER -->
+                <field name="note" string="NOTE_FROM_BUYER" optional="hide"/>
+                <!-- Excel column 6: GIFT_MESSAGE -->
+                <field name="gift_message" string="GIFT_MESSAGE" optional="hide"/>
+                <!-- Excel column 7: PERSONALISATION (channel-agnostic) -->
+                <field name="personalisation" string="PERSONALISATION" optional="show"/>
+                <!-- Excel column 8: SKU (product.default_code) -->
+                <field name="sku" string="SKU" optional="show"/>
+                <!-- Excel column 9: SHOP -->
+                <field name="sales_channel" string="SHOP" optional="show"/>
+                <!-- Excel column 10: ORDER_ID -->
+                <field name="channel_order_ref" string="ORDER_ID" optional="show"/>
+                <!-- Excel columns 11-19: Shipping address -->
+                <field name="partner_shipping_name" string="SHIPPING_NAME" optional="show"/>
+                <field name="partner_shipping_street" string="SHIPPING_ADDRESS1" optional="hide"/>
+                <field name="partner_shipping_street2" string="SHIPPING_ADDRESS2" optional="hide"/>
+                <field name="partner_shipping_city" string="SHIPPING_CITY" optional="hide"/>
+                <field name="partner_shipping_state_id" string="SHIPPING_STATE" optional="hide"/>
+                <field name="partner_shipping_zip" string="SHIPPING_ZIPCODE" optional="hide"/>
+                <field name="partner_shipping_country_id" string="SHIPPING_COUNTRY" optional="hide"/>
+                <field name="partner_shipping_phone" string="SHIPPING_PHONE" optional="hide"/>
+                <field name="partner_shipping_email" string="SHIPPING_EMAIL" optional="hide"/>
+                <!-- Excel column 20: PRODUCT_NAME -->
+                <field name="product_id" string="PRODUCT_NAME" optional="show"/>
+                <!-- Excel columns 21-25: Variant labels (computed + manual fallback) -->
+                <field name="option_label" string="OPTION" optional="show"/>
+                <field name="color" string="COLOR" optional="show"/>
+                <field name="size" string="SIZE" optional="show"/>
+                <field name="side" string="SIDE" optional="hide"/>
+                <field name="face_mask_size" string="FACE_MASK_SIZE" optional="hide"/>
+                <!-- Excel column 26: QUANTITY -->
+                <field name="quantity" string="QUANTITY" optional="show"/>
+                <!-- Excel columns 27-28: Design links -->
+                <field name="design_link_front" string="DESIGN_LINK_FRONT" optional="hide"/>
+                <field name="design_link_back" string="DESIGN_LINK_BACK" optional="hide"/>
+                <!-- Excel column 29: SHIPPING_SERVICE -->
+                <field name="shipping_service_label" string="SHIPPING_SERVICE" optional="show"/>
+                <!-- Excel column 30: PROCESSING_TIME -->
+                <field name="processing_time" string="PROCESSING_TIME" optional="hide"/>
+                <!-- Excel column 31: SHIPPING_COST (free-text Char placeholder
+                     until delivery module added; see findings.md surprise) -->
+                <field name="shipping_cost" string="SHIPPING_COST" optional="hide"/>
+                <!-- Excel column 32: PRICE -->
+                <field name="price_unit" string="PRICE" optional="show"/>
+                <!-- Excel column 33: DISCOUNT_CODE -->
+                <field name="discount_code" string="DISCOUNT_CODE" optional="hide"/>
+                <!-- Excel column 34: SUBTOTAL -->
+                <field name="price_subtotal" string="SUBTOTAL" optional="show"/>
+
+                <!-- Internal Odoo PK appended after Excel-contracted columns
+                     (P1-01b-FIX-DASHBOARD-GAPS, 2026-05-10). Surfaces native
+                     sale.order.id for cross-referencing tickets, GDrive paths,
+                     and Gearment logs. Read-only; not part of the 34-col Excel
+                     contract — operator may drag-position via UI. -->
+                <field name="order_id" string="Sale Order"
+                       options="{'no_create': True, 'no_open': False}"
+                       optional="show"/>
+
+                <!-- BA/Marketing/PD columns appended at right edge (P1-DASH-MERGE heritage). -->
+                <field name="pic_user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="pd_pic_user_id" optional="show"/>
+                <field name="mp_note" optional="show"/>
+                <field name="label_status_id" widget="many2one_tags"
+                       options="{'no_create': True, 'no_open': True}"
+                       optional="show"/>
+                <field name="production_blocked" optional="show"/>
+                <field name="is_overdue_approval" widget="boolean_toggle"
+                       string="Overdue" optional="show"/>
+
+                <!-- Tracking columns (P1-03 + P1-DASH-MERGE heritage). -->
+                <field name="tracking_number" optional="show"/>
+                <field name="tracking_state" widget="badge" optional="show"
+                       decoration-success="tracking_state == 'delivered'"
+                       decoration-info="tracking_state in ('shipped','in_transit')"
+                       decoration-warning="tracking_state == 'returned'"/>
+                <field name="shipping_date" optional="hide"/>
+                <field name="warehouse_zone" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="operations_dashboard_search_view" model="ir.ui.view">
+        <field name="name">sale.order.line.search.operations_dashboard</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <search string="Operations Dashboard">
+                <field name="transaction_id"/>
+                <field name="channel_order_ref"/>
+                <field name="partner_shipping_name"/>
+                <field name="product_id"/>
+                <field name="pic_user_id"/>
+                <separator/>
+                <filter string="Production Blocked" name="filter_blocked"
+                        domain="[('production_blocked', '=', True)]"/>
+                <filter string="Label Set" name="filter_label_set"
+                        domain="[('label_status_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Sales Channel" name="group_channel"
+                        context="{'group_by': 'sales_channel'}"/>
+                <filter string="Carrier" name="group_carrier"
+                        context="{'group_by': 'shipping_carrier_id'}"/>
+                <filter string="Label Status" name="group_label_status"
+                        context="{'group_by': 'label_status_id'}"/>
+                <filter string="Priority" name="group_priority"
+                        context="{'group_by': 'order_priority'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_operations_dashboard" model="ir.actions.act_window">
+        <field name="name">Operations Dashboard</field>
+        <field name="res_model">sale.order.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="operations_dashboard_list_view"/>
+        <field name="search_view_id" ref="operations_dashboard_search_view"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No order lines yet — orders ingested from any channel land here.
+            </p>
+        </field>
+    </record>
+
+    <!--
+        Bulk Mark Shipped server action — re-bound from sale.order
+        (P1-DASH-MERGE) to sale.order.line (P1-01b). Dedupes parent
+        orders before delegating to action_bulk_mark_shipped() so a
+        multi-line selection still calls the FR-017 gated action once
+        per order. Lines on orders without a fulfillment row skip
+        silently (mapped() naturally filters Falsy).
+    -->
+    <record id="action_server_bulk_mark_shipped" model="ir.actions.server">
+        <field name="name">Mark Shipped</field>
+        <field name="model_id" ref="model_sale_order_line"/>
+        <field name="binding_model_id" ref="model_sale_order_line"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.mapped('order_id').filtered('fulfillment_id').action_bulk_mark_shipped()</field>
+    </record>
+
+</odoo>

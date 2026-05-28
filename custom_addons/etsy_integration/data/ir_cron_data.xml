@@ -10,4 +10,76 @@
         <field name="interval_type">minutes</field>
     </record>
 
+    <record id="cron_etsy_order_sync" model="ir.cron">
+        <field name="name">Etsy: API Receipts Sync</field>
+        <field name="model_id" ref="model_etsy_shop"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_orders()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_etsy_api_log_cleanup" model="ir.cron">
+        <field name="name">Etsy: API Log Retention Sweep</field>
+        <field name="model_id" ref="model_etsy_api_log"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_cleanup_old_logs()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="ir_cron_download_pending_etsy_images" model="ir.cron">
+        <field name="name">Etsy: Download Pending Product Images</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_download_etsy_images()</field>
+        <field name="interval_number">30</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_etsy_message_dedupe_retention" model="ir.cron">
+        <field name="name">Etsy: Message Dedupe Retention Sweep</field>
+        <field name="model_id" ref="model_etsy_message_dedupe"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_dedupe_retention()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_etsy_listing_sync" model="ir.cron">
+        <field name="name">Etsy: Listing Metadata Sync</field>
+        <field name="model_id" ref="model_etsy_listing"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_listings()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_etsy_listing_variant_sync" model="ir.cron">
+        <field name="name">Etsy: Listing Variant Inventory Sync</field>
+        <field name="model_id" ref="model_etsy_listing_product"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_variants()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="ir_cron_etsy_tracking_push" model="ir.cron">
+        <field name="name">Etsy: Push Tracking to Etsy</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_push_tracking()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>

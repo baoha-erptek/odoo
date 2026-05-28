@@ -177,8 +177,71 @@ Stage 4.3 of the master-plan execution. Tasks ordered: shared fixtures → core 
 | Spec 005 (Etsy API) | `shipping.carrier.etsy_carrier_name` for tracking push; `sales_channel`; `x_pipeline_state_id` (visible on dashboards but not directly written) |
 | Spec 010 / 011 (Amazon / Website) | Channel field + delegation mixin reuse |
 
+## Stage-2 implementation: P1-09 GDrive Upload Service & Wizard
+
+**Slice context**: ADR-006 (revised 2026-04-13) made GDrive the primary storage mode for design files (10 MB cap on filestore, GDrive primary URL). P1-02a implemented the model + small/url modes; P1-09 implements the **GDrive upload path** — service-account auth, Drive upload, thumbnail generation, wizard-driven `design.file` creation with `storage_mode='gdrive'`. Unblocks P1-02c (queued retry wrap) and P2-06 (GDrive polling cron).
+
+**Scope**: service layer (`services/gdrive_uploader.py`, `services/design_thumbnail_generator.py`) + TransientModel wizard (`models/design_file_upload_wizard.py`) + view + 4 fields on `design.file` + 1 cache field on `etsy.shop`. No cron; no async; queue_job retry deferred to P1-02c.
+
+### Architecture
+
+**GDrive client** (`services/gdrive_uploader.py`):
+- Service-account JSON read from `/opt/odoo/secrets/gdrive-service-account.json` (matches P0-15 credential-path pattern; provisioned by P0-03).
+- Scopes: `https://www.googleapis.com/auth/drive.file` (minimum — app-created files only).
+- API: `upload_file(file_blob, file_name, folder_id) → {file_id, web_view_link, error}` and `ensure_shop_folder(shop) → folder_id`.
+- Folder structure (ADR-006 §6): `Multichannel Hub/Design Files/<shop_code>/<YYYY>/`. Folder-id cached on `etsy.shop.x_gdrive_design_folder_id` (single Drive lookup per shop per year).
+- Errors: auth/quota/503 → `{error: str(e), file_id: None}`. **No silent fallback to `storage_mode='small'`** (ADR-012 §3 explicit). Caller raises `ValidationError` with "use URL instead" affordance.
+- Retry (P1-09): synchronous try-once + exponential-backoff sleep. Queued retry-with-backoff cron lands in P1-02c.
+- Library: `google-api-python-client>=2.80.0` + `google-auth>=2.16.0` pinned in `requirements.txt`.
+- Audit: `_logger.debug` per call (file_id, folder_id, result); no PII.
+
+**Thumbnail generator** (`services/design_thumbnail_generator.py`):
+- Library: Pillow (`pillow>=9.0.0`) pure-python; no system deps. Wand fallback deferred (see findings P1-09).
+- API: `generate_thumbnail(file_blob, max_size_kb=256) → bytes | None`.
+- Inputs: TIFF/JPEG/PNG/PSD (PSD via `psd-tools` if Pillow base fails); output JPEG ≤ 256 KB, quality auto-tuned.
+- Failure mode: returns `None` (caller stores empty `gdrive_thumbnail`); non-fatal — Drive holds the canonical file.
+- Timeout: ≤ 2s wall-clock; abort beyond.
+
+**Upload wizard** (`models/design_file_upload_wizard.py`, TransientModel `design.file.upload.wizard`):
+- Fields: `file_blob` Binary, `file_name` Char, `storage_mode` Selection {small, url, gdrive} default `'gdrive'`, `file_url` Char, `gdrive_folder_id` Char, `thumbnail_blob` Binary (computed preview), `order_id` / `order_line_id` Many2one (from context).
+- Constraint C-DUW-001: `storage_mode='gdrive'` requires `gdrive_folder_id` non-empty.
+- Invocation: button on `sale.order.line` → `ir.actions.act_window target='new'` opens modal; context passes `default_order_line_id` + `default_gdrive_folder_id` (from shop cache).
+- Action `action_upload()`:
+  - `gdrive` mode → upload via `GdriveUploader` → on success create `design.file(storage_mode='gdrive', gdrive_file_id=..., gdrive_preview_url=..., gdrive_folder_id=..., gdrive_thumbnail=...)` → post chatter on parent order
+  - `small` / `url` modes → existing P1-02a paths
+  - On Drive failure → `raise ValidationError(_("GDrive upload failed: %s. Try again, or switch to URL mode.", err))`
+- ACL: `group_production_team` + `group_system` callable; salesman read-only.
+
+**Sale-order integration**: button "Upload Design File" on `sale.order.line` form (visible to `group_production_team` + `group_system`); opens wizard with pre-cached `gdrive_folder_id`.
+
+**Audit trail**: every upload posts a chatter row on the parent `sale.order` (file_name, storage_mode, gdrive_file_id, by-user). RPC-level FR-017 gate on `action_upload` (per `feedback_fr017_write_defense_in_depth` 4-slice pattern).
+
+### Defense-in-depth (FR-017 pattern)
+
+Per memory `feedback_fr017_write_defense_in_depth.md` and 4 prior slice confirmations (P1-02b last):
+- View-level `groups=` is bypassable via XML-RPC.
+- Wizard `action_upload()` MUST start with `_check_production_team_or_raise()` (or equivalent inline `has_group()` gate raising `AccessError`).
+- Add a regression test (`TestRpcGate`) asserting non-production-team user calling `action_upload()` raises.
+
+### Open decisions for P1-09 (captured in findings.md, owner sign-off welcome but non-blocking)
+
+1. **Thumbnail library**: Pillow (default) vs Wand. Pillow chosen for lighter footprint; Wand deferred fallback if PSD support proves brittle.
+2. **GDrive folder scope**: per-shop/year (default, cached on `etsy.shop`) vs per-order (extra Drive calls). Default chosen; per-order requires owner ask.
+3. **Library pinning**: `>=` lower-bound (default) vs exact `==` lock. Lower-bound chosen.
+4. **Historical backfill to Drive**: deferred indefinitely. Etsy-CDN URLs remain valid for legacy `storage_mode='url'` rows; no automated migration.
+
+### Risks / blockers
+
+- **Service-account JSON path drift**: must match P0-15 pattern (`/opt/odoo/secrets/...`). Mock in RED tests; fail-fast on missing in real run.
+- **Pillow large-file behaviour**: 200 MB TIFFs may OOM; thumbnail generator catches + returns None (degraded preview, no slice failure).
+- **Folder-cache races under concurrent upload**: rare; acceptable race resolves at next call (Drive `files.list` is read-after-write consistent for service accounts).
+- **Drive quota on staging**: mocked tests bypass quota; real runs against staging service account (separate from prod).
+
+---
+
 ## Revision History
 
 - **2026-04-06**: v1 plan (single dashboard, archived in `_archive/`)
 - **2026-04-13**: Wave B spec.md rewrite landed; plan.md NOT regenerated at the time
 - **2026-04-27**: Stage 4.1 plan refresh — integrates ADRs 008a/009/010/012 deltas; configurable pipeline replaces hardcoded enum; design-file lifecycle stack replaces single `order.design.file`; module destination is `multichannel_hub_core` per ADR-003 sequencing
+- **2026-04-30**: Added Stage-2 P1-09 section (GDrive upload service + wizard); 4 fields appended to `design.file` (`gdrive_file_id`/`gdrive_preview_url`/`gdrive_folder_id`/`gdrive_thumbnail`) + C-DF-006; tasks T094–T101 added in tasks.md; ADR-006 / ADR-012 audited consistent — no amendments needed.

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Spec 009 — P-HUB-PROD-MODEL T006. data-model.md §1 seed table. -->
+
+    <record id="channel_etsy" model="multichannel.sales.channel">
+        <field name="code">etsy</field>
+        <field name="name">Etsy</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="channel_amazon" model="multichannel.sales.channel">
+        <field name="code">amazon</field>
+        <field name="name">Amazon</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="False"/>
+    </record>
+
+    <record id="channel_website" model="multichannel.sales.channel">
+        <field name="code">website</field>
+        <field name="name">Website / Ecommerce</field>
+        <field name="sequence">30</field>
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

@@ -36,6 +36,27 @@
                             icon="fa-shopping-cart">
                             <field name="order_count" widget="statinfo" string="Orders"/>
                         </button>
+                        <button
+                            name="action_authorize_etsy"
+                            type="object"
+                            string="Authorize Etsy"
+                            class="oe_stat_button"
+                            icon="fa-key"
+                            groups="base.group_system"/>
+                        <button
+                            name="action_test_connection"
+                            type="object"
+                            string="Test Connection"
+                            class="oe_stat_button"
+                            icon="fa-plug"
+                            groups="base.group_system"/>
+                        <button
+                            name="action_provision_enquiry_alias"
+                            type="object"
+                            string="Provision Email Alias"
+                            class="oe_stat_button"
+                            icon="fa-envelope"
+                            groups="base.group_system"/>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <div class="oe_title">
@@ -48,8 +69,39 @@
                             <field name="active" invisible="1"/>
                             <field name="revenue_total" widget="monetary"/>
                         </group>
+                        <group string="Etsy API Configuration"
+                               groups="base.group_system">
+                            <field name="etsy_api_shop_id"
+                                   placeholder="e.g. 60752333"/>
+                            <field name="active_source"/>
+                            <field name="auto_recovery"/>
+                            <field name="active_source_changed_at" readonly="1"/>
+                            <field name="health_check_consecutive_failures"
+                                   readonly="1"/>
+                            <field name="recovery_probe_consecutive_successes"
+                                   readonly="1"/>
+                        </group>
                     </group>
                     <notebook>
+                        <page string="Publisher Defaults" name="publisher_defaults">
+                            <group string="Etsy Publisher Defaults"
+                                   groups="multichannel_hub_core.group_ba_user">
+                                <field name="default_taxonomy_id"
+                                       groups="base.group_system"/>
+                                <field name="default_shipping_profile_id"
+                                       groups="base.group_system"/>
+                                <field name="default_return_policy_id"
+                                       groups="base.group_system"/>
+                                <field name="default_who_made"/>
+                                <field name="default_when_made"/>
+                                <field name="default_is_supply"/>
+                            </group>
+                            <group string="Etsy Publisher Unit Preferences"
+                                   groups="base.group_system">
+                                <field name="weight_unit_pref"/>
+                                <field name="dimensions_unit_pref"/>
+                            </group>
+                        </page>
                         <page string="Orders" name="orders">
                             <field name="order_ids" readonly="1">
                                 <list>

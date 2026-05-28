@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="shipping_carrier_usps" model="shipping.carrier">
+        <field name="name">USPS</field>
+        <field name="code">usps</field>
+        <field name="sequence">10</field>
+        <field name="etsy_carrier_name">usps</field>
+        <field name="tracking_url_template">https://tools.usps.com/go/TrackConfirmAction?tLabels={tracking_number}</field>
+        <field name="tracking_prefix_regex">^(9[0-9]{15,21}|[A-Z]{2}[0-9]{9}US)$</field>
+    </record>
+
+    <record id="shipping_carrier_uniuni" model="shipping.carrier">
+        <field name="name">UniUni</field>
+        <field name="code">uniuni</field>
+        <field name="sequence">20</field>
+        <field name="etsy_carrier_name">other</field>
+        <field name="tracking_url_template">https://www.uniuni.com/track?trackingnumber={tracking_number}</field>
+        <field name="tracking_prefix_regex">^UUS[0-9A-Z]+$</field>
+    </record>
+
+    <record id="shipping_carrier_yunexpress" model="shipping.carrier">
+        <field name="name">YunExpress</field>
+        <field name="code">yunexpress</field>
+        <field name="sequence">30</field>
+        <field name="etsy_carrier_name">other</field>
+        <field name="tracking_url_template">https://www.yuntrack.com/Search?id={tracking_number}</field>
+        <field name="tracking_prefix_regex">^YT[0-9]+$</field>
+    </record>
+
+    <record id="shipping_carrier_4px" model="shipping.carrier">
+        <field name="name">4PX</field>
+        <field name="code">4px</field>
+        <field name="sequence">40</field>
+        <field name="etsy_carrier_name">4px</field>
+        <field name="tracking_url_template">https://track.4px.com/query/{tracking_number}</field>
+    </record>
+
+    <record id="shipping_carrier_dhl_ecommerce" model="shipping.carrier">
+        <field name="name">DHL eCommerce</field>
+        <field name="code">dhl_ecommerce</field>
+        <field name="sequence">50</field>
+        <field name="etsy_carrier_name">dhl</field>
+        <field name="tracking_url_template">https://www.dhl.com/global-en/home/tracking/tracking-ecommerce.html?submit=1&amp;tracking-id={tracking_number}</field>
+    </record>
+
+    <record id="shipping_carrier_fedex_smartpost" model="shipping.carrier">
+        <field name="name">FedEx SmartPost</field>
+        <field name="code">fedex_smartpost</field>
+        <field name="sequence">60</field>
+        <field name="etsy_carrier_name">fedex</field>
+        <field name="tracking_url_template">https://www.fedex.com/fedextrack/?trknbr={tracking_number}</field>
+    </record>
+
+    <record id="shipping_carrier_gke_local" model="shipping.carrier">
+        <field name="name">GKE Local</field>
+        <field name="code">gke_local</field>
+        <field name="sequence">70</field>
+        <field name="etsy_carrier_name">other</field>
+        <field name="notes">Internal Vietnam-side distribution label; no public tracking URL.</field>
+    </record>
+
+    <record id="shipping_carrier_other" model="shipping.carrier">
+        <field name="name">Other / Unknown</field>
+        <field name="code">other</field>
+        <field name="sequence">999</field>
+        <field name="etsy_carrier_name">other</field>
+        <field name="notes">Fallback carrier when tracking number does not match any known prefix regex (P2-02). Lines flagged with this carrier should be reviewed and either get a custom regex added, or be assigned a real carrier manually.</field>
+    </record>
+
+</odoo>

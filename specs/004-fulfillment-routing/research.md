@@ -42,7 +42,15 @@ BasePartnerAdapter:
 - Order flow: POST `/api/v3/orders` (create draft) -> GET price quote -> Manual operator approval -> POST confirm
 - Design files: Passed as URLs in `printing_options[].url` (files must be publicly accessible)
 - Payload: `reference_id`, `platform`, `store_id`, `address`, `shipping_method`, line items with `variant_id`, `quantity`, `printing_options` (location_code + design URL)
-- Webhooks: POST `/api/v3/webhooks` to register; events: `order.completed`, `order.cancelled`, `tracking.updated`
+- Webhooks: registered via Gearment dashboard UI (NOT via `POST /api/v3/webhooks` — dashboard is the source of truth); topics observed on dashboard 2026-05-02: `Order completed`, `Order canceled` (single-l), `Order tracking updated`; each registration picks Topic + Version (V1 OrderDesk / V3 standard) + Stores; **no secret field on the create form** — HMAC source TBD by P0-18b2a probe.
+- V3 webhook payload (captured via dashboard simulator 2026-05-02):
+  ```json
+  {
+    "order": {"gearment_id": "string", "gearment_name": "string", "reference": "string", "status": "shipped", "vendor_id": "string"},
+    "tracking": {"company": "string", "number": "string", "url": "string"}
+  }
+  ```
+  `order.reference` = our `external_order_id` (sale.order.name); `order.status` for the "Order completed" topic was observed as `"shipped"` so handler must read both topic AND status; `tracking.url` is a direct deeplink (skip our `tracking_url_template` for Gearment-fulfilled orders).
 - Rate limit: 100 requests / 10 seconds (block for 1 minute on HTTP 429)
 
 **Generic adapter contract**:

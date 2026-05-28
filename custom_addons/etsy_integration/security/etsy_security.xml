@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- P0-17: dedicated read-only group for diagnostics access to
+         etsy.api.log. Members can browse the log for incident review
+         without being given full system rights. -->
+    <record id="group_etsy_api_log_reader" model="res.groups">
+        <field name="name">Etsy API Log Reader</field>
+    </record>
+
+    <!-- P1-04 BA-tier groups originally lived here. Promoted to
+         multichannel_hub_core 2026-05-03 per ADR-003 — they're
+         channel-agnostic sales-ops roles that the unified Operations
+         Dashboard (P1-DASH-MERGE) and future Amazon/website channels
+         all need. Pre-migration in mhc 19.0.1.0.11 rewrites the
+         ir.model.data rows so user-group memberships survive. -->
+
     <record id="etsy_email_log_rule_user" model="ir.rule">
         <field name="name">Etsy Email Log: read all</field>
         <field name="model_id" ref="model_etsy_email_log"/>

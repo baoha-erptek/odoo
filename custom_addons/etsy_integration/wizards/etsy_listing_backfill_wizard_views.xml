@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_listing_backfill_wizard_form" model="ir.ui.view">
+        <field name="name">etsy.listing.backfill.wizard.form</field>
+        <field name="model">etsy.listing.backfill.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Backfill Etsy Listings → Product Hub">
+                <sheet>
+                    <group>
+                        <field name="shop_id"/>
+                    </group>
+                    <group invisible="not matched_count and not unmatched_count">
+                        <field name="matched_count" readonly="True"/>
+                        <field name="unmatched_count" readonly="True"/>
+                        <field name="unmatched_skus" readonly="True"
+                               invisible="not unmatched_skus"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_backfill" type="object"
+                            string="Run Backfill" class="btn-primary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_etsy_listing_backfill_wizard" model="ir.actions.act_window">
+        <field name="name">Backfill Etsy Listings</field>
+        <field name="res_model">etsy.listing.backfill.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

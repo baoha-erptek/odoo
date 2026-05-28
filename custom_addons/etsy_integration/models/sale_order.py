@@ -1,8 +1,18 @@
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models, tools
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
+
+# Spec 003 C-SO-001: shipping-destination fields locked while an
+# address-change request is pending. Keep this set in lock-step with
+# data-model.md §1.
+_ADDRESS_LOCK_FIELDS = frozenset({
+    'partner_shipping_id',
+    'street', 'street2', 'city', 'zip',
+    'state_id', 'country_id',
+})
 
 
 class SaleOrder(models.Model):
@@ -22,6 +32,52 @@ class SaleOrder(models.Model):
     etsy_subtotal = fields.Float(string='Etsy Subtotal', digits=(12, 2))
     etsy_email_log_id = fields.Many2one(
         'etsy.email.log', string='Source Email', ondelete='set null')
+    # Spec 005 P0-16b1 — provenance for orders ingested via canonical
+    # `EtsyOrderPayload`. `sync_source` mirrors `payload.source`
+    # ('api'/'email') so operators can tell which adapter produced the
+    # record. `etsy_raw_source_id` stores `payload.raw_source_id`
+    # (e.g. `receipt:1234` or `email_log:567`) so we can navigate back
+    # to the originating record for audit + replay.
+    sync_source = fields.Selection(
+        selection=[
+            ('api', 'Etsy API'),
+            ('email', 'Etsy Email'),
+            # 'webhook' is reserved (Spec 005 US4 / Phase 1) so Odoo
+            # never adds a CHECK constraint that would reject the value
+            # when the webhook adapter lands. No code currently writes
+            # 'webhook' — adding it now is purely a forward-compat hook.
+            ('webhook', 'Etsy Webhook (reserved)'),
+        ],
+        string='Sync Source', copy=False, index=True,
+        help='Channel adapter that ingested this order; written by '
+             'EtsyOrderIngestor.')
+    etsy_raw_source_id = fields.Char(
+        string='Source Record Reference', copy=False,
+        help="Back-pointer to the originating record (e.g. 'receipt:1234' "
+             "for API, 'email_log:567' for the email path).")
+    # Spec 005 P0-16c — payment + watermark fields driven by
+    # EtsyOrderIngestor on initial create AND on status-only re-sync
+    # (FR-009). Operator fields (mp_note, pic_user_id, design state)
+    # are NOT touched on re-sync — see EtsyOrderIngestor.ingest.
+    # `readonly=True` enforces single-writer at the UI level — operators
+    # see the value but cannot edit. The ORM still permits writes from
+    # the syncer/ingestor service code (channel-sourced single writer).
+    # Hard ACL (groups='base.group_system') was rejected because the
+    # Order Dashboard (P1-01) needs salesmen to read payment_status to
+    # filter unpaid orders. P0-17 will add tracking=True + mail.thread
+    # audit so any non-syncer write is detectable.
+    payment_status = fields.Selection(
+        selection=[
+            ('unpaid', 'Unpaid'),
+            ('paid', 'Paid'),
+        ],
+        string='Etsy Payment Status', copy=False, index=True, readonly=True,
+        help='Payment state mirrored from the Etsy receipt; updated on '
+             'every API re-sync.')
+    etsy_last_modified = fields.Datetime(
+        string='Etsy Last Modified', copy=False, index=True, readonly=True,
+        help='Mirrors the Etsy receipt last_modified timestamp. Used to '
+             'distinguish stale re-syncs from genuine updates.')
     is_etsy_order = fields.Boolean(
         string='Is Etsy Order', compute='_compute_is_etsy_order', store=True)
     etsy_price_anomaly = fields.Boolean(
@@ -30,10 +86,68 @@ class SaleOrder(models.Model):
         help='True when an Etsy order has a non-positive amount_total — '
              'used by the migration wizard to quarantine bad data.')
 
+    # Spec 005 P1-12 (US3) — tracking-push-to-Etsy state. Written only by
+    # services/etsy_tracking_pusher.EtsyTrackingPusher (webhook-triggered
+    # per ADR decision D-A, on-demand button, or the 5-min fallback cron).
+    # Not group-gated: the Etsy tab is a read-only mirror (owner directive
+    # 2026-05-10 D4) so operators read these; the single writer is service
+    # code, not the form.
+    etsy_tracking_push_status = fields.Selection(
+        selection=[
+            ('none', 'Not Pushed'),
+            ('pending', 'Pending'),
+            ('pushed', 'Pushed'),
+            ('failed', 'Failed'),
+        ],
+        string='Etsy Tracking Push Status',
+        default='none', copy=False, index=True,
+        help='Lifecycle of the tracking-number push to Etsy '
+             '(POST receipts/{receipt_id}/tracking).')
+    etsy_tracking_push_at = fields.Datetime(
+        string='Etsy Tracking Pushed At', copy=False,
+        help='Timestamp of the last successful tracking push to Etsy.')
+    etsy_tracking_push_error = fields.Text(
+        string='Etsy Tracking Push Error', copy=False,
+        help='Error detail from the last failed tracking push; cleared '
+             'on the next successful push.')
+
+    # P1-04 (Spec 003 US4): address-change approval workflow.
+    address_change_request_ids = fields.One2many(
+        'etsy.address.change.request', 'order_id',
+        string='Address Change Requests')
+    has_pending_address_change = fields.Boolean(
+        string='Has Pending Address Change',
+        compute='_compute_has_pending_address_change',
+        store=True, compute_sudo=True, index=True,
+        help='True when at least one address-change request is in '
+             "'requested' state. Locks shipping fields per C-SO-001.")
+
     _sql_constraints = [
         ('etsy_order_id_unique', 'UNIQUE(etsy_order_id)',
          'Etsy Order ID must be unique!'),
     ]
+
+    def init(self):
+        # P1-01a — composite index for the Tracking-Dashboard saved
+        # search "Etsy orders with pending address change" per
+        # data-model.md §1. `sales_channel` is in mhc, `has_pending_address_change`
+        # is in this module — etsy_integration is the lowest-level
+        # module where both columns are guaranteed to exist.
+        super().init()
+        tools.create_index(
+            self.env.cr,
+            'sale_order_sales_channel_pending_addr_idx',
+            self._table,
+            ['sales_channel', 'has_pending_address_change'],
+        )
+        # P0-13 — composite (etsy_shop_id, etsy_last_modified DESC) for the
+        # OrderSyncer "since" cursor and dashboards that filter by shop + recency.
+        # tools.create_index has no DESC affordance; use raw SQL with
+        # CREATE INDEX IF NOT EXISTS for idempotent re-installs.
+        self.env.cr.execute("""
+            CREATE INDEX IF NOT EXISTS sale_order_etsy_shop_last_modified_idx
+                ON sale_order (etsy_shop_id, etsy_last_modified DESC)
+        """)
 
     @api.depends('etsy_order_id')
     def _compute_is_etsy_order(self):
@@ -44,6 +158,50 @@ class SaleOrder(models.Model):
     def _compute_etsy_price_anomaly(self):
         for order in self:
             order.etsy_price_anomaly = bool(order.etsy_order_id) and order.amount_total <= 0
+
+    @api.depends('address_change_request_ids.state')
+    def _compute_has_pending_address_change(self):
+        for order in self:
+            order.has_pending_address_change = any(
+                req.state == 'requested'
+                for req in order.address_change_request_ids
+            )
+
+    def write(self, vals):
+        """C-SO-001: block destination-field writes while a request is pending.
+
+        Bypass via context flag `approve_address_change=True` — set by
+        `etsy.address.change.request.action_approve` only.
+        """
+        if (
+            not self.env.context.get('approve_address_change')
+            and any(f in vals for f in _ADDRESS_LOCK_FIELDS)
+        ):
+            blocked = self.filtered('has_pending_address_change')
+            if blocked:
+                raise UserError(_(
+                    "Address change is pending approval on order(s) %s; "
+                    "shipping fields are locked. Approve or reject the "
+                    "request first."
+                ) % ', '.join(blocked.mapped('name')))
+        return super().write(vals)
+
+    def action_request_address_change(self):
+        """T060: open the etsy.address.change.request quick-create form
+        pre-filled with the current order. Hidden when a request is
+        already pending.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Request address change'),
+            'res_model': 'etsy.address.change.request',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_order_id': self.id,
+            },
+        }
 
     def _etsy_auto_confirm(self):
         """Confirm the order, force-validate its pickings, mark as invoiced.
@@ -188,17 +346,93 @@ class SaleOrder(models.Model):
                     raw_email.message_id)
 
         if processed_ids:
-            try:
-                gmail.remove_label(processed_ids, label)
+            strip_label = ICP.get_param(
+                'etsy_integration.gmail_strip_label_after_process',
+                'True') == 'True'
+            if strip_label:
+                try:
+                    gmail.remove_label(processed_ids, label)
+                    _logger.info(
+                        'Etsy Integration: Removed label from %d emails.',
+                        len(processed_ids))
+                except Exception:
+                    _logger.exception(
+                        'Etsy Integration: Failed to remove label from emails.')
+            else:
                 _logger.info(
-                    'Etsy Integration: Removed label from %d emails.',
+                    "Etsy Integration: %d emails processed; label strip "
+                    "DISABLED (ICP "
+                    "'etsy_integration.gmail_strip_label_after_process'"
+                    "='False'). Set ICP back to 'True' for production.",
                     len(processed_ids))
-            except Exception:
-                _logger.exception(
-                    'Etsy Integration: Failed to remove label from emails.')
 
         _logger.info(
             'Etsy Integration: Cycle complete. %d/%d emails processed.',
             len(processed_ids), len(raw_emails))
 
         self.env['etsy.email.log']._check_parse_failures()
+
+    def action_push_tracking_to_etsy(self):
+        """P1-12 T036 — on-demand tracking push from the sale.order form.
+
+        Synchronous; returns a client notification action so the operator
+        gets immediate feedback. The webhook path (D-A) is the primary
+        trigger; this button is the manual retry/override.
+        """
+        self.ensure_one()
+        # Defense-in-depth: the view `groups=` only hides the button;
+        # mirror it at the method so an RPC call cannot trigger an
+        # authenticated external Etsy push (system OAuth tokens) without
+        # the production-team role (security review HIGH; FR-017 pattern).
+        if not self.env.user._is_system() and not self.env.user.has_group(
+                'multichannel_hub_core.group_production_team'):
+            raise UserError(_(
+                'Only the production/fulfillment team can push tracking '
+                'to Etsy.'))
+        from ..services.etsy_tracking_pusher import EtsyTrackingPusher
+        ok = EtsyTrackingPusher(self.env).push(self)
+        if ok:
+            title, msg, kind = _('Tracking pushed'), _(
+                'Tracking number was pushed to Etsy.'), 'success'
+        else:
+            title, msg, kind = _('Tracking push failed'), (
+                self.etsy_tracking_push_error or _('Push failed.')), 'danger'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {'title': title, 'message': msg, 'type': kind,
+                       'sticky': False},
+        }
+
+    @api.model
+    def _cron_push_tracking(self):
+        """P1-12 T035 — fallback sweep: push tracking for Etsy orders that
+        the webhook (D-A primary trigger) has not yet delivered.
+
+        Picks Etsy orders whose push status is unresolved and that have a
+        fulfillment carrying a tracking number. Per-order soft-fail so one
+        bad order does not poison the batch.
+        """
+        from ..services.etsy_tracking_pusher import EtsyTrackingPusher
+
+        candidates = self.search([
+            ('etsy_order_id', '!=', False),
+            ('etsy_shop_id', '!=', False),
+            ('etsy_tracking_push_status', 'in', ('none', 'pending', 'failed')),
+        ])
+        if not candidates:
+            return
+        pusher = EtsyTrackingPusher(self.env)
+        Fulfillment = self.env['sale.order.fulfillment']
+        for order in candidates:
+            fulfillment = Fulfillment.search(
+                [('order_id', '=', order.id),
+                 ('tracking_number', '!=', False)], limit=1)
+            if not fulfillment:
+                continue
+            try:
+                pusher.push(order)
+            except Exception:  # noqa: BLE001 — batch isolation
+                _logger.exception(
+                    'P1-12: cron tracking push failed for %s (Etsy #%s)',
+                    order.name, order.etsy_order_id)

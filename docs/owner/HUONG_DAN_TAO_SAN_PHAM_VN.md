@@ -1,0 +1,519 @@
+# Hướng dẫn sử dụng — Tạo sản phẩm mới
+
+**Phiên bản:** 1.2 · **Ngày:** 2026-05-28 · **Ngôn ngữ:** Tiếng Việt
+**Đối tượng:** Chủ shop, BA Lead, BA User
+**Tài liệu nghiệp vụ tham chiếu:** [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
+
+> Hướng dẫn từng bước cho việc thêm sản phẩm mới vào hệ thống và đăng lên Etsy. Không yêu cầu kiến thức kỹ thuật — chỉ cần biết dùng trình duyệt web.
+
+> **Cập nhật v1.2 (2026-05-28):** Đổi cách tạo sản phẩm — dùng **form Sản phẩm chuẩn** thay cho các Wizard riêng. Mã SKU **tự sinh** từ Danh mục + Biến thể (BA không phải gõ tay đúng format nữa). Bổ sung mục mới **"Thông tin bổ sung khi đăng Etsy"** với 7 nhóm trường: Tags, Cá nhân hoá, Vật liệu, Ảnh phụ (mini gallery), Override Etsy (Danh mục Etsy / Ai làm / Khi nào làm), Cân nặng & Kích thước, Thuộc tính biến thể. Cập nhật checklist UAT (TC-001..TC-007 đổi sang form chuẩn; TC-008..TC-015 mới cho các nhóm trường).
+
+---
+
+## Mục lục
+
+1. [Yêu cầu trước khi bắt đầu](#1-yêu-cầu-trước-khi-bắt-đầu)
+2. [Vai trò và quyền](#2-vai-trò-và-quyền)
+3. [Cách tạo sản phẩm — form Sản phẩm chuẩn](#3-cách-tạo-sản-phẩm--form-sản-phẩm-chuẩn)
+4. [Thông tin bổ sung khi đăng Etsy](#4-thông-tin-bổ-sung-khi-đăng-etsy)
+5. [Đồng bộ từ Excel (sắp ra mắt)](#5-đồng-bộ-từ-excel)
+6. [Quản lý mã SKU — câu chuyện hai mã](#6-quản-lý-mã-sku--câu-chuyện-hai-mã)
+7. [Đăng sản phẩm lên Etsy](#7-đăng-sản-phẩm-lên-etsy)
+8. [Câu hỏi thường gặp](#8-câu-hỏi-thường-gặp)
+9. [Checklist kiểm thử UAT](#9-checklist-kiểm-thử-uat)
+10. [Báo lỗi cho ai](#10-báo-lỗi-cho-ai)
+
+---
+
+## 1. Yêu cầu trước khi bắt đầu
+
+- Có tài khoản đăng nhập với vai trò **BA User** hoặc cao hơn.
+- Đã chuẩn bị các thông tin cho sản phẩm mới:
+  - Tên sản phẩm (tiếng Anh, dùng cho Etsy).
+  - Danh mục sản phẩm (Mug / Ring Dish / T-shirt / Tattoo …).
+  - Biến thể (Chất liệu / Kích thước / Màu sắc …) nếu sản phẩm có nhiều phiên bản.
+  - Giá niêm yết (USD cho Etsy, VND cho sản xuất).
+  - (Tuỳ chọn) Mã SKU Gearment nếu giao qua Gearment.
+- Trình duyệt Chrome / Edge / Firefox bản mới.
+
+> Mã SKU **không cần BA chuẩn bị trước** — hệ thống tự sinh từ Danh mục + Biến thể khi BA chọn xong. BA chỉ kiểm tra lại và sửa nếu cần.
+
+---
+
+## 2. Vai trò và quyền
+
+| Vai trò | Tạo sản phẩm | Đăng Etsy | Sửa SKU | Xoá sản phẩm |
+|---|---|---|---|---|
+| **BA User** | ✅ | ✅ | ❌ | ❌ |
+| **BA Lead** | ✅ | ✅ | ✅ | ❌ |
+| **BA Manager** | ✅ | ✅ | ✅ | ✅ |
+| **Admin** | ✅ | ✅ | ✅ | ✅ |
+
+> Mọi user thuộc tier **BA** (User / Lead / Manager) đều có quyền đăng sản phẩm lên Etsy. Nếu không thấy menu **Sản phẩm** hoặc nút **"Publish to Etsy"** trên form sản phẩm, hãy liên hệ Admin để cấp quyền BA.
+
+---
+
+## 3. Cách tạo sản phẩm — form Sản phẩm chuẩn
+
+### 3.1 Mở form sản phẩm
+
+1. Đăng nhập (mặc định: `https://odoo.hatafax.com`).
+2. Mở menu **Sản phẩm** → bấm nút **Tạo mới** ở góc trên trái.
+3. Form sản phẩm chuẩn hiển thị — đây là form duy nhất để tạo sản phẩm.
+
+> Trước đây hệ thống có 2 Wizard riêng (Wizard cũ + SKU Builder 4 bước). Từ phiên bản này, **form Sản phẩm chuẩn đã đủ** — Wizard không còn cần thiết và đã được ẩn khỏi menu.
+
+### 3.2 Điền các trường
+
+| Trường | Bắt buộc | Ví dụ | Ghi chú |
+|---|---|---|---|
+| **Tên sản phẩm** | ✅ | `Custom Coffee Mug 11oz` | Tiếng Anh; hiển thị trên Etsy |
+| **Danh mục sản phẩm** | ✅ | `Mug` | Chọn từ dropdown — quyết định Mã SKU |
+| **Biến thể** | _tuỳ sản phẩm_ | Chất liệu = `Ceramic + Chrome`, Size = `11 oz` | Thêm dòng biến thể nếu sản phẩm có nhiều phiên bản |
+| **Mã SKU (Internal Reference)** | _tự sinh_ | `MUG-CR-F11` | Hệ thống tự điền sau khi chọn Danh mục + Biến thể |
+| **Giá bán (Sales Price USD)** | ✅ | `19.99` | Giá Etsy; phải `> 0` |
+| **Mã SKU Gearment** | ❌ | `GEAR-MUG-11OZ-BL` | Có giá trị → bật chế độ Dropship tự động |
+| **Mô tả** | ❌ | _free text_ | Hiển thị trên Etsy |
+| **Ảnh sản phẩm chính** | ❌ | _upload_ | Có thể upload sau; ảnh phụ nằm ở mục 4.4 |
+| **Các kênh áp dụng** | ✅ | ☑ Etsy | Mặc định Etsy |
+
+### 3.3 Mã SKU tự sinh — chuyện thực sự xảy ra
+
+Khi BA chọn xong **Danh mục** và thêm các **Biến thể** (Chất liệu, Kích thước, Màu sắc nếu có) → ô **Mã SKU** sẽ **tự điền** ngay, ví dụ:
+
+| BA chọn | Mã SKU tự sinh |
+|---|---|
+| Danh mục = Mug, Chất liệu = Ceramic + Chrome, Size = 11 oz | `MUG-CR-F11` |
+| Danh mục = Mug, Chất liệu = Ceramic + Chrome, Size = 15 oz, Màu = Black | `MUG-CR-F15-BK` |
+| Danh mục = Apron, Chất liệu = Textile, Size = Medium | `APR-TX-AM` |
+| Danh mục = Doormat, Chất liệu = Textile, Size = 30"×18" | `DMT-TX-R30X18` |
+
+BA xem lại — nếu đúng thì không cần làm gì. **BA vẫn có thể gõ tay sửa** nếu muốn (ví dụ giữ mã legacy cho sản phẩm cũ). Khi BA đã sửa tay → hệ thống tôn trọng và **không gợi ý lại**.
+
+> **Sản phẩm cũ có mã legacy** (`MUG-001`, `T-SHIRT-XL-RED` …): BA chỉ cần gõ mã cũ vào ô Mã SKU — hệ thống lưu nguyên trạng, không yêu cầu đổi sang định dạng mới.
+
+### 3.4 Kiểm tra mã SKU (tự động)
+
+Khi BA bấm **Lưu**, hệ thống tự kiểm tra mã SKU theo quy chuẩn nội bộ:
+
+- Mã hợp lệ (ví dụ `MUG-CR-F11`) → lưu bình thường.
+- Mã legacy (ví dụ `MUG-001`) → vẫn lưu, ghi nhận là **"BA đã chấp nhận mã cũ"**. Lần sau hệ thống không hỏi lại.
+- Có thể bật chế độ **chặt** (cấu hình ở Admin) — khi đó mã không hợp lệ sẽ bị từ chối. Mặc định chế độ **mềm** để không cản trở BA.
+
+### 3.5 Nhấn Lưu
+
+Hệ thống làm các việc sau (mất ≤ 3 giây):
+
+- Tạo bản ghi sản phẩm với thông tin đã điền.
+- Sinh các phiên bản (variants) tương ứng với Biến thể.
+- Tạo trạng thái kênh "Etsy — Draft" cho sản phẩm.
+- Nếu có mã Gearment → bật cờ Dropship tự động.
+- Hiển thị form sản phẩm đã lưu.
+
+### 3.6 Kiểm tra ngay sau khi tạo
+
+Trên form sản phẩm vừa tạo, kiểm tra:
+
+- [ ] **Thông tin chung**: tên, Danh mục, Mã SKU, giá — đúng như đã nhập.
+- [ ] **Biến thể**: hiển thị đầy đủ các phiên bản; mỗi phiên bản có Mã SKU riêng (ví dụ `MUG-CR-F11-BK` cho phiên bản màu Black).
+- [ ] **Channels** (Kênh): thấy dòng "Etsy — Draft".
+- [ ] Nút **"Publish to Etsy"** xuất hiện ở header form.
+
+---
+
+## 4. Thông tin bổ sung khi đăng Etsy
+
+Trên form Sản phẩm chuẩn, hệ thống bổ sung **7 nhóm trường** giúp sản phẩm đủ thông tin khi đăng lên Etsy. Các trường này nằm ngay trên form — không cần mở Wizard riêng. Mặc định để trống thì hệ thống dùng giá trị chung của shop hoặc bỏ qua.
+
+### 4.1 Tags (Từ khoá tìm kiếm)
+
+- **Nhập tối đa 13 tag**, mỗi tag tối đa **20 ký tự**.
+- Chỉ chấp nhận chữ cái, số, khoảng trắng, dấu gạch ngang `-` và dấu nháy đơn `'`.
+- Hệ thống gửi tags lên Etsy giúp khách tìm sản phẩm dễ hơn.
+- Để trống → Etsy không hiển thị tags (không phải lỗi).
+
+**Vị trí trên form:** trang **Listing Tags** trong khu vực Channels.
+
+### 4.2 Cá nhân hoá (Personalization)
+
+Cho phép khách yêu cầu khắc / in tên / lời chúc lên sản phẩm. 4 trường:
+
+| Trường | Ý nghĩa | Mặc định |
+|---|---|---|
+| **Cho phép cá nhân hoá** | Tick để bật tính năng | Tắt |
+| **Bắt buộc khách điền** | Khách phải điền mới mua được | Tắt (tuỳ chọn) |
+| **Số ký tự tối đa** | Giới hạn độ dài lời khách nhập | `256` (cho phép `1`–`1024`) |
+| **Hướng dẫn cho khách** | Hiển thị cho khách khi đặt | (trống) |
+
+Khi **tắt** cá nhân hoá → 3 trường còn lại không gửi lên Etsy (xem như feature off).
+
+**Vị trí trên form:** trang **Listing Options** trong khu vực Channels (chỉ hiện khi BA tick "Cho phép cá nhân hoá").
+
+### 4.3 Vật liệu (Materials)
+
+- Hệ thống **tự suy ra** từ thuộc tính **Chất liệu** của Biến thể — BA không cần nhập lại.
+- Ví dụ: nếu biến thể có Chất liệu = `Ceramic + Chrome` thì hệ thống tự gửi `Ceramic, Chrome` lên Etsy.
+- Tối đa 13 vật liệu, ký tự đặc biệt được làm sạch tự động.
+- Nếu sản phẩm không có biến thể Chất liệu → không gửi vật liệu lên Etsy.
+
+> Đây là field "auto" — BA không có ô riêng để điền. Muốn đổi vật liệu → đổi giá trị thuộc tính Chất liệu trong phần Biến thể.
+
+### 4.4 Ảnh phụ (Mini gallery)
+
+- Ngoài ảnh sản phẩm chính (ô upload chính trên form), BA có thể thêm **ảnh phụ** trong trang **Extra Images**.
+- Mỗi ảnh có **số thứ tự (sequence)** — BA kéo thả để sắp xếp.
+- Hệ thống gửi **tối đa 10 ảnh** lên Etsy (ảnh chính + ảnh phụ), theo đúng thứ tự BA sắp. Ảnh thứ 11 trở đi bị bỏ qua + ghi cảnh báo trong log để Admin biết.
+- Nếu một ảnh upload Etsy lỗi (ví dụ file hỏng) → hệ thống bỏ qua ảnh đó và tiếp tục các ảnh còn lại.
+
+**Vị trí trên form:** trang **Extra Images** trong khu vực Channels.
+
+### 4.5 Override Etsy theo từng sản phẩm
+
+Mặc định mỗi sản phẩm dùng giá trị chung của shop Etsy (Admin cấu hình một lần ở **Etsy → Shop Settings → Publisher Defaults**). Khi cần khác biệt, BA có thể override theo từng sản phẩm. 3 trường:
+
+| Trường | Khi nào dùng | Giá trị |
+|---|---|---|
+| **Danh mục Etsy (taxonomy)** | Catalog có nhiều dòng, mỗi dòng cần danh mục Etsy khác nhau (Mug vs Apron) | Chuỗi ID Etsy (Admin/BA Manager đưa) |
+| **Ai làm (who_made)** | Sản phẩm này không cùng "Ai làm" với mặc định shop | `i_did` / `someone_else` / `collective` |
+| **Khi nào làm (when_made)** | Sản phẩm có khoảng thời gian khác (ví dụ "made_to_order" vs "2020_2025") | Một trong 19 giá trị Etsy chuẩn (`made_to_order`, `2020_2025`, `2010_2019`, …, `before_1700`) |
+
+**Cách hệ thống chọn:** trường nào BA điền → dùng giá trị đó. Trường nào BA bỏ trống → dùng giá trị mặc định của shop. Trường nào shop cũng không cài → dùng giá trị hệ thống mặc định.
+
+**Vị trí trên form:** trang **Listing Defaults** trong khu vực Channels. Placeholder của mỗi ô gợi ý "Leave blank to use shop default".
+
+> Trường **is_supply** ("hàng cung ứng" hay "thành phẩm") **không** override theo sản phẩm — vẫn dùng giá trị chung của shop. Nếu catalog có cả thành phẩm + vật liệu thô, Admin cần tạo 2 shop riêng.
+
+### 4.6 Cân nặng & Kích thước
+
+**Cân nặng:**
+- Điền vào trường **Weight** chuẩn trên form sản phẩm (đơn vị mặc định kg).
+- Hệ thống tự chuyển sang **ounce** hoặc **gram** trước khi gửi Etsy (Admin chọn đơn vị ưu tiên ở shop).
+- Cân nặng = 0 hoặc trống → không gửi cân nặng lên Etsy.
+
+**Kích thước:**
+- Hệ thống tự suy ra từ tên **Size** của Biến thể, ví dụ:
+  - Doormat / Rug có Size = `R30X18` → dài 30, rộng 18.
+  - Mug có Size = `11 oz` → **không có kích thước hình học** → hệ thống gửi cân nặng nhưng bỏ qua kích thước (đúng theo Etsy).
+- Đơn vị **cm** hoặc **inch** do Admin chọn ở shop (mặc định cm).
+
+> Cân nặng + Kích thước phải đi cặp (length + width + unit) hoặc bỏ qua hoàn toàn — Etsy không nhận một phần.
+
+### 4.7 Thuộc tính biến thể (Variant properties)
+
+- Mỗi biến thể có thể có các thuộc tính: **Material, Color, Size, Shape, Fluid oz, Apparel Size**.
+- Hệ thống gửi lên Etsy theo cặp `(loại thuộc tính, giá trị)` để khách xem thấy chính xác trên trang Etsy (ví dụ "Material: Ceramic", "Color: Black").
+- 6 loại thuộc tính bật mặc định: Material, Color, Size, Shape, Fluid oz, Apparel Size.
+- Muốn thêm hoặc tắt loại thuộc tính khác → liên hệ Admin (cài đặt theo shop, BA không tự đổi).
+
+> Nếu một thuộc tính chưa cài ID Etsy đầy đủ → hệ thống vẫn gửi nhãn tên (vd `Material`) + ghi cảnh báo cho Admin xem.
+
+---
+
+## 5. Đồng bộ từ Excel
+
+> ⚠️ **Chưa hoạt động hôm nay.** Tính năng đã thiết kế nhưng cron chưa wire. Mô tả dưới đây là kế hoạch.
+
+### 5.1 Đường dẫn upload
+
+Khi BA đặt file Excel danh mục vào thư mục Google Drive đã cấu hình:
+
+```
+GDrive: /Hatafax_Catalog/<năm>/<tên_file>.xlsx
+```
+
+### 5.2 Cron tự động
+
+- Lịch chạy: mỗi đêm khoảng **02:00 VN**.
+- Hệ thống đọc file mới nhất theo timestamp.
+- Mỗi dòng = một sản phẩm.
+
+### 5.3 Quy tắc cập nhật
+
+| Tình huống | Hành vi |
+|---|---|
+| SKU mới (chưa có trong hệ thống) | Tạo sản phẩm mới |
+| SKU đã có | **Excel thắng** — cập nhật tên, giá, mô tả theo Excel |
+| Sản phẩm cũ có kênh đã chọn | Không xoá — chỉ cập nhật nội dung |
+| Dòng Excel lỗi format | Bỏ qua + ghi vào báo cáo |
+
+### 5.4 Báo cáo cron
+
+Mỗi sáng BA Lead nhận email tóm tắt:
+- Số sản phẩm thêm mới
+- Số sản phẩm cập nhật
+- Số dòng bị lỗi (kèm lý do)
+
+---
+
+## 6. Quản lý mã SKU — câu chuyện hai mã
+
+### 6.1 Hai bộ mã song song
+
+| Mã | Khi nào dùng | Ví dụ |
+|---|---|---|
+| **Mã cũ (legacy)** | SKU BA đã dùng lâu nay; giữ trong "Lưu trữ SKU cũ" | `MUG-001`, `T-SHIRT-XL-RED` |
+| **Mã chuẩn (v2)** | Mã hệ thống tự sinh cho sản phẩm mới | `MUG-CR-F11`, `APR-TX-AM` |
+
+### 6.2 Cấu trúc mã chuẩn
+
+`{FAM3}-{MAT2}-{SIZE}[-{VAR2}]`
+
+Ví dụ: `MUG-CR-F11-BK`
+- `MUG` = nhóm Mug (Family, 3 ký tự)
+- `CR` = chất liệu Ceramic + Chrome (Material, 2 ký tự)
+- `F11` = 11 oz fluid (Size — namespace Fluid oz)
+- `BK` = màu Black (Variant 2, tuỳ chọn)
+
+Đầy đủ 22 family + 7 material + 5 size namespace: xem [`SKU_GRAMMAR.md`](./SKU_GRAMMAR.md).
+
+### 6.3 Trang SKU Drift
+
+Khi mở sản phẩm có mã legacy → trang **SKU Drift** trên form hiển thị:
+
+```
+SKU hiện tại:   MUG-001        [Mã cũ]
+SKU gợi ý mới:  MUG-CR-F11
+
+[Giữ mã cũ]    [Chấp nhận mã mới]
+```
+
+- **Giữ mã cũ** → hệ thống nhớ quyết định, không hỏi lại.
+- **Chấp nhận mã mới** → cập nhật mã trong hệ thống + tự push lên Etsy (nếu sản phẩm đang Etsy "Còn hàng"). Nếu Etsy lỗi → rollback + ghi lỗi.
+
+### 6.4 Xem danh sách SKU drift
+
+**Menu:** Sản phẩm → **SKU Drift** → danh sách các sản phẩm có mã chưa khớp định dạng mới. Bấm vào mỗi dòng để giải quyết.
+
+---
+
+## 7. Đăng sản phẩm lên Etsy
+
+### 7.1 Điều kiện trước khi đăng
+
+- [ ] Đã có ít nhất 1 ảnh sản phẩm chính.
+- [ ] Tên sản phẩm tiếng Anh không vượt quá 140 ký tự.
+- [ ] Giá USD `> 0` (Etsy tự enforce mức $0.20 ở bước push của họ).
+- [ ] Shop Etsy nguồn đã có 4 default IDs do Admin cấu hình một lần (Danh mục Etsy / Shipping Profile / Return Policy / Readiness State).
+- [ ] (Khuyến nghị) Đã điền các Thông tin bổ sung ở mục 4 nếu cần — tags, cá nhân hoá, ảnh phụ …
+
+### 7.2 Bấm "Publish to Etsy"
+
+1. Mở form sản phẩm.
+2. Nhấn nút **"Publish to Etsy"** ở header form (mọi BA tier đều thấy).
+3. Wizard publish mở ra:
+   - **Action: Run Publish (full)** — tạo draft → upload ảnh → push tồn kho → đăng active.
+   - **Action: Run Publish Draft Only** — dừng ở Draft, không phát sinh phí Etsy $0.20.
+4. Nhấn nút tương ứng.
+
+Hệ thống làm các bước:
+
+1. Gọi Etsy tạo listing Draft.
+2. Upload ảnh (chính + phụ, tối đa 10).
+3. Đẩy SKU + tồn kho lên Etsy.
+4. (Nếu action full) chuyển listing sang trạng thái Active.
+5. Cập nhật trạng thái kênh từ Draft → Published (hoặc dừng ở Draft).
+
+### 7.3 Sau khi đăng
+
+- [ ] Mở Etsy Shop Manager → thấy listing mới ở **Drafts** hoặc **Active**.
+- [ ] Trên hệ thống, trang **Channels** hiển thị "Etsy — Published" + listing ID.
+- [ ] Nếu lỗi → trang **Channels** hiển thị "Etsy — Error" + thông báo lỗi → BA xem rồi bấm **"Resume Publish"** (nút đổi tên khi trạng thái = lỗi).
+
+### 7.4 Lỗi thường gặp khi publish
+
+| Lỗi | Nguyên nhân | Cách xử lý |
+|---|---|---|
+| `A readiness_state_id is required for physical listings.` | Shop Etsy nguồn chưa cấu hình Readiness State | Admin vào Etsy → Shop Settings → Publisher Defaults |
+| `All offerings need readiness state` | Push inventory: từng phiên bản chưa carry Readiness State | Hệ thống đã fix; nếu vẫn lỗi → báo Đội Kỹ thuật |
+| `int exceeds XML-RPC limits` | Listing ID > 2.1B chưa cast về dạng chuỗi | Hệ thống đã fix; báo nếu tái phát |
+
+---
+
+## 8. Câu hỏi thường gặp
+
+**Q:** _Tôi tạo nhầm sản phẩm. Xoá thế nào?_
+A: Chỉ Admin / BA Manager mới xoá được. Liên hệ và cung cấp Mã SKU + lý do. Nếu sản phẩm chưa đăng lên Etsy → xoá an toàn. Nếu đã đăng → phải hạ listing Etsy trước.
+
+**Q:** _Sản phẩm tạo xong nhưng không thấy nút "Publish to Etsy"._
+A: Bạn chưa có quyền BA. Liên hệ Admin để cấp quyền (mọi BA tier đều publish được — không cần BA Lead).
+
+**Q:** _Tôi muốn cùng một sản phẩm bán trên Etsy + Amazon._
+A: Hôm nay chỉ Etsy hoạt động. Khi Amazon ra mắt, BA chỉ cần tích thêm ☑ Amazon trong phần "Các kênh áp dụng" của sản phẩm.
+
+**Q:** _Mã SKU Gearment có bắt buộc không?_
+A: Không. Để trống → sản phẩm chạy theo đường MTO (sản xuất nội bộ). Có giá trị → chạy theo đường Dropship Gearment (chế độ Dropship tự bật).
+
+**Q:** _Trước đây có Wizard cũ và SKU Builder — sao bây giờ không thấy nữa?_
+A: Từ phiên bản này, **form Sản phẩm chuẩn đã đủ** — hệ thống tự sinh Mã SKU từ Danh mục + Biến thể nên không cần Wizard riêng nữa. Wizard cũ đã được ẩn khỏi menu để tránh nhầm lẫn.
+
+**Q:** _Mã SKU tự sinh có sai không?_
+A: Hệ thống dựa trên Danh mục + Biến thể để sinh Mã SKU. Nếu BA chọn đúng Danh mục + Biến thể → Mã SKU sẽ đúng định dạng. BA vẫn có thể sửa tay nếu cần (ví dụ giữ mã legacy cho sản phẩm cũ).
+
+**Q:** _Tôi muốn giữ mã legacy cho sản phẩm cũ — làm sao?_
+A: Chỉ cần **gõ tay** mã cũ vào ô Mã SKU → hệ thống giữ nguyên. Lần sau hệ thống không hỏi lại.
+
+**Q:** _Tôi đăng lên Etsy bị lỗi "A readiness_state_id is required for physical listings."_
+A: Shop Etsy nguồn chưa cấu hình Readiness State. Liên hệ Admin để cấu hình từ menu **Etsy → Shop Settings → Publisher Defaults**.
+
+**Q:** _Tôi bật chế độ "chặt" cho kiểm tra Mã SKU thì sao?_
+A: Admin đổi cấu hình hệ thống từ chế độ "mềm" sang "chặt". Từ lúc đó mọi Mã SKU không khớp định dạng sẽ bị từ chối, không tạo sản phẩm. Khuyến nghị: chỉ bật sau khi đã chuẩn hoá hết catalog legacy.
+
+**Q:** _Tôi điền tags / personalization / weight nhưng Etsy listing không thấy?_
+A: Kiểm tra (1) đã bấm **Lưu** chưa, (2) đã chạy "Publish to Etsy" hoặc "Resume Publish" chưa. Etsy listing chỉ cập nhật khi BA bấm publish — không tự đồng bộ.
+
+---
+
+## 9. Checklist kiểm thử UAT
+
+> Người kiểm thử: BA Lead · **Ngày kiểm:** _________ · **Môi trường:** Staging (`https://odoo.hatafax.com`)
+
+### TC-001: Tạo sản phẩm Mug bằng form chuẩn
+
+- [ ] Đăng nhập vai trò BA Lead
+- [ ] Mở menu **Sản phẩm** → bấm **Tạo mới**
+- [ ] Điền: Tên = "UAT-TAOSP Mug 2026", Danh mục = `Mug`, Biến thể: Chất liệu = "Ceramic + Chrome", Size = "11 oz", Giá USD = 12.99, Kênh = ☑ Etsy
+- [ ] **Mong đợi:** Ô Mã SKU tự điền = `MUG-CR-F11`; bấm Lưu thành công
+- [ ] **Kết quả thực tế:** _____
+- [ ] **Pass / Fail:** _____
+
+### TC-002: Tạo sản phẩm Dropship Gearment
+
+- [ ] Mở form Sản phẩm → Tạo mới
+- [ ] Điền tất cả trường bắt buộc + Mã SKU Gearment = "GEAR-UAT-..."
+- [ ] **Mong đợi:** Sản phẩm có cờ Dropship; hiển thị huy hiệu "Dropship" trên form
+- [ ] **Pass / Fail:** _____
+
+### TC-003: Trang SKU Drift — giữ mã cũ
+
+- [ ] _**Yêu cầu seed**: cần 1 sản phẩm có mã legacy trên staging_
+- [ ] Mở sản phẩm có Mã SKU legacy (ví dụ `MUG-001`)
+- [ ] Mở trang "SKU Drift"
+- [ ] Bấm "Keep Legacy"
+- [ ] **Mong đợi:** Mã giữ nguyên; sản phẩm không xuất hiện trong danh sách SKU Drift nữa
+- [ ] **Pass / Fail:** _____
+
+### TC-004: Trang SKU Drift — chấp nhận mã mới (sản phẩm đã đăng Etsy)
+
+- [ ] _**Yêu cầu seed**: cần 1 SP đã publish Etsy + có mã legacy_
+- [ ] Mở SP đã đăng Etsy + có mã legacy
+- [ ] Bấm "Accept Canonical"
+- [ ] **Mong đợi:** Mã SKU đổi sang định dạng mới; trang Channels hiển thị "Inventory push pending" → "pushed"; Etsy Shop Manager phản ánh Mã SKU mới
+- [ ] **Pass / Fail:** _____
+
+### TC-005: Đăng SP lên Etsy (Draft mode)
+
+- [ ] _**Yêu cầu**: owner pre-approved_
+- [ ] Mở SP UAT vừa tạo (có ít nhất 1 ảnh)
+- [ ] Bấm "Publish to Etsy" → **Action: Run Publish Draft Only**
+- [ ] **Mong đợi:** Etsy Shop Manager → listing mới ở Drafts; trang Channels: "Etsy — Published (draft)" + listing ID
+- [ ] **Pass / Fail:** _____
+
+### TC-006: Phân quyền — BA User vẫn thấy nút "Publish to Etsy"
+
+- [ ] Đăng nhập tài khoản BA User
+- [ ] Mở sản phẩm bất kỳ
+- [ ] **Mong đợi:** Nút "Publish to Etsy" **hiện** trên header form; có thể bấm và chạy được wizard publish
+- [ ] **Pass / Fail:** _____
+
+### TC-007: Validator giá — Listing Price phải `> 0`
+
+- [ ] Mở form Sản phẩm → Tạo mới, điền giá USD = 0
+- [ ] Bấm Lưu
+- [ ] **Mong đợi:** Modal lỗi "Listing Price must be greater than 0."
+- [ ] **Pass / Fail:** _____
+
+### TC-008: Tags — happy path + giới hạn 13
+
+- [ ] Tạo sản phẩm mới, mở trang **Listing Tags**
+- [ ] Thêm 13 tag hợp lệ (ví dụ `mug, ceramic, gift, ...`)
+- [ ] **Mong đợi:** Lưu thành công, đếm = 13
+- [ ] Thử thêm tag thứ 14
+- [ ] **Mong đợi:** Lỗi "≤ 13 tags"
+- [ ] Thử thêm tag dài 21 ký tự
+- [ ] **Mong đợi:** Lỗi "≤ 20 chars"
+- [ ] **Pass / Fail:** _____
+
+### TC-009: Cá nhân hoá — bật + bắt buộc + 256 ký tự
+
+- [ ] Tạo sản phẩm, mở trang **Listing Options**
+- [ ] Tick "Cho phép cá nhân hoá", tick "Bắt buộc khách điền", char count = 256, hướng dẫn = "Khắc tên lên cốc"
+- [ ] Bấm Lưu, sau đó Publish Draft to Etsy
+- [ ] **Mong đợi:** Etsy listing có 4 trường personalization hiện đúng giá trị
+- [ ] **Pass / Fail:** _____
+
+### TC-010: Cá nhân hoá — char count ngoài dải
+
+- [ ] Tick "Cho phép cá nhân hoá", char count = 0 → bấm Lưu
+- [ ] **Mong đợi:** Lỗi "1 ≤ char count ≤ 1024"
+- [ ] Đổi char count = 1025 → Lưu
+- [ ] **Mong đợi:** Lỗi như trên
+- [ ] **Pass / Fail:** _____
+
+### TC-011: Vật liệu auto từ biến thể
+
+- [ ] Tạo SP với Biến thể: Chất liệu = "Ceramic + Chrome"
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi:** Etsy listing có Materials = `["Ceramic", "Chrome"]` (hoặc tương đương sau khi làm sạch ký tự)
+- [ ] **Pass / Fail:** _____
+
+### TC-012: Ảnh phụ — upload 3 ảnh + thứ tự
+
+- [ ] Tạo SP, mở trang **Extra Images**
+- [ ] Upload 3 ảnh, đặt sequence = 10 / 20 / 30
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi:** Etsy listing nhận 4 ảnh (ảnh chính + 3 ảnh phụ) đúng thứ tự
+- [ ] **Pass / Fail:** _____
+
+### TC-013: Override Etsy theo sản phẩm — taxonomy_id
+
+- [ ] Cấu hình shop: default Danh mục Etsy = `1234567890`
+- [ ] Tạo SP, mở trang **Listing Defaults**, điền Danh mục Etsy = `9999999999`
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi:** Etsy listing dùng `9999999999`, không phải shop default
+- [ ] **Pass / Fail:** _____
+
+### TC-014: Cân nặng + Kích thước
+
+- [ ] Tạo SP Doormat với Weight = 0.35 kg, Biến thể Size = "R30X18"
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi (shop weight_unit_pref=oz, dimensions_unit_pref=cm):**
+  - Etsy listing: item_weight = `12.35` oz, item_length = `30`, item_width = `18`, item_dimensions_unit = `cm`
+- [ ] Tạo SP Mug với Weight = 0.4 kg, Biến thể Size = "11 oz"
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi:** item_weight = `14.11` oz; **không có** item_length/item_width (Mug không có kích thước hình học)
+- [ ] **Pass / Fail:** _____
+
+### TC-015: Thuộc tính biến thể (variant property_values)
+
+- [ ] Tạo SP với 2 biến thể (Material=Ceramic, Color=Black) và (Material=Ceramic, Color=White)
+- [ ] Publish Draft to Etsy
+- [ ] **Mong đợi:** Mỗi offering trên Etsy listing có 2 property_values: Material=Ceramic, Color=Black hoặc White
+- [ ] **Pass / Fail:** _____
+
+### Tổng kết UAT
+
+- [ ] 15/15 test cases Pass → **Approve**
+- [ ] Có Fail → ghi cụ thể vào `docs/owner/UAT_FINDINGS_<date>.md` + tạo Jira sub-task
+
+---
+
+## 10. Báo lỗi cho ai
+
+| Loại lỗi | Liên hệ |
+|---|---|
+| Form sản phẩm không mở / lỗi UI | Đội Kỹ thuật |
+| Mã SKU bị nghi sai | BA Manager |
+| Etsy báo lỗi khi đăng | BA Lead → Đội Kỹ thuật (kèm screenshot + listing ID) |
+| Cron Excel không chạy | Đội Kỹ thuật (khi cron đi vào hoạt động) |
+| Quyền truy cập / role | Admin |
+| Mã SKU validator báo lỗi | BA Manager (quyết định chế độ mềm/chặt) |
+| Cài đặt mặc định shop Etsy (taxonomy / readiness / shipping / return) | Admin |
+
+---
+
+> **Tài liệu liên quan:**
+> - Tổng quan nghiệp vụ: [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
+> - Walkthrough UAT click-by-click: [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](./UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md)
+> - Định dạng Mã SKU chi tiết: [`SKU_GRAMMAR.md`](./SKU_GRAMMAR.md)
+> - Báo cáo sẵn sàng đăng Etsy: [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](./ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md)
+> - BRD: `docs/owner/BRD_VN.md` (Epic 7)

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            P1-01b — saved filters re-bound from sale.order to
+            sale.order.line (model swap mirrors the dashboard view).
+            Domains traverse via related shadows declared on
+            sale.order.line in models/sale_order_line.py (P1-01b T-01b-04).
+
+            Naming-based role scoping preserved per P1-DASH-MERGE
+            rationale: ir.filters has no group_ids field; group-level
+            gating would go stale. Operations menu still gated by
+            sales_team.group_sale_salesman.
+        -->
+
+        <record id="filter_operations_marketing_user" model="ir.filters">
+            <field name="name">My role: Marketing — Draft orders</field>
+            <field name="model_id">sale.order.line</field>
+            <field name="domain">[('order_id.state', '=', 'draft')]</field>
+            <field name="action_id" ref="action_operations_dashboard"/>
+        </record>
+
+        <record id="filter_operations_ba_lead" model="ir.filters">
+            <field name="name">My role: BA Lead — Open orders</field>
+            <field name="model_id">sale.order.line</field>
+            <field name="domain">[('order_id.state', 'in', ['draft', 'sale'])]</field>
+            <field name="action_id" ref="action_operations_dashboard"/>
+        </record>
+
+        <record id="filter_operations_production_team" model="ir.filters">
+            <field name="name">My role: Production — Ready to ship</field>
+            <field name="model_id">sale.order.line</field>
+            <field name="domain">[('production_blocked', '=', False), ('label_status_id', '!=', False)]</field>
+            <field name="action_id" ref="action_operations_dashboard"/>
+        </record>
+
+    </data>
+</odoo>

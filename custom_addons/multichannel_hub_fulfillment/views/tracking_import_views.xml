@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- tracking.import.log: list -->
+  <record id="view_tracking_import_log_list" model="ir.ui.view">
+    <field name="name">tracking.import.log.list</field>
+    <field name="model">tracking.import.log</field>
+    <field name="arch" type="xml">
+      <list string="GKE Tracking Imports" create="false" edit="false">
+        <field name="create_date"/>
+        <field name="name"/>
+        <field name="filename"/>
+        <field name="state" decoration-info="state == 'processing'"
+               decoration-success="state == 'ok'"
+               decoration-warning="state == 'warning'"
+               decoration-danger="state == 'error'"/>
+        <field name="total_rows"/>
+        <field name="matched_count"/>
+        <field name="unmatched_count"/>
+        <field name="conflict_count"/>
+        <field name="error_count"/>
+        <field name="imported_count"/>
+        <field name="triggered_by_user_id"/>
+        <field name="is_new_schema" optional="hide"/>
+        <field name="schema_hash"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- tracking.import.log: form -->
+  <record id="view_tracking_import_log_form" model="ir.ui.view">
+    <field name="name">tracking.import.log.form</field>
+    <field name="model">tracking.import.log</field>
+    <field name="arch" type="xml">
+      <form string="Tracking Import">
+        <header>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="pending,processing,ok,warning,error"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_today_imports" type="object"
+                    class="oe_stat_button" icon="fa-calendar-o"
+                    string="Today's Imports"
+                    groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+          </div>
+          <div class="oe_title">
+            <h1><field name="name" readonly="1"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="filename"/>
+              <field name="file_size_bytes"/>
+              <field name="schema_hash"/>
+              <field name="is_new_schema"/>
+              <field name="source"/>
+              <field name="source_gdrive_file_id" invisible="source != 'gdrive'"/>
+            </group>
+            <group>
+              <field name="total_rows"/>
+              <field name="matched_count"/>
+              <field name="unmatched_count"/>
+              <field name="conflict_count"/>
+              <field name="error_count"/>
+              <field name="imported_count"/>
+              <field name="address_change_flagged_count"/>
+              <field name="start_at"/>
+              <field name="finish_at"/>
+              <field name="triggered_by_user_id"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Lines">
+              <field name="line_ids" readonly="1">
+                <list>
+                  <field name="row_number"/>
+                  <field name="state" decoration-info="state == 'matched'"
+                         decoration-success="state == 'imported'"
+                         decoration-warning="state in ('unmatched','conflict')"
+                         decoration-danger="state == 'error'"/>
+                  <field name="raw_order_number"/>
+                  <field name="raw_tracking_number"/>
+                  <field name="raw_carrier_label"/>
+                  <field name="raw_shipping_date"/>
+                  <field name="parsed_shipping_date" optional="hide"/>
+                  <field name="sale_order_id"/>
+                  <field name="address_change_flag"/>
+                  <field name="error_message" optional="hide"/>
+                  <button name="action_replay_line" type="object"
+                          string="Re-process" icon="fa-refresh"
+                          invisible="state == 'imported'"
+                          groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+                </list>
+              </field>
+            </page>
+            <page string="Notes">
+              <field name="notes"/>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <!-- P2-02: bulk re-detect carriers server action. -->
+  <record id="action_re_detect_carriers" model="ir.actions.server">
+    <field name="name">Re-detect Carriers</field>
+    <field name="model_id" ref="model_tracking_import_line"/>
+    <field name="binding_model_id" ref="model_tracking_import_line"/>
+    <field name="binding_view_types">list</field>
+    <field name="state">code</field>
+    <field name="code">action = records.action_re_detect_carriers()</field>
+    <field name="group_ids" eval="[(4, ref('multichannel_hub_fulfillment.group_ba_shipping'))]"/>
+  </record>
+
+  <record id="action_tracking_import_log" model="ir.actions.act_window">
+    <field name="name">GKE Tracking Imports</field>
+    <field name="res_model">tracking.import.log</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <!-- P2-04: smart-button target — today's imports. -->
+  <record id="action_tracking_import_log_today" model="ir.actions.act_window">
+    <field name="name">Today's GKE Imports</field>
+    <field name="res_model">tracking.import.log</field>
+    <field name="view_mode">list,form</field>
+    <field name="domain">[('create_date', '&gt;=', (context_today()).strftime('%Y-%m-%d 00:00:00'))]</field>
+  </record>
+
+  <!-- P2-04: per-line replay server action. -->
+  <record id="action_replay_line" model="ir.actions.server">
+    <field name="name">Re-process Row</field>
+    <field name="model_id" ref="model_tracking_import_line"/>
+    <field name="binding_model_id" ref="model_tracking_import_line"/>
+    <field name="binding_view_types">list,form</field>
+    <field name="state">code</field>
+    <field name="code">action = records.action_replay_line()</field>
+    <field name="group_ids" eval="[(4, ref('multichannel_hub_fulfillment.group_ba_shipping'))]"/>
+  </record>
+
+  <!-- tracking.import.wizard: form -->
+  <record id="view_tracking_import_wizard_form" model="ir.ui.view">
+    <field name="name">tracking.import.wizard.form</field>
+    <field name="model">tracking.import.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Import GKE Tracking Excel">
+        <field name="state" invisible="1"/>
+        <group invisible="state != 'draft'">
+          <field name="excel_file" filename="excel_filename"/>
+          <field name="excel_filename" invisible="1"/>
+        </group>
+        <group invisible="state == 'draft'">
+          <group>
+            <field name="schema_hash" readonly="1"/>
+            <field name="is_new_schema" readonly="1"/>
+          </group>
+          <group>
+            <field name="preview_log_id" readonly="1"/>
+          </group>
+        </group>
+        <div invisible="state == 'draft' or not is_new_schema"
+             class="alert alert-warning" role="alert">
+          New schema fingerprint detected. A BA Manager must approve before import.
+        </div>
+        <notebook invisible="state == 'draft'">
+          <page string="Headers">
+            <field name="header_diff_html" readonly="1"/>
+          </page>
+          <page string="Preview Lines">
+            <field name="preview_line_ids" readonly="1">
+              <list>
+                <field name="row_number"/>
+                <field name="state"/>
+                <field name="raw_order_number"/>
+                <field name="raw_tracking_number"/>
+                <field name="raw_carrier_label"/>
+                <field name="raw_shipping_date"/>
+                <field name="sale_order_id"/>
+                <field name="address_change_flag"/>
+              </list>
+            </field>
+          </page>
+        </notebook>
+        <footer>
+          <button name="action_preview" type="object" string="Preview"
+                  class="btn-primary" invisible="state != 'draft'"
+                  groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+          <button name="action_approve_schema" type="object"
+                  string="Approve Schema" class="btn-warning"
+                  invisible="state == 'draft' or not is_new_schema"
+                  groups="multichannel_hub_fulfillment.group_ba_manager"/>
+          <button name="action_import" type="object" string="Import"
+                  class="btn-primary"
+                  invisible="state != 'previewed' or is_new_schema"
+                  groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+          <button name="action_cancel" type="object" string="Cancel"
+                  class="btn-secondary"
+                  invisible="state == 'done'"/>
+          <button special="cancel" string="Close" class="btn-secondary"
+                  invisible="state != 'done'"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_tracking_import_wizard" model="ir.actions.act_window">
+    <field name="name">Import GKE Tracking Excel</field>
+    <field name="res_model">tracking.import.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+  <!-- Menu -->
+  <menuitem id="menu_tracking_import_root"
+            name="Tracking Import"
+            parent="multichannel_hub_core.menu_operations_root"
+            sequence="70"
+            groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+
+  <menuitem id="menu_tracking_import_wizard"
+            name="Import GKE Excel"
+            parent="menu_tracking_import_root"
+            action="action_tracking_import_wizard"
+            sequence="10"
+            groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+
+  <menuitem id="menu_tracking_import_log"
+            name="Import History"
+            parent="menu_tracking_import_root"
+            action="action_tracking_import_log"
+            sequence="20"
+            groups="multichannel_hub_fulfillment.group_ba_shipping"/>
+
+</odoo>

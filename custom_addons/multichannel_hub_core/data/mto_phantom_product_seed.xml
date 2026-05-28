@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--
+    P1-MTO-SEED — Phantom component for pass-through BOMs (ADR-010 amendment 2026-05-03).
+
+    Singleton phantom product reused as the single bom_line input for every
+    vn_internal_production product BOM auto-created by product.mto.bom.wizard.
+
+    Route activation (MTO + Manufacture product_selectable) lives in
+    post_init_hook + migrations/19.0.1.0.16/ — XML overrides on cross-module
+    records are blocked by `noupdate` flags.
+  -->
+  <data noupdate="1">
+    <record id="product_mto_phantom_component" model="product.template">
+      <field name="name">MFG-Phantom</field>
+      <field name="type">service</field>
+      <field name="sale_ok" eval="False"/>
+      <field name="purchase_ok" eval="False"/>
+      <field name="default_code">MFG-PHANTOM</field>
+      <field name="description">Internal manufacturing phantom component used by P1-MTO-SEED auto-BOM wizard. Do not sell or purchase.</field>
+    </record>
+  </data>
+</odoo>

@@ -2,7 +2,7 @@
 
 **Module**: etsy_integration v19.0.1.0.0
 **Platform**: Odoo 19 CE
-**URL**: https://hatafa.erptek.net
+**URL**: https://odoo.hatafax.com
 
 ---
 
@@ -28,7 +28,7 @@
 
 ### Login
 
-1. Open https://hatafa.erptek.net in your browser.
+1. Open https://odoo.hatafax.com in your browser.
 2. Enter your username and password.
 3. Click the **Etsy** menu item in the top navigation bar.
 

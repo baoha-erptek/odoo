@@ -1,0 +1,90 @@
+{
+  "count": 2,
+  "results": [
+    {
+      "receipt_id": 1004,
+      "name": "Diana Designer",
+      "country_iso": "GB",
+      "created_timestamp": 1704326400,
+      "last_modified_tsz": 1704326400,
+      "grandtotal": {
+        "amount": 9500,
+        "divisor": 100,
+        "currency_code": "GBP"
+      },
+      "total_shipping_cost": {
+        "amount": 2000,
+        "divisor": 100,
+        "currency_code": "GBP"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-1004",
+          "listing_id": "L-1004",
+          "title": "Leather Wallet",
+          "sku": "WALLET-001",
+          "quantity": 1,
+          "price": {
+            "amount": 7500,
+            "divisor": 100,
+            "currency_code": "GBP"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "10 King's Road",
+      "second_line": null,
+      "city": "London",
+      "state": null,
+      "zip": "SW3 4UA",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": null,
+      "buyer_email": "diana@example.co.uk",
+      "gift_message": null
+    },
+    {
+      "receipt_id": 1005,
+      "name": "Eve Engineer",
+      "country_iso": "AU",
+      "created_timestamp": 1704412800,
+      "last_modified_tsz": 1704412800,
+      "grandtotal": {
+        "amount": 6200,
+        "divisor": 100,
+        "currency_code": "AUD"
+      },
+      "total_shipping_cost": {
+        "amount": 1200,
+        "divisor": 100,
+        "currency_code": "AUD"
+      },
+      "transactions": [
+        {
+          "transaction_id": "T-1005",
+          "listing_id": "L-1005",
+          "title": "Handmade Scarf",
+          "sku": "SCARF-001",
+          "quantity": 1,
+          "price": {
+            "amount": 5000,
+            "divisor": 100,
+            "currency_code": "AUD"
+          },
+          "variations": []
+        }
+      ],
+      "first_line": "42 Flinders Lane",
+      "second_line": null,
+      "city": "Melbourne",
+      "state": "VIC",
+      "zip": "3000",
+      "is_paid": true,
+      "is_gift": false,
+      "message_from_buyer": null,
+      "buyer_email": "eve@example.com.au",
+      "gift_message": null
+    }
+  ],
+  "next_offset": null
+}

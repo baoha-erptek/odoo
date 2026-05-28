@@ -386,3 +386,200 @@ Task: "Create tracking_import_wizard.py"
 - Stop at any checkpoint to validate the story independently
 - US6 (Etsy CRM) is deferred pending Etsy API approval -- not blocked for MVP or P2 delivery
 - All file paths are relative to repository root (`/home/odoo/odoo_dev/other_projects/odoo19_esty/`)
+
+---
+
+## P0-18b1 Tasks — Gearment API Exploration (Phase 0 Spike, 2026-04-30)
+
+**Branch**: `feature/006-master-plan-coding` | **Module**: `multichannel_hub_fulfillment`
+**Slice scope**: read-only catalog probe + draft/quote/confirm contract via mocks. NO live writes (real `confirm` deferred to P4-01 + owner sign-off). Webhook deferred to P0-18b2.
+**Dep**: P0-18a (`GearmentApiClient`) + `.env` `GEARMENT_API_BASE_URL` + `GEARMENT_API_KEY` + `GEARMENT_API_SECRET` (all set 2026-04-30).
+**Unblocks**: P0-18b2 (webhook discovery), P4-01 (full Gearment adapter).
+
+### RED tests (Phase 2)
+
+- [X] T080 [P0-18b1] Create `tests/test_gearment_adapter_phase1.py` — catalog live probe (single read-only call gated behind `MULTICHANNEL_HUB_FULFILLMENT_LIVE_API=1` env flag; default skip)
+- [X] T081 [P0-18b1] [P] `tests/test_gearment_adapter_orm.py` — Phase-2 ORM tests with `requests` mocked: `test_test_connection_ping_ok`, `test_push_order_returns_partner_ref_and_quote`, `test_get_quote_returns_quote_dict`, `test_confirm_stub_raises_NotImplemented`, `test_register_webhooks_stub_raises_NotImplemented`, `test_parse_webhook_payload_stub_raises_NotImplemented`, `test_idempotency_key_header_set` (POST captures `Idempotency-Key` from `external_order_id`), `test_print_location_codes_extracted_from_catalog`
+- [X] T082 [P0-18b1] [P] `tests/test_gearment_api_log_db.py` — Phase-1 schema verification: `gearment_api_log` table columns + `(sale_order_id, request_started_at)` index + `(source)` Selection includes 6 values + ACL row for `group_system`
+
+### GREEN impl (Phase 3)
+
+- [X] T083 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_adapter.py` — `GearmentAdapter` Protocol + concrete impl wrapping `GearmentApiClient`. Methods: `test_connection`, `push_order`, `get_quote`, `confirm` (stub raises `NotImplementedError("P4-01")`), `register_webhooks` (stub), `parse_webhook_payload` (stub)
+- [X] T084 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/services/gearment_payload.py` — `GearmentOrderPayload` dataclass (external_order_id / platform / store_id / quantity / product_id / address dict / shipping_method / design_files list / notes / custom_attributes). Serializer to `dict` for POST body.
+- [X] T085 [P0-18b1] `custom_addons/multichannel_hub_fulfillment/models/gearment_api_log.py` — Model `gearment.api.log` mirroring `etsy.api.log` (Spec 005 P0-17). 11 fields, no mail.thread, composite index in `init()`. Selection `source`: `probe / draft / quote / confirm / callback / health_check`.
+- [X] T086 [P0-18b1] `security/ir.model.access.csv` — `gearment.api.log` ACL: `group_system` R/W/C/U; `group_sale_manager` R only
+- [X] T087 [P0-18b1] `data/ir_cron_gearment_api_log_retention.xml` — daily cron `_cron_cleanup_old_logs()` with `multichannel_hub_fulfillment.api_log_retention_days` ICP (default 30)
+- [X] T088 [P0-18b1] Wire `GearmentAdapter` to write `gearment.api.log` rows on every call (sudo create with PII-scrubbed payload summary)
+- [X] T089 [P0-18b1] Update `__manifest__.py` data list (security CSV + cron XML); update `models/__init__.py` + `services/__init__.py`
+
+### Verify + commit (Phase 4-6)
+
+- [X] T090 [P0-18b1] Run `odoo -u multichannel_hub_fulfillment --stop-after-init --http-port=8888 --workers=0 --max-cron-threads=0` exit 0
+- [X] T091 [P0-18b1] Run `--test-tags /multichannel_hub_fulfillment --stop-after-init`; all green; coverage ≥80% on new files
+- [X] T092 [P0-18b1] Spawn `code-reviewer` + `security-reviewer` in parallel; block on CRITICAL/HIGH
+- [X] T093 [P0-18b1] grep no `_logger.info(` / `print(` in new files; ACL inline `# sudo:` comments; no raw SQL without justification
+- [X] T094 [P0-18b1] Conventional commit chain on feature branch:
+  - `[multichannel_hub_fulfillment] test(P0-18b1): RED gearment adapter + payload + api log tests (T080-T082)`
+  - `[multichannel_hub_fulfillment] feat(P0-18b1): GREEN GearmentAdapter Protocol + canonical payload + api.log model (T083-T089)`
+  - `[multichannel_hub_fulfillment] docs(P0-18b1): tracker done + tasks [X] + findings`
+
+**Slice exit criteria**:
+- All T080-T094 marked `[X]`
+- Tests green, coverage ≥80% on new files
+- Live catalog probe documented in `findings.md` (real `print_locations` + `legacy_product_id` discovery)
+- Open Q-items DQ1-DQ5 documented (webhook HMAC, idempotency-key behavior on real POST, vendor_id, HTTPS scheme, redirect policy)
+- Tracker P0-18b1 → done
+
+## Phase 0: P0-18b2a — Webhook discovery-mode controller
+
+**Slice scope**: minimal log-only `/gearment/webhook` controller; capture inbound headers + body to `gearment.api.log` so HMAC signature header name + algorithm can be discovered by inspecting the audit table. NO HMAC verify, NO topic routing, NO business writes.
+**Dep**: P0-18b1 ✓; webhook URL `https://odoo.hatafax.com/gearment/webhook` reachable via staging nginx; 3 V3 webhooks registered on Gearment dashboard 2026-05-02.
+**Unblocks**: P0-18b2b (HMAC verify), P0-18b2c (topic routing).
+
+- [X] T100 [P0-18b2a] Plan in `_archive/p0-18b2a-plan.md`
+- [X] T101 [P0-18b2a] RED tests: `tests/test_webhook_discovery_db.py` (4 Phase-1 DB) + `tests/test_webhook_discovery_orm.py` (8 Phase-2 ORM/HttpCase)
+- [X] T102 [P0-18b2a] GREEN: extend `gearment.api.log` with `direction`/`request_headers`/`request_body`/`signature_header_seen`/`topic_seen` + `inbound_webhook` source value
+- [X] T103 [P0-18b2a] GREEN: new `controllers/gearment_webhook.py` (`type='http'`, `auth='public'`, `csrf=False`, `save_session=False`); explicit + dynamic header scrubs; pre-read body cap via `Content-Length`; sudo() inline-justified
+- [X] T104 [P0-18b2a] GREEN: register `controllers/__init__.py` in module `__init__.py`; bump manifest 19.0.1.0.6 → 19.0.1.0.7
+- [X] T105 [P0-18b2a] Update existing `test_source_selection_values` to include `inbound_webhook`
+- [X] T106 [P0-18b2a] Add helper-function unit tests for `_content_length_exceeds_cap` (Werkzeug test client overrides Content-Length, so HttpCase cannot exercise the guard — pure unit tests instead)
+- [X] T107 [P0-18b2a] code-reviewer + security-reviewer parallel: 0 CRITICAL; 2 HIGH fixed inline (body DoS pre-check + drop `exc_info=True` from WARNING)
+- [X] T108 [P0-18b2a] Verify: `-u multichannel_hub_fulfillment` exit 0; 119 mhf tests + 512 cross-module tests all green
+- [X] T109 [P0-18b2a] Conventional commit
+- [X] T110 [P0-18b2a] Update `research.md` with V3 payload schema + dashboard observations; update tracker P0-18b2 split into a/b/c with this slice marked done
+- [ ] T111 [P0-18b2a] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, restart `esty19_odoo`, fire dashboard simulator at full URL `https://odoo.hatafax.com/gearment/webhook`, inspect `gearment.api.log` to capture real signature header + algorithm; document in `findings.md`
+
+**Slice exit criteria**:
+- T100-T110 `[X]`; T111 left for Phase-7 ops (separate session or follow-up)
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2a → done; P0-18b2b + P0-18b2c rows added in `blocked` state
+
+
+## Phase 0: P0-18b2b — HMAC verify + replay defenses
+
+**Slice scope**: HMAC-SHA256 signature verify against `GEARMENT_API_SECRET`; 5-min past + 1-min future timestamp window; 10-min nonce dedup; topic detection updated for body['type']; failure path returns 401 + audit row + truncated body. NO business writes (P0-18b2c).
+**Dep**: P0-18b2a ✓; HMAC scheme cracked from `https://developers.gearment.com/_bundle/webhook.yaml`.
+**Unblocks**: P0-18b2c (topic routing + sale.order writes).
+
+- [X] T112 [P0-18b2b] Plan in `_archive/p0-18b2b-plan.md`
+- [X] T113 [P0-18b2b] RED tests: 13 unit + 12 HttpCase covering signature math, replay window, nonce dedup, header presence, body truncation
+- [X] T114 [P0-18b2b] GREEN: `_compute_signature` + `_verify_signature` module-level helpers; refactor `_record_inbound` to call verify first
+- [X] T115 [P0-18b2b] GREEN: extend `gearment.api.log` with `nonce_value`/`request_timestamp` indexed + `signature_verified`/`verify_failure_reason`; composite index `(nonce_value, request_timestamp)`
+- [X] T116 [P0-18b2b] GREEN: `_detect_topic` checks body['type'] first
+- [X] T117 [P0-18b2b] Relax 5 P0-18b2a HTTP tests to `assertIn(status, (200, 401))` since unsigned probes now return 401
+- [X] T118 [P0-18b2b] code-reviewer + security-reviewer parallel: 0 CRITICAL/HIGH; 1 BLOCKER (real creds in test) + 1 MEDIUM (hardcoded url_path) both fixed inline; UNIQUE(nonce, ts) constraint TOCTOU deferred to P0-18b2c with documentation
+- [X] T119 [P0-18b2b] Verify: 132 mhf + 537 cross-module green; module installs clean
+- [X] T120 [P0-18b2b] Conventional commit + tracker update + tasks.md
+- [X] T121 [P0-18b2b] **Phase 7 (ops)**: rsync mhf to `129.150.63.207`, recreate `esty19_odoo` with `env_file: /odoo/esty19/.env` (added `GEARMENT_API_KEY`/`GEARMENT_API_SECRET`/`GEARMENT_API_BASE_URL`), self-signed Python probe → HTTP 200 + `signature_verified=true` + `topic_seen='order_completed'` (gearment.api.log row 5). Bogus-key curl → HTTP 401 + `client_key_mismatch` (row 4). Owner-fired Gearment dashboard simulator will likewise produce `signature_verified=true` once they re-trigger.
+
+**Slice exit criteria**:
+- T112-T120 [X]; T121 left for Phase-7 ops session
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2b → done; P0-18b2c row updated to absorb deferred UNIQUE constraint
+
+
+## Phase 0: P0-18b2c — Topic dispatch + fulfillment writes
+
+**Slice scope**: per-topic handlers (order_completed/cancelled/tracking_order_updated/on_hold + 5 log-only); sale.order lookup by `body.order.reference`; fulfillment write under `bypass_address_change_check=True`; UNIQUE(nonce, ts) partial index hardens b2b TOCTOU race; new audit fields `business_handled` + `business_summary`; new fulfillment field `tracking_url`.
+**Dep**: P0-18b2b ✓
+**Closes**: P0-18b2 (all sub-slices done).
+
+- [X] T122 [P0-18b2c] Plan in `_archive/p0-18b2c-plan.md`
+- [X] T123 [P0-18b2c] RED tests: 5 Phase-1 DB + 14 dispatcher unit + 3 HttpCase E2E
+- [X] T124 [P0-18b2c] GREEN: dispatcher service + 5 handlers + log-only fan-out + soft-fail strategy
+- [X] T125 [P0-18b2c] GREEN: extend gearment.api.log (`business_handled`/`business_summary`) + UNIQUE PARTIAL index narrowed to `signature_verified=TRUE`; DROP+CREATE pattern
+- [X] T126 [P0-18b2c] GREEN: extend sale.order.fulfillment (`tracking_url`) + add to `_BUS_TRIGGER_FIELDS`
+- [X] T127 [P0-18b2c] GREEN: controller calls dispatcher when verified; populates audit row with biz fields; catches `psycopg2.IntegrityError` → 401 + cr.rollback
+- [X] T128 [P0-18b2c] code-reviewer + security-reviewer parallel: 0 CRITICAL/HIGH; 1 LOW (rollback-failure test) + 2 doc fixes (DoS IP log + secret blast-radius docstring + ERROR log level for rollback failure) applied inline
+- [X] T129 [P0-18b2c] Verify: 153 mhf + 558 cross-module green; module installs `-u multichannel_hub_core,multichannel_hub_fulfillment` exit 0
+- [X] T130 [P0-18b2c] Conventional commit + tracker P0-18b2c→done + tasks.md
+- [ ] T131 [P0-18b2c] **Phase 7 (ops)**: rsync mhc+mhf to staging, bounce container, fire signed POST or dashboard simulator with reference matching a real demo order, confirm fulfillment.tracking_number written + audit row has business_handled=True + business_summary starts 'order_completed'
+
+**Slice exit criteria**:
+- T122-T130 [X]; T131 left for Phase-7 ops session
+- Tests green; coverage ≥80% on changed files
+- Tracker P0-18b2c → done; P0-18b2 row marked complete
+
+
+
+## P4-01 — Spec 004b Gearment adapter, full state machine + UI surfaces (added 2026-05-10)
+
+Slice unblocks P4-01b (bulk-action), P4-02 (returns), P5 reporting. Plan: [`p4-01-plan.md`](./p4-01-plan.md). Decisions D1–D5 resolved in plan §1.
+
+**Sub-phase A — Live verification**
+- [ ] T4-01-01 One live POST against `/api/v3/orders/draft` with reshaped payload to confirm field correctness; capture working request body + response in `quickstart.md`
+
+**Sub-phase B — Payload + adapter regen**
+- [ ] T4-01-02 RED Phase 1 DB: new `GearmentOrderPayload` dataclass field-existence
+- [ ] T4-01-03 RED Phase 2 ORM: `GearmentPayloadBuilder.build()` + `_money_to_decimal()` + new URL routing + 503/504 retry
+- [ ] T4-01-04 RED: update P0-18b1 mock tests (≈28) to expect new URLs + payload shape
+- [ ] T4-01-05 GREEN: regen `GearmentOrderPayload` + new `GearmentAddress` + `GearmentLineItem`; new `GearmentPayloadBuilder`
+- [ ] T4-01-06 GREEN: rewrite `gearment_adapter.py` URLs (`/orders/draft`, `/orders/{ref}/price`, `/orders/draft/labeled`) + `_money_to_decimal` + new `GearmentQuote` dataclass + `confirm()` impl
+- [ ] T4-01-07 GREEN: add `ServiceUnavailableError` + 503/504 retry path (5/15/45 sec backoff) to `gearment_api_client.py`
+- [ ] T4-01-08 Verify all P0-18b1 + P4-01-B tests green; module installs clean
+
+**Sub-phase C — State machine + wizard**
+- [ ] T4-01-09 RED Phase 1 DB: `x_gearment_outbound_state` Selection field; default=draft
+- [ ] T4-01-10 RED Phase 2 ORM: state transitions (draft→quoted→operator_review→confirmed; quoted→cancelled); FR-017 wizard gate; expired-quote guard
+- [ ] T4-01-11 GREEN: `x_gearment_outbound_state` + 4 quote fields (`x_gearment_quote_total/currency/expires_at/breakdown_json`) + `_advance_gearment_state` helper + `action_get_gearment_quote`
+- [ ] T4-01-12 GREEN: `gearment.quote.wizard` TransientModel + form view + `action_confirm` (FR-017 11th confirmation) + `action_cancel`
+
+**Sub-phase D — UI surfaces (D3 + D4 + D5)**
+- [ ] T4-01-13 D5: "Sync to Gearment" form button + Gearment notebook tab on mhf `sale_order_views.xml`; group_ba_shipping
+- [ ] T4-01-14 D3: operations dashboard server action `action_server_gearment_bulk_sync` bound to `sale.order.line`; new `sale_order_line.action_gearment_bulk_sync` method (mhf inherit) with savepoint per order
+- [ ] T4-01-15 D4: read-only Shipping subsection in Etsy tab on `etsy_integration/views/sale_order_views.xml` (tracking_number, shipping_carrier_id, tracking_state, shipping_date, tracking_url — all readonly)
+- [ ] T4-01-16 RED+GREEN Phase 2 ORM: bulk-action dedup + savepoint isolation + FR-017 ACL gate + view-arch tests
+
+**Closure**
+- [ ] T4-01-17 code-reviewer + security-reviewer parallel; block on CRITICAL/HIGH
+- [ ] T4-01-18 Verify: `-u multichannel_hub_fulfillment + multichannel_hub_core + etsy_integration --stop-after-init` exit 0; full test tags green; grep `_logger.info`/`print(`
+- [ ] T4-01-19 Update tracker P4-01 row (`todo-rescoped → done`); append findings.md §"P4-01" with G1-G4 resolutions
+- [ ] T4-01-20 `/learn` capture (or "no new patterns" note)
+
+
+## P4-01-C — Gearment state machine + quote wizard + form button D5 (added 2026-05-10)
+
+Plan: [`p4-01-c-plan.md`](./p4-01-c-plan.md). Decisions E1.b/E2.a/E3.a/E4.a/E5.b resolved in plan §1. Sub-phase D (D3 + D4) deferred to follow-up slice P4-01-D.
+
+- [X] T4-01-C-01 RED Phase 1 DB: x_gearment_outbound_state Selection (5 keys, default=draft, tracking=True)
+- [X] T4-01-C-02 RED Phase 1 DB: 4 quote fields exist + readonly contract
+- [X] T4-01-C-03 RED Phase 1 DB: gearment.quote.wizard is TransientModel
+- [X] T4-01-C-04 RED Phase 2 ORM: state transitions (draft→quoted→operator_review→confirmed; quoted→cancelled)
+- [X] T4-01-C-05 RED Phase 2 ORM: _advance_gearment_state idempotency
+- [X] T4-01-C-06 RED Phase 2 ORM: action_get_gearment_quote calls adapter, writes quote fields, transitions to 'quoted'
+- [X] T4-01-C-07 RED Phase 2 ORM: action_get_gearment_quote raises if no Gearment-eligible lines (E5.b)
+- [X] T4-01-C-08 RED Phase 2 ORM: wizard.action_confirm requires state=='operator_review' (E3)
+- [X] T4-01-C-09 RED Phase 2 ORM: wizard.action_confirm `_check_ba_shipping_or_raise` BEFORE sudo write (FR-017 11th)
+- [X] T4-01-C-10 RED Phase 2 ORM: wizard.action_confirm raises on expired quote (E4)
+- [X] T4-01-C-11 RED Phase 2 ORM: double-click race → second action_confirm raises
+- [X] T4-01-C-12 RED Phase 2 ORM: wizard.action_cancel → 'cancelled' + clears x_gearment_outbound_ref
+- [X] T4-01-C-13 GREEN: x_gearment_outbound_state + 4 quote fields + _advance_gearment_state helper on mhf sale.order
+- [X] T4-01-C-14 GREEN: action_get_gearment_quote + action_open_gearment_quote_wizard
+- [X] T4-01-C-15 GREEN: gearment.quote.wizard TransientModel + form view; action_confirm + action_cancel
+- [X] T4-01-C-16 GREEN: form button "Sync to Gearment" + Gearment notebook tab on mhf sale_order_views.xml
+- [X] T4-01-C-17 GREEN: ACL CSV + manifest bump 19.0.1.0.17
+- [X] T4-01-C-18 code-reviewer + security-reviewer parallel; block on CRITICAL/HIGH
+- [X] T4-01-C-19 Verify: -u mhf exit 0; full test tags green; grep _logger.info/print
+- [X] T4-01-C-20 Tracker P4-01-C → done; findings.md §"P4-01-C" with E1-E5 + FR-017 11th
+
+
+## P4-01-D — Gearment UI surfaces D3+D4+D5 (added 2026-05-10)
+
+Plan: [`p4-01-d-plan.md`](./p4-01-d-plan.md). Decisions DD1-DD5 resolved.
+
+- [X] T4-01-D-01 RED Phase 1 view-arch: D5 button exists with group_ba_shipping + visibility expr
+- [X] T4-01-D-02 RED Phase 1 view-arch: D5 Gearment notebook tab + state + breakdown + expires-at
+- [X] T4-01-D-03 RED Phase 1 view-arch: D4 Etsy tab Shipping subsection — 5 fields readonly
+- [X] T4-01-D-04 RED Phase 1 view-arch: D3 server action + binding_model_id=sale.order.line
+- [X] T4-01-D-05 RED Phase 2 ORM: bulk action dedupes orders
+- [X] T4-01-D-06 RED Phase 2 ORM: savepoint isolation
+- [X] T4-01-D-07 RED Phase 2 ORM: FR-017 12th gate
+- [X] T4-01-D-08 RED Phase 2 ORM: bus.bus.sendmany call count
+- [X] T4-01-D-09 GREEN: mhf/models/sale_order_line.py + action_gearment_bulk_sync
+- [X] T4-01-D-10 GREEN: mhf/views/sale_order_views.xml form button + Gearment tab
+- [X] T4-01-D-11 GREEN: mhc operations_dashboard_views.xml server action
+- [X] T4-01-D-12 GREEN: etsy_integration/views/sale_order_views.xml Shipping subsection
+- [X] T4-01-D-13 GREEN: __init__.py + manifest 19.0.1.0.18
+- [X] T4-01-D-14 code-reviewer + security-reviewer parallel
+- [X] T4-01-D-15 Verify: -u mhf + mhc + etsy_integration exit 0; full tags green; grep
+- [X] T4-01-D-16 Tracker P4-01-D → done; P4-01 parent row split → done; findings.md

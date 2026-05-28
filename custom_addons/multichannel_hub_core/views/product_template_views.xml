@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Spec 009 P-HUB-STATUS-VIEW T034 — Channels tab + smart button on product form. -->
+
+    <record id="product_template_form_hub_status_tab" model="ir.ui.view">
+        <field name="name">product.template.form.hub.status.tab</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object"
+                        name="action_open_channel_statuses"
+                        icon="fa-rss">
+                    <field name="x_published_channel_count" widget="statinfo"
+                           string="Published"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Channels" name="hub_channels">
+                    <group>
+                        <field name="x_channel_applicability_ids"
+                               widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <field name="x_sales_channel_status_ids" readonly="True">
+                        <list>
+                            <field name="channel_id"/>
+                            <field name="state"/>
+                            <field name="external_ref"/>
+                            <field name="last_sync_at"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="SKU Drift" name="hub_sku_drift">
+                    <group>
+                        <field name="x_sku_v2_suggested" readonly="True"/>
+                        <field name="x_sku_v2_status" readonly="True"/>
+                        <field name="x_sku_legacy" readonly="True"/>
+                        <!-- Tracks the last system-derived code so the auto-fill
+                             onchange can tell auto from manual. Must be in the arch
+                             (invisible) to round-trip across onchange calls. -->
+                        <field name="x_sku_auto_value" invisible="1"/>
+                    </group>
+                </page>
+                <page string="Listing Tags" name="hub_listing_tags">
+                    <group>
+                        <field name="product_tag_ids" widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               help="Up to 13 tags, each &lt;=20 chars, charset [A-Za-z0-9 -']. Used by Etsy publisher."/>
+                    </group>
+                </page>
+                <page string="Listing Options" name="hub_listing_options">
+                    <group>
+                        <field name="x_is_personalizable"/>
+                        <field name="x_personalization_required"
+                               invisible="not x_is_personalizable"/>
+                        <field name="x_personalization_char_count"
+                               invisible="not x_is_personalizable"/>
+                    </group>
+                    <field name="x_personalization_instructions"
+                           invisible="not x_is_personalizable"
+                           placeholder="e.g., 'Enter recipient name for engraving'"/>
+                </page>
+                <page string="Listing Defaults" name="hub_listing_defaults">
+                    <group>
+                        <field name="x_taxonomy_id"
+                               placeholder="Leave blank to use shop default"/>
+                        <field name="x_who_made"
+                               placeholder="Leave blank to use shop default"/>
+                        <field name="x_when_made"
+                               placeholder="Leave blank to use shop default"/>
+                    </group>
+                </page>
+                <page string="Extra Images" name="hub_extra_images">
+                    <field name="x_extra_image_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="image_1920" widget="image" options="{'size': [64, 64]}"/>
+                            <field name="name"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

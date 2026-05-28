@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Production Team — generic, channel-agnostic.
+            Owns design.file approval workflow (P1-02a) and the future
+            production dashboards (P2-03 Process Dashboard).
+        -->
+        <record id="group_production_team" model="res.groups">
+            <field name="name">Production Team</field>
+            <field name="comment">Members of the production team. Approve / reject design files; will own the Process Dashboard once P2-03 lands.</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!--
+            BA-tier groups — channel-agnostic sales-ops roles.
+            Originally landed in etsy_integration under P1-04; promoted
+            to multichannel_hub_core 2026-05-03 per ADR-003 (mhc cannot
+            be referenced by per-channel modules in reverse). Consumed
+            by P1-DASH-MERGE saved filters and P1-04 address-change
+            approval workflow. The pre-migration script in
+            migrations/19.0.1.0.11/pre-rename-ba-groups.py rewrites
+            ir.model.data rows so existing user-group memberships
+            survive the XML-ID rename.
+        -->
+        <record id="group_marketing_user" model="res.groups">
+            <field name="name">Marketing User</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_ba_user" model="res.groups">
+            <field name="name">BA User</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_ba_lead" model="res.groups">
+            <field name="name">BA Lead</field>
+            <field name="implied_ids" eval="[(4, ref('multichannel_hub_core.group_ba_user'))]"/>
+        </record>
+
+        <!--
+            BA Manager — caps the channel-agnostic BA hierarchy.
+            Added P1-LBL (2026-05-10) to gate label.status.option master-data
+            edits. Distinct from multichannel_hub_fulfillment.group_ba_manager
+            (which is the narrower "BA Shipping Manager" role for GKE schema
+            approval). The two coexist intentionally — P1-LBL is editing
+            label-status master data, not approving shipping schemas. Future
+            slice may consolidate.
+        -->
+        <record id="group_ba_manager" model="res.groups">
+            <field name="name">BA Manager</field>
+            <field name="implied_ids" eval="[(4, ref('multichannel_hub_core.group_ba_lead'))]"/>
+            <field name="comment">Senior BA role with master-data write permission (label statuses, future enums). Implies BA Lead.</field>
+        </record>
+
+    </data>
+</odoo>

@@ -35,9 +35,9 @@ description: "Tasks for Spec 005 — Etsy API v3 Channel Integration with Email 
 
 These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm prerequisite met). If `multichannel_hub_core` is not yet installed, T006-T010 fail — they are blocking dependencies.
 
-- [ ] T006 [P] Implement `multichannel_hub_core/services/etsy_order_payload.py` with frozen dataclasses `EtsyAddressPayload`, `EtsyLineItemPayload`, `EtsyOrderPayload` per data-model.md §9
-- [ ] T007 [P] Implement `multichannel_hub_core/services/etsy_channel_adapter.py` with `EtsyChannelAdapter` Protocol (`fetch_new_orders`, `health_check`) and `HealthStatus` enum
-- [ ] T008 Implement `multichannel_hub_core/services/etsy_order_ingestor.py` — single ingestion service that selects adapter via `etsy_shop.active_source`, iterates `fetch_new_orders`, writes `sale.order` via existing `OrderCreator` service; idempotent via `etsy_order_id` UNIQUE
+- [X] T006 [P] Implement `etsy_integration/services/etsy_order_payload.py` with frozen dataclasses `EtsyAddressPayload`, `EtsyLineItemPayload`, `EtsyOrderPayload` per data-model.md §9 — **landed P0-16a 2026-04-28** on `feature/006-master-plan-coding`. Module-home moved from `multichannel_hub_core` per findings.md 2026-04-28. `line_items` is `tuple[..., ...]` (immutability hardening from security-reviewer HIGH).
+- [X] T007 [P] Implement `etsy_integration/services/etsy_channel_adapter.py` with `EtsyChannelAdapter` Protocol (`fetch_new_orders`, `health_check`) and `HealthStatus` enum — **landed P0-16a 2026-04-28**. `@runtime_checkable` Protocol; module-home moved per findings entry above.
+- [X] T008 Implement `etsy_integration/services/etsy_order_ingestor.py` — single ingestion service that selects adapter via `etsy_shop.sync_mode` (per ADR-002, not `active_source` per superseded spec), iterates `fetch_new_orders`, writes `sale.order` via existing `OrderCreator` service; idempotent via `etsy_order_id` UNIQUE — **landed P0-16b1 2026-04-28** (minimal slice; adapter-selection logic deferred to syncer P0-16c). Reuses `OrderCreator.process_etsy_payload` helper. Module-home: `etsy_integration` per findings 2026-04-28.
 - [ ] T009 [P] Implement `multichannel_hub_core/utils/rate_limiter.py` — token-bucket limiter shared between API and email adapters per research.md R5
 - [ ] T010 [P] Implement `multichannel_hub_core/controllers/webhook_base.py` — base controller for HMAC-verified webhook endpoints (used by US4 P2)
 - [ ] T011 [P] Phase-2 unit tests `multichannel_hub_core/tests/test_etsy_order_payload.py`: `__post_init__` validation, frozen-immutability assertion, equality semantics
@@ -47,11 +47,11 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 3: US1 — Etsy OAuth2 PKCE authorization (P1)
 
-- [ ] T013 [US1] Implement `etsy.shop` extension in `models/etsy_shop.py` — add API token fields, `active_source` (default 'email' for existing shops, 'api' post scope-grant), `auto_recovery`, `health_check_consecutive_failures`, `recovery_probe_consecutive_successes` per data-model.md §1
+- [X] T013 [US1] Implement `etsy.shop` extension in `models/etsy_shop.py` — add API token fields, `active_source` (default 'email' for existing shops, 'api' post scope-grant), `auto_recovery`, `health_check_consecutive_failures`, `recovery_probe_consecutive_successes` per data-model.md §1
 - [ ] T014 [US1] Add `etsy.shop` C-ESY-001 (token-required-when-active_source=api) and C-ESY-002 (manual-toggle-requires-system-group) constraints
 - [ ] T015 [P] [US1] Implement `services/etsy_api_client.py` — OAuth2 PKCE flow, token refresh on 401, request signing, response parsing, integrates `multichannel_hub_core/utils/rate_limiter.py`
 - [ ] T016 [US1] Implement `controllers/etsy_oauth_callback.py` — `/etsy/api/oauth/callback` route consuming state-nonce, swapping code for tokens, persisting to `etsy.shop`
-- [ ] T017 [P] [US1] Add `views/etsy_shop_views.xml` — Settings → Etsy API Configuration form with "Authorize Etsy" button + "Test Connection" button + active_source toggle (system-group-only)
+- [X] T017 [P] [US1] Add `views/etsy_shop_views.xml` — Settings → Etsy API Configuration form with "Authorize Etsy" button + "Test Connection" button + active_source toggle (system-group-only) — DONE P1-11-RUNBOOK 2026-05-16 (active_source toggle landed earlier in P1-11a; this slice added the two buttons + thin gated action methods)
 - [ ] T018 [P] [US1] Add token-expiry alert cron `cron_etsy_token_expiry_alert` — checks `etsy_refresh_token_expires_at` and raises a 7-day-warning activity per FR-004
 - [ ] T019 [P] [US1] Phase-2 test `tests/test_oauth_flow.py` — PKCE code_verifier/challenge generation, refresh-token flow, expired-token auto-refresh, scope validation
 - [ ] T020 [US1] Phase-1 DB test verifying `groups='base.group_system'` ACL on token columns (read fails for non-admin)
@@ -60,30 +60,30 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 4: US2 — Direct order/receipt sync via canonical payload (P1)
 
-- [ ] T021 [US2] Implement `services/etsy_api_adapter.py` — implements `EtsyChannelAdapter` Protocol; `fetch_new_orders(shop_id, since)` wraps `EtsyApiClient` paginated receipt fetch; transforms each receipt to `EtsyOrderPayload`; emits via generator
-- [ ] T022 [US2] Implement `services/etsy_order_syncer.py` — incremental sync orchestrator: reads `etsy_shop.etsy_last_receipt_sync_at`, calls `EtsyApiAdapter.fetch_new_orders`, passes to `EtsyOrderIngestor.ingest`, advances cursor
-- [ ] T023 [P] [US2] Add cron `cron_etsy_order_sync` (default 5min interval) per FR-012
-- [ ] T024 [P] [US2] Implement `models/etsy_api_log.py` — `etsy.api.log` model per data-model.md §3 (audit trail with retention policy)
-- [ ] T025 [P] [US2] Implement cron `cron_etsy_api_log_cleanup` per FR-035 (delete rows >retention_days)
-- [ ] T026 [US2] Extend `sale.order` in `models/sale_order.py` — add `sync_source`, `etsy_last_modified`, `etsy_tracking_push_status`, `etsy_tracking_push_at`, `etsy_tracking_push_error` per data-model.md §6
-- [ ] T027 [US2] Add composite index `(etsy_shop_id, etsy_last_modified DESC)` on `sale_order` per data-model.md §6 (Tech-architect recommendation)
-- [ ] T028 [P] [US2] Implement `EtsyApiAdapter` mapping function `_receipt_to_payload(receipt_dict) -> EtsyOrderPayload`: maps Etsy fields to canonical schema (handles currency, line_items, shipping_address, buyer_message, listing_id)
-- [ ] T029 [P] [US2] Implement `EtsyOrderIngestor` status-only-update logic for re-sync (FR-009): when `etsy_order_id` exists, update payment_status / shipping_status / cancellation only; preserve `mp_note`, `pic_user_id`, design state
+- [X] T021 [US2] Implement `services/etsy_api_adapter.py` — implements `EtsyChannelAdapter` Protocol; `fetch_new_orders(shop_id, since)` wraps `EtsyApiClient` paginated receipt fetch; transforms each receipt to `EtsyOrderPayload`; emits via generator — **landed P0-16b2 2026-04-28** (commit `ab48e8a8782`).
+- [X] T022 [US2] Implement `services/etsy_order_syncer.py` — incremental sync orchestrator: reads `etsy_shop.etsy_last_receipt_sync_at`, calls `EtsyApiAdapter.fetch_new_orders`, passes to `EtsyOrderIngestor.ingest`, advances cursor — **landed P0-16c 2026-04-28** (commit `b70daf6b07a`). Per-payload cursor advancement; soft-warn on `sync_audit_mode + sync_mode='api_only'`; per-shop exception isolation in `etsy.shop._cron_sync_orders`.
+- [X] T023 [P] [US2] Add cron `cron_etsy_order_sync` (default 5min interval) per FR-012 — **landed P0-16c 2026-04-28**. Cron filters `sync_mode='api_only'` shops (OQ5).
+- [X] T024 [P] [US2] Implement `models/etsy_api_log.py` — `etsy.api.log` model per data-model.md §3 (audit trail with retention policy) — **landed P0-17 2026-04-28** (commit `481bd4250d7`). 11 fields; does NOT inherit mail.thread (high-volume); composite index `(shop_id, request_started_at DESC)` declared in init() raw SQL; `source` Selection adds `audit` (8 values total). New `group_etsy_api_log_reader` group; ACL: reader read-only, system full. P0-16c audit branch retrofit replaces `_logger.warning` with `etsy.api.log.sudo().create({...})` — PII scrubbed (receipt_id + amount + currency only).
+- [X] T025 [P] [US2] Implement cron `cron_etsy_api_log_cleanup` per FR-035 (delete rows >retention_days) — **landed P0-17 2026-04-28**. Daily; raw SQL DELETE parameterized via psycopg2; threshold from `ir.config_parameter.etsy_integration.api_log_retention_days` with 30-day fallback; integer underflow guarded.
+- [X] T026 [US2] Extend `sale.order` in `models/sale_order.py` — add `sync_source`, `etsy_last_modified`, `etsy_tracking_push_status`, `etsy_tracking_push_at`, `etsy_tracking_push_error` per data-model.md §6 — **P0-16c 2026-04-28** (`sync_source`/`etsy_last_modified`/`payment_status`) + **P1-12 2026-05-16** (`etsy_tracking_push_status` [none/pending/pushed/failed, default none], `etsy_tracking_push_at`, `etsy_tracking_push_error`).
+- [ ] T027 [US2] Add composite index `(etsy_shop_id, etsy_last_modified DESC)` on `sale_order` per data-model.md §6 (Tech-architect recommendation) — deferred per active-prioritization (perf, post-prod-scale)
+- [X] T028 [P] [US2] Implement `EtsyApiAdapter` mapping function `_receipt_to_payload(receipt_dict) -> EtsyOrderPayload`: maps Etsy fields to canonical schema (handles currency, line_items, shipping_address, buyer_message, listing_id) — **landed P0-16b2 2026-04-28**. Money divisor handling + variations list→dict flattening + payment_status from is_paid + provenance fields covered.
+- [X] T029 [P] [US2] Implement `EtsyOrderIngestor` status-only-update logic for re-sync (FR-009): when `etsy_order_id` exists, update payment_status / shipping_status / cancellation only; preserve `mp_note`, `pic_user_id`, design state — **landed P0-16c 2026-04-28** (commit `b70daf6b07a`). Subset shipped: `payment_status` + `etsy_last_modified` updated; `shipping_status` + `cancellation` fields deferred to P0-17 (when full status taxonomy lands alongside `etsy.api.log`). Operator-field preservation (mp_note / pic_user_id) verified via test_existing_order_mp_note_preserved + test_existing_order_pic_user_id_preserved.
 - [ ] T030 [P] [US2] Phase-2 test `tests/test_api_adapter.py` — record VCR cassette for representative receipts (different currencies, gift-message, multi-line); verify payload-mapping correctness
-- [ ] T031 [P] [US2] Phase-2 test `tests/test_order_syncer.py` — incremental sync with `since` cursor, dedup by etsy_order_id, status-only update preserving operator data, pagination handling
-- [ ] T032 [US2] Phase-1 DB test verifying composite index `(etsy_shop_id, etsy_last_modified DESC)` exists post-install
-- [ ] T033 [P] [US2] Add `etsy.api.log` views in `views/etsy_api_log_views.xml` (list + form for diagnostics)
+- [X] T031 [P] [US2] Phase-2 test `tests/test_order_syncer.py` — incremental sync with `since` cursor, dedup by etsy_order_id, status-only update preserving operator data, pagination handling — **landed P0-16c 2026-04-28** as `tests/test_etsy_order_syncer.py` (renamed). 11 tests across 6 classes covering all OQ1–OQ5 contracts. JSON fixtures replace VCR per owner decision 2026-04-28.
+- [ ] T032 [US2] Phase-1 DB test verifying composite index `(etsy_shop_id, etsy_last_modified DESC)` exists post-install — paired with T027; deferred together
+- [X] T033 [P] [US2] Add `etsy.api.log` views in `views/etsy_api_log_views.xml` (list + form for diagnostics) — **landed P0-17 2026-04-28**. List with `decoration-danger` on `http_status>=500`; read-only form (`create=false edit=false delete=false`); search with audit-only filter + group-by Shop/Source; menu under Etsy Integration gated to `group_etsy_api_log_reader,base.group_system`.
 
 ---
 
 ## Phase 5: US3 — Tracking push to Etsy (P1)
 
-- [ ] T034 [P] [US3] Implement `services/etsy_tracking_pusher.py` — reads `sale.order.fulfillment.tracking_number` + `shipping_carrier_id`; pushes via `POST /v3/application/shops/:shop_id/receipts/:receipt_id/tracking`; reads `shipping.carrier.etsy_carrier_name` (per ADR-005, FR-014/015)
-- [ ] T035 [P] [US3] Add cron `cron_etsy_tracking_push` (default 5min)
-- [ ] T036 [P] [US3] Implement on-demand push action — button on `sale.order` form invoking `EtsyTrackingPusher.push(order)` synchronously
-- [ ] T037 [P] [US3] Handle unmapped carrier: when `etsy_carrier_name` is NULL, push with `other` and warn-log to `etsy.api.log`
-- [ ] T038 [P] [US3] Phase-2 test `tests/test_tracking_pusher.py` — happy path, missing carrier mapping, retry on 5xx, push status field state machine
-- [ ] T039 [US3] Wire from Spec 003's Tracking Dashboard — when `sale.order.fulfillment.tracking_number` is written, schedule a queued job `EtsyTrackingPusher.enqueue(order)` (replaces cron-only delivery for low-latency push)
+- [X] T034 [P] [US3] Implement `services/etsy_tracking_pusher.py` — reads `sale.order.fulfillment.tracking_number` + `shipping_carrier_id`; pushes via `POST /v3/application/shops/:shop_id/receipts/:receipt_id/tracking`; reads `shipping.carrier.etsy_carrier_name` (per ADR-005, FR-014/015) — **P1-12 2026-05-16**: `EtsyTrackingPusher(env).push(order)`; receipt_id == `order.etsy_order_id`, shop_id == `etsy.shop` record id (matches existing `etsy_api_adapter.py` convention); `EtsyApiClient.push_tracking` added; sets `fulfillment.etsy_ship_notified_at` on success.
+- [X] T035 [P] [US3] Add cron `cron_etsy_tracking_push` (default 5min) — **P1-12 2026-05-16**: `ir_cron_etsy_tracking_push` → `sale.order._cron_push_tracking()`, fallback for the webhook (D-A) primary trigger.
+- [X] T036 [P] [US3] Implement on-demand push action — button on `sale.order` form invoking `EtsyTrackingPusher.push(order)` synchronously — **P1-12 2026-05-16**: `action_push_tracking_to_etsy`, gated to `multichannel_hub_core.group_production_team` (view + method, FR-017 defense-in-depth per security review).
+- [X] T037 [P] [US3] Handle unmapped carrier: when `etsy_carrier_name` is NULL, push with `other` and warn-log to `etsy.api.log` — **P1-12 2026-05-16**.
+- [X] T038 [P] [US3] Phase-2 test `tests/test_tracking_pusher.py` — happy path, missing carrier mapping, retry on 5xx, push status field state machine — **P1-12 2026-05-16**: `tests/test_p1_12_db.py` (7) + `tests/test_p1_12_orm.py` (19), 26/26 green.
+- [X] T039 [US3] Wire from Spec 003's Tracking Dashboard — when `sale.order.fulfillment.tracking_number` is written, schedule a queued job `EtsyTrackingPusher.enqueue(order)` (replaces cron-only delivery for low-latency push) — **P1-12 2026-05-16, decision D-A**: trigger is the Gearment `tracking_order_updated` webhook handler (`gearment_webhook_dispatcher._handle_tracking_order_updated`), NOT a sale.order write — owner directive 2026-05-10 D4 (Etsy tab is read-only mirror). Synchronous soft-fail (no queue model); permanent ValueError → `_logger.error`, transient → warning; 5-min cron retries.
 
 ---
 
@@ -101,18 +101,18 @@ These tasks land in `multichannel_hub_core` (delivered by Spec 003 — confirm p
 
 ## Phase 7: US8 — Source switching (REQ-SRC-01..04, the new core ADR-008a v2)
 
-- [ ] T047 [US8] Implement `models/etsy_shop_source_change_log.py` — `etsy.shop.source.change.log` per data-model.md §2 with append-only constraint (C-SCL-001) + auto-failover/recovery-probe-actor=null constraint (C-SCL-002)
+- [X] T047 [US8] Implement `models/etsy_shop_source_change_log.py` — `etsy.shop.source.change.log` per data-model.md §2 with append-only constraint (C-SCL-001) + auto-failover/recovery-probe-actor=null constraint (C-SCL-002)
 - [ ] T048 [P] [US8] Add ACL for `etsy.shop.source.change.log`: read `group_audit_reader` + Manager; create via system; no update/delete except `base.group_system`
 - [ ] T049 [US8] Implement `services/etsy_health_checker.py` — `EtsyHealthChecker.evaluate(shop)` per research.md R7: probes the shop's active source; on failure increments `health_check_consecutive_failures`; on success resets counter; when counter ≥ 3 → switch source, write `etsy.shop.source.change.log` row with `reason='auto-failover'`, raise HIGH alert
-- [ ] T050 [US8] Implement source-specific probes: `_probe_api(shop)` calls `GET /v3/application/openapi-ping`; `_probe_email(shop)` queries Gmail label freshness ≥ N hours
+- [X] T050 [US8] Implement source-specific probes: `_probe_api(shop)` calls `GET /v3/application/openapi-ping`; `_probe_email(shop)` queries Gmail label freshness ≥ N hours
 - [ ] T051 [P] [US8] Add cron `cron_etsy_health_check` (default 5min interval) calling `EtsyHealthChecker.evaluate` for every shop
 - [ ] T052 [US8] Implement `services/etsy_recovery_prober.py` — `EtsyRecoveryProber.evaluate(shop)`: ONLY for shops in failover; probes the original primary; on success increments `recovery_probe_consecutive_successes`; on failure resets counter; when counter ≥ 6 AND `auto_recovery=True` → switch back, write source-change row with `reason='recovery-probe'`
 - [ ] T053 [P] [US8] Add cron `cron_etsy_recovery_probe` (default 1h interval) calling `EtsyRecoveryProber.evaluate` for every in-failover shop
-- [ ] T054 [P] [US8] Implement migration script `migrations/19.0.1.0.0_post.py` to map legacy `sync_mode → active_source` per data-model.md §1, and bootstrap `etsy.shop.source.change.log` with `reason='bootstrap'` row per shop
-- [ ] T055 [US8] Add `etsy.shop.active_source` manual-toggle UI: form view selection field gated by `groups='base.group_system'` per data-model.md §1 C-ESY-002
+- [X] T054 [P] [US8] Implement migration script `migrations/19.0.1.0.0_post.py` to map legacy `sync_mode → active_source` per data-model.md §1, and bootstrap `etsy.shop.source.change.log` with `reason='bootstrap'` row per shop
+- [X] T055 [US8] Add `etsy.shop.active_source` manual-toggle UI: form view selection field gated by `groups='base.group_system'` per data-model.md §1 C-ESY-002
 - [ ] T056 [P] [US8] Add `auto_recovery` checkbox in shop form view with help text "Sticky override — uncheck to prevent auto-switch-back from email to api"
 - [ ] T057 [P] [US8] Implement `etsy.shop.source.change.log` views in `views/etsy_shop_source_change_log_views.xml` (list + filter by reason)
-- [ ] T058 [US8] Modify `EtsyOrderIngestor.ingest` (T008) to dynamically select adapter from `shop.active_source` — `EtsyApiAdapter` if 'api', `EtsyEmailAdapter` if 'email'
+- [X] T058 [US8] Modify `EtsyOrderIngestor.ingest` (T008) to dynamically select adapter from `shop.active_source` — `EtsyApiAdapter` if 'api', `EtsyEmailAdapter` if 'email'
 - [ ] T059 [P] [US8] Phase-2 test `tests/test_health_check_failover.py` — 3-fail threshold triggers switch + audit log row + HIGH alert
 - [ ] T060 [P] [US8] Phase-2 test `tests/test_recovery_probe.py` — 6-success threshold triggers switch back; `auto_recovery=False` blocks switch back
 - [ ] T061 [P] [US8] Phase-2 test `tests/test_source_change_log.py` — append-only constraint, actor-null on auto-failover/recovery-probe, indexes `(shop_id, changed_at DESC)` and `(reason, changed_at DESC)`
@@ -168,6 +168,29 @@ These tasks land in the renamed `etsy_channel_email` module (was `etsy_integrati
 - [ ] T089 [P] Phase-2 parity test `etsy_channel_email/tests/test_email_adapter.py` — for a representative receipt, the email adapter's canonical payload matches the API adapter's payload on required fields (using fixture from VCR cassette + corresponding email)
 - [ ] T090 Verify `etsy_channel_email/data/ir_cron_data.xml` (Gmail polling cron) stays in place — STAYS OPERATIONAL FOREVER per ADR-008a §4
 - [ ] T091 [P] Add module-rename smoke test on staging: install fresh, then run `pre-migrate.py`, verify `ir_module_module.name='etsy_channel_email'`, verify all sale.order data preserved
+
+---
+
+## Phase 11.5: P0-22 — Ingest parity (early arrival of T088 + T089)
+
+Brought forward from Phase 11 because production cutover (P2-07) cannot ship until the API path writes the same `sale.order` / `sale.order.line` shape as the email path. Lands in `etsy_integration/` (pre-rename); migrates with the rest of the module under T085–T087. Plan: [`p0-22-plan.md`](./p0-22-plan.md).
+
+- [X] T0-22-01 Read `EtsyOrderPayload` + `EtsyLineItemPayload`; add 4 optional `sale.order` fields (`shipping_service`, `processing_time`, `discount_code`, `subtotal`) + `name_override` on line item
+- [X] T0-22-02 Read `email_parser.ParseResult`; verify it exposes `shipping_service` / `processing_time` / `discount_code` / `subtotal` / per-line `product_name`
+- [X] T0-22-03 Write Phase 1 DB tests — 11 field existence + readonly=True on `payment_status` / `etsy_last_modified`
+- [X] T0-22-04 Write Phase 2 ORM unit tests — per-adapter per-field mapping (4 email-side, 4 API-side)
+- [X] T0-22-05 Write Phase 2 golden-fixture parity test — email + API → identical `sale.order` on 9 fields
+- [X] T0-22-06 Author golden-email fixture (`tests/data/sample_p0_22_golden.txt`) covering all 9 fields
+- [X] T0-22-07 Author golden-receipt JSON fixture (`tests/fixtures/etsy_v3/p0_22_golden_receipt.json`) with same `order_id`
+- [X] T0-22-08 Implement `EtsyEmailAdapter._parse_result_to_payload` (`ParseResult` → `EtsyOrderPayload`, `source='email'`)
+- [X] T0-22-09 Extend `EtsyApiAdapter` to populate new payload fields where receipt JSON has them
+- [X] T0-22-10 Update `EtsyOrderIngestor` to write the 4 new payload fields onto `sale.order` + `name_override` onto `sale.order.line`
+- [X] T0-22-11 Run `code-reviewer` + `security-reviewer` in parallel; block on CRITICAL/HIGH
+- [X] T0-22-12 Run `odoo -u etsy_integration --stop-after-init`; verify 0 errors + all etsy_integration test tags pass
+- [X] T0-22-13 Append `findings.md` §"P0-22" with implementation-choice rationale + any surprises
+- [X] T0-22-14 Update tracker P0-22 row to `state=done`; T088 + T089 reference P0-22 commits
+
+When T085–T087 (module rename) land, T0-22 code moves to `etsy_channel_email/` along with the rest of `etsy_integration/`. T088 + T089 close at that point because their work is already done.
 
 ---
 

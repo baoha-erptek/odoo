@@ -11,6 +11,44 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
+            <!-- P1-04 T059: address-change banner + lock partner_shipping_id
+                 while a request is pending. T060 ("Request address change"
+                 button) lands with the Order Dashboard in P1-01. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="has_pending_address_change" invisible="1"/>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not has_pending_address_change">
+                    <strong>Address change pending approval.</strong>
+                    Shipping fields are locked until a BA Lead resolves
+                    the open address-change request.
+                </div>
+            </xpath>
+
+            <!-- T060: "Request address change" button — visible to MP
+                 + BA + sales-user when no request is pending. -->
+            <xpath expr="//header" position="inside">
+                <button name="action_request_address_change"
+                        type="object"
+                        string="Request address change"
+                        invisible="has_pending_address_change or not is_etsy_order"
+                        class="btn-secondary"/>
+                <!-- P1-12 T036: on-demand tracking push (manual retry;
+                     webhook per D-A is the primary trigger). Restricted
+                     to the production/fulfillment team — the action
+                     triggers an authenticated external Etsy API call
+                     using system OAuth tokens (security review HIGH). -->
+                <button name="action_push_tracking_to_etsy"
+                        type="object"
+                        string="Push tracking to Etsy"
+                        invisible="not is_etsy_order"
+                        groups="multichannel_hub_core.group_production_team"
+                        class="btn-secondary"/>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
+                <attribute name="readonly">has_pending_address_change</attribute>
+            </xpath>
+
             <!-- Add Etsy notebook page before the closing notebook tag -->
             <xpath expr="//notebook" position="inside">
                 <page string="Etsy" name="etsy_tab" invisible="not is_etsy_order">
@@ -39,6 +77,24 @@
                             <field name="etsy_gift_message"/>
                         </group>
                     </group>
+                    <!--
+                        P4-01-D D4 — read-only Shipping Tracking subsection.
+                        Surfaces existing sale.order.fulfillment fields
+                        (delegated via P1-05 _inherits) inside the Etsy tab.
+                        No new fields, no Etsy-outbound API push — just makes
+                        tracking data discoverable in the operator's natural
+                        workspace. Owner D4: smallest blast radius.
+                    -->
+                    <group>
+                        <group string="Shipping Tracking">
+                            <field name="tracking_number" readonly="1"/>
+                            <field name="shipping_carrier_id" readonly="1"/>
+                            <field name="tracking_state" readonly="1"/>
+                            <field name="shipping_date" readonly="1"/>
+                            <field name="tracking_url" readonly="1"
+                                   widget="url"/>
+                        </group>
+                    </group>
                 </page>
             </xpath>
 
@@ -49,6 +105,15 @@
                 <field name="etsy_color" optional="hide" column_invisible="not parent.is_etsy_order"/>
                 <field name="etsy_size" optional="hide" column_invisible="not parent.is_etsy_order"/>
                 <field name="etsy_option" optional="hide" column_invisible="not parent.is_etsy_order"/>
+            </xpath>
+
+            <!-- P1-IMG-LINE-WIDGET: product image thumbnail column on order-line list.
+                 Channel-agnostic; visible for all order lines on this form.
+                 Placed BEFORE product_id (deliberate deviation from plan's "after")
+                 so the image is the leftmost visual anchor — matches Odoo's stock
+                 product-list convention where the image column leads the row. -->
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_id']" position="before">
+                <field name="product_image_thumb" widget="image" readonly="1" optional="show" string="Image"/>
             </xpath>
 
         </field>

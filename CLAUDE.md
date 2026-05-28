@@ -185,6 +185,82 @@ Located in `.claude/agents/`:
 
 ---
 
+## Standard-Odoo-First (MANDATORY, 2026-05-27)
+
+**Before adding any new field, model, view, or service: search standard Odoo first.**
+Reuse existing modules, fields, and patterns. If a standard solution exists
+(e.g., `product.tag`, `list_price`, `product_template_image_ids`,
+`product.attribute.value`, partner merge wizard, MRP routes), use it.
+
+**Never reinvent**:
+- Custom Float when `list_price` (Monetary) exists.
+- Custom tag model when `product.tag` ships in 19 CE.
+- Custom image gallery when `product_template_image_ids` exists.
+- Custom merge logic when `base.partner.merge.automatic.wizard` ships.
+- Custom routing when Dropship/MTO routes can be layered.
+
+**Process when you think a custom field/model is needed**:
+1. Grep `addons/` and `odoo/addons/` for the concept (`grep -rn "list_price" addons/product/`).
+2. Check the Odoo 19 developer skill (`.claude/skills/odoo-19-developer/`).
+3. If standard exists → use it; cite the standard source in commit body.
+4. If standard does NOT exist or doesn't fit → **STOP and ping the owner via Telegram/AskUserQuestion** with: (a) the standard option considered, (b) why it doesn't fit, (c) the custom alternative proposed. Do NOT implement custom until owner confirms.
+
+This rule overrides "run to completion" — owner approval is the only valid path to a new custom field/model. Documented in memory `feedback_standard_odoo_first.md`.
+
+---
+
+## Master Plan 006 — Execution Contract (MANDATORY)
+
+When implementing any slice from `.claude/plans/006-master-plan-tracking.md`,
+**you MUST follow `.claude/plans/006-implementation-playbook.md` strictly**.
+This is non-negotiable — past sessions cut corners and produced rework.
+
+**Two anchor docs (always read both at session start when picking up MP006 work):**
+
+| Doc | Role |
+|-----|------|
+| `.claude/plans/006-master-plan-tracking.md` | The *what* — which slice next, owner, blockers, external deps |
+| `.claude/plans/006-implementation-playbook.md` | The *how* — per-slice 9-phase loop, agent dispatch, document hygiene, branching |
+
+**Per-slice 9-phase loop** (Phase 0 Dispatch → Phase 8 Learn → Phase 9 Land):
+
+0. **Dispatch**: read tracker, verify branch is `feature/006-master-plan-coding` (revised 2026-04-27), `TaskCreate` items per slice task + per exit criterion
+1. **Plan**: spawn `planner` agent (skip only for trivial < ~50-LOC slices)
+2. **RED**: spawn `tdd-guide`; write Phase 1 (DB) + Phase 2 (ORM) failing tests first
+3. **GREEN**: implement minimum to pass
+4. **Review**: spawn `code-reviewer` + `security-reviewer` in **parallel** (single message, two `Agent` calls); block on CRITICAL/HIGH
+5. **Verify**: `odoo -u <module> --stop-after-init`, run test tags, ruff (if available), grep for `_logger.info`/`print(`
+6. **Commit**: one conventional commit per checkpoint on `feature/006-master-plan-coding`; cite task IDs in body
+7. **Document**: update `tasks.md` `[X]`, tracker `state` + `last reviewed`, ADR / `findings.md` if needed
+8. **Learn**: run `/learn` to capture surprises into auto-memory
+9. **Land**: feature-branch commits accumulate; merge to `main` after W7 E2E sprint
+
+**Acceptable shortcuts** (rare): trivial scaffold slices (< ~50 LOC, no business logic) may skip Phases 1, 2, 4, 8 — but explicitly note the skip in the commit body and the slice exit-criteria checklist. Never skip Phase 5 (verify) or Phase 6 (commit hygiene).
+
+**Slice exit criteria** (machine-checkable, all required):
+- Every slice task `[X]` in `tasks.md`
+- Tests pass; coverage ≥80% on changed lines
+- Module installs cleanly (`-u <module> --stop-after-init` exit 0)
+- ACLs defined for any new model; `sudo()` commented; raw SQL commented
+- Tracker `state` updated; blockers documented
+- `/learn` insight captured (or explicit "no new patterns" note)
+- `findings.md` updated if anything surprised us
+
+**When the playbook breaks** (ambiguous spec, blocker mid-slice, contradicting ADRs): **STOP**, do not improvise. Update tracker `state→blocked`, append to `findings.md`, escalate to user with the contradiction documented. Resume only when blocker has a written resolution.
+
+### Telegram-triggered slice dispatch
+
+When a Telegram DM arrives (`<channel source="telegram" user="...">`) from an allowlisted owner ID (`1013317517` or `8560005895`, per memory `reference_telegram_routing.md`) AND the message body matches one of:
+
+- `^dispatch\s+next\s*$` → invoke `/dispatch-slice` skill with `next`
+- `^dispatch\s+(P\d+-\d+[a-z]?)\s*$` → invoke `/dispatch-slice` skill with the matched slice ID
+
+route the message into the skill via the `Skill` tool BEFORE writing any other reply. Reject group-chat triggers (`-5233783589` is a different project). Reply via `telegram.reply` with: chosen slice ID + branch/tree state + planner dispatch confirmation. The skill itself enforces Phase 0 hygiene (clean tree, correct branch, dependencies satisfied); refuse and explain via `telegram.reply` if any check fails.
+
+This rule exists because the harness does not auto-invoke skills on Telegram message arrival — without it, default Claude behavior is a freeform chat reply, which would skip Phase 0 hygiene.
+
+---
+
 ## Specs Reference
 
 Planning documents for the Etsy-to-Odoo migration at `specs/001-etsy-order-migration/`:
@@ -233,6 +309,21 @@ bugfix/short-description
 | **PostToolUse** (Edit/Write) | `post-edit-python-check.sh` | Python syntax/debug check on edited files |
 | **Stop** | `check-debug-statements.sh` | Scan modified `.py` for `print()` / `_logger.info` |
 | **PreToolUse** (Bash) | Inline | Git push review reminder |
+
+### Git hooks (`.githooks/`)
+
+Versioned git hooks for cross-team automation. **Activate once per clone:**
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/*
+```
+
+| Hook | Trigger | Action |
+|---|---|---|
+| `post-commit` | After every commit | Auto-push `docs/owner/**/*.md` changes to Confluence space HEP (background, hash-skip optimised). Bypass: `SKIP_CONFLUENCE_SYNC=1` or `[skip-confluence]` in commit message. |
+
+See `.githooks/README.md` for full details + bypass options.
 
 ---
 

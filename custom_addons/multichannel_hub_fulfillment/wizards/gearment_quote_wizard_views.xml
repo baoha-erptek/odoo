@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P4-01-C — Gearment quote confirmation wizard -->
+    <record id="view_gearment_quote_wizard_form" model="ir.ui.view">
+        <field name="name">gearment.quote.wizard.form</field>
+        <field name="model">gearment.quote.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirm Gearment Quote">
+                <sheet>
+                    <group>
+                        <field name="order_id" readonly="1"/>
+                        <field name="quote_currency"/>
+                        <field name="quote_total" widget="monetary"
+                               options="{'currency_field': 'quote_currency'}"/>
+                        <field name="quote_expires_at"/>
+                    </group>
+                    <group string="Breakdown">
+                        <field name="quote_breakdown_json" nolabel="1"
+                               widget="text" readonly="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="Confirm" class="btn-primary"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

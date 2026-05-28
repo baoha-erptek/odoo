@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form view -->
+    <record id="design_file_form" model="ir.ui.view">
+        <field name="name">design.file.form</field>
+        <field name="model">design.file</field>
+        <field name="arch" type="xml">
+            <form string="Design File">
+                <header>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'pending'"
+                            groups="multichannel_hub_core.group_production_team"/>
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            invisible="state != 'pending'"
+                            groups="multichannel_hub_core.group_production_team"
+                            confirm="Set the rejection reason on the file before clicking Reject."/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. Order #1234 — front design"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="order_id" options="{'no_create': True}"/>
+                            <field name="order_line_id" options="{'no_create': True}"/>
+                            <field name="storage_mode"/>
+                            <field name="version" readonly="1"/>
+                            <field name="parent_file_id" readonly="1" invisible="not parent_file_id"/>
+                            <field name="is_seed" readonly="1" invisible="not is_seed"/>
+                        </group>
+                        <group>
+                            <field name="approved_by" readonly="1" invisible="state != 'approved'"/>
+                            <field name="approved_at" readonly="1" invisible="state != 'approved'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="File" name="file">
+                            <group>
+                                <field name="file_url"
+                                       widget="url"
+                                       placeholder="https://drive.google.com/file/d/.../view"
+                                       invisible="storage_mode != 'url'"
+                                       required="storage_mode == 'url'"/>
+                                <field name="design_file"
+                                       filename="file_name"
+                                       invisible="storage_mode != 'small'"/>
+                                <field name="file_name" invisible="storage_mode != 'small'"/>
+                                <field name="file_size" readonly="1"/>
+                                <field name="file_checksum" readonly="1" invisible="not file_checksum"/>
+                                <field name="preview_file" widget="image" filename="file_name"/>
+                            </group>
+                        </page>
+                        <page string="Rejection" name="rejection" invisible="state != 'rejected'">
+                            <field name="rejection_reason"
+                                   placeholder="Reason this file was rejected — visible to the designer."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- List view -->
+    <record id="design_file_list" model="ir.ui.view">
+        <field name="name">design.file.list</field>
+        <field name="model">design.file</field>
+        <field name="arch" type="xml">
+            <list string="Design Files"
+                  decoration-warning="state == 'pending'"
+                  decoration-danger="state == 'rejected'"
+                  decoration-success="state == 'approved'">
+                <field name="name"/>
+                <field name="order_id"/>
+                <field name="order_line_id" optional="hide"/>
+                <field name="storage_mode"/>
+                <field name="state"/>
+                <field name="version"/>
+                <field name="approved_by" optional="show"/>
+                <field name="approved_at" optional="hide"/>
+                <field name="is_seed" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Kanban view: 3 columns by state, Vietnamese labels -->
+    <record id="design_file_kanban" model="ir.ui.view">
+        <field name="name">design.file.kanban</field>
+        <field name="model">design.file</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="name"/>
+                <field name="order_id"/>
+                <field name="version"/>
+                <field name="storage_mode"/>
+                <field name="approved_by"/>
+                <field name="preview_file"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="name"/></strong>
+                            </div>
+                            <div class="o_kanban_image text-center">
+                                <field name="preview_file" widget="image" class="o_image_64_cover"/>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="order_id"/>
+                                <span class="badge badge-secondary"><field name="storage_mode"/></span>
+                                <span class="ms-1">v<field name="version"/></span>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <field name="approved_by" widget="many2one_avatar_user"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="design_file_search" model="ir.ui.view">
+        <field name="name">design.file.search</field>
+        <field name="model">design.file</field>
+        <field name="arch" type="xml">
+            <search string="Design Files">
+                <field name="name"/>
+                <field name="order_id"/>
+                <field name="order_line_id"/>
+                <field name="file_url"/>
+                <filter name="filter_pending" string="Chờ duyệt" domain="[('state', '=', 'pending')]"/>
+                <filter name="filter_approved" string="Duyệt" domain="[('state', '=', 'approved')]"/>
+                <filter name="filter_rejected" string="Cần chỉnh lại" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="filter_url" string="URL Mode" domain="[('storage_mode', '=', 'url')]"/>
+                <filter name="filter_small" string="Filestore" domain="[('storage_mode', '=', 'small')]"/>
+                <separator/>
+                <filter name="filter_is_seed" string="Historical Seed" domain="[('is_seed', '=', True)]"/>
+                <separator/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                <filter name="group_order" string="Order" context="{'group_by': 'order_id'}"/>
+                <filter name="group_storage" string="Storage Mode" context="{'group_by': 'storage_mode'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_design_file" model="ir.actions.act_window">
+        <field name="name">Design Files</field>
+        <field name="res_model">design.file</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="design_file_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No design files yet.</p>
+            <p>Paste a Google Drive / CDN link and assign to an order line, then await production-team approval.</p>
+        </field>
+    </record>
+
+    <!-- Menu under Operations -->
+    <menuitem id="menu_design_file"
+              name="Design Files"
+              parent="multichannel_hub_core.menu_operations_root"
+              action="action_design_file"
+              sequence="20"/>
+
+</odoo>

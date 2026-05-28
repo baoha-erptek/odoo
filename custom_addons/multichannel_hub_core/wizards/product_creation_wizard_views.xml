@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Spec 009 P-HUB-WIZARD T015 — operator-facing creation wizard. -->
+
+    <record id="view_product_creation_wizard_form" model="ir.ui.view">
+        <field name="name">product.creation.wizard.form</field>
+        <field name="model">product.creation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create New Product">
+                <sheet>
+                    <group string="Identity">
+                        <field name="name"/>
+                        <field name="default_code"/>
+                        <field name="categ_id"/>
+                        <field name="x_gearment_sku"
+                               placeholder="Optional — leave blank for in-house production"/>
+                    </group>
+                    <group string="Pricing &amp; Cost (Excel bookkeeping)">
+                        <field name="x_listing_price"/>
+                        <field name="x_shipping_price_internal"/>
+                        <field name="x_additional_cost"/>
+                        <field name="standard_price"/>
+                    </group>
+                    <group string="Channels">
+                        <field name="x_channel_applicability_ids"
+                               widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <group string="Preview" col="2">
+                        <field name="sku_v2_suggested_preview" readonly="True"/>
+                        <field name="sku_v2_status_preview" readonly="True"/>
+                        <field name="production_mode_preview" readonly="True"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_create" type="object"
+                            string="Create Product" class="btn-primary"
+                            groups="multichannel_hub_core.group_ba_user"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_creation_wizard" model="ir.actions.act_window">
+        <field name="name">Create New Product</field>
+        <field name="res_model">product.creation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

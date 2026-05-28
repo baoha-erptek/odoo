@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_address_change_request_list" model="ir.ui.view">
+        <field name="name">etsy.address.change.request.list</field>
+        <field name="model">etsy.address.change.request</field>
+        <field name="arch" type="xml">
+            <list string="Address Change Requests"
+                  decoration-warning="state == 'requested'"
+                  decoration-success="state == 'approved'"
+                  decoration-muted="state == 'rejected'">
+                <field name="create_date"/>
+                <field name="order_id"/>
+                <field name="requested_by"/>
+                <field name="state"/>
+                <field name="approved_by" optional="hide"/>
+                <field name="approved_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_address_change_request_form" model="ir.ui.view">
+        <field name="name">etsy.address.change.request.form</field>
+        <field name="model">etsy.address.change.request</field>
+        <field name="arch" type="xml">
+            <form string="Address Change Request">
+                <header>
+                    <button name="action_approve" type="object"
+                            string="Approve" class="btn-primary"
+                            invisible="state != 'requested'"
+                            groups="multichannel_hub_core.group_ba_lead"/>
+                    <button name="action_reject" type="object"
+                            string="Reject" class="btn-secondary"
+                            invisible="state != 'requested'"
+                            groups="multichannel_hub_core.group_ba_lead"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="requested,approved,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="order_id"/>
+                            <field name="requested_by"/>
+                            <field name="approved_by" invisible="state != 'approved'"/>
+                            <field name="approved_at" invisible="state != 'approved'"/>
+                            <field name="rejected_at" invisible="state != 'rejected'"/>
+                        </group>
+                        <group>
+                            <field name="requested_fields"/>
+                        </group>
+                    </group>
+                    <group string="Reason">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="New Values">
+                        <field name="new_values" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Rejection Reason"
+                           invisible="state != 'rejected'">
+                        <field name="rejection_reason" nolabel="1"
+                               required="state == 'rejected'"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_etsy_address_change_request" model="ir.actions.act_window">
+        <field name="name">Address Change Requests</field>
+        <field name="res_model">etsy.address.change.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

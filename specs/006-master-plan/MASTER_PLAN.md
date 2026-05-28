@@ -144,6 +144,18 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 **Revised 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md), refined 2026-04-26 per [ADR-008a v2](adrs/ADR-008a-email-as-mandatory-backup.md)**: Spec 005 production cutover runs in parallel with dashboard work once scopes arrive. Dashboards don't block on scopes; cutover doesn't block on dashboards (but benefits from the Tracking Dashboard being live). "Cutover" now means flipping `etsy.shop.active_source='api'`; the email adapter remains the per-shop failover source forever.
 
+**Status snapshot (updated as slices land)**:
+
+- ✅ **P1-05 `sale.order.fulfillment` delegation mixin** (Spec 003 + ADR-007 Direction A) — landed 2026-04-27 on `feature/006-master-plan-coding`. 12 fields + `_inherits` extension on `sale.order`; post_init backfill for 17K existing orders.
+- ✅ **P1-06 unified `shipping.carrier`** (Spec 003 + ADR-005) — landed 2026-04-27. Standalone model + 7-row seed (USPS / UniUni / YunExpress / 4PX / DHL eCommerce / FedEx SmartPost / GKE Local); `shipping_carrier_id` Many2one on fulfillment row.
+- ✅ **P1-04 Address-change approval workflow** (Spec 003 US4, safety-critical) — landed 2026-04-29. New `etsy.address.change.request` model + `mail.thread` + 3 constraints + atomic `action_approve` with `approve_address_change=True` context bypass on C-SO-001; 3 BA groups; sale.order banner + readonly `partner_shipping_id` while pending. RPC-level group gate + Markup-escaped chatter bodies (security review CRITICAL fixes).
+- ✅ **P1-01a Order Dashboard** (Spec 003 US1, operator entry point) — landed 2026-04-29. New fields `sales_channel` + `channel_order_ref` on sale.order (mhc, indexed, FR-024/025 backfill via post_init_hook + migration script). Stored computes `qty_total` / `is_duplicate_buyer` (cron-driven retroactive) / `is_overdue_approval` (cron picks up calendar-only transitions). Order Dashboard list view + 4 row decorations + Operations menu. Composite index `(sales_channel, has_pending_address_change)` in etsy_integration. T060 "Request address change" button placeholder. Pipeline fields (`x_pipeline_id` / `x_pipeline_state_id`) + C-SO-002 + design_status rollup + 17K-row perf benchmark deferred to P1-08 / P1-02 / E2E sprint.
+- ✅ **P1-02a Design file MVP** (Spec 003 US5, email-fallback E2E unblocker) — landed 2026-04-29. New `design.file` Model in `multichannel_hub_core` (mail.thread + activity.mixin, `tracking=True` on state, Vietnamese 3-col kanban under Operations menu, RPC-gated `action_approve`/`action_reject`). 10 MB cap dual-enforced (`@api.constrains` + `ir.attachment` `@api.model_create_multi` override) configurable via `multichannel_hub.large_file_threshold_bytes` ICP. `sale.order.line.design_status` stored compute (lowest-state-wins). Idempotent T078 historical seed from `etsy_design_link_front/back`. New `group_production_team` + 3 ACL rows. P1-02 split into b/c/d for routing, GDrive upload, and bulk PDF — all `todo` after P1-02a.
+- ✅ **P1-03 Tracking Dashboard** (Spec 003 US2) — landed 2026-04-29. New mhc fields `pd_pic_user_id` + `warehouse_zone` + `order_id` back-ref on `sale.order.fulfillment`; etsy_integration `_inherit` extension adds `etsy_ship_notified_at` (`groups=base.group_system`). Tracking Dashboard list (13 cols + decoration) + search (5 group-by filters) + Operations menu + Mark-Shipped server action. `action_bulk_mark_shipped` RPC-gated + silent-skip + sticky warning per FR-017; **write-level `_ADDRESS_LOCK_FIELDS` defense-in-depth** (security CRITICAL fix — defeats direct-RPC bypass). bus.bus channel `multichannel_hub.fulfillment_update` emit on write+create gated to ship-relevant fields. Production_team R/W ACL row + migration backfill for `order_id`. T036 Excel export deferred to P2-01 (Spec 004a US1 owns canonical GKE schema).
+- ⏳ **P1-02b Design file routing** — `design.file.route` model + auto-route on confirm + stuck-route badge.
+- ⏳ **P2-01..05 GKE Excel tracking import** (Spec 004a US1–US5) — closes the email-fallback E2E demo loop with P1-03 Tracking Dashboard. Includes the deferred T036 export-format design (FR-006 round-trip).
+- ⏳ **P1-10..13 Spec 005 production cutover** — `waiting` on E1 (Etsy scope review submitted 2026-04-27, awaiting 3–8 weeks).
+
 | Work | Spec | Why |
 |---|---|---|
 | Rewrite Spec 003: Order Dashboard | 003 (rewritten) | C4 |
@@ -181,11 +193,41 @@ All timelines assume 2 devs, 18 effective days/month, 2-3 days/task realistic. S
 
 **Exit criteria**: Daily GKE Excel imports run via wizard (manual OR auto-polled from GDrive). BA's Tracking Dashboard reflects imports within 5 minutes. PD's Process Dashboard in use for all in-flight orders. All 19 shops default to `active_source='api'`; the Gmail cron continues polling on the same schedule as the permanent failover source — it is never disabled.
 
-### Phase 3 — REMOVED per [ADR-008](adrs/ADR-008-api-first-pivot.md)
+### Phase 3 — Central product hub + Odoo→Etsy outbound publish (8-12 weeks) — added 2026-05-23 per [ADR-014](adrs/ADR-014-central-product-hub.md)
 
-**2026-04-13**: Spec 005 work has been redistributed across Phases 0–2. The freed Phase 3 capacity moves directly into Phase 4 (Gearment + returns + pricing audit), effectively accelerating that phase by ~4 weeks.
+**Goal**: Reverse the inbound-only posture established by [ADR-008](adrs/ADR-008-api-first-pivot.md). Make Odoo the system of record for the multichannel catalog. Implement Excel-recurring sync (catalog stays canonical for now per owner directive 2026-05-23) and Etsy outbound publish (first `listings_w` usage; supersedes Spec 008 deferred P-LIST-INV-PUSH). Amazon + ecommerce remain Phase 5.
 
-The original Phase 3 content is preserved below for traceability but is no longer a distinct phase in the execution plan.
+**Authority**: ADR-014 (architecture decision; sync direction matrix; SKU drift policy). Spec 009 (product hub foundation), Spec 010 (catalog Excel recurring sync), Spec 011 (Etsy outbound publish).
+
+| Work | Spec | Why |
+|---|---|---|
+| Author ADR-014 + Spec 009 + Spec 010 + Spec 011 + MP amendment (this row's planning slice = P-HUB-SPEC) | 009/010/011 | Foundation; owner directive 2026-05-23 |
+| `multichannel.sales.channel` reference + `product.channel.status` per-product channel state + `product.template` extensions (channel applicability M2M, pricing bookkeeping, SKU drift trio) | 009 | ADR-014 §1, §2, §4 |
+| Product-creation wizard (operator-gated; validates SKU+category+prices+channels+production-mode) | 009 | Owner directive 2026-05-23 |
+| SKU drift review + canonicalisation wizard (Keep-legacy / Accept-canonical with optional Etsy auto-push) | 009 | ADR-014 §4 |
+| Etsy-listing backfill wizard (non-destructive; pull → match-or-create `product.template`; cross-link via P-LIST-INV-PULL FK) | 009 | Owner answer 2026-05-23 |
+| openpyxl streaming parser + staging tables + per-sheet schema fingerprint + grammar v2 advisory | 010 | Owner directive 2026-05-23; reuse P2-01 pattern |
+| Catalog ingest + ADR-014 §3 conflict matrix + multi-currency pricelist seed (first-import only) | 010 | ADR-014 §3 |
+| Daily cron + manual wizard + run-report view + GDrive primary / local fallback | 010 | Reuse P2-06 GDrive pattern |
+| Catalog image download from Excel "Image 1/2" columns (content-hash idempotency) | 010 | Reuse `etsy_integration/services/image_downloader.py` pattern |
+| `EtsyApiClient.post/put/patch/post_multipart` + audit-source extensions | 011 | First `listings_w` usage |
+| `createDraftListing` + per-shop Etsy defaults (taxonomy/shipping/return policy) | 011 | Etsy v3 contract |
+| Image upload with hash-based diff (re-upload changed / DELETE removed) | 011 | Etsy quota economy |
+| Inventory PUT (entire-array-resubmit; **supersedes Spec 008 P-LIST-INV-PUSH**) | 011 | ADR-013 contract preserved; one owner for the PUT path |
+| Publish PATCH + `etsy.publish.wizard` + resumable state machine on `product.channel.status` | 011 | Owner directive 2026-05-23 |
+| End-to-end smoke on JaHandmadeArt pilot (create synthetic product → publish via wizard → verify live) | 011 | E2E gate |
+
+**Exit criteria**: A product can flow Excel → Odoo (recurring sync) → Etsy (operator wizard publish), end-to-end on JaHandmadeArt pilot. Existing JaHandmadeArt listings have been backfilled into `product.template` non-destructively. SKU drift review surface is operational. Owner-doc Vietnamese flow docs land in `docs/owner/` covering product creation, Etsy publish, order ingest, fulfillment, after-sale.
+
+**Out of scope (Phase 5)**: Amazon channel publisher; ecommerce/website channel publisher; barcode scan; raw-material inventory dashboards. Phase 5 retains the original placeholder slots; Phase 3 takes the immediate-action subset (central hub + Etsy publish).
+
+---
+
+#### Historical Phase 3 (Etsy API v3) — relocated
+
+The original Phase 3 — "Etsy API v3 after scope approval" — was REMOVED on 2026-04-13 per [ADR-008](adrs/ADR-008-api-first-pivot.md); its work was redistributed across Phases 0–2. The Phase 3 slot stayed empty until 2026-05-23 when [ADR-014](adrs/ADR-014-central-product-hub.md) took it for the central product hub + outbound publish charter.
+
+The original Phase 3 content is preserved below for traceability.
 
 ---
 
