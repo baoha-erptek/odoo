@@ -122,6 +122,61 @@ staging run with Stage A deployed prints the real Etsy bodies. TC→feature diag
 Live run needs owner go-ahead — it creates real JaHandmadeArt drafts
 (`RUN_ETSY_PUBLISH=1`, `LIVE_PRICE=250000`, staging `esty_odoo19`).
 
+### Stage B live capture — 2026-05-28 (owner-approved live run)
+
+Deployed Stage A to staging (etsy_integration upgraded, `esty19_odoo` restarted), ran the
+four live TCs with `RUN_ETSY_PUBLISH=1` (workers=1). The captured 4xx bodies **revise the
+scope**: only **two** of the four TCs are publisher-payload bugs. Verbatim bodies:
+
+| TC | Endpoint | HTTP | Captured body | Verdict |
+| --- | --- | --- | --- | --- |
+| TC-009 | `POST shops/60752333/listings` | 400 | `Legacy personalization fields (is_personalizable, personalization_instructions, personalization_is_required, personalization_char_count_max) are deprecated. Use the dedicated personalization endpoints instead. See .../personalization-migration/` | **Real bug — Etsy API deprecation.** Publisher emits the 4 inline fields at `etsy_listing_publisher.py:220-224`. Etsy now rejects them on createListing. |
+| TC-013 | createListing | — | (no Etsy 4xx) draft `4512532828` created, wizard returned `act_window_close listing_id=4512532828` | **NOT a payload bug.** Publish succeeded. Playwright failure is test-side (`external_ref` assertion / timing), not Etsy. |
+| TC-014 | createListing | — | (no Etsy 4xx) draft `4512532970` created | **NOT a payload bug.** Publish succeeded; same test-side failure class as TC-013. |
+| TC-015 | `PUT listings/{id}/inventory` | 400 | `No products supplied` (listings `4512531293`, `4512531621` — createDraft succeeded first) | **Real bug.** `push_inventory` (`:338-350`) iterates `product_variant_ids`, which is **empty** for this template: TC-015 mixes Material (`create_variant=always`) + **Color (`create_variant=dynamic`)**, so Odoo does not materialize variants → empty `products[]`. |
+
+DB check confirms attribute variant modes: `Material=always`, `Fluid oz=always`, `Color=dynamic`.
+
+**Revised Stage B work:**
+1. **TC-015 (mechanical, in-scope):** `push_inventory` must emit ≥1 product offering even when
+   `product_variant_ids` is empty (dynamic-variant templates) — build a fallback single product
+   entry (template SKU + offering, `property_values=[]`) so Etsy gets a non-empty `products[]`.
+2. **TC-009 (DECISION — escalated to owner):** Etsy deprecated inline personalization. Options:
+   (a) stop emitting the 4 fields → draft publishes but personalization feature regresses;
+   (b) implement Etsy's dedicated personalization endpoints → new feature, own slice;
+   (c) gate emission off behind a flag until (b) ships. Shipped feature is P-PUB-PERSONALIZATION,
+   so this is the owner's call, not a unilateral drop.
+3. **TC-013 / TC-014 (out of payload scope):** publishes succeeded; route the `external_ref`
+   test-side failure to a separate test-fix/investigation follow-up — not an Etsy payload edge.
+
+### Stage B fixes + batched live re-run — 2026-05-28 (GREEN)
+
+Both genuine payload bugs fixed (commit `643370c9837`):
+- **TC-009 personalization gate-off** — `_build_create_draft_payload` no longer emits the 4
+  deprecated keys; logs a WARNING when the feature is on; Odoo fields/UI preserved. mhc field
+  help text updated (mhc 19.0.1.0.63). etsy_integration → 19.0.2.25.0.
+- **TC-015 inventory fallback** — `push_inventory` emits one fallback product offering (template
+  SKU, `property_values=[]`) when `product_variant_ids` is empty (dynamic-variant template).
+
+Phase-2 tests: personalization payload tests inverted (keys always absent + Odoo fields persist);
+new dynamic-variant `push_inventory` test. 49 publisher-suite tests green; reviewers 0
+CRITICAL/HIGH; security APPROVED.
+
+**Live re-run (`RUN_ETSY_PUBLISH=1`, staging, workers=1): 3 passed / 1 failed.** Staging logs show
+**zero** Etsy 4xx (no "Legacy personalization", no "No products supplied"); 3 real drafts created
+(listing_ids `4512535947`, `4512536539`, `4512538286`):
+- TC-009 personalization → **PASS** (draft published)
+- TC-013 taxonomy → **PASS**
+- TC-015 variant property_values → **PASS** (inventory pushed)
+- TC-014 weight → **FAIL** but on `locator.fill timeout` at `fillWeight(0.35)` — a **test-side UI
+  timeout**, never reached the Etsy publish. Confirms TC-014 is the test-side class, not a payload bug.
+
+**Follow-up slices opened (tracker):**
+- `R-PUB-PERSONALIZATION-ENDPOINTS` — integrate Etsy's dedicated personalization-migration
+  endpoints so the preserved Odoo personalization data reaches Etsy again.
+- `R-UAT-TAOSP-TC013-014-TESTSIDE` — fix the TC-013/TC-014 test-side flakiness (TC-013 `external_ref`
+  assertion timing; TC-014 `fillWeight` weight-field locator timeout). Publish path itself is proven.
+
 ## P-UAT-TAOSP-V12-RERUN operability notes (cont.)
 
 Operability: JaHandmadeArt is a **VND** shop (Etsy min ~5,043 VND) — live TCs use
