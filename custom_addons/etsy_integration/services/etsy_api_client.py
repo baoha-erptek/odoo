@@ -261,6 +261,20 @@ class EtsyApiClient:
                 f"Etsy returned 403 Forbidden ({body}); check scope/permissions"
             )
 
+        if response.status_code >= 400:
+            # 401 and 403 are already handled and raised above; this reaches
+            # only the remaining 4xx/5xx (400/404/422/5xx). Capture the vendor body
+            # before raise_for_status() discards it. Etsy returns structured
+            # validator detail here (e.g. "A readiness_state_id is required
+            # for physical listings."), which is the cheapest diagnosis path
+            # per memory feedback_capture_response_body_before_blackbox_probe.
+            # Truncated to 500 chars to bound the log line and avoid leaking a
+            # pathologically large body.
+            body = (response.text or '')[:500]
+            _logger.warning(
+                "Etsy HTTP %d url=%s body=%r", response.status_code, url, body,
+            )
+
         response.raise_for_status()
         return response.json()
 

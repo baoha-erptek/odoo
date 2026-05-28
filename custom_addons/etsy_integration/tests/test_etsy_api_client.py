@@ -220,6 +220,7 @@ class TestEtsyApiClientPing(TransactionCase):
         mock_session = mock.Mock()
         mock_response = mock.Mock()
         mock_response.status_code = 403
+        mock_response.text = '{"error":"forbidden"}'
         mock_response.raise_for_status.side_effect = requests.HTTPError("403 Forbidden")
         mock_session.request.return_value = mock_response
         mock_session_class.return_value = mock_session
@@ -235,6 +236,7 @@ class TestEtsyApiClientPing(TransactionCase):
         mock_session = mock.Mock()
         mock_response = mock.Mock()
         mock_response.status_code = 500
+        mock_response.text = '{"error":"internal server error"}'
         mock_response.raise_for_status.side_effect = requests.HTTPError("500 Internal Server Error")
         mock_session.request.return_value = mock_response
         mock_session_class.return_value = mock_session
@@ -536,3 +538,143 @@ class TestEtsyApiClient401Refresh(TransactionCase):
         self.assertFalse(mock_refresh.called)
         # Verify ping still succeeded
         self.assertEqual(result, {'user_id': 12345})
+
+
+@tagged('post_install', '-at_install')
+class TestEtsyApiClient4xxBodyCapture(TransactionCase):
+    """R-PUB-RESPONSE-BODY-DIAGNOSE: capture the Etsy response body on 4xx
+    failures before `raise_for_status()` so the validator message is
+    diagnosable from the log without a special diagnostic redeploy
+    (memory feedback_capture_response_body_before_blackbox_probe).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.shop = cls.env['etsy.shop'].create({
+            'name': 'Test 4xx Body Shop',
+        })
+        cls.shop.sudo().write({
+            'etsy_oauth_access_token': 'access_abc123',
+            'etsy_oauth_refresh_token': 'refresh_xyz789',
+            'etsy_oauth_token_expires_at': datetime(2099, 1, 1, 0, 0, 0),
+        })
+        cls._creds_patcher = mock.patch(
+            'odoo.addons.etsy_integration.services.etsy_api_client._read_credentials',
+            return_value={'client_id': 'test_client_id', 'client_secret': 'test_secret'},
+        )
+        cls._creds_patcher.start()
+        cls.addClassCleanup(cls._creds_patcher.stop)
+
+    def _mock_error_response(self, status_code, text):
+        response = mock.Mock()
+        response.status_code = status_code
+        response.text = text
+        response.raise_for_status.side_effect = requests.HTTPError(f"{status_code} error")
+        return response
+
+    @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
+    def test_400_body_logged_before_raise(self, mock_session_class):
+        """POST 400 -> Etsy validator body is logged at WARNING + HTTPError raised.
+
+        Models TC-009/013/014 (createListing 400). Before this slice the body
+        was discarded by raise_for_status(), so the validator message was lost.
+        """
+        mock_session = mock.Mock()
+        mock_session.request.return_value = self._mock_error_response(
+            400, '{"error":"A readiness_state_id is required for physical listings."}',
+        )
+        mock_session_class.return_value = mock_session
+
+        client = EtsyApiClient(self.shop)
+
+        with self.assertLogs(level='WARNING') as cm:
+            with self.assertRaises(requests.HTTPError):
+                client.post('shops/123/listings', json={'title': 'X'})
+
+        self.assertTrue(
+            any('readiness_state_id' in msg for msg in cm.output),
+            f"Expected captured body in logs, got: {cm.output}",
+        )
+
+    @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
+    def test_422_body_logged_before_raise(self, mock_session_class):
+        """PUT 422 -> validation body is logged + HTTPError raised.
+
+        Models TC-015 (PUT inventory 422/400 on variant property_values).
+        """
+        mock_session = mock.Mock()
+        mock_session.request.return_value = self._mock_error_response(
+            422, '{"error":"property_values: invalid property_id"}',
+        )
+        mock_session_class.return_value = mock_session
+
+        client = EtsyApiClient(self.shop)
+
+        with self.assertLogs(level='WARNING') as cm:
+            with self.assertRaises(requests.HTTPError):
+                client.put('listings/456/inventory', json={'products': []})
+
+        self.assertTrue(
+            any('property_values' in msg for msg in cm.output),
+            f"Expected captured body in logs, got: {cm.output}",
+        )
+
+    @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
+    def test_body_truncated_at_500_chars(self, mock_session_class):
+        """A pathologically long error body is truncated to 500 chars in the log."""
+        long_body = '{"error":"' + ('x' * 900) + '"}'
+        mock_session = mock.Mock()
+        mock_session.request.return_value = self._mock_error_response(400, long_body)
+        mock_session_class.return_value = mock_session
+
+        client = EtsyApiClient(self.shop)
+
+        with self.assertLogs(level='WARNING') as cm:
+            with self.assertRaises(requests.HTTPError):
+                client.post('shops/123/listings', json={})
+
+        # The 900-x run must NOT appear in full; truncation caps the captured
+        # body at 500 chars, so a 600-x substring can never be present.
+        self.assertFalse(
+            any(('x' * 600) in msg for msg in cm.output),
+            "Body should have been truncated to 500 chars",
+        )
+
+    @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
+    def test_empty_body_logged_without_error(self, mock_session_class):
+        """4xx with empty body still logs (no crash on response.text == '')."""
+        mock_session = mock.Mock()
+        mock_session.request.return_value = self._mock_error_response(404, '')
+        mock_session_class.return_value = mock_session
+
+        client = EtsyApiClient(self.shop)
+
+        with self.assertLogs(level='WARNING') as cm:
+            with self.assertRaises(requests.HTTPError):
+                client.get('listings/789')
+
+        self.assertTrue(
+            any('404' in msg for msg in cm.output),
+            f"Expected a WARNING for the 404, got: {cm.output}",
+        )
+
+    @mock.patch('odoo.addons.etsy_integration.services.etsy_api_client.requests.Session')
+    def test_403_still_raises_value_error_and_logs_body(self, mock_session_class):
+        """Regression: 403 keeps its ValueError contract AND logs the body."""
+        mock_session = mock.Mock()
+        mock_session.request.return_value = self._mock_error_response(
+            403, '{"error":"Insufficient permissions for this scope"}',
+        )
+        mock_session_class.return_value = mock_session
+
+        client = EtsyApiClient(self.shop)
+
+        with self.assertLogs(level='WARNING') as cm:
+            with self.assertRaises(ValueError):
+                client.ping()
+
+        self.assertTrue(
+            any('Insufficient permissions' in msg for msg in cm.output),
+            f"Expected 403 body in logs, got: {cm.output}",
+        )
