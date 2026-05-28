@@ -68,3 +68,33 @@ Doc-only slice rewriting `docs/owner/HUONG_DAN_TAO_SAN_PHAM_VN.md` v1.1 → v1.2
 - Validator v2 grammar deep-dive (old §6) reduced to one-line note in §3 + brief FAQ entry.
 - Screenshots out of scope; sibling slice candidate noted.
 - Doc-only slice → skip Phase 2 (RED), Phase 4 security-reviewer, full Phase 8 (light learn note OK).
+
+## P-UAT-TAOSP-V12-RERUN — 2026-05-28 (v1.2 standard-form UAT + fixes)
+
+Live UAT of the v1.2 standard-form flow on staging `esty_odoo19`. Surfaced + fixed
+three product defects (the standard form replaced the wizards in P-HUB-SKU-AUTODERIVE,
+but the wizard's side-effects weren't fully migrated to the model layer):
+
+- **Auto-SKU froze after first variant.** `_onchange_auto_fill_default_code` guard compared
+  `default_code` to the name-only `x_sku_v2_suggested`; once it diverged (`MUG-CR`) later
+  attribute additions stopped re-deriving. Fix: dirty-flag `x_sku_auto_value` declared
+  `invisible` in the form arch so it round-trips across onchange calls (a non-arch helper
+  field reads empty on each onchange — that was the real trap). mhc → 19.0.1.0.62, commit `dfd5209d274`.
+- **`evaluate()` segment order was alphabetical by attribute name**, not grammar role.
+  "11 oz" is on the **Fluid oz** attribute (not "Size"); `sorted(['Fluid oz','Material'])`
+  yielded `MUG-F11-CR`. Fix: `_ATTR_ROLE_ORDER` (Material→MAT, Shape/Size/Fluid oz/Apparel
+  Size→SIZE, Color→VAR2). The SKU builder wizard always had explicit roles; the auto-derive
+  dict path never did.
+- **`product.template` never created `product.channel.status` rows** — only the wizard's
+  `action_create` did. Fix: `_sync_channel_statuses()` on `create()`/`write()` (additive,
+  idempotent, never clobbers Published/Error).
+
+Live-publish 400s (follow-up `R-PUB-RESPONSE-BODY-DIAGNOSE`): TC-005+TC-011 created real
+drafts (path proven); TC-009/013/014 → createListing 400, TC-015 → inventory 400. The Etsy
+client raises `raise_for_status()` without capturing the response body (anti-pattern per
+`feedback_capture_response_body_before_blackbox_probe`) — capture body first, then per-feature fix.
+
+Operability: JaHandmadeArt is a **VND** shop (Etsy min ~5,043 VND) — live TCs use
+`LIVE_PRICE=250000`; standard form lazy-renders notebook pages (re-open General tab before
+reading `default_code`); bare-family SKU triggers Odoo's "Internal Reference already exists"
+Note dialog (auto-dismissed). Owner UAT findings: `docs/owner/UAT_FINDINGS_2026-05-28.md`.
