@@ -1,10 +1,10 @@
 # Quy trình tạo sản phẩm mới (cho Chủ shop)
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-05-26 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.2 · **Ngày:** 2026-05-28 · **Ngôn ngữ:** Tiếng Việt
 
 > Tài liệu này hướng dẫn cách thêm sản phẩm mới vào hệ thống. Dùng cho Chủ shop và nhân viên BA. Không có thuật ngữ kỹ thuật.
 
-> **Cập nhật v1.1 (2026-05-26):** thêm Wizard mới **"SKU Builder 4 bước"** giúp BA dựng mã SKU đúng quy ước mà không phải nhớ format. Bổ sung mô tả validator mã SKU mới (chế độ mềm/cứng) và sub-form bổ sung kích thước khi tên sản phẩm thiếu thông tin.
+> **Cập nhật v1.2 (2026-05-28):** Đổi cách tạo sản phẩm — dùng **form Sản phẩm chuẩn** thay cho các Wizard riêng. Mã SKU **tự sinh** từ Danh mục + Biến thể (BA không phải gõ tay đúng format nữa). Bổ sung mô tả 7 nhóm thông tin mới khi đăng Etsy (Tags, Cá nhân hoá, Vật liệu, Ảnh phụ, Override Etsy theo sản phẩm, Cân nặng & Kích thước, Thuộc tính biến thể).
 
 ---
 
@@ -12,82 +12,77 @@
 
 Sản phẩm trong hệ thống là "bản gốc duy nhất" — sau khi tạo, nó tự động sẵn sàng để đăng bán trên các kênh (Etsy, sau này là Amazon, Website…). Mỗi sản phẩm chỉ tồn tại **một** lần trong hệ thống — các kênh chỉ là "nơi xuất hiện" chứ không phải nơi lưu sản phẩm.
 
-Có hai cách tạo sản phẩm bằng tay:
+Có **một** cách tạo sản phẩm bằng tay (đã hoạt động):
 
-1. **Wizard cổ điển (1 form)** — dùng khi BA đã biết chính xác mã SKU. _(đã hoạt động hôm nay)_
-2. **SKU Builder Wizard (4 bước)** — dùng khi muốn hệ thống giúp dựng mã SKU đúng quy ước. _(mới từ 2026-05-26)_
+1. **Form Sản phẩm chuẩn** — BA mở menu Sản phẩm → bấm Tạo mới → điền Tên + Danh mục + Biến thể + giá. Mã SKU tự sinh từ Danh mục + Biến thể.
 
-Và một cách tự động:
+Và một cách tự động (sắp ra mắt):
 
-3. **Đồng bộ từ file Excel** — dùng khi nhập nhiều sản phẩm cùng lúc từ danh mục Excel. _(sẽ ra mắt trong phiên bản kế tiếp)_
+2. **Đồng bộ từ file Excel** — BA đặt file Excel danh mục vào Google Drive → hệ thống tự nhập hàng đêm.
+
+> Trước đây hệ thống có 2 Wizard riêng (Wizard cũ + SKU Builder 4 bước). Từ phiên bản này, **form Sản phẩm chuẩn đã đủ** — Wizard đã được ẩn khỏi menu.
 
 ---
 
-## Cách 1A: Wizard cổ điển
+## Cách 1: Form Sản phẩm chuẩn
 
 ### Khi nào dùng
 
-- BA đã quen format SKU mới (`MUG-CR-F11`, `APR-TX-AM`…) và biết chính xác mã muốn dùng.
-- Muốn tạo nhanh một sản phẩm thử nghiệm.
-- Nhập sản phẩm có mã SKU legacy (mã cũ) — chấp nhận hệ thống cảnh báo mềm.
+- BA muốn tạo một sản phẩm mới bằng tay.
+- Nhập sản phẩm có Mã SKU legacy (mã cũ) — chỉ cần gõ tay vào ô Mã SKU, hệ thống lưu nguyên trạng.
 
 ### Các bước
 
-1. Truy cập Wizard cũ qua URL `/odoo/action-multichannel_hub_core.action_product_creation_wizard` (hôm nay chưa có menu — sẽ thêm trong slice follow-up `P-HUB-WIZARD-MENU`).
-2. Điền các ô bắt buộc:
-   - **Tên sản phẩm** — ví dụ "Custom Coffee Mug 11oz"
-   - **Mã SKU nội bộ** — BA tự gõ. Hệ thống chỉ gợi ý phần Family (3 ký tự đầu); phần còn lại BA tự dựng.
-   - **Nhóm sản phẩm** — chọn từ danh mục có sẵn.
-   - **Giá niêm yết (USD)** — giá bán trên Etsy. Phải lớn hơn 0.
-   - **Phí vận chuyển nội bộ** — ước tính chi phí vận chuyển.
+1. Mở **Sản phẩm** → bấm **Tạo mới**.
+2. Điền các ô:
+   - **Tên sản phẩm** — ví dụ "Custom Coffee Mug 11oz" (tiếng Anh, hiển thị trên Etsy).
+   - **Danh mục sản phẩm** — chọn từ dropdown (Mug / Apron / Doormat …).
+   - **Biến thể** — thêm dòng biến thể (Chất liệu, Kích thước, Màu sắc) nếu sản phẩm có nhiều phiên bản.
+   - **Giá bán (USD)** — giá Etsy, phải lớn hơn 0.
    - **Các kênh áp dụng** — chọn ít nhất một kênh (mặc định Etsy).
-3. (Tùy chọn) Điền **Mã SKU Gearment** nếu sản phẩm sẽ giao qua Gearment. Hệ thống tự động đặt chế độ "Dropship" cho sản phẩm này.
-4. Nhấn **Tạo sản phẩm**.
+3. Ô **Mã SKU** sẽ tự điền sau khi BA chọn Danh mục + Biến thể. Ví dụ:
+   - Danh mục `Mug` + Chất liệu `Ceramic + Chrome` + Size `11 oz` → `MUG-CR-F11`.
+   - Danh mục `Apron` + Chất liệu `Textile` + Size `Medium` → `APR-TX-AM`.
+   BA xem lại, hoặc gõ tay sửa nếu muốn (ví dụ giữ mã legacy).
+4. (Tùy chọn) Điền **Mã SKU Gearment** nếu sản phẩm sẽ giao qua Gearment → hệ thống tự bật chế độ Dropship.
+5. (Tùy chọn) Điền các Thông tin bổ sung (xem mục riêng bên dưới).
+6. Nhấn **Lưu**.
 
-### Hệ thống làm gì sau khi bấm Tạo
+### Hệ thống làm gì sau khi bấm Lưu
 
-- Chạy validator mã SKU (xem phần "Validator v2" bên dưới).
+- Tự kiểm tra Mã SKU theo quy chuẩn (xem phần "Kiểm tra Mã SKU" bên dưới).
 - Lưu sản phẩm vào kho dữ liệu chung.
 - Tạo "trạng thái kênh" cho từng kênh đã chọn — bắt đầu ở trạng thái "Nháp".
 - Hiển thị ngay form sản phẩm vừa tạo, sẵn sàng để đăng lên Etsy.
 
 ---
 
-## Cách 1B: SKU Builder Wizard (4 bước) — mới
+## Thông tin bổ sung khi đăng Etsy
 
-### Khi nào dùng
+Trên form Sản phẩm chuẩn, BA có thể điền **7 nhóm thông tin** giúp sản phẩm đủ chi tiết khi đăng lên Etsy. Mặc định để trống thì hệ thống dùng giá trị chung của shop hoặc bỏ qua.
 
-- BA chưa quen format mới và muốn hệ thống dựng giúp.
-- Tạo sản phẩm thuộc family ít gặp (BA không nhớ mã family/material/size cho family đó).
-- Muốn thấy preview SKU trước khi commit.
+1. **Tags (từ khoá tìm kiếm)** — tối đa 13 tag, mỗi tag tối đa 20 ký tự. Giúp khách Etsy tìm sản phẩm dễ hơn.
+2. **Cá nhân hoá** — cho phép khách yêu cầu khắc/in tên lên sản phẩm. 4 ô: Cho phép, Bắt buộc khách điền, Số ký tự tối đa (mặc định 256), Hướng dẫn cho khách.
+3. **Vật liệu** — hệ thống **tự suy ra** từ thuộc tính Chất liệu của Biến thể. BA không nhập lại.
+4. **Ảnh phụ** — ngoài ảnh chính, BA upload thêm ảnh phụ vào trang Extra Images. Hệ thống gửi tối đa 10 ảnh lên Etsy theo thứ tự BA sắp.
+5. **Override Etsy theo sản phẩm** — Danh mục Etsy / Ai làm / Khi nào làm. Mặc định dùng giá trị chung của shop; BA điền khi sản phẩm này cần khác biệt.
+6. **Cân nặng & Kích thước** — Cân nặng từ trường Weight chuẩn (kg, hệ thống tự chuyển sang oz/g). Kích thước tự suy ra từ Size của Biến thể (ví dụ `R30X18` cho Doormat → dài 30, rộng 18; Mug "11 oz" không có kích thước hình học).
+7. **Thuộc tính biến thể** — Material / Color / Size / Shape / Fluid oz / Apparel Size. Hệ thống gửi lên Etsy theo cặp (loại thuộc tính, giá trị) cho khách xem.
 
-### Các bước
-
-1. Mở **Operations → Configuration → Build SKU & Create Product**.
-2. **Bước 1 — Family**: gõ tên sản phẩm tiếng Anh. Hệ thống tự nhận biết family (Mug, Apron, Doormat…). Nếu sai, BA chỉnh thủ công.
-3. **Bước 2 — Material**: chọn chất liệu (Ceramic, Wood, Textile, Metal…).
-4. **Bước 3 — Size**: chọn kích thước. Wizard chỉ hiện các size hợp lệ cho family đó (mug → fluid oz, apron → S/M/L, doormat → rect W×H…).
-   - Nếu tên sản phẩm không chứa thông tin size (ví dụ "Color Changing Beverage" không có "11 oz") → wizard hiện thêm ô bổ sung để BA tự điền size hoặc kích thước W/H.
-5. **Bước 4 — Preview**: thấy mã SKU dự kiến (ví dụ `MUG-CR-F11-BK`). Có thể chọn color phụ (VAR2) nếu muốn. Bấm **Create**.
-
-### Lợi ích
-
-- BA không cần thuộc lòng grammar SKU v2.
-- Hệ thống tự gate size theo family — không tạo ra SKU sai logic (ví dụ "Mug size M" — không hợp lệ vì M là apparel).
-- Preview SKU trước khi commit → BA thấy ngay nếu auto-suggest sai và quay lại sửa.
+Đầy đủ chi tiết từng nhóm: xem [`HUONG_DAN_TAO_SAN_PHAM_VN.md`](./HUONG_DAN_TAO_SAN_PHAM_VN.md) mục 4.
 
 ---
 
-## Validator mã SKU v2 — mới
+## Kiểm tra Mã SKU
 
-Hệ thống có một bộ kiểm tra format mã SKU theo grammar v2:
+Hệ thống có một bộ kiểm tra format Mã SKU theo định dạng chuẩn (`<Family>-<Material>-<Size>[-<Variant>]`):
 
-- **Chế độ mềm (mặc định)**: SKU không đúng format vẫn được lưu, chỉ cảnh báo. Thích hợp cho giai đoạn đầu khi catalog còn nhiều mã legacy.
-- **Chế độ cứng**: SKU không đúng format bị từ chối ngay. Bật khi đã chuẩn hoá xong catalog.
+- **Chế độ mềm (mặc định)**: Mã không đúng format vẫn được lưu, chỉ cảnh báo. Thích hợp cho giai đoạn đầu khi catalog còn nhiều mã legacy.
+- **Chế độ chặt**: Mã không đúng format bị từ chối ngay. Bật khi đã chuẩn hoá xong catalog.
 
 Đổi chế độ trong Cấu hình hệ thống (Admin). Mỗi BA không tự đổi được.
 
-> Sản phẩm cũ (legacy SKU) **không** bị validator chặn — chỉ SKU tạo mới hoặc sửa lại mới qua kiểm tra.
+> Sản phẩm cũ (mã legacy) **không** bị validator chặn — chỉ Mã SKU tạo mới hoặc sửa lại mới qua kiểm tra. Sản phẩm legacy được đánh dấu "BA-approved legacy" tự động khi đi qua quy trình lần đầu.
 
 ---
 
@@ -99,9 +94,9 @@ Khi BA đặt file Excel danh mục lên Google Drive thư mục quy định:
 
 1. Mỗi đêm hệ thống tự động đọc file (khoảng 2h sáng).
 2. Mỗi dòng trong Excel = một sản phẩm.
-3. Nếu mã SKU đã có trong hệ thống → cập nhật tên, giá, mô tả… **theo Excel** (Excel thắng).
-4. Nếu mã SKU chưa có → tạo sản phẩm mới.
-5. **Các kênh đã chọn cho sản phẩm cũ KHÔNG bị xóa** — chỉ thêm cập nhật nội dung, không động đến quyết định "bán trên kênh nào" của BA.
+3. Nếu Mã SKU đã có trong hệ thống → cập nhật tên, giá, mô tả… **theo Excel** (Excel thắng).
+4. Nếu Mã SKU chưa có → tạo sản phẩm mới.
+5. **Các kênh đã chọn cho sản phẩm cũ KHÔNG bị xoá** — chỉ thêm cập nhật nội dung, không động đến quyết định "bán trên kênh nào" của BA.
 6. Báo cáo kết quả gửi vào Inbox của BA mỗi sáng: bao nhiêu sản phẩm thêm mới, bao nhiêu cập nhật, bao nhiêu lỗi.
 
 ### Khi nào dùng
@@ -114,36 +109,45 @@ Khi BA đặt file Excel danh mục lên Google Drive thư mục quy định:
 
 ## SKU — câu chuyện hai mã
 
-Hệ thống dùng **hai bộ mã SKU song song**:
+Hệ thống dùng **hai bộ Mã SKU song song**:
 
 - **Mã cũ (legacy)** — mã BA đã dùng lâu nay; vẫn giữ trong "Lưu trữ SKU cũ" trên sản phẩm.
-- **Mã chuẩn v2** — mã theo hệ ngữ pháp mới `<FAM3>-<MAT2>-<SIZE>[-<VAR2>]` (ví dụ `MUG-CR-F11-BK`).
+- **Mã chuẩn** — mã theo định dạng mới `<Family>-<Material>-<Size>[-<Variant>]` (ví dụ `MUG-CR-F11-BK`). Hệ thống tự sinh khi BA chọn Danh mục + Biến thể.
 
-Khi tạo mới, hệ thống dùng mã chuẩn v2 mặc định. Nếu BA muốn giữ mã cũ cho sản phẩm cũ đã đăng trên Etsy → bấm **"Keep Legacy"** trên Wizard chuẩn hoá SKU. Hệ thống nhớ quyết định này và không hỏi lại.
+Khi tạo mới, hệ thống dùng mã chuẩn mặc định. Nếu BA muốn giữ mã cũ cho sản phẩm cũ đã đăng trên Etsy → bấm **"Keep Legacy"** trên trang SKU Drift. Hệ thống nhớ quyết định này và không hỏi lại.
 
-Nếu BA chấp nhận mã chuẩn cho một sản phẩm đã có trên Etsy → hệ thống tự động cập nhật mã đó lên Etsy (Etsy hiện đang đặt trạng thái "Còn hàng"). Nếu Etsy báo lỗi → hệ thống rollback (giữ mã cũ + ghi lỗi vào nhật ký để BA xem).
+Nếu BA chấp nhận mã chuẩn cho một sản phẩm đã có trên Etsy → hệ thống tự động cập nhật mã đó lên Etsy. Nếu Etsy báo lỗi → hệ thống rollback (giữ mã cũ + ghi lỗi vào nhật ký để BA xem).
 
 ---
 
 ## Câu hỏi thường gặp
 
-**Q:** _Tôi muốn xem sản phẩm nào chưa khớp mã chuẩn v2._
-A: Mở **Sản phẩm → SKU Drift** — danh sách các sản phẩm có mã SKU chưa khớp v2; bấm vào mỗi dòng để chọn giữ-cũ / chấp-nhận-mới.
+**Q:** _Trước đây có Wizard cũ và SKU Builder — sao bây giờ không thấy nữa?_
+A: Từ phiên bản này, **form Sản phẩm chuẩn đã đủ** — hệ thống tự sinh Mã SKU từ Danh mục + Biến thể nên không cần Wizard riêng nữa. Wizard cũ đã được ẩn khỏi menu để tránh nhầm lẫn.
+
+**Q:** _Mã SKU tự sinh có sai không?_
+A: Hệ thống dựa trên Danh mục + Biến thể để sinh Mã SKU. Nếu BA chọn đúng → Mã SKU sẽ đúng định dạng. BA vẫn có thể sửa tay nếu cần.
+
+**Q:** _Tôi muốn giữ mã legacy cho sản phẩm cũ — hệ thống có cho phép không?_
+A: Có. BA chỉ cần gõ tay mã cũ vào ô Mã SKU — hệ thống lưu nguyên trạng, không bắt đổi.
+
+**Q:** _Tôi muốn xem sản phẩm nào chưa khớp mã chuẩn._
+A: Mở **Sản phẩm → SKU Drift** — danh sách các sản phẩm có Mã SKU chưa khớp định dạng mới; bấm vào mỗi dòng để chọn giữ-cũ / chấp-nhận-mới.
 
 **Q:** _Tôi cần đăng cùng một sản phẩm trên Etsy lẫn Amazon._
-A: Hôm nay chỉ Etsy hoạt động. Amazon được đánh dấu "không hoạt động" trong cấu hình — khi Amazon ra mắt (Phase 5), BA chỉ cần bật "Amazon" trong kênh áp dụng của sản phẩm.
+A: Hôm nay chỉ Etsy hoạt động. Khi Amazon ra mắt, BA chỉ cần bật "Amazon" trong kênh áp dụng của sản phẩm.
 
 **Q:** _Tôi đặt mã Gearment xong nhưng vẫn muốn tự sản xuất._
-A: Xóa ô "Mã SKU Gearment" trong form sản phẩm → hệ thống tự tắt chế độ Dropship.
+A: Xoá ô "Mã SKU Gearment" trong form sản phẩm → hệ thống tự tắt chế độ Dropship.
 
 **Q:** _Sản phẩm bị lỗi khi đăng — làm sao biết?_
-A: Mở form sản phẩm → tab "Channels" → cột "Lỗi đồng bộ gần nhất" hiển thị thông tin lỗi. Nút **"Publish to Etsy"** sẽ đổi tên thành **"Resume Publish"** — bấm sẽ tiếp tục từ bước bị lỗi (không tạo lại từ đầu).
+A: Mở form sản phẩm → trang "Channels" → cột "Lỗi đồng bộ gần nhất" hiển thị thông tin lỗi. Nút **"Publish to Etsy"** sẽ đổi tên thành **"Resume Publish"** — bấm sẽ tiếp tục từ bước bị lỗi (không tạo lại từ đầu).
 
-**Q:** _Wizard cũ (1A) và SKU Builder (1B) — chọn cái nào?_
-A: Tùy thói quen. SKU Builder phù hợp với BA chưa quen grammar v2. Wizard cũ nhanh hơn cho người đã thuộc format. Hai wizard cùng tồn tại — không có cái nào "sắp bị bỏ".
+**Q:** _Validator ở chế độ "chặt" thì sản phẩm cũ có bị ảnh hưởng?_
+A: Không. Sản phẩm cũ (legacy SKU) không bị re-validate khi đổi chế độ. Chỉ Mã SKU **tạo mới** hoặc **sửa lại** mới qua kiểm tra. Sản phẩm legacy đã được đánh dấu "BA-approved legacy" và không bị bắt buộc đổi.
 
-**Q:** _Validator v2 ở chế độ "cứng" thì sản phẩm cũ có bị ảnh hưởng?_
-A: Không. Sản phẩm cũ (legacy SKU) không bị re-validate khi đổi mode. Chỉ SKU **tạo mới** hoặc **sửa lại** mới qua kiểm tra. Sản phẩm legacy đã được đánh dấu "BA-approved legacy" và không bị bắt buộc đổi.
+**Q:** _Tôi điền tags / personalization / weight nhưng Etsy listing không thấy?_
+A: Kiểm tra (1) đã bấm Lưu chưa, (2) đã chạy "Publish to Etsy" hoặc "Resume Publish" chưa. Etsy listing chỉ cập nhật khi BA bấm publish — không tự đồng bộ.
 
 ---
 
@@ -152,7 +156,7 @@ A: Không. Sản phẩm cũ (legacy SKU) không bị re-validate khi đổi mode
 - Vấn đề chức năng → BA Lead.
 - Mã SKU bị nghi sai → BA Manager.
 - Lỗi kỹ thuật / Etsy báo lỗi → Đội Kỹ thuật.
-- Đổi chế độ validator (soft → hard) → Admin (cấu hình ICP).
+- Đổi chế độ validator (mềm → chặt) → Admin.
+- Cài đặt mặc định shop Etsy (Danh mục Etsy / Readiness / Shipping / Return) → Admin.
 
 > Tài liệu thao tác chi tiết: [`HUONG_DAN_TAO_SAN_PHAM_VN.md`](./HUONG_DAN_TAO_SAN_PHAM_VN.md).
-> Tài liệu sản phẩm chi tiết cho đội kỹ thuật xem trong `specs/009-product-hub/`, `specs/010-catalog-excel-sync/`, `specs/011-etsy-outbound-publish/` (tiếng Anh).
