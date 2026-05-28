@@ -25,6 +25,7 @@ log = logging.getLogger("cleanup_uat")
 
 UAT_SKU_PREFIX = "UAT-"
 UAT_BUILDER_NAME_PREFIX = "UAT-SKU-BUILDER"
+UAT_FORM_NAME_PREFIX = "UAT-TAOSP"  # v1.2 standard-form suite product names
 BA_USER_LOGIN = "uat_ba_user@hatafax.demo"
 
 
@@ -36,14 +37,17 @@ def main():
 
     s = connect(base_url=args.base_url, db=args.db)
 
-    # 1. Archive UAT products — OR domain: legacy SKU prefix OR builder name prefix
+    # 1. Archive UAT products — OR domain across the known UAT markers.
+    #    NOTE: the legacy SKU-drift fixture (UAT-MUG-001) matches UAT_SKU_PREFIX
+    #    and is intentionally archived here too (seed re-creates it on next run).
     pids = s.call(
         "product.template",
         "search",
         [[
-            "|",
+            "|", "|",
             ("default_code", "=like", f"{UAT_SKU_PREFIX}%"),
             ("name", "=like", f"{UAT_BUILDER_NAME_PREFIX}%"),
+            ("name", "=like", f"{UAT_FORM_NAME_PREFIX}%"),
         ]],
         {"context": {"active_test": False}},
     )

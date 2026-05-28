@@ -11,7 +11,9 @@
     "test:all": "playwright test",
     "report": "playwright show-report reports/html",
     "seed:ba-user": "python3 fixtures/seed_ba_user.py",
-    "seed:uat-data": "python3 fixtures/seed_uat_data.py"
+    "seed:uat-data": "python3 fixtures/seed_uat_data.py",
+    "reset:products": "python3 ../../scripts/reset_staging_products.py --db esty_odoo19",
+    "reset:products:apply": "python3 ../../scripts/reset_staging_products.py --db esty_odoo19 --apply --delete-orders"
   },
   "devDependencies": {
     "@playwright/test": "1.48.0",

@@ -63,6 +63,21 @@ async function seedBaUser(): Promise<void> {
   }
 }
 
+async function seedUatData(): Promise<void> {
+  console.log(`[globalSetup] Seeding UAT data (categories/legacy product/tags) on db=${CONFIG.DB} ...`);
+  try {
+    const out = execSync(
+      `python3 ${path.join(__dirname, 'seed_uat_data.py')} --base-url "${CONFIG.BASE_URL}" --db "${CONFIG.DB}"`,
+      { encoding: 'utf8' },
+    );
+    console.log(out);
+  } catch (e) {
+    // Non-fatal: form-only TCs that don't need the seed can still run; the
+    // seed-dependent TCs skip themselves. Surface the error for visibility.
+    console.warn(`[globalSetup] seed_uat_data.py failed (continuing): ${(e as Error).message}`);
+  }
+}
+
 export default async function globalSetup() {
   console.log('===========================================');
   console.log('Odoo19-Esty UAT — globalSetup');
@@ -73,4 +88,5 @@ export default async function globalSetup() {
 
   await preflight();
   await seedBaUser();
+  await seedUatData();
 }
