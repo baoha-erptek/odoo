@@ -118,6 +118,26 @@ class EtsyShop(models.Model):
         default=False,
     )
 
+    # Spec 011 P-PUB-WEIGHT-DIMENSIONS — shop-wide unit preferences for
+    # createListing item_weight + item_dimensions_unit. Odoo stores
+    # product.template.weight in kg; convert at publish time.
+    weight_unit_pref = fields.Selection(
+        selection=[('oz', 'oz'), ('g', 'g')],
+        string='Weight Unit Preference',
+        default='oz',
+        groups='base.group_system',
+        help='Unit system for Etsy listings: oz (ounces) or g (grams). '
+             'Odoo stores weight in kg; conversion applied on publish.',
+    )
+    dimensions_unit_pref = fields.Selection(
+        selection=[('cm', 'cm'), ('in', 'in')],
+        string='Dimensions Unit Preference',
+        default='cm',
+        groups='base.group_system',
+        help='Unit system for item_length/width/height on Etsy listings: '
+             'cm (centimeters) or in (inches).',
+    )
+
     # Spec 005 P0-16c — channel-source selector per ADR-002. Two values
     # only; new shops default to 'email_only' until E1 scope review +
     # per-shop cutover (P1-11). The syncer cron only fires for

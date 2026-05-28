@@ -119,6 +119,69 @@ class EtsyListingPublisher:
         return properties
 
     # ------------------------------------------------------------------
+    # Spec 011 P-PUB-WEIGHT-DIMENSIONS — template weight + Size axis →
+    # createListing item_weight + item_*dimensions
+    # ------------------------------------------------------------------
+    # Weight: read standard product.template.weight (kg base unit per
+    # Odoo); convert to oz or g per shop.weight_unit_pref. Omit weight
+    # keys when weight <= 0 (Etsy treats absence as "no weight").
+    #
+    # Dimensions: parse the template's Size attribute value name for a
+    # rectangular pattern ("R30X18" or "12X18" or "12 × 18"). Mug-family
+    # Size values like "11 oz" do not match the regex → dimensions
+    # omitted (correct: Mugs publish without item_*dimensions). Emits
+    # length+width+unit together or none at all (Etsy rejects partial).
+    # Tracker row 339; LOC ~110.
+    _RECT_PATTERN = re.compile(r'^[Rr]?\s*(\d+)\s*[xX×]\s*(\d+)')
+
+    @staticmethod
+    def _collect_weight_and_dimensions(tmpl, shop):
+        """Build Etsy weight + dimension payload keys.
+
+        tmpl/shop should already be sudo'd (matches _collect_materials
+        call-site convention; safe to re-sudo).
+
+        Returns dict that may contain any of:
+            item_weight, item_weight_unit  (when tmpl.weight > 0)
+            item_length, item_width, item_dimensions_unit
+                (when template's Size value matches rect pattern)
+
+        Empty dict when weight <= 0 AND no parseable Size value.
+        """
+        result = {}
+
+        weight_kg = tmpl.weight or 0.0
+        if weight_kg > 0:
+            unit_pref = shop.weight_unit_pref or 'oz'
+            if unit_pref == 'oz':
+                # kg → oz: 1 kg = 35.274 oz
+                result['item_weight'] = round(weight_kg * 35.274, 2)
+            else:
+                # kg → g
+                result['item_weight'] = round(weight_kg * 1000.0, 2)
+            result['item_weight_unit'] = unit_pref
+
+        try:
+            size_value_name = ''
+            for line in tmpl.attribute_line_ids:
+                if line.attribute_id.name == 'Size' and line.value_ids:
+                    size_value_name = line.value_ids[0].name or ''
+                    break
+            if size_value_name:
+                match = EtsyListingPublisher._RECT_PATTERN.match(size_value_name)
+                if match:
+                    result['item_length'] = int(match.group(1))
+                    result['item_width'] = int(match.group(2))
+                    result['item_dimensions_unit'] = shop.dimensions_unit_pref or 'cm'
+        except Exception as exc:  # noqa: BLE001 — parse failure must not block publish
+            _logger.warning(
+                "Failed to extract dimensions for product.template id=%s: %s",
+                tmpl.id, exc,
+            )
+
+        return result
+
+    # ------------------------------------------------------------------
     # Payload builder
     # ------------------------------------------------------------------
     def _build_create_draft_payload(self, tmpl, shop):
@@ -165,6 +228,8 @@ class EtsyListingPublisher:
         materials = self._collect_materials(s)
         if materials:
             payload['materials'] = materials
+        # Spec 011 P-PUB-WEIGHT-DIMENSIONS — weight + dimension keys
+        payload.update(self._collect_weight_and_dimensions(s, sh))
         return payload
 
     # ------------------------------------------------------------------

@@ -96,6 +96,11 @@
                                 <field name="default_when_made"/>
                                 <field name="default_is_supply"/>
                             </group>
+                            <group string="Etsy Publisher Unit Preferences"
+                                   groups="base.group_system">
+                                <field name="weight_unit_pref"/>
+                                <field name="dimensions_unit_pref"/>
+                            </group>
                         </page>
                         <page string="Orders" name="orders">
                             <field name="order_ids" readonly="1">
