@@ -214,14 +214,20 @@ class EtsyListingPublisher:
         tag_names = s.product_tag_ids.mapped('name')[:13]
         if tag_names:
             payload['tags'] = tag_names
-        # Spec 011 P-PUB-PERSONALIZATION — emit personalization keys only when
-        # the feature is enabled. Etsy treats absence as "feature off"; do NOT
-        # send is_personalizable=False (matches tags-block "empty omitted" pattern).
+        # Spec 011 P-PUB-PERSONALIZATION — emission GATED OFF (R-PUB-RESPONSE-BODY-
+        # DIAGNOSE 2026-05-28). Etsy deprecated the four inline personalization
+        # fields on createListing; sending them now 400s ("Use the dedicated
+        # personalization endpoints instead"). The Odoo fields/UI are preserved
+        # (data intact) — a follow-up slice will integrate Etsy's dedicated
+        # personalization-migration endpoints. Until then we do NOT emit these
+        # keys, and log so the deferred feature is visible in ops.
         if s.x_is_personalizable:
-            payload['is_personalizable'] = True
-            payload['personalization_is_required'] = bool(s.x_personalization_required)
-            payload['personalization_char_count_max'] = int(s.x_personalization_char_count or 256)
-            payload['personalization_instructions'] = s.x_personalization_instructions or ''
+            _logger.warning(
+                "Etsy personalization is enabled on template %s but inline "
+                "personalization fields are deprecated by Etsy; skipping "
+                "emission on createListing (pending dedicated-endpoint slice).",
+                s.id,
+            )
         # Spec 011 P-PUB-MATERIALS — emit materials only when the variant
         # carries Material attribute values. Matches tags-block "empty
         # omitted" pattern; Etsy treats absence as "no materials".
@@ -346,6 +352,25 @@ class EtsyListingPublisher:
             products_payload.append({
                 'sku': sku,
                 'property_values': self._collect_property_values(variant),
+                'offerings': [offering],
+            })
+        # R-PUB-RESPONSE-BODY-DIAGNOSE TC-015: a template whose only attribute
+        # line is a dynamic-variant axis (create_variant='dynamic') has an empty
+        # product_variant_ids, so the loop above produces no entries and Etsy
+        # rejects the PUT with 400 "No products supplied". Emit one fallback
+        # offering (template-level SKU, no property_values) so the listing still
+        # gets a single sellable product.
+        if not products_payload:
+            offering = {
+                'quantity': max(int(tmpl.sudo().qty_available or 0), 1),
+                'price': float(tmpl.sudo().list_price or 0.0),
+                'is_enabled': True,
+            }
+            if readiness:
+                offering['readiness_state_id'] = int(readiness)
+            products_payload.append({
+                'sku': sku,
+                'property_values': [],
                 'offerings': [offering],
             })
         client = EtsyApiClient(shop)

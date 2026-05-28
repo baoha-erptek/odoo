@@ -101,6 +101,69 @@ class TestPubInventoryORM(TransactionCase):
             self.assertIn('property_values', p)
             self.assertIn('offerings', p)
 
+    def test_push_inventory_emits_offering_when_variants_not_materialized(self):
+        """R-PUB-RESPONSE-BODY-DIAGNOSE TC-015: a template whose only attribute
+        line is a dynamic-variant axis has an EMPTY product_variant_ids, so the
+        old loop produced an empty products[] → Etsy 400 "No products supplied".
+        push_inventory must emit at least one fallback product offering.
+        """
+        shop = self._make_shop()
+        dyn_attr = self.env['product.attribute'].create({
+            'name': 'R-PUB Dyn Color',
+            'create_variant': 'dynamic',
+        })
+        dyn_val = self.env['product.attribute.value'].create({
+            'name': 'Onyx',
+            'attribute_id': dyn_attr.id,
+        })
+        tmpl = self.Template.create({
+            'name': 'Dynamic Variant Mug',
+            'default_code': 'DYN-MUG-1',
+            'list_price': 21.0,
+            'attribute_line_ids': [(0, 0, {
+                'attribute_id': dyn_attr.id,
+                'value_ids': [(6, 0, [dyn_val.id])],
+            })],
+        })
+        # Precondition: a dynamic-only template materializes no variants.
+        self.assertEqual(
+            len(tmpl.product_variant_ids), 0,
+            "expected dynamic-variant template to have no materialized variants",
+        )
+        listing = self.Listing.create({
+            'shop_id': shop.id,
+            'etsy_listing_id': 'LST-DYN',
+            'title': 'L DYN',
+            'url': 'https://etsy/x/DYN',
+            'state': 'active',
+            'last_modified': '2026-05-23 00:00:00',
+        })
+        self.Status.create({
+            'product_tmpl_id': tmpl.id,
+            'channel_id': self.etsy_channel.id,
+            'state': 'draft',
+            'external_ref': 'LST-DYN',
+        })
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.put.return_value = {'products': []}
+            publisher.push_inventory(tmpl, listing.etsy_listing_id, shop)
+            kwargs = client.put.call_args[1]
+        products = kwargs['json']['products']
+        self.assertGreaterEqual(
+            len(products), 1,
+            "push_inventory must send a non-empty products[] even when "
+            "product_variant_ids is empty (dynamic-variant template)",
+        )
+        fallback = products[0]
+        self.assertIn('sku', fallback)
+        self.assertIn('offerings', fallback)
+        self.assertGreaterEqual(len(fallback['offerings']), 1)
+        self.assertEqual(fallback['property_values'], [])
+
     def test_push_inventory_uses_v2_sku_per_variant(self):
         shop, tmpl, listing = self._make_product_with_listing(
             code='LEGACY-MUG-1',

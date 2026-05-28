@@ -75,7 +75,9 @@ class ProductTemplate(models.Model):
     x_is_personalizable = fields.Boolean(
         default=False,
         help="Channel-agnostic: listing supports buyer personalization. "
-             "Etsy publisher emits is_personalizable + 3 companion keys when True.",
+             "Note: Etsy deprecated inline personalization on createListing "
+             "(2026); this value is stored but not yet sent to Etsy, pending "
+             "the dedicated personalization-endpoint integration slice.",
     )
     x_personalization_required = fields.Boolean(
         default=False,
@@ -89,7 +91,8 @@ class ProductTemplate(models.Model):
     )
     x_personalization_instructions = fields.Text(
         help="Channel-agnostic: buyer instructions for personalization. "
-             "Sent as personalization_instructions when x_is_personalizable is True.",
+             "Stored but not currently sent to Etsy (inline personalization "
+             "deprecated 2026); preserved for the dedicated-endpoint slice.",
     )
     x_taxonomy_id = fields.Char(
         help="Channel-agnostic per-product Etsy taxonomy override. "
