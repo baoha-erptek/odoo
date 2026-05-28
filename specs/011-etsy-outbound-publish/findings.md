@@ -94,6 +94,36 @@ drafts (path proven); TC-009/013/014 → createListing 400, TC-015 → inventory
 client raises `raise_for_status()` without capturing the response body (anti-pattern per
 `feedback_capture_response_body_before_blackbox_probe`) — capture body first, then per-feature fix.
 
+## R-PUB-RESPONSE-BODY-DIAGNOSE — 2026-05-28 (Stage A landed)
+
+**Stage A (body capture, commit `8ffdc992046`):** `EtsyApiClient._request()` now logs the
+Etsy response body at WARNING (`"Etsy HTTP %d url=%s body=%r"`, truncated 500 chars) for any
+status ≥ 400 that is not already handled. Order preserved: 401 refresh → 403 (ValueError +
+body) → generic 4xx/5xx (body + `raise_for_status`). Previously `raise_for_status()` discarded
+the body, so the validator message was lost. Tests: new `TestEtsyApiClient4xxBodyCapture`
+(400/422 logged, 500-char truncation guard, empty-body no-crash, 403 regression). Two
+pre-existing ping tests (403/500) had to set `mock_response.text` — the 403 test was **already
+erroring on HEAD** (the earlier 403-capture block read `.text`, which an unset Mock can't
+slice); the 500 test entered the new block. 25/25 client tests green; reviewers 0 CRITICAL,
+security APPROVED (header auth → no token in body/url; `%r` repr safe).
+
+**Stage B (per-feature payload fixes) — BLOCKED on live capture.** The exact fixes for
+TC-009/013/014 (createListing 400) + TC-015 (PUT inventory 400) are unknowable until a live
+staging run with Stage A deployed prints the real Etsy bodies. TC→feature diagnostic checklist
+(payload builders in `services/etsy_listing_publisher.py`):
+
+| TC | Endpoint | Feature | Suspect payload area |
+| --- | --- | --- | --- |
+| TC-009 | POST listings | Personalization | `is_personalizable` / `personalization_is_required` / `personalization_char_count_max` / `personalization_instructions` |
+| TC-013 | POST listings | Taxonomy override | `taxonomy_id` (from `x_taxonomy_id` Char) |
+| TC-014 | POST listings | Weight + dimensions | `item_weight*` / `item_length/width/height*` unit+value |
+| TC-015 | PUT inventory | Variant property_values | `property_values: [{property_id, value_ids|values}]` shape |
+
+Live run needs owner go-ahead — it creates real JaHandmadeArt drafts
+(`RUN_ETSY_PUBLISH=1`, `LIVE_PRICE=250000`, staging `esty_odoo19`).
+
+## P-UAT-TAOSP-V12-RERUN operability notes (cont.)
+
 Operability: JaHandmadeArt is a **VND** shop (Etsy min ~5,043 VND) — live TCs use
 `LIVE_PRICE=250000`; standard form lazy-renders notebook pages (re-open General tab before
 reading `default_code`); bare-family SKU triggers Odoo's "Internal Reference already exists"
