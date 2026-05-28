@@ -173,6 +173,35 @@ class TestPubWeightDimensionsPayload(TransactionCase):
         self.assertEqual(result['item_dimensions_unit'], 'in')
 
     # ------------------------------------------------------------------
+    # Test 6b — Dimensions: 3D rect pattern → item_height
+    # ------------------------------------------------------------------
+    def test_dimensions_rect_pattern_3d_height(self):
+        """Size value 'R30X18X2' → length=30, width=18, height=2 (P-PUB-ITEM-HEIGHT)."""
+        tmpl = self._tmpl_with_size(weight=0.1, size_value_name='R30X18X2')
+        shop = self._shop(weight_pref='oz', dim_pref='cm')
+
+        result = EtsyListingPublisher._collect_weight_and_dimensions(tmpl, shop)
+
+        self.assertEqual(result['item_length'], 30)
+        self.assertEqual(result['item_width'], 18)
+        self.assertEqual(result['item_height'], 2)
+        self.assertEqual(result['item_dimensions_unit'], 'cm')
+
+    # ------------------------------------------------------------------
+    # Test 6c — 2D rect omits item_height (regression)
+    # ------------------------------------------------------------------
+    def test_dimensions_rect_pattern_2d_omits_height(self):
+        """Size value 'R30X18' (2D) → length/width set, no item_height key."""
+        tmpl = self._tmpl_with_size(weight=0.1, size_value_name='R30X18')
+        shop = self._shop(weight_pref='oz', dim_pref='cm')
+
+        result = EtsyListingPublisher._collect_weight_and_dimensions(tmpl, shop)
+
+        self.assertIn('item_length', result)
+        self.assertIn('item_width', result)
+        self.assertNotIn('item_height', result)
+
+    # ------------------------------------------------------------------
     # Test 7 — No Size axis → no dimension keys
     # ------------------------------------------------------------------
     def test_no_size_axis_dimensions_omitted(self):

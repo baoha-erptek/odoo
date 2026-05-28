@@ -323,3 +323,40 @@ regression. `materials=['Textile']` still propagated (derived from the template 
 independent of variant materialisation). For true Etsy variations with per-variant SKUs, the
 product needs materialised variants (an `always`-create axis, or a materialise-before-publish
 step). Candidate follow-up: a `R-PUB-VARIANT-MATERIALIZE` slice — owner decision.
+
+## UAT Round 2 — full-field coverage + R-PUB-VARIANT-MATERIALIZE (2026-05-28)
+
+Comprehensive UAT (`tests/e2e/tests/uat_all_fields.spec.ts` + live readback
+`tests/e2e/fixtures/verify_etsy_listing.py`) surfaced THREE issues, all fixed:
+
+1. **Etsy inventory `property_values` REQUIRE `property_name`** (a non-null string) alongside
+   `property_id`. The PUT 400s "Expected string value for 'property_name' (got NULL)". The old
+   `_collect_property_values` emitted only `{property_id, values}` → variant properties had
+   NEVER actually worked end-to-end (prior "passes" were the empty dynamic-axis fallback). Fix:
+   `_property_value_for` emits `{property_id, property_name, values}`; new `x_etsy_property_name`
+   field on product.attribute. Also: **`sku` must be consistent across all products** in one
+   inventory PUT (Etsy 400s mixed SKUs) — kept template-level SKU.
+
+2. **`noupdate="1"` seed never applied on installed DBs.** `etsy_attribute_defaults.xml`
+   (x_publish_as_property / x_etsy_property_id) is noupdate=1; on staging the product.attribute
+   rows pre-existed the file's introduction, so `-u` SKIPPED them → every axis publish=False →
+   push_inventory emitted no properties (single empty offering). Fix: migration
+   `19.0.2.30.0/post-migrate.py` writes the config idempotently for existing DBs (seed still
+   covers fresh installs). **Lesson: noupdate data added after a module is already installed
+   needs a migration to land on existing DBs.**
+
+3. **R-PUB-VARIANT-MATERIALIZE**: push_inventory now builds the products[] grid from the
+   cartesian product of publishable variant-creating attribute lines (not product.product), so
+   dynamic Color (0 materialized variants) yields real Etsy variations. Live proof: apron draft
+   4512614292 = 2 variations (Apparel size Medium fixed + Primary color Black/White varying).
+
+4. **item_height** (Slice A): `_RECT_PATTERN` extended to optional 3rd dim; 3D Size value name
+   `R30X18X2` (x_code `R30X18` keeps SKU canonical → no SKU-grammar change). Live proof: doormat
+   draft 4512614444 = item_length 30 / width 18 / height 2.
+
+Etsy variation property IDs (JaHandmadeArt taxonomies, via seller-taxonomy properties endpoint):
+Primary color=200, Material multi=148789511893, Custom1=513, Custom2=514 (no dedicated Size
+property → size-slot axes use Custom1/513). 200 accepts free-text value names ("Black"/"White").
+
+Test-side gap (not a defect): e2e `ProductFormPage.addTags` doesn't attach tags on the standard
+product form (product_tag_ids stays empty); publisher tag payload is correct (unit-tested).

@@ -13,6 +13,7 @@ by Etsy's createListing endpoint.
 """
 
 import base64
+import itertools
 import logging
 import re
 
@@ -96,26 +97,43 @@ class EtsyListingPublisher:
     # stays empty until a buyer picks a combination — return [] in that
     # case, which Etsy already accepts at line 247's prior baseline.
     @staticmethod
+    def _property_value_for(axis, value_name):
+        """Build one Etsy property_values[] entry for an (axis, value) pair.
+
+        Returns {property_id, property_name, values} or None when the axis is
+        not publishable or is missing its Etsy property id/name. Etsy REQUIRES
+        both a numeric property_id AND a non-null property_name string (the
+        inventory PUT 400s "Expected string value for property_name" without
+        it — verified live 2026-05-28), so an axis lacking either is skipped
+        entirely rather than sent malformed (which would 400 the whole PUT).
+        """
+        if not axis.x_publish_as_property:
+            return None
+        raw = axis.x_etsy_property_id
+        name = axis.x_etsy_property_name
+        if not raw or not name:
+            _logger.warning(
+                "product.attribute id=%s name=%r missing x_etsy_property_id "
+                "or x_etsy_property_name; skipping it as an Etsy variation "
+                "property (Etsy rejects property_values without both).",
+                axis.id, axis.name,
+            )
+            return None
+        return {
+            'property_id': int(raw) if raw.isdigit() else raw,
+            'property_name': name,
+            'values': [value_name],
+        }
+
+    @staticmethod
     def _collect_property_values(variant):
         properties = []
         for ptav in variant.product_template_attribute_value_ids:
-            axis = ptav.attribute_id
-            if not axis.x_publish_as_property:
-                continue
-            raw = axis.x_etsy_property_id
-            if not raw:
-                _logger.warning(
-                    "product.attribute id=%s name=%r missing "
-                    "x_etsy_property_id; falling back to attribute name",
-                    axis.id, axis.name,
-                )
-                prop_id = axis.name
-            else:
-                prop_id = int(raw) if raw.isdigit() else raw
-            properties.append({
-                'property_id': prop_id,
-                'values': [ptav.product_attribute_value_id.name],
-            })
+            pv = EtsyListingPublisher._property_value_for(
+                ptav.attribute_id, ptav.product_attribute_value_id.name,
+            )
+            if pv:
+                properties.append(pv)
         return properties
 
     # ------------------------------------------------------------------
@@ -132,7 +150,11 @@ class EtsyListingPublisher:
     # omitted (correct: Mugs publish without item_*dimensions). Emits
     # length+width+unit together or none at all (Etsy rejects partial).
     # Tracker row 339; LOC ~110.
-    _RECT_PATTERN = re.compile(r'^[Rr]?\s*(\d+)\s*[xX×]\s*(\d+)')
+    # Rect dimensions from a Size value name: "R30X18" (2D) or "R30X18X2" (3D).
+    # The optional 3rd group yields item_height (Etsy createListing field).
+    _RECT_PATTERN = re.compile(
+        r'^[Rr]?\s*(\d+)\s*[xX×]\s*(\d+)(?:\s*[xX×]\s*(\d+))?'
+    )
 
     @staticmethod
     def _collect_weight_and_dimensions(tmpl, shop):
@@ -143,8 +165,9 @@ class EtsyListingPublisher:
 
         Returns dict that may contain any of:
             item_weight, item_weight_unit  (when tmpl.weight > 0)
-            item_length, item_width, item_dimensions_unit
-                (when template's Size value matches rect pattern)
+            item_length, item_width, [item_height,] item_dimensions_unit
+                (when template's Size value matches rect pattern; height only
+                 when the value carries a 3rd dimension, e.g. "R30X18X2")
 
         Empty dict when weight <= 0 AND no parseable Size value.
         """
@@ -172,6 +195,8 @@ class EtsyListingPublisher:
                 if match:
                     result['item_length'] = int(match.group(1))
                     result['item_width'] = int(match.group(2))
+                    if match.group(3):
+                        result['item_height'] = int(match.group(3))
                     result['item_dimensions_unit'] = shop.dimensions_unit_pref or 'cm'
         except Exception as exc:  # noqa: BLE001 — parse failure must not block publish
             _logger.warning(
@@ -312,58 +337,101 @@ class EtsyListingPublisher:
     # ------------------------------------------------------------------
     # Spec 011 P-PUB-INVENTORY — entire-array PUT (T018)
     # ------------------------------------------------------------------
+    # Etsy allows at most 2 *varying* variation properties per listing.
+    ETSY_MAX_VARIATIONS = 2
+
+    def _variant_qty_for_combo(self, tmpl, combo_value_ids):
+        """Quantity for a value combination (set of product.attribute.value ids),
+        preferring a matching materialized variant's on-hand qty; falls back to
+        the template's qty_available when no product.product matches (dynamic
+        axes carry no materialized variant).
+        """
+        for variant in tmpl.product_variant_ids:
+            vids = set(variant.product_template_attribute_value_ids
+                       .mapped('product_attribute_value_id').ids)
+            if vids and vids.issubset(combo_value_ids):
+                return variant.qty_available
+        return tmpl.qty_available
+
     def push_inventory(self, tmpl, listing_id, shop):
         """PUT /listings/{listing_id}/inventory with the full products[] array.
 
-        Builds one product entry per `product.product` variant of the template.
-        Etsy requires the entire array on every write (no partial updates).
-        SKU per ADR-014 §4 (resolved per-variant).
+        R-PUB-VARIANT-MATERIALIZE (2026-05-28): Etsy variations are built from
+        the cartesian product of the publishable variant-creating attribute
+        lines, NOT from `product.product` records — so dynamic-variant axes
+        (e.g. Color, create_variant='dynamic', which materialize no variants)
+        still produce real Etsy variations instead of the prior empty fallback.
 
-        On success, the local `etsy.listing.product` snapshot rows are updated
-        from the response payload (T020).
+        - Varying axes (>1 value) form the product grid; Etsy caps these at 2.
+        - Single-value publishable axes ride along as fixed property_values.
+        - SKU is template-level (ADR-014 §4) and consistent across products
+          (Etsy rejects mixed SKUs: "sku must be consistent across all products").
+        - Quantity prefers a matching materialized variant's on-hand, else the
+          template qty.
+
+        On success, the local `etsy.listing.product` snapshot rows are updated.
         """
         if not listing_id:
             raise ValueError("push_inventory requires a non-empty listing_id")
-        products_payload = []
-        # Template-level SKU resolution wins (ADR-014 §4) — variant default_code
-        # is typically auto-inherited from template and would defeat the v2 rule.
-        # True per-variant overrides aren't in scope for this slice; revisit if
-        # multi-variant publish surfaces a real divergence.
-        sku = self._resolve_sku(tmpl.sudo())
-        # Etsy 2025 API requires readiness_state_id on every offering.
+        t = tmpl.sudo()
+        sku = self._resolve_sku(t)
         readiness = shop.sudo().default_readiness_state_id
-        for variant in tmpl.sudo().product_variant_ids:
-            offering = {
-                'quantity': max(int(variant.sudo().qty_available or 0), 1),
-                'price': float(tmpl.sudo().list_price or 0.0),
-                'is_enabled': True,
-            }
+        price = float(t.list_price or 0.0)
+
+        def _offering(qty):
+            o = {'quantity': max(int(qty or 0), 1), 'price': price, 'is_enabled': True}
             if readiness:
-                offering['readiness_state_id'] = int(readiness)
+                o['readiness_state_id'] = int(readiness)
+            return o
+
+        # Publishable variant-creating axes (Material is materials[]-only, not a
+        # variation property — see etsy_attribute_defaults.xml).
+        pub_lines = [
+            line for line in t.attribute_line_ids
+            if line.value_ids
+            and line.attribute_id.create_variant != 'no_variant'
+            and line.attribute_id.x_publish_as_property
+        ]
+        varying = [line for line in pub_lines if len(line.value_ids) > 1]
+        fixed = [line for line in pub_lines if len(line.value_ids) == 1]
+        if len(varying) > self.ETSY_MAX_VARIATIONS:
+            raise ValueError(
+                "Etsy allows at most %d variation properties, but %r has %d "
+                "varying publishable axes: %s"
+                % (self.ETSY_MAX_VARIATIONS, t.name, len(varying),
+                   ', '.join(line.attribute_id.name for line in varying))
+            )
+
+        # Fixed (single-value) properties are identical on every product.
+        fixed_props = []
+        for line in fixed:
+            pv = self._property_value_for(line.attribute_id, line.value_ids[0].name)
+            if pv:
+                fixed_props.append(pv)
+
+        products_payload = []
+        if varying:
+            for combo in itertools.product(*[list(line.value_ids) for line in varying]):
+                props = list(fixed_props)
+                for line, value in zip(varying, combo):
+                    pv = self._property_value_for(line.attribute_id, value.name)
+                    if pv:
+                        props.append(pv)
+                combo_ids = {v.id for v in combo}
+                combo_ids.update(line.value_ids[0].id for line in fixed)
+                products_payload.append({
+                    'sku': sku,
+                    'property_values': props,
+                    'offerings': [_offering(self._variant_qty_for_combo(t, combo_ids))],
+                })
+        else:
+            # No varying axis → a single product (with any fixed properties).
             products_payload.append({
                 'sku': sku,
-                'property_values': self._collect_property_values(variant),
-                'offerings': [offering],
+                'property_values': fixed_props,
+                'offerings': [_offering(t.qty_available)],
             })
-        # R-PUB-RESPONSE-BODY-DIAGNOSE TC-015: a template whose only attribute
-        # line is a dynamic-variant axis (create_variant='dynamic') has an empty
-        # product_variant_ids, so the loop above produces no entries and Etsy
-        # rejects the PUT with 400 "No products supplied". Emit one fallback
-        # offering (template-level SKU, no property_values) so the listing still
-        # gets a single sellable product.
-        if not products_payload:
-            offering = {
-                'quantity': max(int(tmpl.sudo().qty_available or 0), 1),
-                'price': float(tmpl.sudo().list_price or 0.0),
-                'is_enabled': True,
-            }
-            if readiness:
-                offering['readiness_state_id'] = int(readiness)
-            products_payload.append({
-                'sku': sku,
-                'property_values': [],
-                'offerings': [offering],
-            })
+
         client = EtsyApiClient(shop)
         path = "listings/%s/inventory" % listing_id
         response = client.put(path, json={'products': products_payload})

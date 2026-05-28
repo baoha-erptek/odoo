@@ -204,6 +204,16 @@
         <field name="x_namespace">dim</field>
         <field name="sequence">5</field>
     </record>
+    <!-- Rectangular 3D size: name carries L×W×H for Etsy item_length/width/height;
+         x_code stays 2D (R30X18) so the v2.1 SKU SIZE token remains canonical
+         (<=14 chars, matches R\d+X\d+). Publisher reads the NAME for dimensions. -->
+    <record id="value_size_r30x18x2" model="product.attribute.value">
+        <field name="attribute_id" ref="attribute_size"/>
+        <field name="name">R30X18X2</field>
+        <field name="x_code">R30X18</field>
+        <field name="x_namespace">dim</field>
+        <field name="sequence">6</field>
+    </record>
 
     <!-- ============================================================== -->
     <!-- Fluid oz values (3) — §4 fluid_oz; MUG/TUM gated                -->

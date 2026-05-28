@@ -23,6 +23,17 @@ class ProductAttribute(models.Model):
             "properties endpoint for the listing's taxonomy_id."
         ),
     )
+    x_etsy_property_name = fields.Char(
+        string="Etsy Property Name",
+        help=(
+            "Etsy property display name sent with the property ID in "
+            "push_inventory property_values[]. Etsy REQUIRES a non-null "
+            "property_name (the inventory PUT 400s 'Expected string value "
+            "for property_name' without it). For standard properties match "
+            "Etsy's canonical name (e.g. 200 -> 'Primary color'); for custom "
+            "properties (513/514) it is a free label."
+        ),
+    )
     x_publish_as_property = fields.Boolean(
         string="Publish as Etsy property",
         default=False,

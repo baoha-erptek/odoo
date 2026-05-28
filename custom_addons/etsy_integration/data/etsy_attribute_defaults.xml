@@ -1,33 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    P-PUB-VARIANT-PROPERTIES (Spec 011 MP006) — opt-in seed.
+    P-PUB-VARIANT-PROPERTIES + R-PUB-VARIANT-MATERIALIZE (Spec 011 MP006).
 
-    Field x_publish_as_property defaults False; this seed flips True for
-    the known variant-attribute axes the publisher should emit as Etsy
-    property_values[]. Family stays False because it is `no_variant` and
-    therefore never appears in variant.product_template_attribute_value_ids
-    anyway — keeping the explicit row makes intent visible.
+    x_publish_as_property gates which axes become Etsy variation properties.
+    x_etsy_property_id + x_etsy_property_name are BOTH required by Etsy's
+    inventory PUT (property_name must be a non-null string, verified live
+    2026-05-28 — the PUT 400s "Expected string value for property_name"
+    otherwise). Property IDs discovered via the seller-taxonomy properties
+    endpoint for JaHandmadeArt's taxonomies:
+      - Primary color = 200 (universal; accepts free-text value names)
+      - Custom1 = 513, Custom2 = 514 (universal free-text custom properties)
+    No dedicated "Size" property exists on these taxonomies, so the size-slot
+    axes (Size / Apparel Size / Fluid oz / Shape) map to Custom1 (513). A
+    product carries exactly one size-slot axis (grammar role design), so they
+    never collide within one listing. Color (200) + one size-slot (513) keeps
+    a product within Etsy's 2-variation limit.
+
+    Material is NOT a variation property — it is emitted via the listing-level
+    materials[] array (P-PUB-MATERIALS), so x_publish_as_property=False avoids
+    double-sending it.
 
     noupdate="1" so admin edits via the form persist across upgrades.
 -->
 <odoo noupdate="1">
     <record id="multichannel_hub_core.attribute_material" model="product.attribute">
-        <field name="x_publish_as_property">True</field>
+        <field name="x_publish_as_property">False</field>
     </record>
     <record id="multichannel_hub_core.attribute_shape" model="product.attribute">
         <field name="x_publish_as_property">True</field>
+        <field name="x_etsy_property_id">513</field>
+        <field name="x_etsy_property_name">Shape</field>
     </record>
     <record id="multichannel_hub_core.attribute_size" model="product.attribute">
         <field name="x_publish_as_property">True</field>
+        <field name="x_etsy_property_id">513</field>
+        <field name="x_etsy_property_name">Size</field>
     </record>
     <record id="multichannel_hub_core.attribute_fluid_oz" model="product.attribute">
         <field name="x_publish_as_property">True</field>
+        <field name="x_etsy_property_id">513</field>
+        <field name="x_etsy_property_name">Fluid oz</field>
     </record>
     <record id="multichannel_hub_core.attribute_apparel_size" model="product.attribute">
         <field name="x_publish_as_property">True</field>
+        <field name="x_etsy_property_id">513</field>
+        <field name="x_etsy_property_name">Apparel size</field>
     </record>
     <record id="multichannel_hub_core.attribute_color" model="product.attribute">
         <field name="x_publish_as_property">True</field>
+        <field name="x_etsy_property_id">200</field>
+        <field name="x_etsy_property_name">Primary color</field>
     </record>
     <record id="multichannel_hub_core.attribute_family_tag" model="product.attribute">
         <field name="x_publish_as_property">False</field>
