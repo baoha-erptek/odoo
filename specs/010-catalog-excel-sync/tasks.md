@@ -14,13 +14,13 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 |---|---|---|---|---|
 | T001 | [X] Schemas finalized | Spec 009 ✓ | plan | |
 | T002 | [X] 3 models (`product.catalog.import.run` + `import.line` + `sheet.fingerprint`) + sequence + C-CIL-001 + C-CSF-001 init() mirrors + composite indexes | T001 | GREEN | |
-| T003 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] openpyxl parser service | T002 ✓ | — | Larger scope; needs a fixture xlsx |
-| T004 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] sheet map + fixture xlsx | T003 | — | |
+| T003 | [X] openpyxl parser service (`services/excel_catalog_parser.py`) | T002 ✓ | GREEN | Shipped `P-HUB-XLS-PARSE-SERVICE` c7c8ef1cfad (2026-05-23); reconciled 2026-05-28 |
+| T004 | [X] sheet map + fixture xlsx | T003 | GREEN | In-test openpyxl fixture (no committed binary); reconciled 2026-05-28 |
 | T005 | [X] ACL rows (6 — 3 models × 2 groups) | T002 | GREEN | |
 | T006 | [X] RED Phase 1 (DB) — 8 tests | T001 | RED | port 8175 |
-| T007 | [DEFERRED to P-HUB-XLS-PARSE-SERVICE] Phase 2 parser tests | T003,T004 | — | |
-| T008 | [X-partial] GREEN for Phase 1; parser-side moves to follow-up | T006 | GREEN | |
-| T009 | [X-partial] Verify + Commit; Review skipped per playbook small-slice exception (data-layer-only scaffold) | T008 | Land | Follow-up slice **P-HUB-XLS-PARSE-SERVICE** for openpyxl parser + fingerprint compute + row emission |
+| T007 | [X] Phase 2 parser tests (`test_phase2_excel_parser_orm.py`) | T003,T004 | GREEN | Part of 24 Phase-2 ORM post-tests, 0 failed (verified 2026-05-28) |
+| T008 | [X] GREEN (Phase 1 + parser) | T006 | GREEN | |
+| T009 | [X] Verify + Commit | T008 | Land | `P-HUB-XLS-PARSE-SERVICE` shipped the openpyxl parser + fingerprint compute + row emission |
 
 ---
 
@@ -28,11 +28,11 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T010 | `services/catalog_ingestor.py` — `upsert(env, run, lines)` batches `product.template.search` once per sheet; applies ADR-014 §3 conflict matrix per field; per-row savepoint; emits error line on per-row failure | P-HUB-XLS-PARSE ✓ | GREEN | No N+1; first-import detection via search-miss |
-| T011 | Multi-currency pricelist seed helper (US5) — `_seed_pricelist_items_first_import(env, product, line)` writes 1 item per non-empty currency column; idempotent (no overwrite); seeded pricelists `noupdate=1` | T010 | GREEN | First-import branch only |
-| T012 | RED Phase 2 (ORM): upsert new row creates template; existing row preserves `x_channel_applicability_ids`; Excel-wins fields overwrite; missing-from-Excel row flagged but not archived; first-import seeds pricelist items; second import preserves items; per-row failure rolls back row only (other rows succeed) | T010,T011 | RED | `--http-port=8170` |
-| T013 | GREEN | T012 | GREEN | |
-| T014 | Review + Verify + Commit | T013 | Review→Land | |
+| T010 | [X] `services/catalog_ingestor.py` — `upsert(env, run, lines)` batches `product.template.search` once per sheet; applies ADR-014 §3 conflict matrix per field; per-row savepoint; emits error line on per-row failure | P-HUB-XLS-PARSE ✓ | GREEN | Shipped `P-HUB-XLS-INGEST core` 29cf95eeb4a (2026-05-23) |
+| T011 | [ ] Multi-currency pricelist seed helper (US5) — `_seed_pricelist_items_first_import(env, product, line)` writes 1 item per non-empty currency column; idempotent (no overwrite); seeded pricelists `noupdate=1` | T010 | — | **Still deferred** — `catalog_ingestor.py:16` explicitly notes "Multi-currency pricelist seed (T011/US5) is deferred to a follow-up". Incremental enhancement, non-blocking. |
+| T012 | [X] RED Phase 2 (ORM): upsert new row creates template; existing row preserves `x_channel_applicability_ids`; Excel-wins fields overwrite; missing-from-Excel row flagged but not archived; per-row failure rolls back row only | T010 | RED | pricelist-seed assertions deferred with T011 |
+| T013 | [X] GREEN (`test_phase2_catalog_ingestor_orm.py`) | T012 | GREEN | Part of 24 Phase-2 ORM post-tests, 0 failed (verified 2026-05-28) |
+| T014 | [X] Review + Verify + Commit | T013 | Review→Land | |
 
 ---
 
@@ -40,13 +40,13 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T015 | `wizards/catalog_import_wizard.py` — file picker (GDrive folder ID or local upload base64) + dry-run flag + `_check_ba_or_raise()` + `action_preview` / `action_commit` | P-HUB-XLS-INGEST ✓ | GREEN | FR-017 22nd confirmation: gate before parse+upsert |
-| T016 | `data/ir_cron_catalog_excel_sync.xml` — daily 02:00 UTC; gated on ICP `multichannel_hub_core.catalog_excel_source` non-empty | T015 | GREEN | If ICP empty, cron logs warning and exits 0 |
-| T017 | `services/gdrive_catalog_fetcher.py` — reads ICP `catalog_excel_source` (folder ID); picks newest .xlsx via GDrive list_files; downloads to temp path; passes to parser+ingestor; cleans up | T015, P2-06 GDrive plumbing ✓ | GREEN | Reuses GdriveUploader extended in P2-06 |
-| T018 | Run report view — tree + form on `product.catalog.import.run` with smart button to error `line_ids` | T015 | GREEN | |
-| T019 | RED Phase 2 (ORM): cron picks newest Excel from GDrive folder (mocked); manual-run wizard dry-run writes no products; manual-run wizard commit-mode writes products; FR-017 gate refuses non-BA; cron with empty ICP logs+exits | T015,T016,T017 | RED | Mock `GdriveUploader._build_service` per P2-06 pattern |
-| T020 | GREEN | T019 | GREEN | |
-| T021 | Review + Verify + Commit | T020 | Review→Land | |
+| T015 | [X] manual-run wizard (`wizards/catalog_import_run_wizard.py`) — file picker + dry-run flag + `_check_ba_or_raise()` + preview/commit actions | P-HUB-XLS-INGEST ✓ | GREEN | Shipped `P-HUB-XLS-MANUAL-WIZARD` 0d9a6f3a283 (filename drift: `catalog_import_run_wizard.py`); FR-017 gate before parse+upsert |
+| T016 | [X] cron (`data/product_catalog_cron.xml`) — daily 02:00 UTC; local-path source + ICP gate | T015 | GREEN | Shipped `P-HUB-XLS-CRON schedule` 357ab57b178 (filename drift) |
+| T017 | [X] GDrive fetcher (`services/gdrive_uploader_helper.py`) — newest .xlsx → parser+ingestor | T015, P2-06 GDrive plumbing ✓ | GREEN | Filename drift; reuses GdriveUploader from P2-06; `test_phase2_catalog_gdrive_fetcher_orm.py` mocks `_build_service` |
+| T018 | [X] Run report view — tree + form on `product.catalog.import.run` | T015 | GREEN | Shipped with the wizard/menus commit |
+| T019 | [X] RED Phase 2 (ORM): cron + wizard dry-run/commit + FR-017 gate + empty-ICP exit | T015,T016,T017 | RED | `test_phase2_catalog_orchestrator_orm.py` + `test_phase2_catalog_gdrive_fetcher_orm.py` |
+| T020 | [X] GREEN | T019 | GREEN | Part of 24 Phase-2 ORM post-tests, 0 failed (verified 2026-05-28) |
+| T021 | [X] Review + Verify + Commit | T020 | Review→Land | Orchestrator method shipped `P-HUB-XLS-CRON orchestrator` 03881e201d7 |
 
 ---
 
@@ -54,12 +54,12 @@ Status legend: `[ ]` todo · `[~]` doing · `[X]` done.
 
 | ID | Task | Depends | Phase | Notes |
 |---|---|---|---|---|
-| T022 | `services/catalog_image_downloader.py` — detect content kind (GDrive URL / HTTPS URL / filename); content-hash SHA-256 on bytes for idempotency; persist to `product.template.image_1920` (Image 1) + `product.image` One2many (Image 2); reuse `etsy_integration/services/image_downloader.py` patterns | P-HUB-XLS-INGEST ✓ | GREEN | TokenBucket throttle (2/sec, burst 10) |
-| T023 | Wire image download into ingest pass — emit warning + error line on download failure, but don't roll back the row's product upsert | T022 | GREEN | Image failure ≠ row failure |
-| T024 | ICP `multichannel_hub_core.catalog_max_images_per_run` (default 500) — cron cap to avoid quota burn | T022 | GREEN | |
-| T025 | RED Phase 2 (ORM): GDrive URL → download; HTTPS URL → download; filename → resolve in configured folder; re-download skipped on unchanged content hash; download failure emits warning + error line without rolling back product upsert; per-run cap honored | T022,T023,T024 | RED | Mock HTTP + GDrive |
-| T026 | GREEN | T025 | GREEN | |
-| T027 | Review + Verify + Commit | T026 | Review→Land | |
+| T022 | [X-partial] image downloader (`services/excel_catalog_image_downloader.py`) — content kind detection + content-hash SHA-256 idempotency + persist to `product.template.image_1920` (Image 1) | P-HUB-XLS-INGEST ✓ | GREEN | Shipped `P-HUB-IMAGES MVP` a783d63cf2d (filename drift). **Image 2 / `product.image` One2many deferred** — no `product.image` model in Odoo 19 CE (same constraint as P-PUB-IMAGES option B) |
+| T023 | [X] Wire image download into ingest pass — image failure emits warning/error line, doesn't roll back product upsert | T022 | GREEN | Image failure ≠ row failure |
+| T024 | [X] ICP `catalog_max_images_per_run` (default 500) — per-run cap | T022 | GREEN | |
+| T025 | [X] RED Phase 2 (ORM): URL/filename paths + re-download skip on unchanged hash + failure-doesn't-rollback + per-run cap | T022,T023,T024 | RED | `test_phase2_excel_image_downloader_orm.py` (mock HTTP + GDrive) |
+| T026 | [X] GREEN | T025 | GREEN | Part of 24 Phase-2 ORM post-tests, 0 failed (verified 2026-05-28) |
+| T027 | [X] Review + Verify + Commit | T026 | Review→Land | |
 
 ---
 

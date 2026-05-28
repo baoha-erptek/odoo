@@ -11,6 +11,19 @@
 - **Coordination point with Spec 011.** New `etsy.api.log` `source` values needed for catalog ops (`catalog_import_run`, `catalog_image_download`) — to be added in Spec 011's audit-source extension slice (cleaner co-location since Spec 011 also extends the Selection for publishing). Cross-referenced in Spec 011 plan + this finding.
 - **Pure-doc slice.** No code/tests; Two-Phase Testing N/A for P-HUB-SPEC. Implementation slices carry the testing burden.
 
+## Tracker reconciliation — 2026-05-28
+
+- **Phantom-slice drift caught during `/dispatch-slice next`** (memory gotcha #142). The dispatcher resolved "next" to `P-HUB-XLS-PARSE-SERVICE`, but verification showed the **entire 3c Excel-sync chain was already shipped 2026-05-23** while the tracker still read `doing`/`todo`. Commits: `P-HUB-XLS-PARSE-MODELS` d4e82d839cb, `P-HUB-XLS-ICP-DEFAULTS` f3c3ef9d42b, `P-HUB-XLS-PARSE-SERVICE` c7c8ef1cfad, `P-HUB-XLS-INGEST core` 29cf95eeb4a, `P-HUB-XLS-CRON orchestrator` 03881e201d7, `P-HUB-XLS-MANUAL-WIZARD` 0d9a6f3a283, `P-HUB-XLS-CRON schedule` 357ab57b178, `P-HUB-IMAGES MVP` a783d63cf2d.
+- **Verification on reconcile**: `-u multichannel_hub_core --stop-after-init` exit 0; catalog tests = **8 Phase-1 DB + 24 Phase-2 ORM = 32, 0 failed / 0 error** (`TestPhase1CatalogDB`, `TestPhase1CatalogICPDB`, `TestExcelCatalogParserORM`, `TestCatalogIngestorORM`, `TestCatalogOrchestratorORM`, `TestCatalogGdriveFetcherORM`, `TestExcelCatalogImageDownloaderORM`).
+- **Tracker + tasks.md updated** 2026-05-28: P-HUB-XLS-PARSE `doing`→`done`; P-HUB-XLS-CRON `todo`→`done`; P-HUB-IMAGES `todo`→`done`.
+- **Filename drift** (planned → shipped): `catalog_image_downloader.py`→`excel_catalog_image_downloader.py`; `catalog_import_wizard.py`→`catalog_import_run_wizard.py`; `gdrive_catalog_fetcher.py`→`gdrive_uploader_helper.py` + orchestrator method. Functionally equivalent; tasks.md notes the drift.
+
+### Residual 3c follow-ups (genuinely not shipped)
+
+- **T011 multi-currency pricelist seed (US5)** — explicitly deferred in `catalog_ingestor.py:16`. Incremental enhancement; non-blocking.
+- **T022 Image 2 / `product.image` One2many** — deferred: no `product.image` model in Odoo 19 CE (same constraint as Spec 011 P-PUB-IMAGES option B). Image 1 → `image_1920` is live; secondary-image gallery would reuse the `multichannel.product.image` mini-gallery from P-PUB-MULTI-IMAGE if needed later.
+- **P-HUB-XLS-AVAILABILITY-MAP** — deferred post-MVP (auto-derive `x_channel_applicability_ids` from Excel "Availability" column); raise only if BA wants the default-derivation.
+
 ## E2E surfacing (live)
 
-_(none yet — implementation not started)_
+_(none yet — no live cron/wizard run captured)_
