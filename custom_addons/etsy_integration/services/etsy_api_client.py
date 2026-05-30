@@ -282,6 +282,38 @@ class EtsyApiClient:
         """Cheapest auth-validation call. Returns the user/me payload."""
         return self._request('GET', 'users/me')
 
+    def fetch_users_me_shop_id(self) -> str | None:
+        """Discover the real Etsy shop_id from /v3/application/users/me.
+
+        Returns ``str(shop_id)`` on success, ``None`` on any HTTP/parse
+        failure (with a WARNING log). Used by the OAuth callback to
+        auto-populate ``etsy.shop.etsy_api_shop_id`` (C-ESY-003) the
+        instant tokens land, so the operator never has to manually
+        backfill (the manual step that P1-11-WIRE-LIVE shipped).
+
+        shop_id cast to str at the boundary per gotcha #144 — Etsy ids
+        can exceed XML-RPC int32 (e.g. listing 4510454735), and storing
+        as Char dodges the overflow class entirely even though current
+        shop_ids are smaller.
+        """
+        try:
+            payload = self._request('GET', 'users/me')
+        except Exception as exc:  # noqa: BLE001 — callback must survive any failure
+            _logger.warning(
+                "Etsy /users/me failed for shop %s (id=%s): %s",
+                self.shop.name, self.shop.id, type(exc).__name__,
+            )
+            return None
+        shop_id = payload.get('shop_id')
+        if shop_id is None:
+            _logger.warning(
+                "Etsy /users/me returned no shop_id for shop %s (id=%s); "
+                "payload keys=%s",
+                self.shop.name, self.shop.id, sorted(payload.keys()),
+            )
+            return None
+        return str(shop_id)
+
     def get(self, path: str, params: dict | None = None) -> dict:
         """Authenticated GET against the Etsy v3 application surface.
 

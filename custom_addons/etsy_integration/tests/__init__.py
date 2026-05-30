@@ -71,3 +71,5 @@ from . import test_phase1_pub_variant_properties_db
 from . import test_phase2_pub_variant_properties_orm
 from . import test_phase1_pub_weight_dimensions_db
 from . import test_phase2_pub_weight_dimensions_orm
+from . import test_p1_11_shopid_bootstrap_phase1_db
+from . import test_p1_11_shopid_bootstrap_phase2_orm

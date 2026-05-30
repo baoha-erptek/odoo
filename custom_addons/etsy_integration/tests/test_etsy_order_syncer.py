@@ -307,6 +307,7 @@ class TestEtsyOrderSyncer_CronFilter(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'tok',
             'etsy_oauth_refresh_token': 'ref',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
         self.env['etsy.shop'].create({
             'name': 'EmailOnlyShop', 'active_source': 'email',

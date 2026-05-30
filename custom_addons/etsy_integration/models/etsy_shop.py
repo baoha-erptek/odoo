@@ -294,6 +294,43 @@ class EtsyShop(models.Model):
                     "active_source is 'api' (C-ESY-001)."
                 )
 
+    @api.constrains('active_source', 'etsy_api_shop_id',
+                    'etsy_oauth_access_token', 'etsy_oauth_refresh_token')
+    def _check_api_source_has_shop_id(self):
+        """C-ESY-003: `active_source='api'` requires a non-empty etsy_api_shop_id.
+
+        Gated on tokens-present so C-ESY-001 (token-required-when-api)
+        owns the "totally unconfigured" failure mode and we own only the
+        "post-authorization gap" — tokens landed but the OAuth callback
+        skipped the /users/me bootstrap (e.g. transient Etsy 4xx). This
+        ordering keeps each constraint's error message diagnostic for
+        the operator and prevents constraint-evaluation race from
+        masking C-ESY-001 in unit tests.
+
+        sudo() rationale: `etsy_api_shop_id` carries
+        `groups='base.group_system'`; the constraint must read it
+        regardless of which (system) user triggered the write.
+
+        Without this gate, an api-source shop with NULL shop_id sends
+        `/shops//...` (or `/shops/{odoo_pk}/...`) which Etsy 403s with
+        "User does not own Shop {n}" — and the 403 path discards the
+        request body, so diagnosis is expensive (P1-11-WIRE-LIVE 2026-05-22).
+        """
+        for shop in self:
+            if shop.active_source != 'api':
+                continue
+            shop_su = shop.sudo()
+            if not (shop_su.etsy_oauth_access_token and shop_su.etsy_oauth_refresh_token):
+                # C-ESY-001 owns this failure mode; let it raise.
+                continue
+            if not shop_su.etsy_api_shop_id:
+                raise ValidationError(
+                    "Etsy shop_id (etsy_api_shop_id) is required when "
+                    "active_source is 'api' (C-ESY-003). Authorize the "
+                    "shop or set the field manually before flipping the "
+                    "source."
+                )
+
     def write(self, vals):
         """FR-017 write-level mirror of the C-ESY-002 UI gate, plus
         append-only source-change audit logging.
