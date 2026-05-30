@@ -4,6 +4,49 @@ Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers,
 
 ---
 
+## 2026-05-30 — P1-11-SHOPID-BOOTSTRAP landed (`f6b96fe2eb6`)
+
+**Slice scope (final)**:
+- `controllers/etsy_oauth.py` — new block at end of `callback()`: after token persist + before final redirect, call `EtsyApiClient(shop).fetch_users_me_shop_id()` → `shop.sudo().write({'etsy_api_shop_id': api_shop_id})`. `BLE001` swallow (with noqa explanation) so `/users/me` failures never break OAuth — tokens are valid; operator can re-Authorize or set field manually; **C-ESY-003 is the safety net** that blocks the eventual `active_source='api'` flip until shop_id lands.
+- `services/etsy_api_client.py` — new `fetch_users_me_shop_id() → str | None`. Wraps the existing `_request('GET', 'users/me')` (gets the 401-refresh + 429-retry + 4xx-body-capture behavior for free). `str(shop_id)` cast at the boundary per gotcha #144.
+- `models/etsy_shop.py` — new `_check_api_source_has_shop_id` `@api.constrains` (C-ESY-003).
+- `migrations/19.0.2.31.0/post-migrate.py` — raw-SQL `SELECT id, name FROM etsy_shop WHERE active_source='api' AND (etsy_api_shop_id IS NULL OR etsy_api_shop_id='')` → if any rows, raise `Exception` listing them (operator must fix and re-run `-u`).
+- Two new test files: `test_p1_11_shopid_bootstrap_phase1_db.py` (DB schema) + `test_p1_11_shopid_bootstrap_phase2_orm.py` (constraint + helper + live `_probe_api` canary + service guards + migration). 20 tests, all GREEN.
+- Manifest 19.0.2.30.0 → **19.0.2.31.0**.
+
+**Surprises (resolved before commit)**:
+
+1. **C-ESY-003 must be gated on tokens-present.** First implementation made it unconditional (`if active_source=='api' and not etsy_api_shop_id: raise`). Result: 7 pre-existing C-ESY-001 / SourceChangeLog tests in `test_p1_11a_phase2_orm.py` + `test_etsy_order_syncer.py` started failing because their fixtures created `active_source='api'` shops without shop_id — and Odoo's constraint dispatch order is not deterministic. C-ESY-003 raced ahead and raised about etsy_api_shop_id, masking the C-ESY-001 "tokens required" message the tests asserted on. Fix: gate C-ESY-003 on `etsy_oauth_access_token AND etsy_oauth_refresh_token` so C-ESY-001 owns the "totally unconfigured" path and C-ESY-003 owns only the "post-authorization gap". This is also semantically cleaner — the two constraints cover disjoint failure modes. Companion fixture parity: 7 pre-existing test writes now also set `'etsy_api_shop_id': '60752333'` so they survive C-ESY-003 (no semantic change to those tests; they target other concerns).
+
+2. **OAuth callback `sudo()` write is unavoidable for an `auth='public'` route.** The callback runs with no logged-in user; writing `etsy_api_shop_id` (which has `groups='base.group_system'`) requires `sudo()`. State-param validation upstream pins `shop.id`, so there's no shop-hijack surface. The shop_id content is fully owner-controlled (Etsy returns the OAuth user's shop_id). Inline rationale comment added per project rule. security-reviewer confirmed PASS.
+
+3. **`EtsyApiClient.__init__` reads credentials from disk via `_read_credentials()`.** New tests must `patch.object(eac_module, '_read_credentials', return_value=_FAKE_CREDS)` in setUpClass — same pattern as existing `test_phase2_pub_client_orm.py`. Without the patch, the constructor raises before the test method body runs and the test ERRORs on setup rather than running the assertion. Caught by orchestrator's own test-run (per memory `feedback_tdd_guide_init_py_imports.md`: orchestrator MUST run the suite itself, not trust tdd-guide's "RED confirmed" claim).
+
+4. **Raw-SQL fixture bypass needed to exercise the constraint guards.** The 3 caller-site service guards (`etsy_order_syncer`, `etsy_tracking_pusher`, `etsy_listing_publisher`) all check `if not shop.sudo().etsy_api_shop_id: refuse`. To unit-test those guards we need a shop in the very state C-ESY-003 refuses. Raw SQL inside the test savepoint (no `cr.commit()` — per gotcha #33 forbidden in TransactionCase) is the only valid path. Helper function `_bypass_c_esy_003_create_api_shop(env, name, with_tokens, with_shop_id)` encapsulates this and is reusable.
+
+5. **Migration test cannot call `cr.commit()`** (gotcha #33). First version of `test_migration_refuses_email_to_api_flip_without_shop_id` tried it and ERRORed with `Cannot commit or rollback a cursor from inside a test`. Fix: raw SQL within the savepoint (visible to the same cursor), then `importlib.util.spec_from_file_location` to load the migration module and call its `migrate(cr, version)` function directly. Clean RED → GREEN.
+
+6. **Vacuous-pass test trap from tdd-guide.** The first iteration of the OAuth callback tests was `try: shop.sudo().write({'etsy_api_shop_id': '...'}); assert ...; except ValueError: pass` — the test manually wrote the field it was asserting about, with a broad except swallowing the contract failure. Caught by orchestrator review. Rewrote as a service-helper unit test (test the helper that the controller calls), which is cheaper than spinning up `HttpCase` and exercises the actual contract.
+
+**Verification**:
+- 20/20 P1-11-SHOPID tests GREEN (Phase 1 DB schema + Phase 2 constraint/helper/probe/guards/migration).
+- Full `etsy_integration` suite: 18 failed + 5 errored of 664 tests; **zero NEW regressions** vs baseline (post-slice failures all pre-existing — `test_p1_12_orm`, `test_p_list_pull_phase2_orm`, `test_phase2_*` work outside this scope).
+- Module installs cleanly (`-u etsy_integration --stop-after-init` exit 0).
+- code-reviewer: 0 CRITICAL / 0 HIGH / 3 MEDIUM applied (dead `isinstance(dict)` guard removed; `sudo()` inline comment at callback write site; migration raw-SQL rationale comment) / 1 LOW deferred.
+- security-reviewer: 0 CRITICAL / 0 HIGH / APPROVED.
+
+**Branch + commit**: `feature/006-master-plan-coding` `f6b96fe2eb6`. 10 files (+831/-1).
+
+**Deferred (not scope creep)**:
+- Deprecated `check_access_rights()` / `check_access_rule()` at `controllers/etsy_oauth.py:176-177` (planner OQ3 default: defer; still works in Odoo 19; cosmetic DeprecationWarning surfaced during P1-11-WIRE-LIVE).
+- Multi-shop owners (Etsy supports it; we don't have any today; `/users/me` returns one `shop_id`, multi-shop case would need `/users/{user_id}/shops`).
+
+**Unblocks**: Future Etsy shop OAuth flips never need manual `UPDATE etsy_shop SET etsy_api_shop_id=...` SQL backfill again. Next-shop cutover runbook can drop that step.
+
+---
+
+---
+
 ## 2026-04-28 — P0-17 etsy.api.log model + audit retrofit + retention cron landed
 
 **Slice scope (final, post-execution)**:
