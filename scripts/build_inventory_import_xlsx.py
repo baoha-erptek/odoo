@@ -255,33 +255,42 @@ def _new_wb(headers: list[str]) -> tuple[Workbook, object]:
 
 
 def write_categories(rows: list[ProductRow], stats: ConversionStats, path: Path) -> int:
-    """One row per unique enrichment category (PHÂN LOẠI SP)."""
+    """One row per unique enrichment category (PHÂN LOẠI SP).
+
+    The ``id`` column carries the full ``inv_initial_load.cat_<slug>`` external
+    ID so subsequent ``categ_id/id`` lookups from the template XLSX resolve
+    cleanly. Without the module prefix Odoo would file the records under
+    ``__import__`` and the cross-ref would break.
+    """
     wb, ws = _new_wb(['id', 'name'])
     written = 0
     for cat_name, cat_extid in sorted(stats.categories.items()):
-        ws.append([cat_extid.split('.', 1)[1], cat_name])
+        ws.append([cat_extid, cat_name])
         written += 1
     wb.save(path)
     return written
 
 
 def write_templates(rows: list[ProductRow], path: Path) -> int:
-    """133 rows for product.template."""
+    """133 rows for product.template.
+
+    Odoo 19 dropped ``uom_po_id`` from ``product.template`` (purchase UoM is
+    now per-supplier on ``product.supplierinfo``); the column is omitted.
+    """
     headers = [
         'id', 'name', 'default_code', 'type', 'is_storable', 'tracking',
-        'categ_id/id', 'uom_id/id', 'uom_po_id/id', 'sale_ok', 'purchase_ok',
+        'categ_id/id', 'uom_id/id', 'sale_ok', 'purchase_ok',
     ]
     wb, ws = _new_wb(headers)
     for r in rows:
         ws.append([
-            f'tonkho_pd_hatafa_{r.row_idx:03d}',
+            f'{EXTID_MODULE}.tonkho_pd_hatafa_{r.row_idx:03d}',
             r.name,
             r.default_code,
             'consu',          # Odoo 19: type+is_storable together
             'TRUE',
             'none',            # No Tracking per owner decision 2026-05-30
             r.category_extid,
-            UOM_UNITS_XMLID,
             UOM_UNITS_XMLID,
             'TRUE',
             'TRUE',
@@ -291,7 +300,14 @@ def write_templates(rows: list[ProductRow], path: Path) -> int:
 
 
 def write_on_hand(rows: list[ProductRow], path: Path) -> int:
-    """stock.quant rows with inventory_quantity for the Physical Inventory flow."""
+    """stock.quant rows with inventory_quantity for the Physical Inventory flow.
+
+    Note: ``product_id/id`` holds a *template* external ID; the RPC driver
+    (``scripts/apply_inventory_to_staging.py``) rewrites the column to
+    ``product_id`` with the int id of the auto-created ``product.product``
+    variant before calling ``stock.quant.load``. base_import UI users
+    follow the same hop manually.
+    """
     headers = ['product_id/id', 'location_id/id', 'inventory_quantity']
     wb, ws = _new_wb(headers)
     for r in rows:
@@ -305,10 +321,18 @@ def write_on_hand(rows: list[ProductRow], path: Path) -> int:
 
 
 def write_reorder_rules(rows: list[ProductRow], path: Path) -> int:
-    """One orderpoint per row that has BOTH safety AND reorder_point in Vat dung."""
+    """One orderpoint per row that has BOTH safety AND reorder_point in Vat dung.
+
+    Same template-extid -> variant-id rewrite caveat as ``write_on_hand``.
+
+    Odoo 19 removed ``qty_multiple`` from ``stock.warehouse.orderpoint``;
+    multiple-rounding is handled via UoM packaging now. The ``Số lượng đặt
+    hàng`` column from Vat dung is reported in ``conversion_report.txt`` but
+    not written into Odoo.
+    """
     headers = [
         'product_id/id', 'warehouse_id/id', 'location_id/id',
-        'product_min_qty', 'product_max_qty', 'qty_multiple',
+        'product_min_qty', 'product_max_qty',
     ]
     wb, ws = _new_wb(headers)
     written = 0
@@ -322,7 +346,6 @@ def write_reorder_rules(rows: list[ProductRow], path: Path) -> int:
             STOCK_LOCATION_XMLID,
             enr.safety,                          # product_min_qty
             enr.reorder_point,                   # product_max_qty (replenish up to)
-            enr.reorder_qty or 1.0,              # qty_multiple
         ])
         written += 1
     wb.save(path)

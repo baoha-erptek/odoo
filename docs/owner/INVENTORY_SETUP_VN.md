@@ -126,7 +126,7 @@ Script sẽ chuyển 3 cột này sang **Quy tắc đặt hàng lại** của Od
 |---|---|
 | `Tồn kho an toàn` | `product_min_qty` (mức tối thiểu — khi giảm xuống dưới mức này thì Odoo cảnh báo) |
 | `Điểm đặt hàng` | `product_max_qty` (mức Odoo sẽ "đặt hàng lên đến") |
-| `Số lượng đặt hàng` | `qty_multiple` (đơn vị bội — số lượng đặt làm tròn theo bội này) |
+| `Số lượng đặt hàng` | *Không có trường tương đương trong Odoo 19* — bội đặt hàng giờ được khai báo trên packaging của UoM. Cột này chỉ được liệt kê trong `conversion_report.txt` để anh tham khảo, không nạp vào Odoo. |
 
 ⚠️ **Cần xác nhận:** cách hiểu hiện tại đang là:
 "khi tồn ≤ `product_min_qty` → Odoo cảnh báo và đề xuất bổ sung lên `product_max_qty`".
