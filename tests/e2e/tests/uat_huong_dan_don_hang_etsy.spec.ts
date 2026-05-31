@@ -161,9 +161,12 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
     // recent cron run succeeded AND the anchor order has every documented field.
     const logRows = await rpc(request, 'etsy.api.log', 'search_read',
       [[['create_date', '>=', new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 19).replace('T', ' ')]]],
-      { fields: ['id', 'state', 'name'], order: 'create_date desc', limit: 20 });
+      { fields: ['id', 'http_status', 'error_message'], order: 'create_date desc', limit: 20 });
     expect(logRows?.length, 'at least one etsy.api.log entry in the last 24h').toBeGreaterThan(0);
-    const success = (logRows || []).find((r: any) => /success|ok|2\d\d/i.test(String(r.state ?? '')));
+    const success = (logRows || []).find((r: any) => {
+      const status = Number(r.http_status ?? 0);
+      return status >= 200 && status < 300 && !r.error_message;
+    });
     expect(success, 'at least one successful API call in the last 24h').toBeTruthy();
     const so = (await rpc(request, 'sale.order', 'search_read',
       [[['name', '=', ANCHOR.odoo_name]]],
@@ -270,11 +273,11 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
   test('TC-007 — Etsy API Log ghi đúng (read-only)', async ({ request }) => {
     const rows = await rpc(request, 'etsy.api.log', 'search_read',
       [[]],
-      { fields: ['id', 'state', 'name'], order: 'create_date desc', limit: 50 });
+      { fields: ['id', 'http_status', 'endpoint'], order: 'create_date desc', limit: 50 });
     expect(rows?.length, 'etsy.api.log has rows (cron has run at least once)').toBeGreaterThan(0);
-    // Every row should have a non-empty state (success or failure detail).
+    // Every row should have a status code (success or failure detail).
     for (const r of rows) {
-      expect(r.state, `etsy.api.log id=${r.id} has non-empty state`).toBeTruthy();
+      expect(r.http_status, `etsy.api.log id=${r.id} has non-empty http_status`).toBeTruthy();
     }
   });
 
