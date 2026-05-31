@@ -26,6 +26,8 @@ log = logging.getLogger("cleanup_uat")
 UAT_SKU_PREFIX = "UAT-"
 UAT_BUILDER_NAME_PREFIX = "UAT-SKU-BUILDER"
 UAT_FORM_NAME_PREFIX = "UAT-TAOSP"  # v1.2 standard-form suite product names
+UAT_ORDER_REF_PREFIX = "UAT-2026-05-31"  # Flow-2/3 seed_uat_orders() naming
+UAT_EMAIL_DEDUP_GMAIL_ID = "uat-2026-05-31-dedupe-fixture-msg-id"
 BA_USER_LOGIN = "uat_ba_user@hatafax.demo"
 
 
@@ -56,6 +58,39 @@ def main():
         s.call("product.template", "write", [pids, {"active": False}])
     else:
         log.info("No UAT product templates found to archive")
+
+    # 1b. Cancel UAT-2026-05-31-* sale.order rows still in draft. Confirmed orders
+    #     are left for owner review (per plan file Phase 1 partition).
+    oids = s.call(
+        "sale.order",
+        "search",
+        [[
+            ("client_order_ref", "=like", f"{UAT_ORDER_REF_PREFIX}%"),
+            ("state", "in", ["draft", "sent"]),
+        ]],
+        {"context": {"active_test": False}},
+    )
+    if oids:
+        log.info("Cancelling %d UAT-2026-05-31-* draft sale.order rows: %s", len(oids), oids)
+        try:
+            s.call("sale.order", "action_cancel", [oids])
+        except Exception as e:
+            log.warning("action_cancel failed (continuing): %s", e)
+
+    # 1c. Unlink the dedupe email-log fixture (safe — it's parse_status=skipped,
+    #     no downstream side effect). Wrapped in try/except: model may be absent.
+    try:
+        eids = s.call(
+            "etsy.email.log",
+            "search",
+            [[("gmail_message_id", "=", UAT_EMAIL_DEDUP_GMAIL_ID)]],
+            {"context": {"active_test": False}},
+        )
+        if eids:
+            log.info("Unlinking %d email-log dedupe fixture rows: %s", len(eids), eids)
+            s.call("etsy.email.log", "unlink", [eids])
+    except Exception as e:
+        log.info("email-log cleanup skipped (model absent or insufficient ACL): %s", e)
 
     # 2. Archive BA User
     uids = s.call(

@@ -1,0 +1,16 @@
+From: noreply@example.invalid
+To: orders@hatafax.demo
+Subject: Promotional newsletter — Spring sale
+Date: Sun, 31 May 2026 04:35:00 +0000
+Message-ID: <uat-2026-05-31-orphan-no-receipt-msg-id@example.invalid>
+Content-Type: text/plain; charset=utf-8
+
+This is an unrelated marketing email used by Flow-2 TC-005 (parse-fail +
+Retry Parse). The Etsy parser should classify it as parse_status='failed'
+because there is no receipt id, no Etsy headers, and no order block.
+
+After Retry Parse the row should stay 'failed' (re-running the parser does
+not transform an orphan email into an order) and an actionable
+error_message should surface to the operator.
+
+— end fixture —

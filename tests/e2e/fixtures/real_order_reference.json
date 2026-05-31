@@ -1,0 +1,23 @@
+{
+  "_description": "Frozen anchor for the canonical real-data Etsy order used by Flow-2 + Flow-3 read-only TCs. If staging-side values drift (e.g., owner manually advances the pipeline state), the TCs that assert these fields fail loudly — re-audit on staging and update this file.",
+  "_inspected_on": "2026-05-31",
+  "_source": "staging esty_odoo19 via STAGING_ADMIN_LOGIN XML-RPC read",
+  "etsy_order_id": "3818231452",
+  "odoo_name": "S00007",
+  "etsy_shop_id_odoo_pk": 10,
+  "etsy_shop_name": "JaHandmadeArt",
+  "product_id": 47,
+  "product_name": "Ring Dish",
+  "partner_id": 12,
+  "partner_name": "Fiona Kellett",
+  "expected_state": "draft",
+  "expected_pipeline_state_code": "pending_file",
+  "expected_pipeline_state_name": "Chờ File",
+  "etsy_raw_source_id": "receipt:3818231452",
+  "etsy_tracking_push_status": "none",
+  "amount_total_vnd": 734914,
+  "_findings": [
+    "default_code=null while x_sku_v2_status=non_canonical + x_sku_v2_suggested=RDS — SKU drift surface exists on real data; TC-003/TC-004 can exercise against this product.",
+    "x_taxonomy_id=null on product 47 — publish-to-Etsy would fall back to shop default; assert shop default_taxonomy_id populated before any publish TC."
+  ]
+}

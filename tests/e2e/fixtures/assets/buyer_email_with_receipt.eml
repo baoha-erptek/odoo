@@ -1,0 +1,30 @@
+From: transaction@etsy.com
+To: orders@hatafax.demo
+Subject: Etsy order #UAT-2026-05-31-EML-001 — auto-fixture
+Date: Sun, 31 May 2026 04:30:00 +0000
+Message-ID: <uat-2026-05-31-with-receipt-msg-id@etsy.com>
+Content-Type: text/plain; charset=utf-8
+
+You have received an order on Etsy.
+
+Order #: UAT-2026-05-31-EML-001
+Buyer: UAT Buyer Auto
+Buyer email: uat-buyer@hatafax.demo
+
+Ship to:
+  UAT Buyer Auto
+  123 UAT Lane
+  Springfield, IL 62704
+  United States
+
+Item: UAT MTO Ring Dish (auto-seeded)
+SKU: UAT-MTO-RDISH
+Quantity: 1
+Price: USD 29.99
+
+Buyer note: Auto-fixture for Flow-2 TC-004 (email parse happy path).
+Personalization: "UAT auto-test — no real production"
+
+Receipt: https://www.etsy.com/your/orders/transactions/3818231453
+
+— Etsy
