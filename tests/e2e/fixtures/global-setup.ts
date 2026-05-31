@@ -120,7 +120,18 @@ async function seedBaUser(): Promise<void> {
     while ((match = lineRe.exec(result)) !== null) {
       const role = match[1];
       const pwd = match[2];
-      process.env[`STAGING_${role}_PASSWORD`] = pwd;
+      // SECURITY/CORRECTNESS: do NOT overwrite process.env.STAGING_BA_LEAD_PASSWORD —
+      // that env var is reserved for the owner-provided legacy BA Lead (often
+      // the staging admin user) and is consumed by env.ts STATIC_CONFIG
+      // BA_LEAD_PASSWORD → loginAsBaLead(). Overwriting it with the auto-seeded
+      // uat_ba_lead@hatafax.demo password breaks every spec that calls
+      // loginAsBaLead, because the login + password pair becomes mismatched
+      // (admin user × uat_ba_lead's 16-char password → AccessDenied).
+      // The auto-seeded BA Lead password is recoverable from seedState via the
+      // BA_LEAD_AUTO_PASSWORD getter in env.ts (reads from _seed_state.json).
+      if (role !== 'BA_LEAD') {
+        process.env[`STAGING_${role}_PASSWORD`] = pwd;
+      }
       // Persist with legacy key name for the original BA_USER (env.ts dereferences
       // it via getter); other roles persisted under snake-case for lookup parity.
       seedState[role === 'BA_USER' ? 'ba_user_password' : `${role.toLowerCase()}_password`] = pwd;
