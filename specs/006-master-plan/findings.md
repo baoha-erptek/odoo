@@ -236,3 +236,33 @@ Sibling MOs on the same SO share the same `origin`, so `search([('origin', '=', 
 - If we ever need the inverse (SO → MOs) more efficiently, look at `sale.order.procurement_group_id.stock_move_ids.production_id` — that path *does* exist (MO has `move_dest_ids` reverse).
 
 **Implication for future slices**: any code documentation referring to `mrp.production.procurement_group_id` is wrong for Odoo 19. Update the planner default and any ADR that mentions it.
+
+---
+
+### P-UAT-AUTOMATION-2FLOWS — Phase A/B/C authoring (2026-05-31)
+
+**Authoring shipped in 4 commits on `feature/006-master-plan-coding`:**
+- `aee31f6de03` — 6 POMs (sale_order_form, design_files_kanban, gearment_quote_wizard, tracking_import_wizard, address_change_request_form, email_log)
+- `863add87ef9` — fixtures (extends seed_uat_data + seed_ba_user 4 roles + cleanup_uat_data), Gearment HMAC stub `gearment_webhook_post.py`, `preflight_check.py` wired into globalSetup, asset builder `build_uat_assets.py`, real-order anchor JSON
+- `3489926e65c` — Flow-2 spec (8 TCs) + Flow-3 spec (14 TCs)
+- `73e0417d9c0` — Phase 4 review fixes (1 CRITICAL + 3 HIGH)
+
+**Verify**: `npx playwright test --list` → 40 tests in 5 files, exit 0.
+
+**Phase D handoff (owner-gated)**:
+- Run preflight: `STAGING_ADMIN_PASSWORD=... python3 tests/e2e/fixtures/preflight_check.py`
+- Suite run: `cd tests/e2e && npm run test:don-hang-etsy && npm run test:giao-hang && npm run report`
+- Defects classify A/B/C per plan file Phase D; A → new `P-UAT-FIX-*` MP006 slice on a branch off `feature/006-master-plan-coding`, full 9-phase loop; B/C → land under this findings.md entry.
+
+**Known shape of expected-skips at runtime**:
+- TC-002 (Etsy Test Connection): hits live Etsy GET; cheap but counts.
+- TC-006 Address change: auto-skips if seeded ADDR-001 is not is_etsy_order. Follow-up to extend `seed_uat_orders` to mark Etsy-typed.
+- TC-DROP-002/003: auto-skip when `GEARMENT_API_KEY` missing (preflight catches).
+- TC-DROP-005 webhook: auto-skips when `GEARMENT_API_SECRET` missing.
+- TC-ETSY-PUSH-001/002: auto-skip when SO is not `is_etsy_order` (same follow-up as TC-006).
+
+**Mid-slice surprises captured**:
+1. `cleanup_uat_data.py` only had `action_cancel` semantics for draft SOs; ConfirmedOrders are deliberately left for owner review.
+2. `seed_ba_user.py` refactor changed `BA_USER_PASSWORD=` to the first of 4 lines — backward-compatible because globalSetup parses all `<ROLE>_PASSWORD=` lines now.
+3. Real S00007 anchor freezing went into `fixtures/real_order_reference.json` for spec-side reads + preflight verification. If owner advances S00007's pipeline manually, preflight will fail loudly with "x_pipeline_state_id.code drifted".
+4. `design_files_kanban._ensureGroupedByState()` heuristic is brittle (reviewer flagged MEDIUM); not fixed — kept as Phase D triage candidate per code-reviewer guidance.
