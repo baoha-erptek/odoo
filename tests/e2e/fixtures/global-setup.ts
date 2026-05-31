@@ -105,9 +105,13 @@ async function seedBaUser(): Promise<void> {
           STAGING_ADMIN_LOGIN: CONFIG.ADMIN_LOGIN,
           STAGING_ADMIN_PASSWORD: CONFIG.ADMIN_PASSWORD,
         },
-      }
+      },
     );
-    console.log(result);
+    // SECURITY: do NOT echo `result` — it contains `<ROLE>_PASSWORD=<value>` lines
+    // for every seeded role and would leak generated passwords into CI logs.
+    // Print only the non-credential lines (everything before the first PASSWORD= line).
+    const safeLog = result.replace(/^[A-Z_]+_PASSWORD=\S+$/gm, '<REDACTED_PASSWORD_LINE>');
+    console.log(safeLog);
     // Parse all role lines `<ROLE>_PASSWORD=<value>` (seed_ba_user.py emits
     // one per provisioned role: BA_USER, BA_LEAD, BA_SHIPPING, BA_SHIPPING_MGR).
     const lineRe = /^([A-Z_]+)_PASSWORD=(\S+)$/gm;

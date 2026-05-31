@@ -51,6 +51,21 @@ const GKE_BROKEN_XLSX = path.join(__dirname, '..', 'fixtures', 'assets', 'gke_ex
 // Helpers (admin RPC for seed/inspect; UI for the human path)
 // ---------------------------------------------------------------------------
 
+/** Strip credential-shaped fields before serializing an Odoo error payload. */
+function _sanitizeError(err: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(err, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[circular]';
+      seen.add(value);
+    }
+    if (typeof key === 'string' && /password|secret|token|api[_-]?key/i.test(key)) {
+      return '[REDACTED]';
+    }
+    return value;
+  });
+}
+
 async function rpc(
   request: import('@playwright/test').APIRequestContext,
   model: string,
@@ -65,7 +80,7 @@ async function rpc(
     data: { jsonrpc: '2.0', params: { model, method, args, kwargs } },
   });
   const body = await res.json();
-  if (body?.error) throw new Error(`${model}.${method} error: ${JSON.stringify(body.error)}`);
+  if (body?.error) throw new Error(`${model}.${method} error: ${_sanitizeError(body.error)}`);
   return body?.result;
 }
 
@@ -193,7 +208,14 @@ test.describe('UAT Flow-3 MTO — HUONG_DAN_GIAO_HANG_VN §9.MTO', () => {
       expect(result.toLowerCase(), '12MB upload surfaced size-limit feedback')
         .toMatch(/limit|10|size|exceed|vượt|giới hạn/);
     } finally {
-      try { fs.unlinkSync(tmp); } catch { /* swallow */ }
+      try {
+        fs.unlinkSync(tmp);
+      } catch (e) {
+        // Don't fail the test on cleanup error, but surface it so a stuck
+        // 12MB file doesn't silently accumulate across runs.
+        // eslint-disable-next-line no-console
+        console.warn(`[TC-MTO-004] failed to unlink ${tmp}: ${(e as Error).message}`);
+      }
     }
   });
 

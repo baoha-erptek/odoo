@@ -278,13 +278,15 @@ def main() -> int:
     seed_tags(s)
     try:
         seed_uat_orders(s, cats)
-    except Exception as e:
-        # Non-fatal: Flow-2/3 spec TCs skip when fixtures missing.
-        log.warning("UAT order seeding skipped: %s", e)
+    except Exception:
+        # Non-fatal: Flow-2/3 spec TCs skip when fixtures missing. Use
+        # log.exception so the traceback survives — silently swallowing
+        # programming errors here cost a half-day of triage in the past.
+        log.exception("UAT order seeding skipped")
     try:
         seed_email_dedupe_fixture(s)
-    except Exception as e:
-        log.warning("Email dedupe fixture skipped: %s", e)
+    except Exception:
+        log.exception("Email dedupe fixture skipped")
     log.info("UAT seed complete")
     return 0
 

@@ -1,1 +1,4 @@
 *.xlsx
+# Runtime-generated test artifacts (TC-MTO-004 12MB blob, etc.)
+_tmp_*
+*.bin

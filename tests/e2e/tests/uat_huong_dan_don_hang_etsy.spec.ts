@@ -47,6 +47,25 @@ const ANCHOR = JSON.parse(
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Strip credential-shaped fields from an Odoo error payload before serializing
+ * for an Error message. Defensive against the case where a backend echoes
+ * request kwargs (which may contain `password`/`token`/`secret`) in error data.
+ */
+function _sanitizeError(err: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(err, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[circular]';
+      seen.add(value);
+    }
+    if (typeof key === 'string' && /password|secret|token|api[_-]?key/i.test(key)) {
+      return '[REDACTED]';
+    }
+    return value;
+  });
+}
+
 async function rpc(
   request: import('@playwright/test').APIRequestContext,
   model: string,
@@ -64,7 +83,7 @@ async function rpc(
     data: { jsonrpc: '2.0', params: { model, method, args, kwargs } },
   });
   const body = await res.json();
-  if (body?.error) throw new Error(`${model}.${method} error: ${JSON.stringify(body.error)}`);
+  if (body?.error) throw new Error(`${model}.${method} error: ${_sanitizeError(body.error)}`);
   return body?.result;
 }
 
