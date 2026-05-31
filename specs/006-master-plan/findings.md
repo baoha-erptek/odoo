@@ -371,3 +371,30 @@ After the globalSetup fix + the 4 spec/POM authoring-drift fixes (etsy.shop oaut
 - Class C (seed/fixture): 1 outstanding (Flow-3 teardown coordination + email-log fixture refresh).
 
 No `P-UAT-FIX-*` sub-slices were opened because no Class-A defects surfaced. The umbrella slice `P-UAT-AUTOMATION-2FLOWS` state stays `authoring_done` pending the 3 Class-B/C closures above; flipping to `done` requires Flow-2 + Flow-3 fully green or explicit owner sign-off that the residual skips are acceptable.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D residual triage attempt (2026-05-31) — Class A surfaced, escalating
+
+Owner-approved scope: address all 3 Class-B/C residuals, with option (c) for Flow-3 (re-seed-friendly cancelled-order revival rather than per-run refs).
+
+**Residuals #1 and #2 landed**:
+- **#1 cron-trigger plumbing**: new `tests/e2e/fixtures/trigger_crons.py` fires `Etsy: API Receipts Sync` cron via `ir.cron.method_direct_trigger` and reports the recent `etsy.api.log` row count. Wired into `globalSetup` after `seedUatData`. Best-effort; cron failures surface in the spec, not the harness.
+- **#2 cancelled-order revival**: `_ensure_uat_order` in `seed_uat_data.py` now calls `sale.order.action_draft` on any pre-existing row in `state='cancel'`. This keeps the documented `UAT-2026-05-31-*` refs (so cleanup and spec lookup constants stay stable) while making the seed survive re-runs after `globalTeardown` cancels.
+
+**Residual #3 blocked by a newly discovered Class A defect**: `etsy.api.log.http_status` is `fields.Integer` (default 0). The TC-003 spec asserts `http_status in [200,299] AND error_message empty`. Live staging diagnostic against `https://odoo.hatafax.com/esty_odoo19`:
+- Zero rows in the entire `etsy.api.log` table have `http_status > 0`.
+- Recent rows from the listing-pull cron (e.g. ids 5524-5533) all show `http_status=0`, `error_message=False`.
+- Only ONE producer in the codebase sets the field: `services/etsy_tracking_pusher.py:159`. Three other audit writers omit it: `models/etsy_listing.py:239` (`source='listing_pull'`), `models/etsy_listing_product.py:238` (likely `listing_pull` variant), `services/etsy_order_syncer.py:136` (`source='audit'`).
+- The field is documented as "NULL on connection failures or audit-mode rows" but spec, view, and existing Phase-1 DB tests all treat it as populated on success.
+
+This is a Class A defect: producer code mismatch with the asserted contract, not a test-infra issue. Per the umbrella plan handoff rule, Class A needs a new `P-UAT-FIX-*` MP006 slice with the full 9-phase loop, not an inline fix. **Proposed slice: `P-UAT-FIX-API-LOG-HTTP-STATUS`** — populate `http_status` in all 3 missing writers, add a Phase-1 DB constraint test asserting no `listing_pull`/`audit` row lands with NULL/0 http_status when `error_message` is empty, then re-run Flow-2 to confirm TC-003 + downstream chain (TC-004/005/008) converge.
+
+**Status update**:
+- Class A: **1 surfaced** (`etsy.api.log` http_status omission across 3 writers).
+- Class B: 6 fixed total (5 from prior entry + #2 cancelled-order revival here).
+- Class C: 1 outstanding (#1 cron-trigger plumbing landed but doesn't help until the Class A is closed — keeps the freshness signal intact for the future fix).
+- Tracker `state` stays `authoring_done`; cannot flip to `done` until `P-UAT-FIX-API-LOG-HTTP-STATUS` lands and Flow-2/3 re-runs green.
+
+**Commits this session**:
+- residuals #1 + #2 + this findings entry (single commit on `feature/006-master-plan-coding`).
+
+**Lesson worth remembering**: TC-003 was tagged Class B ("seed gap") in the prior session because the rows existed but were sparse. The actual sparsity was a producer bug — rows existed but the asserted field was never written. When a Phase-D residual says "spec needs more data of shape X", verify the producer code actually emits shape X before classifying as a seed gap.

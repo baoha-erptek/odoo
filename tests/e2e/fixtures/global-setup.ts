@@ -168,6 +168,35 @@ async function seedUatData(): Promise<void> {
   }
 }
 
+/**
+ * Phase D residual #1 — fire the Etsy receipts cron once so Flow-2 TC-003
+ * has a fresh etsy.api.log row to assert on. Best-effort: cron failures
+ * surface in the spec itself, not here.
+ */
+async function triggerStagingCrons(): Promise<void> {
+  if (!CONFIG.ADMIN_PASSWORD) {
+    console.warn('[globalSetup] STAGING_ADMIN_PASSWORD not set — skipping cron trigger');
+    return;
+  }
+  console.log(`[globalSetup] Triggering staging crons (etsy.api.log freshness) ...`);
+  try {
+    const out = execSync(
+      `python3 ${path.join(__dirname, 'trigger_crons.py')} --base-url "${CONFIG.BASE_URL}" --db "${CONFIG.DB}"`,
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          STAGING_ADMIN_LOGIN: CONFIG.ADMIN_LOGIN,
+          STAGING_ADMIN_PASSWORD: CONFIG.ADMIN_PASSWORD,
+        },
+      },
+    );
+    console.log(out);
+  } catch (e) {
+    console.warn(`[globalSetup] trigger_crons.py failed (continuing): ${(e as Error).message}`);
+  }
+}
+
 export default async function globalSetup() {
   console.log('===========================================');
   console.log('Odoo19-Esty UAT — globalSetup');
@@ -180,5 +209,6 @@ export default async function globalSetup() {
   await preflightStaging();
   await seedBaUser();
   await seedUatData();
+  await triggerStagingCrons();
   await buildUatAssets();
 }

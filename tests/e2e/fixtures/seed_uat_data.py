@@ -189,12 +189,26 @@ def _ensure_uat_order(s, name: str, partner_id: int, product_id: int,
                       price_unit: float | None = None) -> int:
     """Idempotent sale.order keyed by `client_order_ref` (we use the UAT name
     there because sale.order.name is auto-numbered).
+
+    Phase D residual #2: globalTeardown cancels these orders between runs
+    (state=cancel). On re-seed, revive any cancelled row back to draft so
+    Flow-3 specs have a workable order, instead of creating duplicates with
+    suffixed refs (which would force every spec to discover the suffix).
     """
-    existing = s.call("sale.order", "search",
-                      [[("client_order_ref", "=", name)]],
-                      {"context": {"active_test": False}})
-    if existing:
-        return existing[0]
+    existing_rows = s.call(
+        "sale.order", "search_read",
+        [[("client_order_ref", "=", name)]],
+        {"fields": ["id", "state"], "limit": 1, "context": {"active_test": False}},
+    )
+    if existing_rows:
+        row = existing_rows[0]
+        if row["state"] == "cancel":
+            try:
+                s.call("sale.order", "action_draft", [[row["id"]]])
+                log.info("UAT order revived (cancel -> draft) id=%s ref=%s", row["id"], name)
+            except Exception as exc:
+                log.warning("UAT order %s revive failed (continuing): %s", row["id"], exc)
+        return row["id"]
     line_vals = {"product_id": product_id, "product_uom_qty": quantity}
     if price_unit is not None:
         line_vals["price_unit"] = price_unit
