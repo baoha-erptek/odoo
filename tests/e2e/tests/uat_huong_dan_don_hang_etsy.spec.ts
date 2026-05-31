@@ -126,17 +126,17 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
     const shopRows = await rpc(request, 'etsy.shop', 'search_read',
       [[['name', '=', SHOP_NAME]]],
       {
-        fields: ['id', 'etsy_api_shop_id', 'access_token', 'refresh_token', 'token_expires_at'],
+        fields: ['id', 'etsy_api_shop_id', 'etsy_oauth_access_token', 'etsy_oauth_refresh_token', 'etsy_oauth_token_expires_at'],
         limit: 1,
       });
     expect(shopRows?.length, `etsy.shop ${SHOP_NAME} missing`).toBe(1);
     const shop = shopRows[0];
     expect(shop.etsy_api_shop_id, 'etsy_api_shop_id discovered after Authorize').toBeTruthy();
-    expect(shop.access_token, 'access_token persisted after Authorize').toBeTruthy();
-    expect(shop.refresh_token, 'refresh_token persisted after Authorize').toBeTruthy();
-    if (shop.token_expires_at) {
-      const expDate = new Date(shop.token_expires_at.replace(' ', 'T') + 'Z');
-      expect(expDate.getTime(), 'token_expires_at in the future').toBeGreaterThan(Date.now());
+    expect(shop.etsy_oauth_access_token, 'etsy_oauth_access_token persisted after Authorize').toBeTruthy();
+    expect(shop.etsy_oauth_refresh_token, 'etsy_oauth_refresh_token persisted after Authorize').toBeTruthy();
+    if (shop.etsy_oauth_token_expires_at) {
+      const expDate = new Date(shop.etsy_oauth_token_expires_at.replace(' ', 'T') + 'Z');
+      expect(expDate.getTime(), 'etsy_oauth_token_expires_at in the future').toBeGreaterThan(Date.now());
     }
     // UI sanity: form shows the discovered id + the Authorize button still visible.
     const form = new EtsyShopFormPage(page);

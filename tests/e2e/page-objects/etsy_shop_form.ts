@@ -53,7 +53,7 @@ export class EtsyShopFormPage {
   /** Open the Etsy Shops list and click into a named shop. */
   async openByName(shopName: string): Promise<void> {
     // Menu: Etsy → Shops (action_etsy_shop). Direct action URL keeps tests resilient to menu reordering.
-    await this.page.goto('/odoo/action-etsy_integration.action_etsy_shop');
+    await this.page.goto('/odoo/action-etsy_integration.action_etsy_shops');
     await this.page.waitForSelector('.o_list_view, .o_kanban_view', { timeout: 15000 });
     const row = this.page.locator('tr.o_data_row, .o_kanban_record', { hasText: shopName }).first();
     await row.waitFor({ state: 'visible', timeout: 8000 });
