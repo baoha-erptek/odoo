@@ -47,21 +47,22 @@ REQUIRED_ENV_KEYS = (
     "STAGING_DB",
     "STAGING_ADMIN_LOGIN",
     "STAGING_ADMIN_PASSWORD",
-    # Phase D Gearment + Etsy outbound paths:
+    # Gearment outbound (quote, push, webhook); runner posts HMAC-signed webhook directly.
     "GEARMENT_API_KEY",
     "GEARMENT_API_SECRET",
-    "ETSY_KEYSTRING",
-    "ETSY_SHARED_SECRET",
+    # Etsy creds live in /opt/odoo/secrets/etsy_credentials.json (encrypted, ref by
+    # ir.config_parameter['etsy.oauth.credentials_path']) — not in env. Verified by
+    # _check_etsy_oauth_wiring below instead of an env presence check.
 )
 
 ANCHOR_FILE = Path(__file__).resolve().parent / "real_order_reference.json"
 
 # Cron names verified on staging (feature/006-master-plan-coding HEAD).
-# Loose-match on `name ilike` to survive owner renames.
+# Loose-match on `name ilike` to survive owner renames. Email-fetch cron
+# is intentionally NOT required — legacy path per API-first pivot 2026-04-13.
 CRON_NAME_FRAGMENTS = (
-    "Etsy: Sync",       # etsy api cron family
-    "Etsy: Email",      # email parser cron
-    "Tracking",         # tracking push / GDrive poll family
+    "Etsy: API Receipts Sync",       # etsy api ingest
+    "Etsy: Push Tracking",           # outbound tracking push
 )
 CRON_FRESHNESS_MINUTES = 15
 
@@ -102,7 +103,7 @@ def _check_shop_defaults(s, diagnostics: list[str]) -> bool:
                 "id", "etsy_api_shop_id", "active_source",
                 "default_taxonomy_id", "default_shipping_profile_id",
                 "default_return_policy_id", "default_readiness_state_id",
-                "token_expires_at",
+                "etsy_oauth_token_expires_at",
             ],
             "limit": 1,
         },
@@ -129,7 +130,7 @@ def _check_shop_defaults(s, diagnostics: list[str]) -> bool:
             "open Publisher Defaults tab and fill before any publish TC"
         )
         return False
-    expiry = shop.get("token_expires_at")
+    expiry = shop.get("etsy_oauth_token_expires_at")
     if expiry:
         try:
             exp_dt = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
@@ -222,6 +223,32 @@ def _check_real_order_anchor(s, diagnostics: list[str]) -> bool:
     return True
 
 
+def _check_etsy_oauth_wiring(s, diagnostics: list[str]) -> bool:
+    """Confirm Etsy OAuth client creds are wired via ir.config_parameter.
+
+    Replaces the (incorrect) env-var presence check — Etsy creds live in
+    an encrypted file referenced by `etsy.oauth.credentials_path`, never
+    in the runner's env.
+    """
+    if not _model_exists(s, "ir.config.parameter"):
+        return True  # nothing to check
+    rows = s.call(
+        "ir.config_parameter",
+        "search_read",
+        [[("key", "in", ["etsy.oauth.credentials_path", "etsy.oauth.fernet_key"])]],
+        {"fields": ["key", "value"]},
+    )
+    found = {r["key"]: r.get("value") for r in rows}
+    for required in ("etsy.oauth.credentials_path", "etsy.oauth.fernet_key"):
+        if not found.get(required):
+            diagnostics.append(
+                f"etsy oauth: ir.config_parameter['{required}'] is empty — "
+                "Etsy publisher cannot read encrypted creds"
+            )
+            return False
+    return True
+
+
 def _check_module_version(s, diagnostics: list[str]) -> bool:
     if not _model_exists(s, "ir.module.module"):
         return True  # nothing to check
@@ -276,6 +303,7 @@ def main() -> int:
 
     checks = (
         ("module-version", _check_module_version),
+        ("etsy-oauth-wiring", _check_etsy_oauth_wiring),
         ("crons", _check_crons),
         ("shop-defaults", _check_shop_defaults),
         ("real-order-anchor", _check_real_order_anchor),

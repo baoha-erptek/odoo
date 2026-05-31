@@ -266,3 +266,17 @@ Sibling MOs on the same SO share the same `origin`, so `search([('origin', '=', 
 2. `seed_ba_user.py` refactor changed `BA_USER_PASSWORD=` to the first of 4 lines — backward-compatible because globalSetup parses all `<ROLE>_PASSWORD=` lines now.
 3. Real S00007 anchor freezing went into `fixtures/real_order_reference.json` for spec-side reads + preflight verification. If owner advances S00007's pipeline manually, preflight will fail loudly with "x_pipeline_state_id.code drifted".
 4. `design_files_kanban._ensureGroupedByState()` heuristic is brittle (reviewer flagged MEDIUM); not fixed — kept as Phase D triage candidate per code-reviewer guidance.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D start: 3 preflight authoring bugs (2026-05-31)
+
+First Phase D run surfaced 3 classification-B (test-infra) bugs in `tests/e2e/fixtures/preflight_check.py`. All fixed in a single commit; no `custom_addons/` touched.
+
+| Bug | Symptom | Root cause | Fix |
+|---|---|---|---|
+| 1 | `PREFLIGHT FAIL: env: missing required keys ETSY_KEYSTRING, ETSY_SHARED_SECRET` | Authoring assumed Etsy creds lived in env. They actually live in `/opt/odoo/secrets/etsy_credentials.json` (encrypted), referenced via `ir.config_parameter['etsy.oauth.credentials_path']` + `['etsy.oauth.fernet_key']`. No code in `custom_addons/` reads those env vars. | Removed `ETSY_KEYSTRING`/`ETSY_SHARED_SECRET` from `REQUIRED_ENV_KEYS`; added new `_check_etsy_oauth_wiring()` that verifies both `ir.config_parameter` keys are populated. |
+| 2 | `cron: no active cron matches 'Etsy: Sync'` | `CRON_NAME_FRAGMENTS` used wrong substrings. Actual active crons on staging: `Etsy: API Receipts Sync`, `Etsy: Listing Metadata Sync`, `Etsy: Listing Variant Inventory Sync`, `Etsy: Push Tracking to Etsy`, `Etsy: Download Pending Product Images`, `Etsy: API Log Retention Sweep`, `Etsy: Message Dedupe Retention Sweep`. `Etsy: Fetch Order Emails` is INACTIVE (legacy per API-first pivot 2026-04-13). | Narrowed `CRON_NAME_FRAGMENTS` to `Etsy: API Receipts Sync` + `Etsy: Push Tracking` — the two crons the new specs actually depend on. Dropped `Etsy: Email` (legacy) and over-broad `Tracking` fragment. |
+| 3 | `shop-defaults: Invalid field 'token_expires_at' on 'etsy.shop'` | Field name authored from memory was wrong. Real column: `etsy_oauth_token_expires_at` (alongside `etsy_oauth_access_token`, `etsy_oauth_refresh_token`). | Renamed both the search_read fields list and the `.get()` site in `_check_shop_defaults`. |
+
+**Verification**: `python3 tests/e2e/fixtures/preflight_check.py` → exit 0, `PREFLIGHT OK — staging ready for UAT suite`.
+
+**Authoring-bug pattern worth remembering** — when writing a preflight check, the script's own field names / env keys / cron substrings must be cross-checked against actual staging state, not against the developer's mental model. Memory entry candidate for `feedback_odoo19_test_gotchas.md`: "preflight scripts that name-match runtime artifacts (cron names, ORM fields, ir.config_parameter keys, env vars) need a one-time live-staging dry-run before they're declared green — even if the spec authoring agent's plan looks self-consistent."
