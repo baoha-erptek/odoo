@@ -329,3 +329,45 @@ After unblocking preflight, Phase D-2 (deploy) and Phase D-3 (seed) executed cle
 **Phase D-2/D-3 (deploy + seed) outputs are preserved on staging** so re-run cost is just D-4 onwards once the auth path is resolved.
 
 **Class-B fix attempts on `odoo-auth.ts` were reverted** to keep the file at HEAD-canonical (`560fb58ac22`); none of the attempted variants worked. The preflight fix from earlier (`a480f5b4420`) IS committed and stands on its own.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D actual root cause + resolution (2026-05-31, RETRACTS prior "auth-path BLOCKER")
+
+Earlier "Phase D BLOCKER" entry above misdiagnosed the auth failure as a Playwright-vs-Odoo race / passkey / captcha / WAF / browser-fingerprint issue. **All of that was a red herring.** Adding a `console.log(\`pwd_len=${password.length}\`)` to the auth path revealed the password Playwright sent was 16 chars, not the expected 5.
+
+**Real root cause**: `tests/e2e/fixtures/global-setup.ts:123` looped over every `<ROLE>_PASSWORD=<value>` line emitted by `seed_ba_user.py` and exported each as `process.env.STAGING_<ROLE>_PASSWORD`. For `BA_LEAD`, this clobbered the owner-provided `STAGING_BA_LEAD_PASSWORD` (which maps to the staging `admin` user with a 5-char password) with the auto-seeded 16-char password belonging to a different user (`uat_ba_lead@hatafax.demo`). `env.ts`'s static `BA_LEAD_PASSWORD` reads `process.env` first → got the wrong password → `loginAsBaLead()` sent (login="admin", password=<16-char>) → AccessDenied. Non-browser auth paths (curl/urllib/XML-RPC) read directly from `.env` without `env.ts` so they kept working — which is what made the trail confusing.
+
+**Fix**: skip `BA_LEAD` in the process.env write loop. Committed `0156a42273e`. The auto-seeded BA Lead password is still recoverable via the `BA_LEAD_AUTO_PASSWORD` getter (reads from `artifacts/_seed_state.json`).
+
+**Memory-worthy lesson**: when a Playwright spec presents as "Wrong login/password" against a known-good staging Odoo, the first instrumentation is `console.log(CONFIG.<role>_PASSWORD.length)` (no value — just length). It rules out env-var poisoning, getter conflicts, and quote-stripping mismatches in one line. Dom-side hypotheses (form-hide race, passkey JS, captcha hook) should be SECOND priority.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D final state (2026-05-31)
+
+After the globalSetup fix + the 4 spec/POM authoring-drift fixes (etsy.shop oauth field names, action_etsy_shop → action_etsy_shops XML ID, etsy.api.log field names in TC-003/TC-007), the suites converge to:
+
+| Suite | Pass | Fail | Skip | Notes |
+|---|---:|---:|---:|---|
+| Flow-1 baseline (`test:tao-san-pham`) | 5 | 0 | 10 | Skips are by design (TC-006 BA-User permission TC, TC-008..015 require live publish — `RUN_ETSY_PUBLISH=0`) |
+| Flow-2 (`test:don-hang-etsy`) | 2 | 1 | 5 | Pass: TC-001 Authorize + TC-002 Test Connection. Fail: TC-003 (Class B — `etsy.api.log` has 0 rows with non-null `http_status` on staging; cron-side, not spec-side; needs an in-window successful sync to converge). Skips: chain off TC-003 + email/dedupe TCs require pre-deploy email-log fixtures the seeder doesn't refresh per-run. |
+| Flow-3 (`test:giao-hang`) | 0 | 0 | 13 | All skip via `test.skip(!order)`: `globalTeardown` runs after every spec file and cancels (state=cancel, NOT delete — IDs 3311-3314 still exist on staging) all `UAT-2026-05-31-*` orders; the spec's seeded-order lookup filters `state in ('draft','sent','sale')` and finds nothing. Class B — teardown-vs-spec coordination, not a code defect. |
+
+**Total Phase D commits on `feature/006-master-plan-coding`**:
+- `a480f5b4420` — preflight ETSY_KEYSTRING env removal + cron names + token field name
+- `e5ce8515cca` — Phase D STOPPED documentation (now superseded but kept as the false-trail audit)
+- `0156a42273e` — globalSetup BA_LEAD env-poison fix (the real auth bug)
+- `63265e69b6c` — Flow-2 etsy.shop oauth field rename + etsy_shop_form action XML ID
+- `906ba23e9c5` — etsy.api.log field rename in TC-003 + TC-007 (via e2e-runner agent audit pass)
+
+**Remaining Class-B work to fully green Phase D** (not in this session's scope; document for next dispatch):
+1. **etsy.api.log seed for TC-003**: trigger `ir.cron.method_direct_trigger` for the Etsy API receipts cron in preflight or globalSetup so the spec sees at least one `http_status` in [200-299] row.
+2. **Flow-3 teardown coordination**: choose ONE of —
+   - (a) Skip cancel-on-teardown for `UAT-2026-05-31-*` orders; let them accumulate; cleanup is a manual owner step.
+   - (b) Move teardown out of `globalTeardown` into per-test afterEach with order-scoped cleanup.
+   - (c) Re-seed at the START of `test:giao-hang` (idempotent seed already supports this; need to either un-cancel existing or skip-when-cancelled and create fresh sale.orders with different client_order_ref).
+3. **Email-fixture refresh**: TC-004/TC-005/TC-008 chain off TC-003; some need a fresh `etsy.email.log` row that the dedup fixture doesn't supply. Seeder extension or per-test fixture wire-up.
+
+**Phase D classification recap** (per umbrella plan):
+- Class A (code defect in `custom_addons/`) → **NONE found**. Every Phase D failure traced to test infra (Class B) or seed gaps (Class C).
+- Class B (test infra): 5 fixed this session, 1 outstanding (TC-003 needs cron-trigger in globalSetup).
+- Class C (seed/fixture): 1 outstanding (Flow-3 teardown coordination + email-log fixture refresh).
+
+No `P-UAT-FIX-*` sub-slices were opened because no Class-A defects surfaced. The umbrella slice `P-UAT-AUTOMATION-2FLOWS` state stays `authoring_done` pending the 3 Class-B/C closures above; flipping to `done` requires Flow-2 + Flow-3 fully green or explicit owner sign-off that the residual skips are acceptable.
