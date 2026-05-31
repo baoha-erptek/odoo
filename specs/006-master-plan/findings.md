@@ -280,3 +280,52 @@ First Phase D run surfaced 3 classification-B (test-infra) bugs in `tests/e2e/fi
 **Verification**: `python3 tests/e2e/fixtures/preflight_check.py` → exit 0, `PREFLIGHT OK — staging ready for UAT suite`.
 
 **Authoring-bug pattern worth remembering** — when writing a preflight check, the script's own field names / env keys / cron substrings must be cross-checked against actual staging state, not against the developer's mental model. Memory entry candidate for `feedback_odoo19_test_gotchas.md`: "preflight scripts that name-match runtime artifacts (cron names, ORM fields, ir.config_parameter keys, env vars) need a one-time live-staging dry-run before they're declared green — even if the spec authoring agent's plan looks self-consistent."
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D BLOCKER: Playwright auth path fails against staging (2026-05-31)
+
+After unblocking preflight, Phase D-2 (deploy) and Phase D-3 (seed) executed clean:
+- 3 modules rsynced + `odoo -u etsy_integration,multichannel_hub_core,multichannel_hub_fulfillment --stop-after-init` exit 0 + container restart
+- `npm run seed:ba-user` created 4 role users (uid 5, 28, 29, 30)
+- `npm run seed:uat-data` created 4 UAT orders (3311–3314) + email-log dedupe fixture
+
+**Phase D-4 (baseline Flow-1 spec) FAILED on a previously-passing suite**: 4 failed, 10 skipped, 1 passed. All 4 failures share the same root cause and are NOT defects in custom_addons — they are an auth-path regression in `fixtures/odoo-auth.ts` against the current staging build of Odoo 19.
+
+**Symptom**: every `loginAs*()` call ends at `expect(page.locator('nav.o_main_navbar, header.o_navbar').first()).toBeVisible()` timing out, screenshot shows the login form with "Wrong login/password" alert.
+
+**What was tried and ruled out**:
+
+| Hypothesis | Test | Result |
+|---|---|---|
+| `STAGING_BA_LEAD_PASSWORD` stale | curl POST /web/login with same .env values | succeeds — redirects to /odoo |
+| Same creds via Python urllib JSON-RPC `/web/session/authenticate` | direct request | uid=2 success |
+| Same creds via Python XML-RPC `common.authenticate` | preflight + seed scripts | uid=2 success (logged every run) |
+| Rate-limit / brute-force lockout | 3 rapid Python urllib auths | all 3 succeed |
+| `waitForURL` regex too permissive (matches /web/login) | narrowed to `/\/odoo(\/|$|\?|#)|\/web\/(?!login)/` | unchanged |
+| Form submission bypasses captcha hook (`data-captcha="login"`) | switched between `button[type="submit"].click()` and JS `form.submit()` | both fail; also `website_cf_turnstile` + `google_recaptcha` are `uninstalled` on staging — no captcha actually loaded |
+| Form hidden by `class="oe_login_form d-none"` until passkey-detect JS resolves | added `form.oe_login_form` waitFor visible | unchanged |
+| Password not actually filled (passkey JS clears the field) | value-length verify + refill on mismatch | refill did not change outcome |
+| Sidestep form entirely via `page.request.post('/web/session/authenticate')` | JSON-RPC body identical to working Python urllib | Odoo returns `odoo.exceptions.AccessDenied` |
+| Stale `session_id` cookie poisoning JSON-RPC | `page.context().clearCookies()` before authenticate | AccessDenied unchanged |
+
+**What we know for certain**:
+- Credentials are correct (every non-browser auth path accepts them).
+- Staging is reachable (preflight + module update + seed scripts all worked).
+- No captcha module is installed (`website_cf_turnstile` + `google_recaptcha` both `uninstalled`).
+- The failure is browser-context-specific: Python urllib with browser-mimicking UA also succeeds, so it is NOT a nginx UA-block.
+
+**Unknown root cause** (candidates):
+1. Odoo 19 added a browser-fingerprint check to `/web/session/authenticate` that headless Chromium fails silently (returns AccessDenied instead of a specific error).
+2. A nginx/Cloudflare rule in front of staging that fingerprints headless Chromium (sec-ch-ua: "HeadlessChrome") and either drops the body or rewrites the request.
+3. A residual Odoo session state from `globalSetup` (which spawns XML-RPC seed scripts) that interferes with browser-side auth — though `clearCookies()` did not help.
+
+**Phase D STOPPED here per playbook §"When the playbook breaks"**. Continuing to guess at fixes burns context without converging.
+
+**Recommended next-session steps** (any one suffices):
+- Run `tests/e2e` from the staging host itself (Option 2 from earlier dispatch question) — same-host browser to same-host Odoo eliminates nginx/Cloudflare fingerprint suspects.
+- Hand to `e2e-runner` agent with this findings entry + the trace.zip artifact to deep-dive.
+- Switch `loginAs` to use an out-of-band XML-RPC authentication: call `/xmlrpc/2/common.authenticate` from Node (or Python helper), then plant the resulting `session_id` cookie on the browser context via `page.context().addCookies()`. This is a known Odoo E2E pattern but needs the XML-RPC→session-cookie bridge wired.
+- Owner side: temporarily disable any WAF / rate-limit rule on `/web/login` + `/web/session/authenticate` on staging and re-run; if it passes, the suspect is confirmed.
+
+**Phase D-2/D-3 (deploy + seed) outputs are preserved on staging** so re-run cost is just D-4 onwards once the auth path is resolved.
+
+**Class-B fix attempts on `odoo-auth.ts` were reverted** to keep the file at HEAD-canonical (`560fb58ac22`); none of the attempted variants worked. The preflight fix from earlier (`a480f5b4420`) IS committed and stands on its own.
