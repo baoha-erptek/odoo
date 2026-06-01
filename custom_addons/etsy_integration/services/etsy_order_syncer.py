@@ -139,6 +139,13 @@ class EtsyOrderSyncer:
                 shop.sudo().etsy_api_shop_id or shop.id,
             ),
             'source': 'audit',
+            # P-UAT-FIX-API-LOG-HTTP-STATUS: `_audit_log` is only called
+            # AFTER `adapter.fetch_new_orders` has yielded a payload —
+            # i.e. the upstream page fetch has already returned 200. The
+            # adapter/client are not in scope here; hardcoding 200 is
+            # both correct and the cheapest way to keep the row's
+            # http_status non-NULL so Flow-2 TC-003 converges.
+            'http_status': 200,
             'response_summary': (
                 'audit: receipt %s amount=%s %s — '
                 'no sale.order written (sync_audit_mode=True).'

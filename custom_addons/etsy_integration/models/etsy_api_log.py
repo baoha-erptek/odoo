@@ -71,7 +71,10 @@ class EtsyApiLog(models.Model):
     )
     http_status = fields.Integer(
         string='HTTP Status',
-        help='NULL on connection failures or audit-mode rows.',
+        help='Last HTTP status seen. NULL on connection failures (no '
+             'response). Audit-mode order-sync rows record 200 because '
+             'the audit fires only after a successful page fetch '
+             '(P-UAT-FIX-API-LOG-HTTP-STATUS).',
     )
     request_started_at = fields.Datetime(
         string='Request Started At', required=True,

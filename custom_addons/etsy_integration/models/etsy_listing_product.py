@@ -162,7 +162,15 @@ class EtsyListingProduct(models.Model):
                     created += 1
                 self._match_variant(rec)
             soft_deleted += self._soft_delete_absent(listing, seen)
-        self._write_audit(shop, created, updated, soft_deleted)
+        # P-UAT-FIX-API-LOG-HTTP-STATUS: surface last HTTP status from
+        # the inventory adapter's client (the loop above only reaches
+        # this line on a successful iteration, but we still source from
+        # the client rather than hardcoding so the value reflects reality
+        # if a future caller adds a try/except around the loop).
+        self._write_audit(
+            shop, created, updated, soft_deleted,
+            http_status=getattr(adapter._client, 'last_http_status', 0),
+        )
         return {'created': created, 'updated': updated,
                 'soft_deleted': soft_deleted}
 
@@ -224,9 +232,13 @@ class EtsyListingProduct(models.Model):
             'last_synced_at': fields.Datetime.now(),
         }
 
-    def _write_audit(self, shop, created, updated, soft_deleted):
+    def _write_audit(self, shop, created, updated, soft_deleted,
+                     http_status=0):
         """One `etsy.api.log` row per shop variant sync. sudo(): log
-        model is system-create-only; cron is already `__system__`."""
+        model is system-create-only; cron is already `__system__`.
+
+        `http_status` is sourced from the adapter's client by the caller
+        (P-UAT-FIX-API-LOG-HTTP-STATUS — keeps Flow-2 TC-003 convergent)."""
         # Path note: variants are fetched per-listing at
         # /listings/{listing_id}/inventory (no shop prefix); the audit
         # string mentions the shop_id for operator readability only.
@@ -236,6 +248,7 @@ class EtsyListingProduct(models.Model):
                 'GET /v3/application/listings/{listing_id}/inventory '
                 '[shop %s]' % (shop.sudo().etsy_api_shop_id or shop.id),
             'source': 'listing_pull',
+            'http_status': http_status,
             'response_summary': (
                 'variant_pull: created=%d updated=%d soft_deleted=%d'
                 % (created, updated, soft_deleted)

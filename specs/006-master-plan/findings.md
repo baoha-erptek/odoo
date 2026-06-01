@@ -398,3 +398,36 @@ This is a Class A defect: producer code mismatch with the asserted contract, not
 - residuals #1 + #2 + this findings entry (single commit on `feature/006-master-plan-coding`).
 
 **Lesson worth remembering**: TC-003 was tagged Class B ("seed gap") in the prior session because the rows existed but were sparse. The actual sparsity was a producer bug — rows existed but the asserted field was never written. When a Phase-D residual says "spec needs more data of shape X", verify the producer code actually emits shape X before classifying as a seed gap.
+
+### P-UAT-FIX-API-LOG-HTTP-STATUS — Class A resolved (2026-06-01)
+
+**Landed** on `feature/006-master-plan-coding`. etsy_integration 19.0.2.31.0 → **19.0.2.32.0**. Closes Residual #3 of `P-UAT-AUTOMATION-2FLOWS` Phase D.
+
+**Fix shape**: new `EtsyApiClient.last_http_status` attribute, set inside `_request()` immediately after `_send_with_429_retry()` and also after the post-401-refresh retry. Captures both success (200) and HTTP-failure (4xx/5xx) cases before `raise_for_status()` raises; non-HTTP errors (parse, connection, RateLimitError exhaustion) leave the attribute at its previous value. Threaded into 2 of the 3 broken writers via a new `http_status=` kwarg (default 0) on `_write_audit`:
+
+- `etsy_listing._sync_shop_listings` reads `adapter._client.last_http_status` on both branches (success + exception caught at line 175) and passes to `_write_audit`.
+- `etsy_listing_product._sync_shop_variants` reads `adapter._client.last_http_status` on the success path (no error path here — exception bubbles to `_cron_sync_variants` which catches at the shop level and writes no row).
+- `etsy_order_syncer._audit_log` hardcodes `http_status=200` — the method is invoked only AFTER `adapter.fetch_new_orders` has yielded a payload, i.e. the upstream page fetch already returned 200. Plumbing the client through `_audit_log(shop, payload)` would have been broader scope for no diagnostic gain.
+
+Bonus help-text update: `etsy.api.log.http_status.help` previously said "NULL on connection failures or audit-mode rows" — the audit-mode half is now wrong (audit rows record 200 by design); updated per security-reviewer INFORMATIONAL note.
+
+**Tests** (`tests/test_p_uat_fix_api_log_http_status.py`, ~280 LOC, 5 tests):
+- `TestT1_ListingPullHttpStatus` × 2 (success + post-fetch-error path; both assert `http_status=200` from the captured client attribute).
+- `TestT2_VariantPullHttpStatus` × 1 (success path).
+- `TestT3_OrderSyncerAuditLogHttpStatus` × 1 (audit-mode payload yield).
+- `TestPhase1_HttpStatusInvariant` × 1 — Phase-1 DB-style regression. Exercises all 3 writers in one TransactionCase savepoint, then queries raw SQL: `source IN ('listing_pull','audit') AND (error_message IS NULL OR error_message = '') AND (http_status IS NULL OR http_status <= 0)` → must return `[]`.
+
+**Trap captured** for memory: `fields.Integer()` without `default=` writes **NULL** when the key is omitted from `.create()`. The ORM read coerces NULL→0 on field access (so `log.http_status == 0` for tests using `assertEqual`), but PG storage is NULL. The Phase-1 invariant query therefore had to use `IS NULL OR <= 0` to catch both. Initial test draft used `<= 0` only and passed spuriously — only `raise AssertionError(...DIAG all_rows: %r)` revealed the truth. See memory `feedback_odoo19_test_gotchas` for new entry.
+
+**RED → GREEN**:
+- RED: 5 expected failures (the 5 tests all assert `http_status` populated; producers wrote NULL).
+- GREEN: 5/5 pass.
+- Regression check: full `--test-tags /etsy_integration` shows 18 failed / 5 errored — identical to the **stashed-baseline** count (`git stash` → run → unstash → run again). All pre-existing, none caused by this slice. Documented for traceability; out of scope for this hotfix.
+
+**Reviews ran in parallel** (single message, two `Agent` calls per playbook §Phase 4):
+- code-reviewer: APPROVE; 0 CRITICAL / 0 HIGH; 1 MEDIUM (style — `last_http_status` → `_last_http_status` private-prefix). **Not applied** per simplicity-first; the attribute is functional public-looking but only ever read from sibling-module audit writers, and the underscore-bikeshed would just churn 4 call sites. Documented as deferred.
+- security-reviewer: APPROVE; 0 CRITICAL / 0 HIGH; 1 LOW (attribute exposure: HTTP status codes are non-sensitive operational metadata, not a privilege gateway) + 1 INFORMATIONAL (help-text drift on `etsy.api.log.http_status` — **applied inline** in this slice's commit).
+
+**Owner-gated remainder** (T6): Flow-2 TC-003 + downstream (TC-004/005/008) re-run on staging requires staging deploy of etsy_integration 19.0.2.32.0 + admin password + Etsy creds + Gearment HMAC secret per `P-UAT-AUTOMATION-2FLOWS` Phase D contract. Code work is done; convergence verification is the operator's next step via `npm run test:don-hang-etsy`.
+
+**Tracker status flip**: `P-UAT-AUTOMATION-2FLOWS` can flip from `authoring_done` → `done` once T6 lands green. This slice (`P-UAT-FIX-API-LOG-HTTP-STATUS`) is independently `done` for code; only the staging convergence verification is owner-gated.

@@ -132,6 +132,11 @@ class EtsyApiClient:
         self.client_id = credentials['client_id']
         self.client_secret = credentials['client_secret']
         self._rate_limiter = TokenBucket(_RATE_LIMIT_QPS, _RATE_LIMIT_PERIOD)
+        # P-UAT-FIX-API-LOG-HTTP-STATUS: expose the most recent HTTP status
+        # to callers so audit-log writers can populate `etsy.api.log.http_status`.
+        # Set inside `_request()` before `raise_for_status()` so both success
+        # and HTTP-failure paths capture (non-HTTP errors leave it unchanged).
+        self.last_http_status = 0
 
     def _session(self) -> requests.Session:
         session = requests.Session()
@@ -233,6 +238,9 @@ class EtsyApiClient:
 
         session = self._session()
         response = self._send_with_429_retry(session, method, url, **kwargs)
+        # Capture before any branch — keeps the attribute up-to-date even
+        # when the call ultimately raises (401/403/4xx/5xx).
+        self.last_http_status = response.status_code
 
         if response.status_code == _AUTH_NEEDS_REFRESH:
             # One-shot refresh + retry. If the post-refresh request also 401s,
@@ -240,6 +248,7 @@ class EtsyApiClient:
             self._refresh_token()
             session = self._session()
             response = self._send_with_429_retry(session, method, url, **kwargs)
+            self.last_http_status = response.status_code
             if response.status_code == _AUTH_NEEDS_REFRESH:
                 raise ValueError(
                     "Etsy auth still failing after token refresh; "
