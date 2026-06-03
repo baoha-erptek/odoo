@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vai trò 4: Kiểm soát giá (RD) — Audit giá hàng ngày — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937;position:relative}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  .mu-design-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(180,28,28,0.08);display:flex;align-items:center;justify-content:center;z-index:5}
+  .mu-design-banner{background:#fee2e2;color:#b91c1c;border:2px solid #dc2626;border-radius:4px;padding:8px 12px;font-size:13px;font-weight:600;text-align:center}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Vai trò 4 · Kiểm soát giá (RD) — Audit giá hàng ngày</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">VAI TRÒ 4 · ĐỌC ~5 PHÚT</div>
+    <h2>Kiểm soát giá (RD) — Audit giá hàng ngày</h2>
+    <p class="lede">Chị Mai, RD (Research & Development) 35 tuổi, phụ trách phát hiện đơn lệch giá hàng ngày. Mỗi sáng mở Excel + Etsy dashboard để đối chiếu: giá listing trên Etsy vs giá thực mà khách đã trả lúc mua. Nếu delta > 10%, báo cáo cho CDA để xem có là do coupon, A/B test, hay lỗi pricing. Hôm nay toàn thủ công 100% Excel; tương lai (Story 6.5, <b>đang thiết kế — chưa khởi công</b>) sẽ tự động kéo giá từ Etsy + so sánh với từng đơn hàng trong 7 ngày qua, alert nếu vượt ngưỡng. <b>Standard-Odoo-First chưa chạy:</b> trước khi xây dashboard riêng cần cân nhắc view pivot/spreadsheet có sẵn của Odoo.</p>
+    <div class="pills">
+      <span class="pill red">🟥 Trong thiết kế · Story 6.5</span>
+      <span class="pill grey">Phase 6 roadmap</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh — tại sao cần kiểm soát giá?</h3>
+    <p>Etsy shop của chúng tôi có ~100–300 listing mỗi cửa hàng. Một số sản phẩm được bán dưới giá niêm yết vì ba lý do: (1) coupon hợp lệ do BA/Marketing cấp, (2) A/B test giá tạm thời để xem đơn tăng hay giảm, (3) lỗi pricing — ai đó sửa giá nhầm trên Etsy hoặc trên hệ thống, quên sync lại. Hôm nay, mỗi sáng Chị Mai phải mở Excel pivot từ doanh số tuần trước, lôi danh sách Etsy listing ra từ Etsy dashboard, sau đó gõ tay so sánh 20–30 ca/ngày. Nếu thấy case lệch giá, phải email báo cho CDA để xử lý từng ca. Quá trình này: (a) mất 1–2 giờ/ngày, (b) dễ sót case vì thủ công, (c) không có dashboard tập trung để RD, BA, CDA cùng xem mức độ lệch giá trong tuần.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Lịch một ngày — khi Story 6.5 live (tương lai)</h3>
+    <p style="margin-bottom:14px">Bảng dưới so sánh: cột "Ngày nay (thủ công)" vs cột "Tương lai (Story 6.5 tự động)" để RD có ảnh tương lai về cách làm việc sẽ thay đổi.</p>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Mốc giờ</div>
+      <div class="swim-head">Hành động (tương lai)</div>
+      <div class="swim-head">Hành động hôm nay</div>
+      <div class="swim-head">Màn hình/tool</div>
+      <div class="swim-head">Trạng thái</div>
+
+      <div class="swim-row-lbl">1. Sáng sớm</div>
+      <div class="swim-cell">~08:30</div>
+      <div class="swim-cell pending">Mở Price Audit Dashboard, scan alerts đêm qua (cron tự gửi lúc 7h sáng)</div>
+      <div class="swim-cell blocked">Mở Excel từ tuần trước, lôi danh sách 19 shop từ Etsy dashboard</div>
+      <div class="swim-cell pending">Price Audit Dashboard (thiết kế)</div>
+      <div class="swim-cell blocked">Thủ công</div>
+
+      <div class="swim-row-lbl">2. Scan alerts</div>
+      <div class="swim-cell">~09:15</div>
+      <div class="swim-cell pending">Drill-down top 5 alert: xem order #, listing, giá bán vs giá đơn, tính delta %</div>
+      <div class="swim-cell blocked">Copy-paste Order # từ Etsy → Excel, gõ tay Delta %</div>
+      <div class="swim-cell pending">Alert table + outlier detail view</div>
+      <div class="swim-cell blocked">Thủ công</div>
+
+      <div class="swim-row-lbl">3. Ghi chú RD</div>
+      <div class="swim-cell">~10:30</div>
+      <div class="swim-cell pending">Ghi chú vào từng order: "lý do: coupon BA grant", "lý do: A/B test SKU-123", "lý do: lỗi pricing — cần BA xem"</div>
+      <div class="swim-cell blocked">Email BA Lead từng case riêng lẻ</div>
+      <div class="swim-cell pending">Outlier list view + order chatter (ghi chú nội bộ)</div>
+      <div class="swim-cell blocked">Email</div>
+
+      <div class="swim-row-lbl">4. Tổng hợp</div>
+      <div class="swim-cell">~14:00</div>
+      <div class="swim-cell pending">Xuất report: "Lệch giá tuần X — tổng tổn thất 7 ngày / shop / tỉ lệ lệch"</div>
+      <div class="swim-cell blocked">Pivot Excel, tính % tổn thất bằng tay</div>
+      <div class="swim-cell pending">Report export form (thiết kế)</div>
+      <div class="swim-cell blocked">Excel</div>
+
+      <div class="swim-row-lbl">5. Báo cáo</div>
+      <div class="swim-cell">~15:00</div>
+      <div class="swim-cell pending">Gửi PDF báo cáo cho CDA + Marketing (nếu có case A/B test)</div>
+      <div class="swim-cell blocked">Export + gửi PDF từ email</div>
+      <div class="swim-cell pending">PDF tự sinh + gửi qua cron</div>
+      <div class="swim-cell blocked">Email PDF</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Các bước chi tiết (5 bước — khi Story 6.5 live)</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">RD · Mỗi sáng 8h30</div>
+        <div class="title">Mở Price Audit Dashboard, đọc alerts đêm qua</div>
+        <div class="desc">(Thiết kế — chưa khởi công.) Khi hoàn thiện, hệ thống sẽ chạy lịch tự động lúc 7h sáng: kéo danh sách listing từ Etsy, so sánh với giá bán trên từng đơn hàng trong 7 ngày qua, tính delta %. Nếu delta > 10%, thêm vào bảng alert. RD mở dashboard, thấy ngay top alerts có múi gì.</div>
+      </div></li>
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">RD · 45 phút</div>
+        <div class="title">Drill-down 5 alert top, xác định lý do lệch giá</div>
+        <div class="desc">Bấm vào alert → xem detail: Order #, SKU, tên sản phẩm, giá listing Etsy, giá đơn khách trả, delta %, ngày đặt. Chị Mai xem là case nào: coupon hợp lệ (kiểm tra với BA), A/B test (xem trong chatter có ghi ghi chú không), hay lỗi cần fix. Ghi chú tạm thời vào dòng.</div>
+      </div></li>
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">RD · tuỳ case</div>
+        <div class="title">Cập nhật RD note vào order và tổng hợp lý do</div>
+        <div class="desc">Nhập lý do vào field "RD Note" (1 dòng ngắn gọn): "✓ coupon BA-grant 20%"; "✓ A/B test giá $5 vs $8"; "⚠️ lỗi pricing — listing đang $10 nhưng order trả $3 — sai đơn vị?". Hệ thống tự gom các case cùng lý do để báo cáo phân loại.</div>
+      </div></li>
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">RD · 14:00</div>
+        <div class="title">Xuất report tuần: danh sách + thống kê tổn thất</div>
+        <div class="desc">Bấm "Export Pricing Audit Report" → chọn tuần, min delta % (vd 5% / 10%), nhóm theo shop. Hệ thống xuất PDF với: top 10 case lệch giá, tỉ lệ % lệch giá theo shop, ước tính tổn thất tuần (vd "mất $2,500 từ 47 đơn lệch giá").</div>
+      </div></li>
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">RD · 15:00</div>
+        <div class="title">Gửi báo cáo cho CDA + Marketing (nếu có case A/B)</div>
+        <div class="desc">PDF tự gửi cho CDA qua email. Nếu tuần có ≥5 case A/B test, cron cũng gửi cơ bản cho Marketing để họ review xem A/B test nào hiệu quả. Hết việc cho hôm nay — chuyên sâu vào case nào thường là CDA quyết định.</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo — 3 mockup (trong thiết kế)</h3>
+    <div class="mu-lede">3 màn hình mô phỏng của Story 6.5. Tất cả đều được đánh dấu "Trong thiết kế" vì chưa bắt đầu code (Phase 6 roadmap). Cuộn xuống để xem từng cảnh.</div>
+
+    <!-- MOCKUP 1: Price Audit Dashboard -->
+    <div class="mu-screen">
+      <div class="mu-design-overlay">
+        <div class="mu-design-banner">🟥 Trong thiết kế · Story 6.5</div>
+      </div>
+      <div class="mu-screen-title">Màn hình 1 · <strong>Price Audit Dashboard (target) — KPI + Alert list</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Báo cáo</span><span class="mu-menu">Kiểm soát giá › Dashboard</span>
+        <span class="mu-spacer"></span><span class="mu-user">rd.chị_mai@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Báo cáo<span class="mu-sep">›</span><strong>Kiểm soát giá</strong><span class="mu-sep">›</span>Tuần này</div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Tuần này</button>
+        <button class="mu-btn">Tháng này</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn mu-btn-primary">Export Report PDF</button>
+      </div>
+      <div class="mu-form">
+        <div style="margin-bottom:18px">
+          <div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:10px">KPI tuần này</div>
+          <ul class="kpi-list">
+            <li><b>Đơn lệch giá</b>23 đơn (7 ngày)</li>
+            <li><b>Tổng tổn thất</b>$2,456.75 (~12% doanh số)</li>
+            <li><b>Shop lệch nhiều</b>JaHandmadeArt (8 đơn)</li>
+            <li><b>SKU lệch nhiều</b>MUG-CR-F11 (5 đơn)</li>
+          </ul>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:8px">Top alerts — 10 đơn lệch giá nhất</div>
+        <table class="mu-list">
+          <thead><tr><th style="width:70px">Đơn #</th><th>Shop</th><th>SKU</th><th>Giá listing</th><th>Giá đơn</th><th>Delta %</th><th>Lý do (RD note)</th><th>Ngày</th></tr></thead>
+          <tbody>
+            <tr><td class="mu-mono">ORD-9234</td><td>JaHandmadeArt</td><td>MUG-CR-F11</td><td>$14.50</td><td>$5.00</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-65%</td><td><span class="mu-pill mu-pill-warn">coupon BA-grant 65%</span></td><td>28/5</td></tr>
+            <tr><td class="mu-mono">ORD-9201</td><td>HatafaVN</td><td>APR-LN-AM</td><td>$28.00</td><td>$7.99</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-71%</td><td><span class="mu-pill mu-pill-danger">⚠️ lỗi pricing?</span></td><td>27/5</td></tr>
+            <tr><td class="mu-mono">ORD-9189</td><td>JaHandmadeArt</td><td>DMT-TX-R30X18</td><td>$18.00</td><td>$12.50</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-31%</td><td><span class="mu-pill mu-pill-neutral">A/B test SKU</span></td><td>26/5</td></tr>
+            <tr><td class="mu-mono">ORD-9175</td><td>CraftyCorner</td><td>RING-SQ-CE</td><td>$16.00</td><td>$9.99</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-38%</td><td><span class="mu-pill mu-pill-neutral">A/B test tiền tệ?</span></td><td>26/5</td></tr>
+            <tr><td class="mu-mono">ORD-9143</td><td>JaHandmadeArt</td><td>MUG-CR-F11</td><td>$14.50</td><td>$6.00</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-59%</td><td><span class="mu-pill mu-pill-warn">coupon BA-grant 60%</span></td><td>25/5</td></tr>
+            <tr><td class="mu-mono">ORD-9128</td><td>GiftGala</td><td>MUG-CR-F11</td><td>$14.50</td><td>$10.50</td><td class="mu-mono" style="color:#ca8a04;font-weight:700">-28%</td><td><span class="mu-pill mu-pill-neutral">chưa xem</span></td><td>24/5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mu-caption">Dashboard mở ra mỗi sáng lúc 8h30 khi RD tới công ty. <b>KPI tiles</b> hiển thị tóm tắt: bao nhiêu đơn lệch, mất bao nhiêu tiền, shop/SKU nào có vấn đề nhất. <b>Alert table</b> dưới là danh sách chi tiết từ cao xuống thấp theo delta %. RD bấm vào row để drill-down hoặc ghi chú lý do trực tiếp.</div>
+    </div>
+
+    <!-- MOCKUP 2: Outlier list view (detail) -->
+    <div class="mu-screen">
+      <div class="mu-design-overlay">
+        <div class="mu-design-banner">🟥 Trong thiết kế · Story 6.5</div>
+      </div>
+      <div class="mu-screen-title">Màn hình 2 · <strong>Outlier List View (target) — chi tiết đơn lệch giá + RD note</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Báo cáo</span><span class="mu-menu">Kiểm soát giá › Danh sách lệch giá</span>
+        <span class="mu-spacer"></span><span class="mu-user">rd.chị_mai@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Báo cáo<span class="mu-sep">›</span>Kiểm soát giá<span class="mu-sep">›</span><strong>Danh sách</strong> <span class="mu-pill mu-pill-warn" style="margin-left:8px">23 đơn</span></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Delta > 10%</button>
+        <button class="mu-btn">Lọc: 7 ngày qua</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn">Xuất Excel</button>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th style="width:60px">Đơn #</th><th>Shop</th><th>SKU</th><th>Giá listing</th><th>Giá đơn</th><th>Delta %</th><th>RD note</th><th>Lý do hệ thống</th><th>Xem đơn</th></tr></thead>
+        <tbody>
+          <tr><td class="mu-mono">ORD-9234</td><td>JaHandmadeArt</td><td>MUG-CR-F11</td><td>$14.50</td><td>$5.00</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-65%</td><td style="color:#15803d;font-weight:600">✓ coupon BA</td><td>Coupon hợp lệ (xác nhận)</td><td><button class="mu-btn mu-btn-link">Xem</button></td></tr>
+          <tr><td class="mu-mono">ORD-9201</td><td>HatafaVN</td><td>APR-LN-AM</td><td>$28.00</td><td>$7.99</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-71%</td><td style="color:#b91c1c;font-weight:600">⚠️ Lỗi?</td><td>Cần xem lại (đơn này 3 lần update giá)</td><td><button class="mu-btn mu-btn-link">Xem</button></td></tr>
+          <tr><td class="mu-mono">ORD-9189</td><td>JaHandmadeArt</td><td>DMT-TX-R30X18</td><td>$18.00</td><td>$12.50</td><td class="mu-mono" style="color:#dc2626;font-weight:700">-31%</td><td style="color:#714B67;font-weight:600">A/B test</td><td>A/B test giá tương ứng với SKU (có log)</td><td><button class="mu-btn mu-btn-link">Xem</button></td></tr>
+          <tr><td class="mu-mono">ORD-9128</td><td>GiftGala</td><td>MUG-CR-F11</td><td>$14.50</td><td>$10.50</td><td class="mu-mono" style="color:#ca8a04;font-weight:700">-28%</td><td style="color:#6b7280">—</td><td>Chưa rõ (RD cần xem)</td><td><button class="mu-btn mu-btn-link">Xem</button></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Đây là view chi tiết của danh sách. RD có thể lọc theo shop, ngày, delta %, hoặc từ khóa SKU. Cột "RD note" là nơi RD ghi lý do (có thể edit trực tiếp). Cột "Lý do hệ thống" show tên tắt của các flag mà cron đã tính (coupon, A/B test, kiểm tra tập dữ liệu). Bấm "Xem" để mở toàn bộ order form và đọc timeline chat (có ghi chú từ BA/Marketing không).</div>
+    </div>
+
+    <!-- MOCKUP 3: Report export form -->
+    <div class="mu-screen">
+      <div class="mu-design-overlay">
+        <div class="mu-design-banner">🟥 Trong thiết kế · Story 6.5</div>
+      </div>
+      <div class="mu-screen-title">Màn hình 3 · <strong>Report Export Form (target) — chuẩn bị xuất PDF</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Báo cáo</span><span class="mu-menu">Kiểm soát giá › Xuất báo cáo</span>
+        <span class="mu-spacer"></span><span class="mu-user">rd.chị_mai@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Báo cáo<span class="mu-sep">›</span><strong>Xuất báo cáo kiểm soát giá</strong></div>
+      <div class="mu-form">
+        <div class="mu-form-title">Xuất báo cáo kiểm soát giá</div>
+        <div class="mu-grid2">
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Tuần / Tháng</div><div class="mu-field-value"><select style="border:1px solid #d1d5db;padding:4px 8px;border-radius:3px;font-size:13px"><option>Tuần 21/2026 (27/5–2/6)</option><option>Tuần 20/2026 (20/5–26/5)</option><option>Tháng 5/2026</option></select></div></div>
+            <div class="mu-field"><div class="mu-field-label">Shop (tuỳ chọn)</div><div class="mu-field-value"><input type="text" placeholder="Để trống = tất cả shop" style="border:1px solid #d1d5db;padding:4px 8px;border-radius:3px;font-size:13px;width:100%"></div></div>
+            <div class="mu-field"><div class="mu-field-label">Min delta % để báo</div><div class="mu-field-value"><select style="border:1px solid #d1d5db;padding:4px 8px;border-radius:3px;font-size:13px"><option selected>10% (mặc định)</option><option>5%</option><option>15%</option><option>20%</option></select></div></div>
+          </div>
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Gửi email cho</div><div class="mu-field-value"><input type="email" placeholder="CDA, Marketing, etc." style="border:1px solid #d1d5db;padding:4px 8px;border-radius:3px;font-size:13px;width:100%"></div></div>
+            <div class="mu-field"><div class="mu-field-label">Chế độ báo cáo</div><div class="mu-field-value"><label style="display:block;margin-bottom:6px"><input type="radio" name="report_mode" checked> Đầy đủ (detail + KPI + biểu đồ)</label><label><input type="radio" name="report_mode"> Tóm tắt (KPI + top 10 only)</label></div></div>
+            <div class="mu-field"><div class="mu-field-label"></div><div class="mu-field-value"><button class="mu-btn mu-btn-primary" style="width:100%;margin-top:8px">Xuất PDF + Gửi email</button></div></div>
+          </div>
+        </div>
+        <div style="background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;margin-top:14px;font-size:12.5px;color:#4b5563;line-height:1.55">
+          <b>Hệ thống sẽ:</b> Tạo PDF có: tóm tắt tuần (KPI), top 10 case lệch giá, biểu đồ delta % theo shop, tỉ lệ % case coupon vs lỗi vs A/B test, ước tính tổn thất. Nếu bật "Gửi email", cron tự gửi PDF cho danh sách người nhận lúc 16:00 cùng ngày.
+        </div>
+      </div>
+      <div class="mu-caption">Form tạo báo cáo đơn giản: RD chọn tuần/tháng, min delta %, có muốn gửi email hay không, rồi bấm "Xuất PDF". PDF được lưu vào attachment của đơn và gửi cho CDA (mặc định) hoặc các email khác. Dùng tuần để track trend hàng tuần, dùng tháng để track hàng tháng.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Phương án tạm thời — hôm nay (trước Story 6.5)</h3>
+    <p><b>Excel pivot từ nhật ký Etsy:</b> BA export danh sách bán từ Odoo, RD tính delta % bằng công thức Excel, sau đó gõ tay so sánh với giá listing trên Etsy (kéo từ Etsy dashboard hoặc copy-paste).</p>
+    <p><b>Xuất danh sách đơn + filter ngày:</b> RD vào menu Bán hàng → Đơn hàng, filter "Ngày ≥ -7d", export ra Excel, sau đó dùng VLOOKUP để join với danh sách listing.</p>
+    <p><b>Cross-reference Etsy dashboard:</b> Mở Etsy từng shop (19 lần), note giá listing, mang lại đối chiếu với order list trong Excel. Nếu thấy delta > 10%, ghi tên case vào sticky note.</p>
+    <p><b>Gửi email báo cho BA Lead:</b> Sau khi xong, gõ email cho BA + CDA liệt kê các case cần xem. Có thể kèm screenshot hoặc file Excel trong email.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Luồng và vai trò liên quan</h3>
+    <div class="crosslink-grid">
+      <a href="flow-1-tao-san-pham.html"><b>Luồng</b>Luồng 1 — Tạo + publish listing lên Etsy, giá niêm yết được lưu</a>
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Luồng</b>Luồng 2 — Nhận đơn hàng Etsy, giá bán được lưu trên đơn hàng</a>
+      <a href="flow-1-tao-san-pham.html"><b>Luồng</b>Luồng 3 — Quản lý coupon, A/B test giá</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng</b>Luồng 4 — Đơn hàng từ Etsy đến kho</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — escalation path khi RD phát hiện lỗi pricing</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>Marketing — quản lý coupon, báo cho RD nếu có A/B test giá</a>
+      <a href="role-3-san-xuat.html"><b>Vai trò</b>Sản xuất — xác nhận đơn hàng trước khi gửi</a>
+      <a href="role-5-pd.html"><b>Vai trò</b>Thiết kế sản phẩm (PD) — quản lý SKU, liên kết giá listing</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">F</span>Câu hỏi mở</h3>
+    <p><b>Story 6.5 chưa ưu tiên:</b> Hiện đang Phase 6 roadmap. Dự kiến tháng 7/2026 bắt đầu code. Trước đó, RD vẫn dùng phương án Excel tay (D).</p>
+    <p><b>Ngưỡng alert (delta %):</b> Cần quyết định: alert ở 5% / 10% / 15%? Thấp quá → nhiều false alarm (coupon hợp lệ), cao quá → miss case lỗi. Đề xuất: 10% mặc định, RD có filter để xem 5%+ nếu cần.</p>
+    <p><b>Cron interval:</b> Chạy cron kéo giá listing + so sánh mỗi giờ hay mỗi ngày? Hàng giờ → phát hiện lỗi nhanh, nhưng tốn tài nguyên + gửi email nhiều; mỗi ngày tóm tắt (7h sáng) → hạn chế spam. Đề xuất: 1 lần sáng (7h) cho report tuần, + cron pull giá 3 lần/ngày (9h / 14h / 18h) để RD có option xem realtime nếu cần.</p>
+    <p><b>Quyền dismiss alert:</b> Nếu RD ghi chú "lý do: coupon hợp lệ", alert đó có được mark "resolved" tự động hay vẫn hiển thị? Hay phải BA/CDA duyệt mới tắt? Cần quyết định để tránh nhầm lẫn.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">G</span>Nhân vật — Chị Mai (RD)</h3>
+    <p><b>Tên:</b> Mai (Chị Mai) | <b>Tuổi:</b> 35 | <b>Chức vụ:</b> Research & Development / Kiểm soát giá | <b>Kinh nghiệm:</b> 8 năm làm RD/QC ở công ty may/in ấn, chuyển sang Etsy 1 năm.</p>
+    <p><b>Trách nhiệm hàng ngày:</b> Mở Excel + Etsy dashboard, so sánh giá listing vs giá bán, phát hiện outlier, ghi chú lý do, báo cáo cho CDA/Marketing. Hôm nay 100% thủ công, mất 1–2 giờ/ngày.</p>
+    <p><b>Dạy-học:</b> Chị Mai không sợ hệ thống mới miễn là dashboard đơn giản. Cô ấy dùng Outlook + Excel thành thạo, nên nếu Story 6.5 làm dashboard y như Excel (cột + lọc + sort), sẽ dễ bấm được.</p>
+  </div>
+
+  <footer>Vai trò 4 · cập nhật 2026-06-03 · nguồn: BRD_VN v1.0 · SRS_VN v1.0 · Story 6.5 (chưa code) · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

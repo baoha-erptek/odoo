@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vai trò 3: Sản xuất — Quét mã, chuyển trạng thái, báo cáo ca — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Vai trò 3 · Sản xuất — Quét mã, chuyển trạng thái, báo cáo ca</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">VAI TRÒ 3 · ĐỌC ~6 PHÚT</div>
+    <h2>Sản xuất — Quét mã, chuyển trạng thái, báo cáo ca</h2>
+    <p class="lede">Anh Long, 30 tuổi, Trưởng ca sản xuất tại Hatafa. Mỗi ca làm 8 giờ, 50-80 đơn đi qua tay. Phụ trách 4 thợ in + 2 thợ QC. Hôm nay công việc của anh là mở pipeline kanban, bấm "Move → trạng thái tiếp theo" cho từng đơn khi hoàn tất công đoạn, tạo task in lại khi có lỗi, và ghi báo cáo cuối ca. Năm 2026 Story 3.6 sẽ cho phép scan QR đơn trên di động — tự động chuyển trạng thái khi MRP work order xong, không cần bấm tay.</p>
+    <div class="pills">
+      <span class="pill yellow">Quét mã trên di động — đang xây</span>
+      <span class="pill grey">Story 3.6 auto-stage chưa ra</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh vai trò</h3>
+    <p>Đội sản xuất là vai trò chạy nhiều nhất theo số lượng action trên hệ thống nhưng ít quyền nhất. Mỗi đơn đi qua tay 4-5 lần: chờ in → đang in → chờ QC → đóng gói → chờ ship. Hôm nay anh Long phải bấm tay từng transition trên web; Story 3.6 sẽ cho phép scan QR đơn trên mobile và tự động chuyển khi MRP work order hoàn tất. Anh không có quyền edit địa chỉ, edit giá, hoặc đẩy lên Etsy/Gearment — mỗi việc đó là trách nhiệm của BA Lead, Marketing, hoặc BA Shipping. Trách nhiệm chính của anh là chuyển trạng thái nhanh, chính xác, ghi note khi có vấn đề, và báo cáo cuối ca.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Lịch một ca làm việc (8 giờ, ~50-80 đơn)</h3>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Giờ</div>
+      <div class="swim-head">Hành động</div>
+      <div class="swim-head">Màn hình/công cụ</div>
+      <div class="swim-head">Số đơn</div>
+      <div class="swim-head">Ghi chú</div>
+
+      <div class="swim-row-lbl">1. Bắt đầu ca</div>
+      <div class="swim-cell">08:00</div>
+      <div class="swim-cell">Mở pipeline kanban filter "Đã duyệt thiết kế" — xem danh sách đơn cần in hôm nay</div>
+      <div class="swim-cell">Pipeline kanban (3 cột: Đã duyệt / Đang in / Chờ QC)</div>
+      <div class="swim-cell done">~22 đơn</div>
+      <div class="swim-cell">Chọn "Hôm nay" để chỉ xem đơn giao trong hôm</div>
+
+      <div class="swim-row-lbl">2. In lô đầu tiên</div>
+      <div class="swim-cell">08:15</div>
+      <div class="swim-cell">Pick đơn đầu tiên, bấm "Move → Đang in" để chuyển trạng thái</div>
+      <div class="swim-cell">Tab Pipeline trên đơn hàng + kanban (sẽ đầy đủ khi pipeline 17 trạng thái hoàn tất)</div>
+      <div class="swim-cell">1 đơn</div>
+      <div class="swim-cell">Cùng lúc 4 thợ in pick đơn khác</div>
+
+      <div class="swim-row-lbl">3. In xong batch</div>
+      <div class="swim-cell">09:30</div>
+      <div class="swim-cell">Batch 10 đơn in xong, chuyển từng đơn từ "Đang in" → "Chờ QC"</div>
+      <div class="swim-cell">Pipeline kanban drag-drop hoặc form Pipeline tab</div>
+      <div class="swim-cell done">10 đơn</div>
+      <div class="swim-cell">Đợi QC duyệt, không để đơn quá 30 phút ở Chờ QC</div>
+
+      <div class="swim-row-lbl">4. QC kiểm tra</div>
+      <div class="swim-cell">10:00</div>
+      <div class="swim-cell">QC pass 8 đơn (chuyển → Đóng gói), reject 2 đơn (lỗi mực): create task "In lại" + gắn vào đơn cha</div>
+      <div class="swim-cell">QC form + Chatter tạo task</div>
+      <div class="swim-cell pending">8 pass / 2 fail</div>
+      <div class="swim-cell">Task in lại tự thêm vào timeline của đơn</div>
+
+      <div class="swim-row-lbl">5. Nghỉ trưa</div>
+      <div class="swim-cell">12:00–13:00</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">6. Đợt 2 sản xuất</div>
+      <div class="swim-cell">13:00</div>
+      <div class="swim-cell">Đơn Dropship Gearment KHÔNG đi qua phòng in (auto skip → Đã giao Gearment); Anh Long chỉ thấy MTO. Lọc pipeline để ẩn Dropship.</div>
+      <div class="swim-cell">Pipeline kanban filter "MTO"</div>
+      <div class="swim-cell pending">~35 đơn</div>
+      <div class="swim-cell">Gearment xử lý ở bên Mỹ, không cần Anh Long can thiệp</div>
+
+      <div class="swim-row-lbl">7. Đóng gói + ghi mã vận chuyển</div>
+      <div class="swim-cell">15:30</div>
+      <div class="swim-cell">QC + Đóng gói hoàn tất; Anh Long bấm "Move → Chờ nhãn vận chuyển". BA Shipping sẽ in nhãn riêng (Anh không in).</div>
+      <div class="swim-cell">Pipeline kanban + Chatter ghi số tracking sau (tuỳ chọn)</div>
+      <div class="swim-cell done">~28 đơn</div>
+      <div class="swim-cell">Chưa push Etsy — BA Lead làm sau</div>
+
+      <div class="swim-row-lbl">8. Báo cáo cuối ca</div>
+      <div class="swim-cell">16:30</div>
+      <div class="swim-cell">Mở production EOD report (nút trên Operations Dashboard hoặc link từ Trang chủ): ghi 56 đơn xong, 3 đơn cần in lại, 0 đơn hư hỏng, thời gian trung bình 7 phút/đơn. Bấm Submit EOD → gửi cho BA Lead.</div>
+      <div class="swim-cell">Production EOD report form</div>
+      <div class="swim-cell done">56 + 3 + 0</div>
+      <div class="swim-cell">EOD report auto-lưu vào database; BA Lead nhận notification</div>
+    </div>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo trong một ca làm việc</h3>
+    <div class="mu-lede">3 màn hình mô phỏng. Cuộn xuống để xem từng cảnh — từ pipeline kanban lọc "Đã duyệt thiết kế", form state transition, và EOD report cuối ca.</div>
+
+    <!-- MOCKUP 1: Pipeline kanban filter -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Pipeline kanban filter "Đã duyệt thiết kế" — 22 đơn hôm nay cần in</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Đơn hàng › Pipeline theo design status</span>
+        <span class="mu-spacer"></span><span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span><strong>Pipeline: Đã duyệt thiết kế</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Đã duyệt thiết kế + Hôm nay</button>
+        <button class="mu-btn">Loại: MTO (không Dropship)</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280">22 đơn · Giao hôm 2026-06-03 · Hôm qua: 18 đơn</span>
+      </div>
+      <div class="mu-kanban" style="grid-template-columns:repeat(3,1fr)">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Đã duyệt thiết kế · 8</div>
+          <div class="mu-kb-card"><h4>Order #S00234</h4><div class="mu-kb-meta"><b>SKU:</b> MUG-CR-F11<br><b>Kích thước:</b> 11oz<br><b>Giao:</b> 2026-06-03 16:00</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Order #S00235</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AM<br><b>Kích thước:</b> M<br><b>Giao:</b> 2026-06-03 18:00</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#a16207;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Đang in · 9</div>
+          <div class="mu-kb-card"><h4>Order #S00228</h4><div class="mu-kb-meta"><b>SKU:</b> DMT-TX-R30X18<br><b>Màu:</b> Welcome<br><b>In từ:</b> 08:30 · Đã 45 phút</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Order #S00229</h4><div class="mu-kb-meta"><b>SKU:</b> RDS-CE-SQ<br><b>Loại:</b> Ring dish<br><b>In từ:</b> 08:45</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Chờ QC · 5</div>
+          <div class="mu-kb-card"><h4>Order #S00220</h4><div class="mu-kb-meta"><b>SKU:</b> MUG-CR-F11-BK<br><b>Chờ QC:</b> 15 phút<br><b>QC:</b> Kiếp Long</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Order #S00221</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AXL<br><b>Chờ QC:</b> 8 phút<br><b>Tình trạng:</b> OK</div></div>
+        </div>
+      </div>
+      <div class="mu-caption">Kanban này cho Anh Long xem một cái nhìn tổng: 8 đơn sẵn sàng in, 9 đơn đang in (4 thợ in song song), 5 đơn chờ QC. Kéo thẻ từ cột này sang cột khác để chuyển trạng thái, hoặc bấm nút hành động trên từng thẻ. <b>Lọc MTO</b> ẩn đi các đơn Gearment (không cần Anh Long can thiệp).</div>
+    </div>
+
+    <!-- MOCKUP 2: State transition form -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Form Đơn hàng — Pipeline tab, chuyển trạng thái "Đang in" → "Chờ QC"</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Đơn hàng › S00228</span>
+        <span class="mu-spacer"></span><span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span><strong>Order #S00228</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Discard</button>
+        <button class="mu-btn mu-btn-primary">Save</button>
+        <div class="mu-stage-pipe"><span class="mu-stage">Đã duyệt</span><span>›</span><span class="mu-stage active">Đang in</span><span>›</span><span class="mu-stage">Chờ QC</span><span>›</span><span class="mu-stage">Đóng gói</span></div>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">Order #S00228 · Doormat 30x18 Welcome <span class="mu-pill mu-pill-warn" style="margin-left:8px">ĐANG IN</span></div>
+        <div class="mu-tabs"><span class="mu-tab active">Pipeline</span><span class="mu-tab">Sản phẩm</span><span class="mu-tab">Thiết kế</span><span class="mu-tab">Khách hàng</span><span class="mu-tab">Gearment</span><span class="mu-tab">Etsy</span></div>
+        <div style="padding:14px 0">
+          <div style="margin-bottom:14px;padding:0 18px;font-size:13.5px;color:#555;line-height:1.6">
+            <b>Trạng thái hiện tại:</b> Đang in (kể từ 08:30, 45 phút)<br>
+            <b>Người đang xử lý:</b> Thợ in Khánh<br>
+            <b>Lịch sử:</b> Chuyển từ "Đã duyệt" lúc 08:30 · production.long
+          </div>
+          <div style="padding:0 18px;margin:10px 0 14px;border-left:3px solid #714B67;background:#f9fafb;padding:8px 12px;font-size:12.5px;color:#4b5563">
+            <b>Hôm nay mỗi đơn cần 4-5 clicks:</b> bấm nút "Move → Chờ QC", "Move → Đóng gói", "Move → Chờ nhãn", "Move → Đã in nhãn", "Move → Giao bưu vận". Không có tự động — Story 3.6 sẽ thêm scan QR trên mobile để tự chuyển khi MRP work order hoàn tất.
+          </div>
+          <div style="padding:0 18px">
+            <div style="background:#faf5f9;border:1px solid #e4cee0;border-radius:6px;padding:12px;margin-bottom:12px;font-size:13px">
+              <div style="margin-bottom:8px">
+                <button class="mu-btn" style="width:100%;text-align:left">Move → Chờ QC</button>
+              </div>
+              <div style="margin-bottom:8px">
+                <button class="mu-btn" style="width:100%;text-align:left">Move → Hỏi QC nhanh (inline)</button>
+              </div>
+              <div>
+                <button class="mu-btn" style="width:100%;text-align:left">Cancel (in lại)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Khi in xong batch, Anh Long mở từng đơn → tab Pipeline → bấm nút <b>"Move → Chờ QC"</b>. Hệ thống ghi lại ai bấm, khi nào, từ trạng thái nào sang trạng thái nào. Nút "Cancel (in lại)" dùng khi phát hiện lỗi giữa quá trình (chỉ Anh Long + BA Lead thấy).</div>
+    </div>
+
+    <!-- MOCKUP 3: EOD report -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Production EOD Report — báo cáo cuối ca 16:30</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Báo cáo › Production EOD</span>
+        <span class="mu-spacer"></span><span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Báo cáo<span class="mu-sep">›</span><strong>Production EOD · 2026-06-03 Ca sáng</strong></div>
+      <div style="padding:16px 18px">
+        <div class="mu-form-title" style="margin-bottom:18px">Production EOD Report · Ca sáng (08:00–16:30)</div>
+        <div class="mu-grid2">
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Người lập báo cáo</div><div class="mu-field-value">Anh Long · production.long</div></div>
+            <div class="mu-field"><div class="mu-field-label">Ca làm việc</div><div class="mu-field-value">Sáng (08:00–16:30)</div></div>
+            <div class="mu-field"><div class="mu-field-label">Ngày</div><div class="mu-field-value">2026-06-03</div></div>
+            <div class="mu-field"><div class="mu-field-label">Trưởng ca duyệt</div><div class="mu-field-value" style="color:#9ca3af">— (chờ BA Lead duyệt)</div></div>
+          </div>
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Đơn hoàn tất</div><div class="mu-field-value mu-amount" style="color:#15803d;font-size:18px">56</div></div>
+            <div class="mu-field"><div class="mu-field-label">Đơn cần in lại</div><div class="mu-field-value mu-amount" style="color:#ca8a04;font-size:18px">3</div></div>
+            <div class="mu-field"><div class="mu-field-label">Đơn hư / mất</div><div class="mu-field-value mu-amount" style="color:#6b7280">0</div></div>
+            <div class="mu-field"><div class="mu-field-label">Thời gian trung bình/đơn</div><div class="mu-field-value">7 phút 23 giây</div></div>
+          </div>
+        </div>
+        <div style="margin-top:18px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:#1f2937;margin-bottom:8px">Top 3 đơn lâu nhất (khó in):</div>
+          <table class="mu-list" style="font-size:12px;margin-top:8px">
+            <tbody>
+              <tr><td>Order #S00201</td><td class="mu-mono">MUG-CR-F11-BK</td><td style="text-align:right">18 phút 45 giây</td></tr>
+              <tr><td>Order #S00207</td><td class="mu-mono">APR-LN-AXL</td><td style="text-align:right">14 phút 12 giây</td></tr>
+              <tr><td>Order #S00213</td><td class="mu-mono">RDS-CE-SQ</td><td style="text-align:right">13 phút 33 giây</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:18px">
+          <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:#1f2937">Ghi chú nội bộ (tuỳ chọn):</div>
+          <textarea style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;min-height:60px;font-family:sans-serif">Hôm nay mực in máy #2 gặp tình trạng chảy mực dẫn đến mất 30 phút. Cần bảo dưỡng ngay. Thợ Khánh đã xử lý sơ bộ. 3 đơn S00201, S00245, S00267 cần in lại do lỗi này.</textarea>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="mu-btn">Lưu nháp</button>
+          <button class="mu-btn mu-btn-primary">Submit EOD Report</button>
+        </div>
+      </div>
+      <div class="mu-caption">Anh Long lập báo cáo cuối ca: số đơn hoàn tất (56), cần in lại (3), hư/mất (0), thời gian trung bình (7 phút/đơn). Hệ thống tự tính từ pipeline transitions; Anh chỉ confirm + ghi ghi chú nếu có (bảo dưỡng máy, tình huống bất thường). Bấm <b>Submit</b> → BA Lead nhận notification + duyệt báo cáo (workflow tối giản — không phải ký từng dòng).</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Giới hạn quyền — Anh Long không có</h3>
+    <ul class="kpi-list">
+      <li><b>Edit giá bán</b>Giá được BA Lead lock; Anh chỉ xem</li>
+      <li><b>Edit địa chỉ khách</b>BA Lead duyệt trước; Anh không sửa được</li>
+      <li><b>Duyệt thiết kế</b>PD là người duyệt; Anh chỉ xem trạng thái</li>
+      <li><b>Push Etsy / Gearment</b>BA Shipping làm; Anh không thấy nút</li>
+      <li><b>Tạo đơn mới</b>Marketing hoặc webhook Etsy; Anh không tạo được</li>
+      <li><b>Tạo phiếu in / work order</b>MRP specialist; Anh chỉ xem + thực hiện</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Anh Long có thể làm</h3>
+    <ul class="kpi-list">
+      <li><b>Chuyển trạng thái pipeline</b>17 trạng thái qua các bước in → QC → đóng gói → ship</li>
+      <li><b>Tạo task in lại</b>Ghi lý do, gắn vào đơn cha, thợ in nhận task</li>
+      <li><b>Ghi note chatter</b>Liên hệ giữa Anh và BA Lead / QC / Marketing</li>
+      <li><b>Xem design files</b>Tải file từ Google Drive để biết in như thế nào</li>
+      <li><b>Báo cáo cuối ca</b>EOD report tự động từ pipeline transitions; Anh confirm + ghi ghi chú</li>
+      <li><b>Xem lịch sử transitions</b>Menu Vận hành › Pipeline Transitions — ai bấm lúc nào</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Liên kết với các luồng và vai trò</h3>
+    <div class="crosslink-grid">
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng chính</b>Luồng 3A — MTO (in nội bộ) 17 trạng thái pipeline VN mà Anh Long chạy qua</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Liên quan</b>Luồng 3B — Dropship Gearment (Anh Long không can thiệp, hệ thống tự xử)</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — duyệt design, chốt trạng thái, duyệt lại khi Anh gặp vấn đề</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>Marketing — Anh Minh quản lý 5 shop Etsy chính</a>
+      <a href="role-4-rd.html"><b>Vai trò</b>Kiểm soát giá (RD) — Audit giá hàng ngày</a>
+      <a href="role-5-pd.html"><b>Vai trò</b>Thiết kế sản phẩm (PD) — Lặp file, duyệt, lưu kho</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">F</span>Câu hỏi mở và lộ trình tương lai</h3>
+    <p><b>Quét mã QR trên mobile (Story 3.6):</b> Hôm nay Anh Long phải mở web để bấm từng trạng thái. Tương lai sẽ có app mobile scan QR đơn → tự động chuyển trạng thái khi MRP work order hoàn tất, không cần bấm tay. Dự kiến Q3 2026.</p>
+    <p><b>Cuối ca BA Lead phải tổng hợp lại EOD reports từ 3 ca:</b> Hôm nay Anh Long ghi report, BA Lead đọc + duyệt. Tương lai có thể tự lập báo cáo tổng hợp 3 ca (sáng + chiều + tối) bằng cron.</p>
+    <p><b>Anh Long không thấy số đơn Dropship Gearment:</b> Vì Gearment xử lý ở bên Mỹ, Anh không cần can thiệp. Nhưng Anh có thể muốn xem tổng số để biết "hôm nay toàn bộ bao nhiêu đơn" — cần thêm dashboard "All orders today" (không lọc MTO).</p>
+  </div>
+
+  <footer>Vai trò 3 · cập nhật 2026-06-03 · nguồn: FLOW_GIAO_HANG_VN v1.0 · HUONG_DAN_GIAO_HANG_VN v1.0 · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

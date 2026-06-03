@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vai trò 5: Thiết kế sản phẩm (PD) — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Vai trò 5 · Thiết kế sản phẩm (PD)</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">VAI TRÒ 5 · ĐỌC ~6 PHÚT</div>
+    <h2>Thiết kế sản phẩm (PD) — Lặp file, duyệt, lưu kho</h2>
+    <p class="lede">Em Tuấn, nhân viên thiết kế 26 tuổi, là PD chính của Hatafa. Mỗi ngày nhận 3–7 yêu cầu từ BA Lead: tạo mockup sản phẩm mới hoặc tùy chỉnh file cho đơn hàng cụ thể cá nhân hoá. Em lặp file qua Illustrator/Photoshop ngoài hệ thống, upload từng phiên bản vào Design Files kanban, chờ BA duyệt feedback, sửa lại. Khi BA cuối cùng chấp thuận, em archive các phiên bản cũ và lưu phiên bản cuối vào kho Design Files để sử dụng lại.</p>
+    <div class="pills">
+      <span class="pill green">Hoạt động</span>
+      <span class="pill blue">Luồng 1 + Luồng 3A</span>
+      <span class="pill grey">Tham gia: 5–6 giờ/ngày</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh — PD chạm vào hệ thống ở 2 luồng</h3>
+    <p><b>Luồng 1:</b> Tạo sản phẩm mới (Flow 1). BA Lead mở form Sản phẩm chuẩn, yêu cầu PD chuẩn bị file mockup cho sản phẩm đó. PD tạo trên Illustrator/Photoshop, upload qua Design Files trên form sản phẩm hoặc dán link Google Drive. File được lưu trong tab Files của form sản phẩm với versioning (v1, v2, v3…).</p>
+    <p><b>Luồng 3A:</b> File thiết kế cho đơn cụ thể có cá nhân hoá (Flow 3A). Khi khách đặt đơn cá nhân hoá (ví dụ: khắc tên lên mug), BA gắn tag yêu cầu "Personalize file" vào đơn → hệ thống thông báo cho PD → PD tạo file từ template sản phẩm gốc + buyer text → upload vào đơn → BA duyệt → sẵn sàng in.</p>
+    <p>File chính được upload qua Google Drive link (nếu lớn hơn 2 MB) hoặc binary upload nhỏ ≤ 2 MB trực tiếp trên hệ thống. Kanban Design Files có 3 trạng thái: <b>Pending</b> (chờ duyệt), <b>Approved</b> (ba duyệt rồi), <b>Rejected</b> (BA yêu cầu sửa). BA Lead là approver duy nhất; PD tự duyệt sơ bộ, sau đó chỉnh sang Approved để BA review cuối.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Lịch một ngày (6–7 mốc chính)</h3>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Hành động</div>
+      <div class="swim-head">Màn hình</div>
+      <div class="swim-head">Kết quả</div>
+      <div class="swim-head">Thời gian</div>
+      <div class="swim-head">Ghi chú</div>
+
+      <div class="swim-row-lbl">09:00</div>
+      <div class="swim-cell">Mở Design Files inbox: xem yêu cầu mới do BA gắn tag</div>
+      <div class="swim-cell">Design Files inbox (filter Pending)</div>
+      <div class="swim-cell done">Thấy 2 sản phẩm mới + 1 đơn cá nhân hoá</div>
+      <div class="swim-cell">10 phút</div>
+      <div class="swim-cell">Scroll qua tất cả Filter = Pending</div>
+
+      <div class="swim-row-lbl">09:30</div>
+      <div class="swim-cell">Thiết kế mockup mới: Illustrator/Photoshop ngoài Odoo; upload mỗi version vào sản phẩm</div>
+      <div class="swim-cell">Illustrator + form Sản phẩm Files tab</div>
+      <div class="swim-cell done">Upload v1 mockup mug xanh</div>
+      <div class="swim-cell">60–90 phút / sản phẩm</div>
+      <div class="swim-cell">Làm 2–3 sản phẩm/ngày</div>
+
+      <div class="swim-row-lbl">11:30</div>
+      <div class="swim-cell">Lặp lần 1: BA Lead phản hồi "thay font, tăng logo", PD sửa, upload v2</div>
+      <div class="swim-cell">Design file detail (xem comment BA + history)</div>
+      <div class="swim-cell done">Upload v2 sau sửa 25 phút</div>
+      <div class="swim-cell">25–40 phút/lần sửa</div>
+      <div class="swim-cell">Thường 1–2 lượt sửa/file</div>
+
+      <div class="swim-row-lbl">14:00</div>
+      <div class="swim-cell">File personalize cho đơn cụ thể: BA gắn Order #, PD tạo từ template + buyer text</div>
+      <div class="swim-cell">Tab File thiết kế trên đơn hàng + Illustrator</div>
+      <div class="swim-cell done">Upload file khắc tên "Anna" lên đơn</div>
+      <div class="swim-cell">15–30 phút/đơn</div>
+      <div class="swim-cell">2–3 đơn/ngày</div>
+
+      <div class="swim-row-lbl">15:00</div>
+      <div class="swim-cell">Tự duyệt sơ bộ (Pending → Approved) bằng kanban drag-drop</div>
+      <div class="swim-cell">Design Files kanban (3 cột)</div>
+      <div class="swim-cell done">Kéo 4 file từ Pending sang Approved</div>
+      <div class="swim-cell">5 phút</div>
+      <div class="swim-cell">PD kiểm tra trước khi BA duyệt</div>
+
+      <div class="swim-row-lbl">16:00</div>
+      <div class="swim-cell">Lưu kho: archive các v cũ, giữ v cuối approved trên sản phẩm</div>
+      <div class="swim-cell">Product form Files tab (Archive view)</div>
+      <div class="swim-cell done">Archive v1, giữ v2 active</div>
+      <div class="swim-cell">10 phút</div>
+      <div class="swim-cell">Tự động hay tay?</div>
+
+      <div class="swim-row-lbl">16:30</div>
+      <div class="swim-cell">Tổng kết ngày: 5 file mới + 8 sửa + 2 personalize → chatter note</div>
+      <div class="swim-cell">Chatter form sản phẩm</div>
+      <div class="swim-cell done">Ghi nhật ký hôm nay</div>
+      <div class="swim-cell">5 phút</div>
+      <div class="swim-cell">Tuỳ chọn</div>
+    </div>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo mà PD sử dụng</h3>
+    <div class="mu-lede">4 màn hình mô phỏng: Design Files inbox, Design file detail với versioning, kanban duyệt 3 trạng thái, và Archive view để tìm file cũ khi có biến thể mới.</div>
+
+    <!-- MOCKUP 1: Design Files inbox -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Design Files inbox — lọc Pending từ sản phẩm + đơn</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Sản phẩm</span><span class="mu-menu">Design Files › Inbox</span>
+        <span class="mu-spacer"></span><span class="mu-user">em.tuan@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Design Files<span class="mu-sep">›</span><strong>Inbox · Pending</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Pending</button>
+        <button class="mu-btn">Sắp xếp: Cũ nhất</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280"><b style="color:#714B67">4 yêu cầu</b> chờ xử lý</span>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Yêu cầu #</th><th>Loại</th><th>Reference (SKU / Order)</th><th>BA gắn tag</th><th>Tuổi yêu cầu</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td class="mu-mono">FD-2401</td><td><span class="mu-pill mu-pill-neutral">Sản phẩm mới</span></td><td>MUG-CR-F11 (Coffee Mug 11oz)</td><td>ba.lead</td><td>2 giờ</td><td><span class="mu-pill mu-pill-warn">Pending</span></td></tr>
+          <tr><td class="mu-mono">FD-2402</td><td><span class="mu-pill mu-pill-neutral">Sản phẩm mới</span></td><td>APR-TX-AM (Apron Linen)</td><td>ba.lead</td><td>1 giờ</td><td><span class="mu-pill mu-pill-warn">Pending</span></td></tr>
+          <tr><td class="mu-mono">FD-2403</td><td><span class="mu-pill mu-pill-success">Personalize đơn</span></td><td>Order #1845 (khắc tên Anna)</td><td>ba.lead</td><td>45 phút</td><td><span class="mu-pill mu-pill-warn">Pending</span></td></tr>
+          <tr><td class="mu-mono">FD-2404</td><td><span class="mu-pill mu-pill-success">Personalize đơn</span></td><td>Order #1847 (in text đơn)</td><td>ba.lead</td><td>30 phút</td><td><span class="mu-pill mu-pill-warn">Pending</span></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">PD bắt đầu ngày bằng inbox này. Lọc = Pending hiển thị những yêu cầu chưa được duyệt. Cột Loại phân biệt sản phẩm mới (template) và personalize riêng cho đơn. BA Lead gắn tag vào mỗi yêu cầu; PD nhìn thấy ngay trong hệ thống.</div>
+    </div>
+
+    <!-- MOCKUP 2: Design file detail versioning -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Design file detail — versioning, comment BA, lịch sử sửa</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Sản phẩm</span><span class="mu-menu">Design Files › MUG-CR-F11</span>
+        <span class="mu-spacer"></span><span class="mu-user">em.tuan@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Design Files<span class="mu-sep">›</span><strong>Coffee Mug 11oz</strong></div>
+      <div class="mu-form">
+        <div class="mu-form-title">Design file: Coffee Mug 11oz</div>
+        <div class="mu-grid2">
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Tên file</div><div class="mu-field-value">MUG-11oz-Ceramic-Blue-v3.ai</div></div>
+            <div class="mu-field"><div class="mu-field-label">Phiên bản hiện tại</div><div class="mu-field-value"><span class="mu-pill mu-pill-neutral">v3</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">Tạo bởi</div><div class="mu-field-value">em.tuan (2026-06-01)</div></div>
+          </div>
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Trạng thái</div><div class="mu-field-value"><span class="mu-pill mu-pill-warn">Chờ BA duyệt</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">Duyệt bởi</div><div class="mu-field-value">—</div></div>
+            <div class="mu-field"><div class="mu-field-label">Sửa gần nhất</div><div class="mu-field-value">06-01 15:28 · em.tuan</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:4px">
+          <b style="color:#15803d">Preview v3 (phiên bản hiện tại)</b>
+          <div style="margin-top:8px;height:120px;background:#e5e7eb;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:12px">
+            [Thumbnail mug xanh ceramic, v3 đã sửa font + logo]
+          </div>
+        </div>
+        <div style="margin-top:14px;font-weight:600;font-size:13px;color:#1f2937">Lịch sử phiên bản:</div>
+        <div style="margin-top:6px;font-size:12px;color:#6b7280;line-height:1.8">
+          <b style="color:#1f2937">v1 (Sáng 14:00)</b> — Upload lần đầu; BA feedback "font Raleway thay bằng Montserrat, logo to hơn"<br>
+          <b style="color:#dc2626">↳ Status: Rejected</b> (ba.lead duyệt)<br><br>
+          <b style="color:#1f2937">v2 (Sáng 15:30)</b> — Sửa font + logo; BA feedback "logo hoàn hảo, nhưng màu xanh hạn chế - thử xanh đậm hơn"<br>
+          <b style="color:#a16207">↳ Status: Pending review</b><br><br>
+          <b style="color:#1f2937">v3 (Sáng 15:28 hôm nay)</b> — Xanh đậm + tinh chỉnh, sẵn sàng BA cuối cùng approve<br>
+          <b style="color:#15803d">↳ Status: Sẵn sàng duyệt</b>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#fffbeb;border-left:3px solid #ca8a04;border-radius:3px;font-size:12px;color:#854d0e">
+          <b>BA comment (mới nhất, 06-01 16:00):</b> "v2 đẹp lắm em, xanh đậm hơn được không? Em sửa xong upload v3 nhé."
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="mu-btn">Tải file v3</button>
+          <button class="mu-btn">Xem v2</button>
+          <button class="mu-btn">Xem v1</button>
+          <button class="mu-btn mu-btn-primary">Submit for Review</button>
+        </div>
+      </div>
+      <div class="mu-caption">Chi tiết một file thiết kế: tên file, phiên bản, ai tạo khi nào. Lịch sử sửa hiển thị từng phiên bản, feedback BA, trạng thái duyệt. PD xem comment BA, sửa file, upload lại. Nút "Submit for Review" đổi trạng thái Pending → Approved để BA review cuối.</div>
+    </div>
+
+    <!-- MOCKUP 3: Design Files kanban 3 cột -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Design Files kanban — 3 trạng thái Pending / Approved / Rejected</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Sản phẩm</span><span class="mu-menu">Design Files › Kanban</span>
+        <span class="mu-spacer"></span><span class="mu-user">em.tuan@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Design Files<span class="mu-sep">›</span><strong>Kanban view</strong></div>
+      <div style="padding:12px;background:#f3f4f6;border-radius:4px;font-size:12px;color:#6b7280;margin-bottom:12px">
+        <b style="color:#1f2937">Gợi ý:</b> kéo thẻ từ Pending sang Approved khi PD tự kiểm tra xong. BA Lead cuối cùng sẽ review phần Approved rồi chuyển sang dùng.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#a16207;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Pending · 2</div>
+          <div class="mu-kb-card"><h4>Apron Linen — v1</h4><div class="mu-kb-meta"><b>Tạo:</b> em.tuan<br><b>Upload:</b> 09:45<br><b>BA feedback:</b> waiting</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Personalize Order #1845 — v1</h4><div class="mu-kb-meta"><b>Tạo:</b> em.tuan<br><b>Text:</b> khắc "Anna"<br><b>BA feedback:</b> waiting</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Approved · 3</div>
+          <div class="mu-kb-card"><h4>Coffee Mug 11oz — v3</h4><div class="mu-kb-meta"><b>Upload:</b> em.tuan<br><b>Sửa lần:</b> 2<br><b>Sẵn sàng:</b> BA final review</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Doormat 30x18 — v2</h4><div class="mu-kb-meta"><b>Upload:</b> hôm qua<br><b>Status:</b> đã sửa font<br><b>Chờ:</b> BA chốt</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Ring Dish — v1</h4><div class="mu-kb-meta"><b>Upload:</b> 3 giờ trước<br><b>Loại:</b> sản phẩm mới<br><b>Chớp:</b> ready</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#dc2626;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Rejected · 1</div>
+          <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9"><h4>Mug Personal Name — v1</h4><div class="mu-kb-meta"><b>Feedback:</b> BA từ chối<br><b>Lý do:</b> "tên quá nhỏ"<br><b>Cần:</b> upload v2</div></div>
+        </div>
+      </div>
+      <div class="mu-caption">Kanban view của Design Files: 3 cột tương ứng với trạng thái Pending / Approved / Rejected. PD kéo thẻ từ Pending sang Approved sau khi tự kiểm tra. BA Lead review phần Approved, nếu chấp nhận → dùng để in; nếu từ chối → quay lại Pending để PD sửa. Mục Rejected hiển thị những file BA yêu cầu sửa lại.</div>
+    </div>
+
+    <!-- MOCKUP 4: Archive view -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Archive view — lưu trữ file đã duyệt theo sản phẩm</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Sản phẩm</span><span class="mu-menu">Design Files › Archive</span>
+        <span class="mu-spacer"></span><span class="mu-user">em.tuan@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Design Files<span class="mu-sep">›</span><strong>Archive (Approved)</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Approved</button>
+        <button class="mu-btn">Nhóm: Sản phẩm</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280">Tổng <b style="color:#714B67">28 file</b> đã lưu</span>
+      </div>
+      <div style="padding:14px;background:#fafafa;border-radius:4px">
+        <div style="font-weight:600;color:#1f2937;font-size:13px;margin-bottom:8px">📁 Apron</div>
+        <ul style="list-style:none;padding-left:14px;font-size:12px;line-height:1.8;color:#4b5563">
+          <li>• <b style="color:#1f2937">APR-TX-AM (Apron Linen Medium)</b> — v4 cuối (2026-05-28), ba.lead approved<br/>
+            <span style="margin-left:18px;color:#6b7280">File: APR-TX-AM-v4-final.ai · Size: 12 MB · Upload: em.tuan</span></li>
+          <li style="margin-top:6px">• <b style="color:#1f2937">APR-LN-AXL (Apron XL Heavy)</b> — v2 cuối (2026-05-20), ba.lead approved<br/>
+            <span style="margin-left:18px;color:#6b7280">File: APR-LN-AXL-v2-final.ai · Size: 8 MB · Upload: em.tuan</span></li>
+        </ul>
+        <div style="font-weight:600;color:#1f2937;font-size:13px;margin-top:12px;margin-bottom:8px">📁 Mug</div>
+        <ul style="list-style:none;padding-left:14px;font-size:12px;line-height:1.8;color:#4b5563">
+          <li>• <b style="color:#1f2937">MUG-CR-F11 (Coffee Mug 11oz)</b> — v3 cuối (2026-06-01), ba.lead approved<br/>
+            <span style="margin-left:18px;color:#6b7280">File: MUG-11oz-Ceramic-Blue-v3.ai · Size: 15 MB · Upload: em.tuan</span></li>
+          <li style="margin-top:6px">• <b style="color:#1f2937">MUG-CR-F15 (Coffee Mug 15oz)</b> — v1 cuối (2026-05-15), ba.lead approved<br/>
+            <span style="margin-left:18px;color:#6b7280">File: MUG-15oz-Ceramic-Red-v1.ai · Size: 14 MB · Upload: em.tuan</span></li>
+        </ul>
+      </div>
+      <div class="mu-caption">Archive view hiển thị các file đã được BA cuối cùng duyệt, nhóm theo sản phẩm. Khi có biến thể mới hoặc khách yêu cầu thiết kế tương tự, PD tra cứu archive để xem phiên bản gốc đã duyệt, tải lại và tùy chỉnh (ví dụ: đổi màu, thêm text). Không cần lặp lại từ đầu.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Quyền hạn của PD</h3>
+    <ul class="kpi-list">
+      <li><b>Upload file</b>Tải file thiết kế (ảnh, PDF, Illustrator) lên Design Files trên form sản phẩm hoặc đơn</li>
+      <li><b>Request duyệt</b>Bấm "Submit for Review" để chuyển Pending → Approved (BA Lead duyệt cuối)</li>
+      <li><b>Sửa sau Rejected</b>Khi BA từ chối, PD sửa file + upload phiên bản mới</li>
+      <li><b>Kanban drag-drop</b>Tự duyệt sơ bộ (kéo Pending → Approved) nhưng chỉ là hint cho BA</li>
+      <li><b>Xem history</b>Xem phiên bản cũ, comment BA, trac lịch sửa tất cả file của mình</li>
+      <li><b>Không có: Approve cuối</b>BA Lead là approver duy nhất (ghi chú "approved by ba.lead")</li>
+      <li><b>Không có: Edit metadata</b>PD không sửa tên sản phẩm, danh mục, giá; BA quản lý</li>
+      <li><b>Không có: Publish Etsy</b>PD không gửi file lên Etsy; BA Lead thực hiện khi sẵn sàng</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Luồng và vai trò liên quan</h3>
+    <div class="crosslink-grid">
+      <a href="flow-1-tao-san-pham.html"><b>Luồng</b>Luồng 1 — Tạo sản phẩm mới, PD chuẩn bị mockup file</a>
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Luồng</b>Luồng 2 — Nhận đơn hàng, xem sản phẩm được in bằng file nào</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng</b>Luồng 3A — In nội bộ MTO, file thiết kế cho đơn cá nhân hoá</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng</b>Luồng 4 — Xử lý đơn hàng, in + giao</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — người duyệt cuối cùng, ghi feedback vào Design Files</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>Marketing — yêu cầu file cho campaign, A/B test</a>
+      <a href="role-3-san-xuat.html"><b>Vai trò</b>Sản xuất — lấy file để in, xác nhận đơn hàng</a>
+      <a href="role-4-rd.html"><b>Vai trò</b>RD (Kiểm soát giá) — kiểm tra tên sản phẩm + SKU liên kết file</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Câu hỏi mở và giới hạn hôm nay</h3>
+    <p><b>Google Drive là kho chính cho file lớn:</b> File &gt; 2 MB nên upload lên Google Drive (kênh dùng chung của shop), dán link vào Design Files trên hệ thống. Hệ thống lưu link + preview, không copy file (tiết kiệm dung lượng, tránh trùng bản). Tuy nhiên, trách nhiệm lưu trữ dài hạn ở GDrive, không phải Odoo.</p>
+    <p><b>Binary upload ≤ 2 MB là giới hạn hệ thống:</b> Odoo filestore có cấu hình `multichannel_hub.large_file_threshold_bytes` mặc định 2 MB — file lớn hơn sẽ timeout. Cần sử dụng GDrive link để vượt qua giới hạn này.</p>
+    <p><b>Tìm kiếm file cũ chưa dễ dàng:</b> Hôm nay search Design Files chỉ theo tên file hoặc SKU sản phẩm, chưa có tag thêm. Nếu muốn tìm "tất cả file apron xanh", phải scroll Archive lâu hoặc nhớ tên sản phẩm. Có thể thêm tag vào file trong tương lai (ví dụ: #apron, #xanh, #ceramic).</p>
+  </div>
+
+  <footer>Vai trò 5 · cập nhật 2026-06-03 · nguồn: FLOW_TAO_SAN_PHAM_VN · FLOW_GIAO_HANG_VN · BRD_VN · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

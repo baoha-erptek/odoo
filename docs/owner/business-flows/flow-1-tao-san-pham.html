@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luồng 1: Tạo sản phẩm POD và đăng lên Etsy — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Luồng 1 · Tạo sản phẩm POD và đăng lên Etsy</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">LUỒNG 1 · ĐỌC ~8 PHÚT</div>
+    <h2>Tạo sản phẩm POD và đăng lên Etsy</h2>
+    <p class="lede">Từ ý tưởng thiết kế đến listing sống trên Etsy. BA mở form Sản phẩm chuẩn, chọn Danh mục + Biến thể, hệ thống tự sinh Mã SKU theo bộ ngữ pháp v2.1. BA bấm Publish, hệ thống gói metadata và gọi Etsy API. Hôm nay 5 trên 11 ca thử nghiệm đăng draft đã thành công thật; 4 ca khác trả về lỗi 400 ở phía Etsy do thiếu chi tiết payload — đội kỹ thuật đang chờ Etsy bật chế độ trả nội dung lỗi đầy đủ để gỡ.</p>
+    <div class="pills">
+      <span class="pill yellow">Hoàn thành ~85%</span>
+      <span class="pill blue">UAT 2026-05-28</span>
+      <span class="pill grey">Nguồn: FLOW_TAO_SAN_PHAM_VN v1.2 · SKU_GRAMMAR v2.1</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Ai làm gì — sơ đồ vai trò</h3>
+    <p>Luồng tạo sản phẩm liên kết 4 vai trò người dùng và Etsy. Hệ thống làm việc nền (sinh SKU, đồng bộ kênh, gọi API). Bảng dưới đọc từ trái qua phải: mỗi cột là một vai trò, mỗi hàng là một mốc chính.</p>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Thiết kế (PD)</div>
+      <div class="swim-head">BA Lead</div>
+      <div class="swim-head">Marketing</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+      <div class="swim-head">Etsy API</div>
+
+      <div class="swim-row-lbl">1. Chuẩn bị</div>
+      <div class="swim-cell done">Hoàn thiện file mockup, upload Google Drive, dán link vào yêu cầu</div>
+      <div class="swim-cell">Nhận yêu cầu, gắn vào dự án</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">2. Tạo template</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Mở form Sản phẩm, điền Tên + Danh mục + Biến thể + Giá USD</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Tự sinh Mã SKU chuẩn (vd <b>MUG-CR-F11</b>) sau onchange Danh mục/Biến thể</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">3. Bổ sung chi tiết Etsy</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">Bật/tắt 7 nhóm: Tags, Cá nhân hoá, Ảnh phụ, Cân nặng, Override taxonomy…</div>
+      <div class="swim-cell done">Phối hợp duyệt nội dung Title/Description nếu cần A/B</div>
+      <div class="swim-cell done">Tự suy ra Vật liệu + Kích thước từ Biến thể</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">4. Lưu + tạo trạng thái kênh</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Nhấn Lưu</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Lưu sản phẩm + tạo dòng trạng thái kênh mặc định "Etsy — Draft"</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">5. Đăng Etsy</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell pending">Bấm <b>Publish to Etsy</b> hoặc <b>Publish Draft Only</b> (free)</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell pending">Gói payload (createListing, push_inventory, push_images) và gọi Etsy</div>
+      <div class="swim-cell pending">Trả về listing_id hoặc 400 nếu validator báo lỗi</div>
+
+      <div class="swim-row-lbl">6. Tracking lỗi</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell blocked">Đọc cột "Lỗi đồng bộ gần nhất" trong tab Channels; bấm <b>Resume Publish</b> sau khi sửa</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell blocked">Ghi vào nhật ký Etsy; chưa lưu được nội dung 400 chi tiết</div>
+      <div class="swim-cell blocked">Trả 400 thiếu body chi tiết (cần Etsy support)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Các bước chi tiết (10 bước)</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">PD · BA Lead</div>
+        <div class="title">Nhận yêu cầu thiết kế và hoàn thiện file gốc</div>
+        <div class="desc">PD nhận brief (qua chat hoặc message), thiết kế trên Illustrator/Photoshop, đẩy file lên Google Drive thư mục dự án. BA Lead xác nhận file đã sẵn sàng.</div>
+      </div></li>
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">BA · 2 phút</div>
+        <div class="title">Mở Sản phẩm → Tạo mới</div>
+        <div class="desc">Menu Bán hàng → Sản phẩm → nút <b>Tạo mới</b>. Form trắng hiện ra, BA bắt đầu nhập.</div>
+      </div></li>
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">BA · 3 phút</div>
+        <div class="title">Điền Tên · Danh mục · Biến thể · Giá USD</div>
+        <div class="desc">Tên tiếng Anh ("Custom Coffee Mug 11oz"); chọn Danh mục từ dropdown (Mug / Apron / Doormat …); thêm dòng Biến thể (Chất liệu, Size, Color); nhập Giá. <b>Mặc định kênh Etsy</b> được bật.</div>
+        <div class="sys"><b>Hệ thống:</b> mỗi lần BA đổi Danh mục hoặc Biến thể, ô <b>Mã SKU</b> được tính lại theo bộ ngữ pháp v2.1 — ví dụ Danh mục Mug + Chất liệu Ceramic+Chrome + Size 11oz → <b>MUG-CR-F11</b>. Nếu BA gõ tay sửa, hệ thống nhớ và không ghi đè khi onchange chạy lại (cờ "BA-edited").</div>
+      </div></li>
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">BA · 1 phút (tuỳ chọn)</div>
+        <div class="title">Điền Mã SKU Gearment nếu sản phẩm sẽ giao qua Gearment</div>
+        <div class="desc">Mở tab Channels, gõ mã Gearment vào ô tương ứng. Hệ thống tự bật chế độ Dropship cho sản phẩm này. Để trống → sản phẩm chạy nội bộ (MTO, xem Luồng 3A).</div>
+      </div></li>
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">BA + Marketing · 5–10 phút</div>
+        <div class="title">Bổ sung 7 nhóm thông tin Etsy (tuỳ chọn)</div>
+        <div class="desc">Tags (≤13 từ khoá, mỗi từ ≤20 ký tự); Cá nhân hoá (cho phép khắc tên?); Ảnh phụ (upload thêm 3–9 ảnh phụ); Override taxonomy/shipping/return per sản phẩm; Cân nặng; Thuộc tính biến thể (Material/Color/Size). Mỗi nhóm là một tab phụ trong form.</div>
+        <div class="sys"><b>Hệ thống:</b> Vật liệu và Kích thước được suy ra tự động từ Biến thể — BA không gõ lại. Nếu để trống tags/personalization thì hệ thống dùng giá trị mặc định của shop khi push lên Etsy.</div>
+      </div></li>
+      <li class="step"><div class="n">6</div><div class="body">
+        <div class="who">BA · 1 giây</div>
+        <div class="title">Nhấn Lưu</div>
+        <div class="desc">Hệ thống lưu sản phẩm, sinh các biến thể, và tạo dòng <b>trạng thái kênh</b> "Draft" cho mỗi kênh đã chọn (mặc định Etsy).</div>
+        <div class="sys"><b>Phía sau:</b> SKU validator chạy theo chế độ mềm (mặc định) — mã sai format vẫn lưu, có cảnh báo. Chế độ chặt chỉ Admin bật được; sản phẩm legacy SKU không bị bắt buộc đổi.</div>
+      </div></li>
+      <li class="step"><div class="n">7</div><div class="body">
+        <div class="who">BA · 1 phút</div>
+        <div class="title">Bấm Publish Draft Only (miễn phí phí Etsy)</div>
+        <div class="desc">Nút <b>Publish Draft Only</b> mới được thêm 2026-05-28 — đẩy lên Etsy ở trạng thái draft (chưa mở bán, không tốn phí $0.20). Hoặc bấm <b>Publish to Etsy</b> để đẩy thẳng lên live (tốn phí).</div>
+        <div class="sys"><b>Hệ thống:</b> gọi 3 đường API liền nhau — tạo listing chính; đẩy biến thể và thuộc tính; đẩy ảnh chính + ảnh phụ. Tất cả ghi vào nhật ký Etsy.</div>
+      </div></li>
+      <li class="step"><div class="n">8</div><div class="body">
+        <div class="who">BA · theo dõi</div>
+        <div class="title">Đọc kết quả ở tab Channels</div>
+        <div class="desc">Sau publish, dòng <b>trạng thái kênh</b> chuyển sang "Published" + có mã listing Etsy. Nếu lỗi, dòng sang trạng thái "Error" + cột "Lỗi đồng bộ gần nhất" hiển thị thông tin.</div>
+      </div></li>
+      <li class="step"><div class="n">9</div><div class="body">
+        <div class="who">BA · khi gặp 400</div>
+        <div class="title">Bấm Resume Publish sau khi sửa</div>
+        <div class="desc">Nếu Etsy trả 400 (ví dụ thiếu taxonomy hoặc cá nhân hoá sai format), nút Publish đổi tên thành <b>Resume Publish</b>. BA sửa metadata, bấm Resume — hệ thống không tạo lại listing mà tiếp tục từ bước bị lỗi.</div>
+        <div class="badge yellow">⚠ Hôm nay nội dung 400 chưa hiển thị chi tiết — đang đợi mở tính năng capture body</div>
+      </div></li>
+      <li class="step"><div class="n">10</div><div class="body">
+        <div class="who">BA + Marketing · sau publish</div>
+        <div class="title">Xem listing trực tiếp trên Etsy</div>
+        <div class="desc">Bấm link listing_id trong tab Channels — mở thẳng trang Etsy của listing để kiểm tra ảnh, mô tả, biến thể có đúng không. Nếu cần sửa, BA quay lại form Odoo, sửa, bấm <b>Resume Publish</b>.</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo trong luồng này</h3>
+    <div class="mu-lede">5 màn hình mô phỏng. Cuộn xuống để xem từng cảnh — từ form chuẩn, danh sách SKU drift, gói payload sắp gửi Etsy, modal lỗi 400, và kanban sản phẩm lọc theo kênh.</div>
+
+    <!-- MOCKUP 1: Product form with Auto-SKU -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Form Sản phẩm chuẩn — Auto-SKU sau onchange Danh mục/Biến thể</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › Sản phẩm</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span>Tạo mới<span class="mu-sep">›</span><strong>Custom Coffee Mug 11oz</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Discard</button>
+        <button class="mu-btn mu-btn-primary">Save</button>
+        <button class="mu-btn">Publish Draft Only</button>
+        <button class="mu-btn">Publish to Etsy</button>
+        <div class="mu-stage-pipe"><span class="mu-stage active">Draft</span><span>›</span><span class="mu-stage">Published</span><span>›</span><span class="mu-stage">Archived</span></div>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">Custom Coffee Mug 11oz <span class="mu-pill mu-pill-warn" style="margin-left:8px">UNSAVED</span></div>
+        <div class="mu-grid2">
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Tên sản phẩm</div><div class="mu-field-value">Custom Coffee Mug 11oz</div></div>
+            <div class="mu-field"><div class="mu-field-label">Danh mục</div><div class="mu-field-value">Mug</div></div>
+            <div class="mu-field"><div class="mu-field-label">Giá bán (USD)</div><div class="mu-field-value mu-amount">14.50</div></div>
+            <div class="mu-field"><div class="mu-field-label">Các kênh áp dụng</div><div class="mu-field-value"><span class="mu-pill mu-pill-neutral">Etsy</span></div></div>
+          </div>
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Mã SKU</div><div class="mu-field-value"><span class="mu-mono">MUG-CR-F11</span> <span class="mu-pill mu-pill-success" style="margin-left:6px">auto</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">SKU Gearment</div><div class="mu-field-value" style="color:#9ca3af">— (để trống nếu in nội bộ)</div></div>
+            <div class="mu-field"><div class="mu-field-label">Trạng thái</div><div class="mu-field-value"><span class="mu-pill mu-pill-neutral">Draft</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">Cập nhật lần cuối</div><div class="mu-field-value">2026-05-28 14:32 · ba.lead</div></div>
+          </div>
+        </div>
+        <div class="mu-tabs"><span class="mu-tab">Mô tả</span><span class="mu-tab active">Biến thể</span><span class="mu-tab">Channels</span><span class="mu-tab">Tags</span><span class="mu-tab">Cá nhân hoá</span><span class="mu-tab">Ảnh phụ</span><span class="mu-tab">Cân nặng &amp; Kích thước</span><span class="mu-tab">Override Etsy</span></div>
+        <div style="padding:14px 0">
+          <table class="mu-list">
+            <thead><tr><th>Thuộc tính</th><th>Giá trị</th><th>Auto SKU segment</th></tr></thead>
+            <tbody>
+              <tr><td>Chất liệu</td><td>Ceramic + Chrome</td><td class="mu-mono">CR</td></tr>
+              <tr><td>Fluid oz</td><td>11 oz</td><td class="mu-mono">F11</td></tr>
+              <tr><td>Color</td><td><i style="color:#9ca3af">không dùng — bỏ qua</i></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="mu-caption">Mã SKU <b>MUG-CR-F11</b> được sinh tự động ngay khi BA chọn Danh mục Mug và thuộc tính Fluid oz = 11 oz. Thứ tự nối: <b>Family → Material → Size → (Color nếu có)</b> theo SKU Grammar v2.1. BA có thể gõ tay sửa; sau đó hệ thống sẽ không ghi đè khi onchange chạy lại (cờ BA-edited).</div>
+    </div>
+
+    <!-- MOCKUP 2: SKU drift list -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>SKU Drift — danh sách sản phẩm có mã legacy chưa khớp v2.1</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › SKU Drift</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.manager@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span><strong>SKU Drift</strong> <span class="mu-pill mu-pill-warn" style="margin-left:8px">22 dòng</span></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Drift hiện hành</button>
+        <button class="mu-btn">Nhóm theo Danh mục</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn">Keep Legacy</button>
+        <button class="mu-btn mu-btn-primary">Accept Canonical</button>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th style="width:30px">☐</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Mã legacy</th><th>Mã đề xuất v2.1</th><th>Đã publish Etsy?</th><th>Quyết định</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>Coffee Mug Black</td><td>Mug</td><td class="mu-mono" style="color:#9ca3af">MUG001-BK</td><td class="mu-mono">MUG-CR-F11-BK</td><td><span class="mu-pill mu-pill-success">Yes · listing 2845…</span></td><td><span class="mu-pill mu-pill-neutral">Chưa quyết</span></td></tr>
+          <tr><td>☐</td><td>Apron Linen Medium</td><td>Apron</td><td class="mu-mono" style="color:#9ca3af">AP-LIN-M</td><td class="mu-mono">APR-LN-AM</td><td><span class="mu-pill mu-pill-success">Yes · listing 3019…</span></td><td><span class="mu-pill mu-pill-neutral">Chưa quyết</span></td></tr>
+          <tr><td>☐</td><td>Doormat 30x18 Welcome</td><td>Doormat</td><td class="mu-mono" style="color:#9ca3af">DM-WLCM-3018</td><td class="mu-mono">DMT-TX-R30X18</td><td><span class="mu-pill mu-pill-neutral">Draft</span></td><td><span class="mu-pill mu-pill-success">Keep Legacy</span></td></tr>
+          <tr><td>☐</td><td>Ring Dish Square</td><td>Ring Dish</td><td class="mu-mono" style="color:#9ca3af">RING-SQ-CE</td><td class="mu-mono">RDS-CE-SQ</td><td><span class="mu-pill mu-pill-success">Yes · listing 2774…</span></td><td><span class="mu-pill mu-pill-success">Accept</span></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">SKU Drift là nơi BA Manager đối chiếu mã legacy với mã chuẩn v2.1. <b>Keep Legacy</b> giữ nguyên mã cũ; <b>Accept Canonical</b> cập nhật mã mới vào Odoo và đẩy lên Etsy (nếu listing đã published). Nếu Etsy báo lỗi khi đổi mã, hệ thống rollback và ghi vào nhật ký để BA xem.</div>
+    </div>
+
+    <!-- MOCKUP 3: Pre-push payload preview -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Hậu trường — gói payload sắp gửi Etsy (tab Channels)</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › Custom Coffee Mug 11oz</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span>Custom Coffee Mug 11oz<span class="mu-sep">›</span><strong>Channels</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn mu-btn-primary">Publish Draft Only</button>
+        <button class="mu-btn">Publish to Etsy</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280">2 record liên quan: <b style="color:#714B67">product.template #4081</b> ↔ <b style="color:#714B67">etsy.listing.product #112</b></span>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="background:#faf5f9;border:1px solid #e4cee0;border-radius:6px;padding:14px;margin-bottom:14px;font-size:12.5px;color:#5b3a55">
+          <b>Vì sao có 2 bản ghi cho cùng một sản phẩm?</b> Odoo lưu sản phẩm gốc trong <b>product.template</b> (Danh mục, biến thể, kho, giá USD). Mỗi listing Etsy tương ứng được lưu thêm trong <b>etsy.listing.product</b> (listing_id, trạng thái sync, lỗi gần nhất). Cùng một SKU xuất hiện ở cả hai. Đây là lựa chọn thiết kế từ ADR-008 để giữ vòng đời Etsy độc lập (vd. khi Etsy nâng cấp API thì không ảnh hưởng product.template).
+        </div>
+        <table class="mu-list">
+          <thead><tr><th>Kênh</th><th>Trạng thái</th><th>Etsy listing_id</th><th>Đã sync</th><th>Lỗi đồng bộ gần nhất</th></tr></thead>
+          <tbody>
+            <tr><td>Etsy — JaHandmadeArt</td><td><span class="mu-pill mu-pill-neutral">Draft (chưa push)</span></td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:18px;font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px">Payload Etsy sẽ gửi (preview):</div>
+        <table class="mu-list">
+          <tbody>
+            <tr><td style="width:200px;color:#6b7280">title</td><td>Custom Coffee Mug 11oz — Ceramic White</td></tr>
+            <tr><td style="color:#6b7280">price (VND)</td><td class="mu-mono" style="color:#1f2937">368500</td></tr>
+            <tr><td style="color:#6b7280">taxonomy_id</td><td class="mu-mono">2172</td></tr>
+            <tr><td style="color:#6b7280">readiness_state_id</td><td class="mu-mono">1406133708616</td></tr>
+            <tr><td style="color:#6b7280">materials</td><td>Ceramic, Chrome <span class="mu-pill mu-pill-neutral" style="margin-left:6px">auto từ Biến thể</span></td></tr>
+            <tr><td style="color:#6b7280">tags (5)</td><td>coffee-mug, ceramic, 11oz, gift, handmade</td></tr>
+            <tr><td style="color:#6b7280">personalization</td><td><span class="mu-pill mu-pill-neutral">tắt</span></td></tr>
+            <tr><td style="color:#6b7280">weight</td><td>0.34 kg → <span class="mu-mono">12 oz</span> (Etsy đơn vị)</td></tr>
+            <tr><td style="color:#6b7280">offerings (push_inventory)</td><td>1 biến thể (Ceramic+Chrome / 11oz)</td></tr>
+            <tr><td style="color:#6b7280">images</td><td>1 ảnh chính + 3 ảnh phụ (max 10)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mu-caption">Đây là cảnh BA xem ngay <b>trước khi bấm Publish</b>. Hệ thống tự gói các giá trị từ form + cấu hình mặc định shop (taxonomy_id 2172, readiness_state_id …). Nếu BA bật Override Etsy theo sản phẩm thì các giá trị này được thay thế. Lưu ý: <b>JaHandmadeArt là shop VND</b> nên price được nhân từ USD form theo tỉ giá shop trước khi gửi (đã sửa từ UAT 2026-05-28).</div>
+    </div>
+
+    <!-- MOCKUP 4: 400 error modal with banner -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Modal lỗi 400 — Etsy từ chối publish (TC-014 Cân nặng + Kích thước)</strong></div>
+      <div class="mu-chrome-bar"><span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › Custom Coffee Mug 11oz</span><span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span></div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span>Custom Coffee Mug 11oz<span class="mu-sep">›</span><strong>Lỗi đồng bộ</strong></div>
+      <div class="mu-modal-overlay">
+        <div class="mu-modal">
+          <div class="mu-modal-head">⚠ Etsy trả lỗi 400 khi push listing</div>
+          <div class="mu-modal-body">
+            <p style="margin-bottom:8px"><b>Sản phẩm:</b> Custom Coffee Mug 11oz</p>
+            <p style="margin-bottom:8px"><b>Bước thất bại:</b> createListing</p>
+            <p style="margin-bottom:8px"><b>Mã lỗi HTTP:</b> 400</p>
+            <p style="margin-bottom:10px"><b>Thời điểm:</b> 2026-05-28 14:38:21</p>
+            <div class="mu-modal-banner">
+              <b>Đang chờ phản hồi chi tiết từ Etsy.</b> Hệ thống Etsy trả lỗi 400 nhưng chưa cung cấp lý do cụ thể. Đội kỹ thuật đang bổ sung tính năng <b>"capture response body"</b> để hiển thị thông điệp lỗi đầy đủ (kế hoạch R-PUB-RESPONSE-BODY-DIAGNOSE). Đây <b>không phải lỗi giao diện</b> — là vấn đề khả năng quan sát đang được khắc phục.
+            </div>
+            <p style="font-size:12.5px;color:#6b7280;margin-top:8px">Các bước tiếp theo: BA Lead báo cho đội Kỹ thuật để cấp diagnostics chi tiết, sau đó bấm <b>Resume Publish</b> để tiếp tục từ bước bị lỗi (không tạo lại từ đầu).</p>
+          </div>
+          <div class="mu-modal-foot">
+            <button class="mu-btn">Đóng</button>
+            <button class="mu-btn">Mở nhật ký Etsy</button>
+            <button class="mu-btn mu-btn-primary">Resume Publish</button>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Modal hiện ra sau khi Etsy 400 ở bước createListing. UAT 2026-05-28 ghi nhận 4 ca như vậy (TC-009 cá nhân hoá, TC-013 taxonomy override, TC-014 cân nặng + kích thước, TC-015 variant). Vấn đề không nằm ở giao diện hay quy trình — nằm ở việc client chưa lưu body 400 chi tiết. Đã có kế hoạch <b>R-PUB-RESPONSE-BODY-DIAGNOSE</b> để fix capture body trước khi chạy lại các TC bị 400.</div>
+    </div>
+
+    <!-- MOCKUP 5: Kanban filtered by Etsy channel -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 5 · <strong>Kanban Sản phẩm lọc theo kênh Etsy — trạng thái đăng bán</strong></div>
+      <div class="mu-chrome-bar"><span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › Trạng thái theo kênh</span><span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span></div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span><strong>Trạng thái theo kênh: Etsy</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Kênh Etsy</button>
+        <button class="mu-btn">Shop: JaHandmadeArt</button>
+        <button class="mu-btn">Nhóm theo Trạng thái</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280">132 sản phẩm · 28 Draft · 98 Published · 6 Error</span>
+      </div>
+      <div class="mu-kanban" style="grid-template-columns:repeat(3,1fr)">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Draft · 28</div>
+          <div class="mu-kb-card"><h4>Custom Coffee Mug 11oz</h4><div class="mu-kb-meta"><b>SKU:</b> MUG-CR-F11<br><b>Giá:</b> 14.50 USD<br><b>Cập nhật:</b> hôm nay 14:32</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Apron Linen Medium</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AM<br><b>Giá:</b> 28.00 USD<br><b>Cập nhật:</b> hôm qua</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Published · 98</div>
+          <div class="mu-kb-card"><h4>Ring Dish Square</h4><div class="mu-kb-meta"><b>SKU:</b> RDS-CE-SQ<br><b>listing_id:</b> 2774…<br><b>Bán:</b> 23 đơn / 30 ngày</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Doormat 30x18 Welcome</h4><div class="mu-kb-meta"><b>SKU:</b> DMT-TX-R30X18<br><b>listing_id:</b> 3104…<br><b>Bán:</b> 8 đơn / 30 ngày</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#b91c1c;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Error · 6</div>
+          <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9"><h4>Mug Personalised Name</h4><div class="mu-kb-meta"><b>SKU:</b> MUG-CR-F11-BK<br><b>Lỗi:</b> 400 personalization<br><b>Cần:</b> R-PUB-RESPONSE-BODY-DIAGNOSE</div></div>
+          <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9;margin-top:8px"><h4>Apron XL Heavy</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AXL<br><b>Lỗi:</b> 400 weight/dims<br><b>Tuổi lỗi:</b> 3 ngày</div></div>
+        </div>
+      </div>
+      <div class="mu-caption">Kanban này là điểm nhìn tổng cho BA Lead: bao nhiêu sản phẩm draft đang chờ duyệt, bao nhiêu live trên Etsy, và bao nhiêu đang vướng lỗi. Cột Error là việc cần xử lý — bấm vào thẻ sẽ mở thẳng form sản phẩm tại tab Channels để xem lý do và bấm <b>Resume Publish</b> sau khi sửa.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Tiêu chí thành công</h3>
+    <ul class="kpi-list">
+      <li><b>Thời gian tạo</b>BA mở form → bấm Lưu ≤ 5 phút (đã đạt với 5 ca UAT 2026-05-28)</li>
+      <li><b>Tỉ lệ SKU đúng format</b>≥ 95% mã sinh tự động khớp v2.1 (mã legacy không tính)</li>
+      <li><b>Tỉ lệ publish thành công</b>≥ 80% lần publish lên Etsy không bị 400 (hôm nay 55% — đang chờ R-PUB fix)</li>
+      <li><b>Thời gian từ Publish → listing live</b>≤ 30 giây (Etsy API response time)</li>
+      <li><b>Tỉ lệ Resume Publish thành công</b>≥ 90% sau khi sửa metadata (chưa đo vì còn thiếu body)</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Liên kết với các luồng khác</h3>
+    <div class="crosslink-grid">
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Tiếp theo</b>Luồng 2 — Khi listing có người mua, đơn về Odoo qua API</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Liên quan</b>Luồng 3A — Sản phẩm in nội bộ MTO sau khi nhận đơn</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Liên quan</b>Luồng 3B — Sản phẩm có SKU Gearment → dropship</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — một ngày làm việc bao gồm tạo sản phẩm</a>
+      <a href="role-5-pd.html"><b>Vai trò</b>Thiết kế PD — bước chuẩn bị file đầu vào</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Lưu ý và câu hỏi mở</h3>
+    <p><b>Đang chờ Etsy hỗ trợ:</b> R-PUB-RESPONSE-BODY-DIAGNOSE — capture nội dung lỗi 400 đầy đủ để BA chẩn đoán nhanh. Đây là blocker duy nhất để chuyển trạng thái Luồng 1 từ "Đang xây dựng 85%" sang "Hoạt động".</p>
+    <p><b>Còn thiết kế:</b> đồng bộ từ Excel hàng đêm (Cách 2 trong FLOW_TAO_SAN_PHAM_VN). Hôm nay BA tạo tay từng sản phẩm; sau Phase 7 sẽ có cron đêm tự nhập Excel từ Google Drive.</p>
+    <p><b>Câu hỏi mở từ ADR-014 (Product Hub):</b> bài toán đa kênh (Amazon, Website) — chưa code. Đến khi Spec 009 spawn, form Channels sẽ có thêm cột; logic publish phải tách thành adapter theo kênh. Hôm nay chỉ Etsy hoạt động.</p>
+    <p><b>F-PRICE drift (UAT 2026-05-28):</b> form Sản phẩm chuẩn không enforce giá &gt; 0 (ràng buộc cũ ở wizard cũ đã ẩn). Cần quyết định: thêm constraint ở form, hay tiếp tục dựa vào Etsy push-time enforcement ($0.20 floor)? Hôm nay theo phương án 2.</p>
+  </div>
+
+  <footer>Luồng 1 · cập nhật 2026-06-03 · nguồn: FLOW_TAO_SAN_PHAM_VN v1.2 · HUONG_DAN_TAO_SAN_PHAM_VN v1.2 · SKU_GRAMMAR v2.1 · UAT 2026-05-28 · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>
