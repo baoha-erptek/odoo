@@ -431,3 +431,102 @@ Bonus help-text update: `etsy.api.log.http_status.help` previously said "NULL on
 **Owner-gated remainder** (T6): Flow-2 TC-003 + downstream (TC-004/005/008) re-run on staging requires staging deploy of etsy_integration 19.0.2.32.0 + admin password + Etsy creds + Gearment HMAC secret per `P-UAT-AUTOMATION-2FLOWS` Phase D contract. Code work is done; convergence verification is the operator's next step via `npm run test:don-hang-etsy`.
 
 **Tracker status flip**: `P-UAT-AUTOMATION-2FLOWS` can flip from `authoring_done` → `done` once T6 lands green. This slice (`P-UAT-FIX-API-LOG-HTTP-STATUS`) is independently `done` for code; only the staging convergence verification is owner-gated.
+
+### P-DOCS-BUSINESS-FLOWS-AUDIT — 2026-06-03 (Phase 0, facts pinned BEFORE prose edits)
+
+**Subject**: 11 untracked HTML files in `docs/owner/business-flows/` (10 docs + 1 index), authored 2026-06-03 09:36–05:17 UTC by a prior session. No slice ID, no findings anchor, no git history. Owner asked us to audit before promoting to a tracked deliverable. This audit follows the `odoo-ba-consultant` agent suite (`odoo-standard-first` decision tree + `odoo-functional-mockup` 5-step procedure) and reconciles every claim against the actual built code in `custom_addons/` via the graphify graph rebuilt today (370 files / 6176 nodes / 8925 edges / 441 communities — manifest now spans `etsy_integration` + `multichannel_hub_core` + `multichannel_hub_fulfillment`; commits 2026-06-03T10:05 UTC, see `graphify-out/cost.json` run #2).
+
+**Doc-only slice contract** (per `feedback_doc_only_slice_spec_drift_first.md` + playbook §Phase 2 abbreviated):
+- Phase 2 RED: skipped (no failing tests; prose).
+- Phase 4 security-reviewer: skipped (no code change).
+- Phase 1 planner: `~/.claude/plans/check-for-odoo-ba-consultant-and-linear-gizmo.md` (approved 2026-06-03).
+- This facts-table commit lands ALONE on `feature/006-master-plan-coding` BEFORE any HTML edit. HTML corrections follow in subsequent commits, each citing back to this table.
+
+#### Audit matrix (11 docs × 4 verdict axes)
+
+Verdict legend per axis:
+- **POV**: ✅ end-user · ⚠ mixed · ❌ dev-jargon in prose
+- **Std-1st**: ✅ standard cited · ⚠ partial · ❌ custom presented as default with no standard-considered trace
+- **Mockup**: ✅ baseline XML ID cited · ⚠ implicit baseline · ❌ invented chrome, no baseline
+- **Reality**: ✅ matches built code · ⚠ partial-built / aspirational · ❌ not built
+
+| # | Doc | POV | Std-1st | Mockup | Reality | Notes |
+|---|---|---|---|---|---|---|
+| 1 | `index.html` | ✅ | n/a | n/a | ✅ | Pure nav index; only audit risk is dead links to docs in this set. |
+| 2 | `flow-1-tao-san-pham.html` | ❌ | ⚠ | ❌ | ✅ | Body prose leaks `etsy.api.log`, `product.channel.status`, `product.template`. Mockup #1 says "Form Sản phẩm chuẩn" but doesn't cite the `product.template.product_template_form_view` XML ID it inherits from. SKU v2.1 + Channels tab + Etsy publish wizard are all coded (communities #6, #18, #20). |
+| 3 | `flow-2-nhan-don-hang-etsy.html` | ❌ | ⚠ | ❌ | ⚠ | Body prose leaks `etsy.api.log`, `sale.order`, **`cron_sync_orders`** — wrong cron name (actual XML IDs: `etsy_integration.cron_etsy_order_sync` 5-min, `etsy_integration.ir_cron_etsy_fetch_emails`/`ir_cron_fetch_etsy_emails` 10-min — DUPLICATE ID across two XML files — orphan-cron-method audit needed separately). API log + email log fallback are coded (communities #21, #10, #15). |
+| 4 | `flow-3a-giao-hang-in-noi-bo.html` | ⚠ | ❌ | ❌ | ⚠ | **17-state pipeline presented as live; code reality is 5-stage compact**. `multichannel_hub_core/data/order_pipeline_state_seed.xml:22` comment: "5-stage compact; 17-stage detail"; `order_pipeline_seed.xml:11` says "full state machine lands in P1-PIPELINE-FULL". Section E ("Tự động hóa trạng thái sắp ra") admits manual transitions but body presents 17 stages as shipped. Mockup #4 "Production Scan View QR & Barcode" — **`grep -rEln "barcode" custom_addons/` returns 0 hits** — not built. Mockup #5 "QC Checklist" — no standard `quality_control` module evaluation. Standard-first never run on pipeline-vs-`stock.picking`/MRP routing decision. |
+| 5 | `flow-3b-giao-hang-gearment-dropship.html` | ❌ | ⚠ | ❌ | ✅ | Body prose leaks `etsy.api.log`, `sale.order`. Gearment adapter / payload / API client / webhook dispatcher / HMAC verification are coded (communities #0, #5, #11; file `gearment_webhook_dispatcher.py` confirmed). Lede claim "UAT 2026-05-28 confirm HMAC-SHA256" matches `reference_gearment_webhook_signature.md`. Mockups don't cite the inherited `sale.order.view_order_form` baseline. |
+| 6 | `flow-4-hau-mai.html` | ✅ | ❌ | ❌ | ❌ | Cleanest POV but factually shakiest. (a) Buyer-message ingestion: doc admits `conversations_r` scope not yet approved by Etsy — correct, matches `project_external_deps_2026_04_27.md` E1 status. (b) **Address-change wizard: `grep -rEln "address.*change.*wizard\|change.*address.*wizard\|doi.dia.chi" custom_addons/` returns 0 hits — NOT BUILT**. Standard-first never run vs `res.partner` + `sale.order.partner_shipping_id` write rules. (c) "In lại" reset to "Chờ in" depends on the 17-state pipeline being live (see doc #4 — not yet). (d) Refund: `etsy.order.ticket` named as a placeholder Story 4.8 — `grep` confirms no such model — correctly labeled "design phase" in the mockup caption. |
+| 7 | `role-1-ba-lead.html` | ⚠ | n/a | ❌ | ⚠ | Persona narrative is clean, but mockup #4 title literally says "etsy.api.log Filter HTTP=400" (model name surfaced in end-user mockup). Address Change Modal — same not-built issue as doc #6. Other 4 mockups (Operations Dashboard, Design Files Kanban, SKU Drift list, Day-end report) align with built code. |
+| 8 | `role-2-marketing.html` | ❌ | ❌ | ❌ | ⚠ | Body prose leaks `etsy.api.log`, `product.channel.status`, `sale.order`. Multi-shop message hub explicitly "trong thiết kế" — honest. "Dashboard Kiểm soát giá" also "trong thiết kế" — honest. Standard-first never run on Multi-shop = could be `mail.alias` + per-shop filter vs new model. |
+| 9 | `role-3-san-xuat.html` | ⚠ | ❌ | ❌ | ⚠ | "Story 3.6 sẽ cho phép scan" admits scan-to-advance is roadmap — honest. But the kanban screens depict pipeline transitions that depend on the not-yet-live 17-state machine (doc #4). Standard-first never run on production-progress vs MRP work-order completion hook. |
+| 10 | `role-4-rd.html` | ❌ | ❌ | ❌ | ❌ | Body prose leaks `etsy.api.log`, `sale.order`. **All 3 mockups labeled "(target)" — none are built**. Story 6.5 — `grep "price.audit\|anomal" custom_addons/` only matches `data_migration_wizard.py` (different concept). Standard-first never run on price-variance reporting vs Odoo 19 CE pivot / spreadsheet views. Per `feedback_ceo_unified_dashboard.md` CEO wants unified ops dashboard — this is a separate audit topic. |
+| 11 | `role-5-pd.html` | ⚠ | ⚠ | ❌ | ✅ | Body prose leaks `sale.order` (one mention). Design Files kanban + upload wizard + versioning are coded (communities #9, #24). Mockup screens don't cite `multichannel_hub_core.design_file_kanban_view` baseline. |
+
+#### Reality cross-cuts (apply to multiple docs)
+
+- **Cron-name drift**: doc #3 says `cron_sync_orders`; actual XML IDs are `etsy_integration.cron_etsy_order_sync` (sale orders, 5-min) and `etsy_integration.ir_cron_etsy_fetch_emails` (Gmail poll, 10-min). The 5-min interval matches the lede claim; only the name is wrong.
+- **Duplicate XML ID**: `ir_cron_etsy_fetch_emails` vs `ir_cron_fetch_etsy_emails` both appear in `grep -E "ir_cron[^\"]*etsy[^\"]*email" custom_addons/`. Out of audit scope but flagged — may be a real bug in `etsy_integration`. Capture as separate finding when verified.
+- **17-stage MTO pipeline is aspirational**: only 5 stages currently seeded; impacts docs #4, #7, #9.
+- **Address-change wizard does NOT exist**: impacts docs #6, #7. Standard-first decision required before any custom build (Odoo 19 has `sale.order.partner_shipping_id` write rules + record rules for FR-017 gating).
+- **Barcode/QR scan is NOT built**: impacts docs #4 mockup #4, #9.
+- **Price audit / anomaly detection is NOT built**: impacts doc #10 entirely. Story 6.5 not started.
+- **Buyer-message ingestion blocked on Etsy `conversations_r` scope**: impacts docs #6, #8. External dep E1.
+
+#### Standard-Odoo-First decisions still owed (must run before any custom build)
+
+Per `feedback_standard_odoo_first.md`, the following customizations described in the docs lack a documented standard-considered trace:
+
+| Doc | Mechanism | Standard option to grep | Owner-escalation required? |
+|---|---|---|---|
+| #4 | 17-state pipeline | `stock.picking` + custom routes; `crm.stage`; `mrp.production` state machine | YES (custom 17-state vs `stock.picking` + `mrp.production` is a strategic call already partially made — needs ADR pointer) |
+| #4 | QC checklist | `quality_control` / `quality.check` (Enterprise) — CE gap; or `stock.move.line.lot_id` + chatter | YES |
+| #4 | Production scan | `stock.barcode` (standard CE); deserves grep | YES if scan-flow is wanted |
+| #6 | Address-change wizard | `sale.order.write({'partner_shipping_id': ...})` with record-rule gate | YES — owner approval before TransientModel |
+| #6 | Refund / `etsy.order.ticket` | `helpdesk.ticket` (Enterprise); `account.move` refund flow; `stock.return.picking` | YES |
+| #8 | Multi-shop message hub | `mail.alias` per shop + `discuss.channel` aggregation; or extending chatter on `etsy.shop` | YES |
+| #10 | Price audit | Pivot/dashboard views on `sale.order.line`; spreadsheet (Enterprise); custom dashboard | YES |
+
+#### Corrections to apply (Phase 3, after this commit)
+
+Red docs (4 + 1 supporting) — must add baseline footnote OR owner-escalation pointer; must strip dev-jargon from body prose:
+
+1. `flow-3a-giao-hang-in-noi-bo.html` — change "17 trạng thái pipeline" to honest "5-trạng thái hiện tại / 17 dự kiến (P1-PIPELINE-FULL)"; remove mockup #4 (barcode) or relabel as `(thiết kế)`; relabel mockup #5 QC checklist as `(thiết kế)` and pointer to standard-first audit owed; add baseline footnote pointing at `mhc.order_pipeline_state_seed.xml`.
+2. `flow-4-hau-mai.html` — flip address-change wizard from "đã có" framing to `(thiết kế, chờ owner duyệt vs sale.order.partner_shipping_id)`; keep refund placeholder as-is.
+3. `role-4-rd.html` — all 3 "(target)" mockups already correctly labeled; add a Section E pointer that Story 6.5 is unbuilt and standard-first not yet run; strip `etsy.api.log` + `sale.order` from body.
+4. `role-5-pd.html` — strip `sale.order` mention; add baseline footnote to Design Files kanban (`mhc.design_file_kanban_view`).
+
+Orange docs (2):
+
+5. `flow-3b-giao-hang-gearment-dropship.html` — strip dev jargon from body; add baseline footnote to fulfillment tab (inherited from `sale.order.view_order_form`); cite `gearment_webhook_dispatcher` real module path.
+6. `role-3-san-xuat.html` — add "depends on P1-PIPELINE-FULL" caveat at the kanban screens.
+
+Yellow docs (2):
+
+7. `flow-1-tao-san-pham.html` — strip dev jargon (`etsy.api.log`, `product.channel.status`, `product.template`); add baseline footnote `addons/product/views/product_views.xml#product_template_form_view`.
+8. `flow-2-nhan-don-hang-etsy.html` — fix cron name `cron_sync_orders` → `cron_etsy_order_sync`; strip dev jargon; add baseline footnote for sale.order Etsy tab.
+
+Green docs (3) — light touch only:
+
+9. `index.html` — verify all hyperlinks resolve after renames.
+10. `role-1-ba-lead.html` — change mockup #4 title from `etsy.api.log Filter HTTP=400` to plain `Bộ lọc lỗi Etsy theo mã HTTP`.
+11. `role-2-marketing.html` — strip dev jargon; multi-shop hub + price dashboard already correctly labeled "trong thiết kế".
+
+#### Acceptance gates for closing this slice
+
+1. Per-doc verdict in table flips from current state to ✅ on POV + Mockup axes (Std-1st may stay ⚠/❌ where owner-escalation is the right answer instead of code).
+2. `grep -rEn 'etsy\.api\.log|product\.channel\.status|@api\.depends|_inherit|cron_sync_orders|ir_cron_[a-z_]+' docs/owner/business-flows/` returns 0 hits in body prose (`<details class="technical">` callouts allowed but not used in current set).
+3. Every mockup has a baseline footnote `Mockup gốc: <XML_ID> tại <addon>/<view-file>; chỗ khác biệt: <lý do>` OR an explicit "(thiết kế, owner chưa duyệt)" pointer.
+4. Each "Standard-Odoo-First decision still owed" row above has an owner-escalation doc reference, an ADR pointer, OR a `(thiết kế)` label — not silent customization.
+5. `git add docs/owner/business-flows/` + commit on `feature/006-master-plan-coding`. Commit body cites this `findings.md` section by anchor.
+6. code-reviewer APPROVE (security-reviewer skipped per doc-only slice contract).
+7. Tracker `state` for `P-DOCS-BUSINESS-FLOWS-AUDIT` flips to `done`; `/learn` entry captures pattern "agent-generated docs need post-hoc Standard-First + reality audit when authored outside the playbook" OR explicit "no new pattern" note.
+
+#### Out of scope for this slice (logged for follow-up)
+
+- Migrate HTML → markdown (owner can request separate slice).
+- Fix the duplicate `ir_cron_etsy_fetch_emails` / `ir_cron_fetch_etsy_emails` XML IDs in `etsy_integration` (likely real bug, separate hotfix).
+- Resolve the 7 "Standard-Odoo-First decisions still owed" rows — each becomes its own owner-escalation request after this audit commits.
+- Refresh graphify when `multichannel_hub_fulfillment` ships new payload code (current graph is a snapshot at 2026-06-03T10:05Z, manifest 220 mhc/mhf refs).
+
