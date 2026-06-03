@@ -287,7 +287,7 @@
           </tbody>
         </table>
       </div>
-      <div class="mu-caption">Operations Dashboard hiển thị <b>toàn bộ dòng sản phẩm mới</b> (không phải toàn bộ đơn). KPI trên cùng cho thấy tình hình API + fallback. Cron pull 14 đơn (23 dòng sản phẩm) trong 4.3 giây lúc 14:03.</div>
+      <div class="mu-caption">Operations Dashboard hiển thị <b>toàn bộ dòng sản phẩm mới</b> (không phải toàn bộ đơn). KPI trên cùng cho thấy tình hình API + fallback. Cron pull 14 đơn (23 dòng sản phẩm) trong 4.3 giây lúc 14:03.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.operations_dashboard_list_view</code> @ <code>multichannel_hub_core/views/operations_dashboard_views.xml</code>) — dựng trên <code>sale.order.line</code> với 34 cột lấy từ Excel "Esty main 2 - 15h VN.xlsx" (P1-01b). KPI ở trên cùng là phần thêm bên ngoài standard list view.</i></div>
     </div>
 
     <!-- MOCKUP 2: Sale Order form, Etsy tab -->
@@ -328,7 +328,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">Tab <b>Etsy</b> hiển thị toàn bộ metadata từ Etsy API: receipt_id (mã gọi tiền), payment_status ("paid" = đã thanh toán), shipping_status, etsy_last_modified (timestamp — để track update). Nếu khách sửa địa chỉ trên Etsy, BA Lead bấm <b>"Yêu cầu đổi địa chỉ"</b> — xem Luồng 2 chi tiết.</div>
+      <div class="mu-caption">Tab <b>Etsy</b> hiển thị toàn bộ metadata từ Etsy API: receipt_id (mã gọi tiền), payment_status ("paid" = đã thanh toán), shipping_status, etsy_last_modified (timestamp — để track update). Nếu khách sửa địa chỉ trên Etsy, BA Lead bấm <b>"Yêu cầu đổi địa chỉ"</b> — xem Luồng 2 chi tiết.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn của Odoo (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: tab "Etsy" mở rộng + các trường receipt_id / payment_status / shipping_address / etsy_last_modified trong <code>etsy_integration/views/sale_order_views.xml</code>.</i></div>
     </div>
 
     <!-- MOCKUP 3: Etsy API Log -->
@@ -357,7 +357,7 @@
           <tr><td>2026-06-03 13:28</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>3 đơn, 1.5s</td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">Etsy API Log ghi mỗi cuộc gọi cron: thời điểm, HTTP status, số đơn được kéo, thời gian response. <b>200</b> = thành công; <b>429</b> = rate limit (hệ thống tự retry); <b>500</b> = Etsy down (trigger Email fallback nếu xảy ra 3 lần liền). Cron pull 14 đơn (23 dòng) trong 4.3 giây lúc 14:03.</div>
+      <div class="mu-caption">Etsy API Log ghi mỗi cuộc gọi cron: thời điểm, HTTP status, số đơn được kéo, thời gian response. <b>200</b> = thành công; <b>429</b> = rate limit (hệ thống tự retry); <b>500</b> = Etsy down (trigger Email fallback nếu xảy ra 3 lần liền). Cron pull 14 đơn (23 dòng) trong 4.3 giây lúc 14:03.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list + form tuỳ biến (<code>etsy_integration.view_etsy_api_log_tree</code> / <code>view_etsy_api_log_search</code> @ <code>etsy_integration/views/etsy_api_log_views.xml</code>) — không có view chuẩn Odoo cho nhật ký API; đây là mô hình tuỳ biến cho Etsy.</i></div>
     </div>
 
     <!-- MOCKUP 4: Email Fallback Log -->
@@ -384,7 +384,7 @@
           <tr><td>2026-05-11 10:05</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-success">yes</span></td><td><span class="mu-mono">SO-2026-0375</span></td><td>parsed via email, 3 items, cá nhân hoá đầy đủ</td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">Email Log chỉ hoạt động khi API hỏng liên tục. Khi API quay lại bình thường, email log vẫn chạy trong nền để fallback nếu cần. Các trạng thái: <b>yes</b> = parse thành công, <b>failed</b> = không bóc được (BA cần xem thủ công), <b>duplicate</b> = đơn đã có (từ API), <b>pending</b> = chờ xử lý. Khi API tạm xuống, BA được alert để bấm "Test Connection" authorize lại.</div>
+      <div class="mu-caption">Email Log chỉ hoạt động khi API hỏng liên tục. Khi API quay lại bình thường, email log vẫn chạy trong nền để fallback nếu cần. Các trạng thái: <b>yes</b> = parse thành công, <b>failed</b> = không bóc được (BA cần xem thủ công), <b>duplicate</b> = đơn đã có (từ API), <b>pending</b> = chờ xử lý. Khi API tạm xuống, BA được alert để bấm "Test Connection" authorize lại.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view tuỳ biến trong <code>etsy_integration/views/etsy_email_log_views.xml</code> — không có view chuẩn Odoo; mô hình email-fallback chuyên biệt cho Etsy (kích hoạt khi API hỏng 3 lần liền).</i></div>
     </div>
   </div>
 

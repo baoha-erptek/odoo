@@ -302,6 +302,7 @@
           <div style="font-size:13px;color:#1f2937">📝 Created address change request (from Medium → XL)</div>
         </div>
       </div>
+      <div class="mu-caption">Chatter là phần chuẩn của Odoo trên mọi mô hình kế thừa <code>mail.thread</code>. Tin nhắn buyer được parser từ email Etsy tự động post vào chatter của đơn hàng tương ứng.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: chatter chuẩn của Odoo (<code>mail.thread</code> mặc định trên <code>sale.order</code>); không có view tuỳ biến — email parser của <code>etsy_integration</code> tự post message vào chatter qua API.</i></div>
     </div>
 
     <!-- MOCKUP 2: Address change approval form -->
@@ -348,7 +349,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">BA Lead xem yêu cầu từ BA Marketing. Nếu đơn vẫn ở pre-production state, nút <b>Duyệt</b> sáng — bấm sẽ áp địa chỉ mới. Nếu đơn ở "Đang in" hay sau đó, nút bị vô hiệu + cảnh báo FR-017 lock. Sau duyệt, chatter tự ghi log.</div>
+      <div class="mu-caption">BA Lead xem yêu cầu từ BA Marketing. Nếu đơn vẫn ở pre-production state, nút <b>Duyệt</b> sáng — bấm sẽ áp địa chỉ mới. Nếu đơn ở "Đang in" hay sau đó, nút bị vô hiệu + cảnh báo FR-017 lock. Sau duyệt, chatter tự ghi log.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form yêu cầu đổi địa chỉ tuỳ biến (<code>etsy_integration.view_etsy_address_change_request_form</code> @ <code>etsy_integration/views/etsy_address_change_request_views.xml</code>) trên mô hình <code>etsy.address.change.request</code> (constraints C-AC-001/002/003); modal là cách hiển thị standard của form trong Odoo.</i></div>
     </div>
 
     <!-- MOCKUP 3: Pipeline reprint state transition -->
@@ -389,7 +390,7 @@
         <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Design Files · Giữ nguyên</div>
         <div style="font-size:13px;color:#1f2937"><b>design-coffee-mug-v1.pdf</b> — approved 2026-05-28, không đổi khi in lại</div>
       </div>
-      <div class="mu-caption">Sau khi bấm <b>"Chuyển sang In lại"</b>, wizard hỏi lý do (ghi vào chatter). Pipeline state chuyển từ "Hoàn tất" về "Chờ in" (reset). Design Files giữ nguyên — sản xuất tái sử dụng file cũ. Chatter ghi log transition với timestamp + user.</div>
+      <div class="mu-caption">Sau khi bấm <b>"Chuyển sang In lại"</b>, wizard hỏi lý do (ghi vào chatter). Pipeline state chuyển từ "Hoàn tất" về "Chờ in" (reset). Design Files giữ nguyên — sản xuất tái sử dụng file cũ. Chatter ghi log transition với timestamp + user.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn (<code>sale.view_order_form</code>) + tab Pipeline tuỳ biến @ <code>multichannel_hub_core/views/sale_order_form.xml</code>; reset trạng thái về "Chờ in" là action method trên <code>sale.order</code>.</i></div>
     </div>
 
     <!-- MOCKUP 4: Refund placeholder (design) -->

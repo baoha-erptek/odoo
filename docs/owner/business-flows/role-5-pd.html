@@ -236,7 +236,7 @@
           <tr><td class="mu-mono">FD-2404</td><td><span class="mu-pill mu-pill-success">Personalize đơn</span></td><td>Order #1847 (in text đơn)</td><td>ba.lead</td><td>30 phút</td><td><span class="mu-pill mu-pill-warn">Pending</span></td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">PD bắt đầu ngày bằng inbox này. Lọc = Pending hiển thị những yêu cầu chưa được duyệt. Cột Loại phân biệt sản phẩm mới (template) và personalize riêng cho đơn. BA Lead gắn tag vào mỗi yêu cầu; PD nhìn thấy ngay trong hệ thống.</div>
+      <div class="mu-caption">PD bắt đầu ngày bằng inbox này. Lọc = Pending hiển thị những yêu cầu chưa được duyệt. Cột Loại phân biệt sản phẩm mới (template) và personalize riêng cho đơn. BA Lead gắn tag vào mỗi yêu cầu; PD nhìn thấy ngay trong hệ thống.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.action_design_file</code> + view list mặc định) trên mô hình <code>design.file</code> @ <code>multichannel_hub_core/views/design_file_views.xml</code>; bộ lọc Pending qua search default.</i></div>
     </div>
 
     <!-- MOCKUP 2: Design file detail versioning -->
@@ -286,7 +286,7 @@
           <button class="mu-btn mu-btn-primary">Submit for Review</button>
         </div>
       </div>
-      <div class="mu-caption">Chi tiết một file thiết kế: tên file, phiên bản, ai tạo khi nào. Lịch sử sửa hiển thị từng phiên bản, feedback BA, trạng thái duyệt. PD xem comment BA, sửa file, upload lại. Nút "Submit for Review" đổi trạng thái Pending → Approved để BA review cuối.</div>
+      <div class="mu-caption">Chi tiết một file thiết kế: tên file, phiên bản, ai tạo khi nào. Lịch sử sửa hiển thị từng phiên bản, feedback BA, trạng thái duyệt. PD xem comment BA, sửa file, upload lại. Nút "Submit for Review" đổi trạng thái Pending → Approved để BA review cuối.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form tuỳ biến (<code>mhc.design_file_form</code> @ <code>multichannel_hub_core/views/design_file_views.xml:5</code>) trên mô hình <code>design.file</code>; phần lịch sử sửa hiển thị qua chatter chuẩn (<code>mail.thread</code>).</i></div>
     </div>
 
     <!-- MOCKUP 3: Design Files kanban 3 cột -->
@@ -317,7 +317,7 @@
           <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9"><h4>Mug Personal Name — v1</h4><div class="mu-kb-meta"><b>Feedback:</b> BA từ chối<br><b>Lý do:</b> "tên quá nhỏ"<br><b>Cần:</b> upload v2</div></div>
         </div>
       </div>
-      <div class="mu-caption">Kanban view của Design Files: 3 cột tương ứng với trạng thái Pending / Approved / Rejected. PD kéo thẻ từ Pending sang Approved sau khi tự kiểm tra. BA Lead review phần Approved, nếu chấp nhận → dùng để in; nếu từ chối → quay lại Pending để PD sửa. Mục Rejected hiển thị những file BA yêu cầu sửa lại.</div>
+      <div class="mu-caption">Kanban view của Design Files: 3 cột tương ứng với trạng thái Pending / Approved / Rejected. PD kéo thẻ từ Pending sang Approved sau khi tự kiểm tra. BA Lead review phần Approved, nếu chấp nhận → dùng để in; nếu từ chối → quay lại Pending để PD sửa. Mục Rejected hiển thị những file BA yêu cầu sửa lại.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.design_file_kanban</code> @ <code>multichannel_hub_core/views/design_file_views.xml:96</code>); 3 cột nhóm theo trường trạng thái của <code>design.file</code>.</i></div>
     </div>
 
     <!-- MOCKUP 4: Archive view -->
@@ -350,7 +350,7 @@
             <span style="margin-left:18px;color:#6b7280">File: MUG-15oz-Ceramic-Red-v1.ai · Size: 14 MB · Upload: em.tuan</span></li>
         </ul>
       </div>
-      <div class="mu-caption">Archive view hiển thị các file đã được BA cuối cùng duyệt, nhóm theo sản phẩm. Khi có biến thể mới hoặc khách yêu cầu thiết kế tương tự, PD tra cứu archive để xem phiên bản gốc đã duyệt, tải lại và tùy chỉnh (ví dụ: đổi màu, thêm text). Không cần lặp lại từ đầu.</div>
+      <div class="mu-caption">Archive view hiển thị các file đã được BA cuối cùng duyệt, nhóm theo sản phẩm. Khi có biến thể mới hoặc khách yêu cầu thiết kế tương tự, PD tra cứu archive để xem phiên bản gốc đã duyệt, tải lại và tùy chỉnh (ví dụ: đổi màu, thêm text). Không cần lặp lại từ đầu.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến trên mô hình <code>design.file</code> + bộ lọc theo trường archive standard của Odoo (<code>active=False</code> toggle có sẵn ở mọi mô hình kế thừa <code>archive</code> mixin); nhóm theo sản phẩm qua group_by tiêu chuẩn.</i></div>
     </div>
   </div>
 

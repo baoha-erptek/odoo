@@ -363,7 +363,7 @@
         <div style="margin-left:12px;padding:8px;background:#fff;border-left:3px solid #fee2e2">Order #1239 — ⚠ Sẽ hết hạn 2 ngày</div>
         <div style="margin-top:12px">... 6 trạng thái khác (Chờ duyệt, Đã duyệt, Sản xuất, QC, Đóng gói, ...)</div>
       </div>
-      <div class="mu-caption">Kanban view hiển thị các cột tương ứng 17 trạng thái. Kéo thả để cập nhật (hoặc form đơn nút dropdown).</div>
+      <div class="mu-caption">Kanban view hiển thị các cột tương ứng 17 trạng thái. Kéo thả để cập nhật (hoặc form đơn nút dropdown).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.order_pipeline_views</code> @ <code>multichannel_hub_core/views/order_pipeline_views.xml</code>) trên mô hình pipeline riêng; hôm nay seed 5 trạng thái gọn — P1-PIPELINE-FULL sẽ mở rộng đủ 17. Không kế thừa <code>sale.view_order_kanban</code> vì các cột là pipeline state, không phải state chuẩn của sale.order.</i></div>
     </div>
 
     <div class="mu-screen">
@@ -401,7 +401,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">3 cột: Pending (chờ BA duyệt), Approved (sẵn sàng in), Rejected (Marketing cần sửa).</div>
+      <div class="mu-caption">3 cột: Pending (chờ BA duyệt), Approved (sẵn sàng in), Rejected (Marketing cần sửa).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.design_file_kanban</code> @ <code>multichannel_hub_core/views/design_file_views.xml:96</code>) trên mô hình <code>design.file</code> riêng — không có view chuẩn Odoo cho file thiết kế POD.</i></div>
     </div>
 
     <div class="mu-screen">
@@ -444,7 +444,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">Tab Pipeline cho phép BA chọn trạng thái mới từ dropdown. Chatter ghi lại tất cả thay đổi + ghi chú của đội.</div>
+      <div class="mu-caption">Tab Pipeline cho phép BA chọn trạng thái mới từ dropdown. Chatter ghi lại tất cả thay đổi + ghi chú của đội.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn của Odoo (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: thêm tab "Pipeline" với dropdown trạng thái MTO trong <code>multichannel_hub_core/views/sale_order_form.xml</code>. Chatter là mặc định từ <code>mail.thread</code>.</i></div>
     </div>
 
     <div class="mu-screen">
@@ -557,7 +557,7 @@
           <b>✓ Thành công:</b> Tracking đã được gửi lên Etsy vào 2026-06-03 14:22. Khách hàng sẽ nhận email "Đơn đã giao".
         </div>
       </div>
-      <div class="mu-caption">Shipping team nhập tracking, chọn carrier, bấm "Push now" để gửi lên Etsy. Trạng thái: pending → pushed (hoặc failed).</div>
+      <div class="mu-caption">Shipping team nhập tracking, chọn carrier, bấm "Push now" để gửi lên Etsy. Trạng thái: pending → pushed (hoặc failed).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn (<code>sale.view_order_form</code>) + nút Mark Shipped tuỳ biến; cơ chế đẩy tracking lên Etsy chạy qua <code>P1-TRK-PUSH-ETSY</code> cron + service <code>carrier_detector</code> trong <code>multichannel_hub_fulfillment</code>.</i></div>
     </div>
   </div>
 </div>

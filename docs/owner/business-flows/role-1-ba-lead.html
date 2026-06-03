@@ -244,7 +244,7 @@
           </tbody>
         </table>
       </div>
-      <div class="mu-caption">Dashboard vận hành sáng 08:30. Chị Hương mở đây trước tiên để biết hôm nay có bao nhiêu đơn, lỗi gì, và ưu tiên gì. Dòng chứa trạng thái "Chờ duyệt thiết kế" là yêu cầu duyệt thiết kế—chị sẽ mở kanban tiếp theo để xử lý.</div>
+      <div class="mu-caption">Dashboard vận hành sáng 08:30. Chị Hương mở đây trước tiên để biết hôm nay có bao nhiêu đơn, lỗi gì, và ưu tiên gì. Dòng chứa trạng thái "Chờ duyệt thiết kế" là yêu cầu duyệt thiết kế—chị sẽ mở kanban tiếp theo để xử lý.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: list tuỳ biến (<code>mhc.operations_dashboard_list_view</code> @ <code>multichannel_hub_core/views/operations_dashboard_views.xml</code>) dựng trên <code>sale.order.line</code> với 34 cột Excel-fixture; KPI ở trên cùng là phần thêm bên ngoài standard list view.</i></div>
     </div>
 
     <!-- MOCKUP 2: Design Files Kanban -->
@@ -275,7 +275,7 @@
           <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9"><h4>MUG-STR-BK_v1.ai</h4><div class="mu-kb-meta"><b>PD: Tuấn</b><br>Lý do: Chữ bị cắt<br><button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Xem chi tiết</button></div></div>
         </div>
       </div>
-      <div class="mu-caption">Kanban 3 cột: Pending (chờ duyệt), Approved (đã duyệt), Rejected (bị từ chối). Chị Hương duyệt từng card bằng cách click "Duyệt" để chuyển sang Approved, hoặc "Reject" để ghi lý do. Mỗi card hiển thị tên file, uploader (PD), và thời gian.</div>
+      <div class="mu-caption">Kanban 3 cột: Pending (chờ duyệt), Approved (đã duyệt), Rejected (bị từ chối). Chị Hương duyệt từng card bằng cách click "Duyệt" để chuyển sang Approved, hoặc "Reject" để ghi lý do. Mỗi card hiển thị tên file, uploader (PD), và thời gian.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.design_file_kanban</code> @ <code>multichannel_hub_core/views/design_file_views.xml:96</code>) trên mô hình <code>design.file</code> riêng.</i></div>
     </div>
 
     <!-- MOCKUP 3: Address Change Wizard Modal -->
@@ -318,7 +318,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">Modal duyệt đổi địa chỉ. Chị Hương so sánh trạng thái pipeline (Đã in) rồi quyết định Reject vì đơn đang ở giai đoạn không thể đổi. Nếu pipeline còn sớm (Chờ duyệt thiết kế, Đang in…) thì Approve.</div>
+      <div class="mu-caption">Modal duyệt đổi địa chỉ. Chị Hương so sánh trạng thái pipeline (Đã in) rồi quyết định Reject vì đơn đang ở giai đoạn không thể đổi. Nếu pipeline còn sớm (Chờ duyệt thiết kế, Đang in…) thì Approve.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form yêu cầu đổi địa chỉ tuỳ biến (<code>etsy_integration.view_etsy_address_change_request_form</code> @ <code>etsy_integration/views/etsy_address_change_request_views.xml</code>) trên mô hình <code>etsy.address.change.request</code> (Spec 003 US4 / P1-04, constraints C-AC-001/002/003).</i></div>
     </div>
 
     <!-- MOCKUP 4: Nhật ký Etsy with HTTP 400 filter -->
@@ -346,7 +346,7 @@
           <tr><td>2026-05-26 16:32</td><td>Doormat 30x18 Welcome</td><td>createListing</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>Đang chờ body chi tiết</td><td><button class="mu-btn mu-btn-link">Resume</button></td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">Nhật ký Etsy lọc HTTP=400 (7 ngày qua). Chị Hương xem từng dòng, bấm vào sản phẩm để sửa metadata, rồi bấm Resume Publish. Hôm nay phần "Lý do" chưa có chi tiết vì Etsy chưa trả nội dung phản hồi đầy đủ — đó là việc cần fix trong R-PUB-RESPONSE-BODY-DIAGNOSE.</div>
+      <div class="mu-caption">Nhật ký Etsy lọc HTTP=400 (7 ngày qua). Chị Hương xem từng dòng, bấm vào sản phẩm để sửa metadata, rồi bấm Resume Publish. Hôm nay phần "Lý do" chưa có chi tiết vì Etsy chưa trả nội dung phản hồi đầy đủ — đó là việc cần fix trong R-PUB-RESPONSE-BODY-DIAGNOSE.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list + search tuỳ biến (<code>etsy_integration.view_etsy_api_log_tree</code> + <code>view_etsy_api_log_search</code> @ <code>etsy_integration/views/etsy_api_log_views.xml</code>); không có view chuẩn Odoo cho nhật ký API.</i></div>
     </div>
 
     <!-- MOCKUP 5: SKU Drift List -->
@@ -372,7 +372,7 @@
           <tr><td><input type="checkbox" style="width:16px;height:16px" checked></td><td>Ring Dish Square</td><td class="mu-mono" style="color:#9ca3af">RING-SQ</td><td class="mu-mono">RDS-CE-SQ</td><td><span class="mu-pill mu-pill-success">Yes · 2774…</span></td><td><span class="mu-pill mu-pill-success">Accept</span></td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">SKU Drift: BA Manager đã pre-sort, Chị Hương duyệt quyết định. "Keep Legacy" nếu product đã published Etsy (tránh xáo trộn); "Accept Canonical" nếu draft. Chị tick dòng và bấm "Accept Canonical" để lưu.</div>
+      <div class="mu-caption">SKU Drift: BA Manager đã pre-sort, Chị Hương duyệt quyết định. "Keep Legacy" nếu product đã published Etsy (tránh xáo trộn); "Accept Canonical" nếu draft. Chị tick dòng và bấm "Accept Canonical" để lưu.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.view_product_sku_drift_list</code> @ <code>multichannel_hub_core/views/product_sku_drift_views.xml</code>); không có view chuẩn Odoo tương đương.</i></div>
     </div>
   </div>
 

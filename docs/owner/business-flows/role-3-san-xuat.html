@@ -248,7 +248,7 @@
           <div class="mu-kb-card" style="margin-top:8px"><h4>Order #S00221</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AXL<br><b>Chờ QC:</b> 8 phút<br><b>Tình trạng:</b> OK</div></div>
         </div>
       </div>
-      <div class="mu-caption">Kanban này cho Anh Long xem một cái nhìn tổng: 8 đơn sẵn sàng in, 9 đơn đang in (4 thợ in song song), 5 đơn chờ QC. Kéo thẻ từ cột này sang cột khác để chuyển trạng thái, hoặc bấm nút hành động trên từng thẻ. <b>Lọc MTO</b> ẩn đi các đơn Gearment (không cần Anh Long can thiệp).</div>
+      <div class="mu-caption">Kanban này cho Anh Long xem một cái nhìn tổng: 8 đơn sẵn sàng in, 9 đơn đang in (4 thợ in song song), 5 đơn chờ QC. Kéo thẻ từ cột này sang cột khác để chuyển trạng thái, hoặc bấm nút hành động trên từng thẻ. <b>Lọc MTO</b> ẩn đi các đơn Gearment (không cần Anh Long can thiệp).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.order_pipeline_views</code> @ <code>multichannel_hub_core/views/order_pipeline_views.xml</code>) trên mô hình pipeline riêng; hôm nay seed 5 trạng thái gọn — P1-PIPELINE-FULL sẽ mở rộng đủ 17.</i></div>
     </div>
 
     <!-- MOCKUP 2: State transition form -->
@@ -291,7 +291,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">Khi in xong batch, Anh Long mở từng đơn → tab Pipeline → bấm nút <b>"Move → Chờ QC"</b>. Hệ thống ghi lại ai bấm, khi nào, từ trạng thái nào sang trạng thái nào. Nút "Cancel (in lại)" dùng khi phát hiện lỗi giữa quá trình (chỉ Anh Long + BA Lead thấy).</div>
+      <div class="mu-caption">Khi in xong batch, Anh Long mở từng đơn → tab Pipeline → bấm nút <b>"Move → Chờ QC"</b>. Hệ thống ghi lại ai bấm, khi nào, từ trạng thái nào sang trạng thái nào. Nút "Cancel (in lại)" dùng khi phát hiện lỗi giữa quá trình (chỉ Anh Long + BA Lead thấy).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: tab "Pipeline" mở rộng với nút Move @ <code>multichannel_hub_core/views/sale_order_form.xml</code>. Quyền hiển thị nút "Cancel" qua security groups.</i></div>
     </div>
 
     <!-- MOCKUP 3: EOD report -->

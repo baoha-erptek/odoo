@@ -304,7 +304,7 @@
           </table>
         </div>
       </div>
-      <div class="mu-caption">Mã SKU <b>MUG-CR-F11</b> được sinh tự động ngay khi BA chọn Danh mục Mug và thuộc tính Fluid oz = 11 oz. Thứ tự nối: <b>Family → Material → Size → (Color nếu có)</b> theo SKU Grammar v2.1. BA có thể gõ tay sửa; sau đó hệ thống sẽ không ghi đè khi onchange chạy lại (cờ BA-edited).</div>
+      <div class="mu-caption">Mã SKU <b>MUG-CR-F11</b> được sinh tự động ngay khi BA chọn Danh mục Mug và thuộc tính Fluid oz = 11 oz. Thứ tự nối: <b>Family → Material → Size → (Color nếu có)</b> theo SKU Grammar v2.1. BA có thể gõ tay sửa; sau đó hệ thống sẽ không ghi đè khi onchange chạy lại (cờ BA-edited).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form sản phẩm chuẩn của Odoo (<code>product.product_template_form_view</code> @ <code>addons/product/views/product_template_views.xml</code>); chỗ khác biệt: thêm tab "Channels" tuỳ biến + onchange tự sinh Mã SKU theo SKU Grammar v2.1 (mở rộng trong <code>etsy_integration/views/product_views.xml</code>).</i></div>
     </div>
 
     <!-- MOCKUP 2: SKU drift list -->
@@ -331,7 +331,7 @@
           <tr><td>☐</td><td>Ring Dish Square</td><td>Ring Dish</td><td class="mu-mono" style="color:#9ca3af">RING-SQ-CE</td><td class="mu-mono">RDS-CE-SQ</td><td><span class="mu-pill mu-pill-success">Yes · listing 2774…</span></td><td><span class="mu-pill mu-pill-success">Accept</span></td></tr>
         </tbody>
       </table>
-      <div class="mu-caption">SKU Drift là nơi BA Manager đối chiếu mã legacy với mã chuẩn v2.1. <b>Keep Legacy</b> giữ nguyên mã cũ; <b>Accept Canonical</b> cập nhật mã mới vào Odoo và đẩy lên Etsy (nếu listing đã published). Nếu Etsy báo lỗi khi đổi mã, hệ thống rollback và ghi vào nhật ký để BA xem.</div>
+      <div class="mu-caption">SKU Drift là nơi BA Manager đối chiếu mã legacy với mã chuẩn v2.1. <b>Keep Legacy</b> giữ nguyên mã cũ; <b>Accept Canonical</b> cập nhật mã mới vào Odoo và đẩy lên Etsy (nếu listing đã published). Nếu Etsy báo lỗi khi đổi mã, hệ thống rollback và ghi vào nhật ký để BA xem.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.view_product_sku_drift_list</code> @ <code>multichannel_hub_core/views/product_sku_drift_views.xml</code>); chỗ khác biệt: hiển thị 2 cột so sánh mã legacy vs canonical với 2 nút Keep Legacy / Accept Canonical — không có view chuẩn Odoo tương đương.</i></div>
     </div>
 
     <!-- MOCKUP 3: Pre-push payload preview -->
@@ -374,7 +374,7 @@
           </tbody>
         </table>
       </div>
-      <div class="mu-caption">Đây là cảnh BA xem ngay <b>trước khi bấm Publish</b>. Hệ thống tự gói các giá trị từ form + cấu hình mặc định shop (taxonomy_id 2172, readiness_state_id …). Nếu BA bật Override Etsy theo sản phẩm thì các giá trị này được thay thế. Lưu ý: <b>JaHandmadeArt là shop VND</b> nên price được nhân từ USD form theo tỉ giá shop trước khi gửi (đã sửa từ UAT 2026-05-28).</div>
+      <div class="mu-caption">Đây là cảnh BA xem ngay <b>trước khi bấm Publish</b>. Hệ thống tự gói các giá trị từ form + cấu hình mặc định shop (taxonomy_id 2172, readiness_state_id …). Nếu BA bật Override Etsy theo sản phẩm thì các giá trị này được thay thế. Lưu ý: <b>JaHandmadeArt là shop VND</b> nên price được nhân từ USD form theo tỉ giá shop trước khi gửi (đã sửa từ UAT 2026-05-28).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: panel tuỳ biến trong tab Channels của form sản phẩm (mở rộng từ <code>product.product_template_form_view</code>); không có view chuẩn Odoo cho việc preview payload — đây là lựa chọn thiết kế theo ADR-008 (Etsy listing lưu ở mô hình riêng <code>etsy.listing.product</code> trong <code>etsy_integration</code>).</i></div>
     </div>
 
     <!-- MOCKUP 4: 400 error modal with banner -->
@@ -402,7 +402,7 @@
           </div>
         </div>
       </div>
-      <div class="mu-caption">Modal hiện ra sau khi Etsy 400 ở bước createListing. UAT 2026-05-28 ghi nhận 4 ca như vậy (TC-009 cá nhân hoá, TC-013 taxonomy override, TC-014 cân nặng + kích thước, TC-015 variant). Vấn đề không nằm ở giao diện hay quy trình — nằm ở việc client chưa lưu body 400 chi tiết. Đã có kế hoạch <b>R-PUB-RESPONSE-BODY-DIAGNOSE</b> để fix capture body trước khi chạy lại các TC bị 400.</div>
+      <div class="mu-caption">Modal hiện ra sau khi Etsy 400 ở bước createListing. UAT 2026-05-28 ghi nhận 4 ca như vậy (TC-009 cá nhân hoá, TC-013 taxonomy override, TC-014 cân nặng + kích thước, TC-015 variant). Vấn đề không nằm ở giao diện hay quy trình — nằm ở việc client chưa lưu body 400 chi tiết. Đã có kế hoạch <b>R-PUB-RESPONSE-BODY-DIAGNOSE</b> để fix capture body trước khi chạy lại các TC bị 400.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: hộp cảnh báo chuẩn của Odoo (<code>WarningDialog</code> trong OWL frontend); nội dung lỗi được viết riêng cho ngữ cảnh Etsy 400.</i></div>
     </div>
 
     <!-- MOCKUP 5: Kanban filtered by Etsy channel -->
@@ -434,7 +434,7 @@
           <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9;margin-top:8px"><h4>Apron XL Heavy</h4><div class="mu-kb-meta"><b>SKU:</b> APR-LN-AXL<br><b>Lỗi:</b> 400 weight/dims<br><b>Tuổi lỗi:</b> 3 ngày</div></div>
         </div>
       </div>
-      <div class="mu-caption">Kanban này là điểm nhìn tổng cho BA Lead: bao nhiêu sản phẩm draft đang chờ duyệt, bao nhiêu live trên Etsy, và bao nhiêu đang vướng lỗi. Cột Error là việc cần xử lý — bấm vào thẻ sẽ mở thẳng form sản phẩm tại tab Channels để xem lý do và bấm <b>Resume Publish</b> sau khi sửa.</div>
+      <div class="mu-caption">Kanban này là điểm nhìn tổng cho BA Lead: bao nhiêu sản phẩm draft đang chờ duyệt, bao nhiêu live trên Etsy, và bao nhiêu đang vướng lỗi. Cột Error là việc cần xử lý — bấm vào thẻ sẽ mở thẳng form sản phẩm tại tab Channels để xem lý do và bấm <b>Resume Publish</b> sau khi sửa.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban sản phẩm chuẩn của Odoo (<code>product.product_template_kanban_view</code> @ <code>addons/product/views/product_template_views.xml</code>); chỗ khác biệt: nhóm theo "Trạng thái kênh" qua <code>mhc.view_multichannel_sync_health_list</code> + bộ lọc kênh Etsy trong <code>multichannel_hub_core/views/multichannel_sync_health_views.xml</code>.</i></div>
     </div>
   </div>
 
