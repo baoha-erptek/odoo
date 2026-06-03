@@ -215,9 +215,9 @@
       </div></li>
       <li class="step"><div class="n">5</div><div class="body">
         <div class="who">Hệ thống Odoo</div>
-        <div class="title">Tìm hoặc tạo res.partner (khách hàng) dựa trên email</div>
-        <div class="desc">Hệ thống tìm res.partner theo buyer_email từ Etsy. Nếu đúng 1 kết quả → auto link (không cần BA duyệt). Nếu 0 kết quả → hệ thống tạo partner mới với tên từ Etsy (buyer_name). Nếu nhiều hơn 1 kết quả → BA Lead phải duyệt chọn cái nào (dự phòng).</div>
-        <div class="sys"><b>Ngoại lệ:</b> nếu buyer_email chứa ký tự đặc biệt hoặc trống → BA chấp nhận thủ công qua giao diện "Etsy Email Log — chưa xử lý".</div>
+        <div class="title">Tìm hoặc tạo khách hàng dựa trên email</div>
+        <div class="desc">Hệ thống tìm khách hàng theo email Etsy. Nếu đúng 1 kết quả → tự liên kết (không cần BA duyệt). Nếu 0 kết quả → hệ thống tự tạo khách hàng mới với tên từ Etsy. Nếu nhiều hơn 1 kết quả → BA Lead phải duyệt chọn cái nào (qua hàng chờ "Nhật ký email Etsy — chưa xử lý" — xem màn hình 4).</div>
+        <div class="sys"><b>Ngoại lệ:</b> nếu email chứa ký tự đặc biệt hoặc trống → BA chấp nhận thủ công qua giao diện "Nhật ký email Etsy — chưa xử lý" (cùng màn hình 4). <b>Cơ chế chọn khách hàng trùng</b> dựa trên hộp thoại tìm kiếm chuẩn của Odoo trên mô hình khách hàng — không có wizard riêng cho việc này.</div>
       </div></li>
       <li class="step"><div class="n">6</div><div class="body">
         <div class="who">Hệ thống Odoo</div>

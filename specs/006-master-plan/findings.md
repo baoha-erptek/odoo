@@ -556,6 +556,8 @@ Green docs (3) — light touch only:
 3. Relabeled `role-3-san-xuat.html` Production EOD Report as `(thiết kế)` — that one IS actually unbuilt (no `eod`/`shift_report` files anywhere in `custom_addons`).
 
 **Still owed for this audit** (not blocking the slice but worth tracking):
-- Baseline XML-ID footnotes on the ~30 ⚠ screens (mostly mechanical; templates in the per-mockup audit table).
-- Coverage gaps: flow-1 step 7 error-drill list, flow-2 partner-match disambiguation dialog. Both can either get a new mockup OR an explicit "uses standard list/dialog" note.
+- ~~Baseline XML-ID footnotes on the ~30 ⚠ screens~~ — **DONE in commit `43e6d275349`** (33 footnotes across 9 docs).
+- ~~Coverage gaps: flow-1 step 7 error-drill list, flow-2 partner-match disambiguation dialog~~ — **DONE in commit `<next>`** as inline pointers (cross-references to existing mockups rather than net-new screens, since the underlying surfaces are already covered: flow-1 step 7 → role-1 mockup #4 (Etsy log HTTP=400 filter); flow-2 step 5 → mockup #4 (Email log queue) + Odoo standard partner search dialog; flow-3a step 10 → mockup #6 (Mark Shipped). No new mockups needed.
+
+**Slice ready to flip to `done` after this commit lands.** All acceptance gates from the Phase 1 audit table are met. The 7 Standard-Odoo-First decisions still owed (multi-shop hub, price audit, QC checklist, barcode scan, refund, etc.) are tracked as separate follow-up audits — they will become individual owner-escalation requests when each becomes a build candidate.
 
