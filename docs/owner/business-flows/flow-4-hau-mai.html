@@ -130,7 +130,7 @@
   <div class="page-head">
     <div class="crumbs">LUỒNG 4 · ĐỌC ~7 PHÚT</div>
     <h2>Chăm sóc sau bán — Tin nhắn, Đổi địa chỉ, In lại, Hoàn tiền</h2>
-    <p class="lede">Bốn quy trình hậu mãi (sau khi đơn giao đến khách): (a) tin nhắn từ khách qua Etsy → đường email dự phòng (kênh chính cần Etsy duyệt quyền đọc tin nhắn — đang chờ); (b) yêu cầu đổi địa chỉ → <b>đang thiết kế</b> (Standard-Odoo-First chưa chạy: cần cân nhắc cập nhật trực tiếp địa chỉ giao trên đơn với quyền hạn chế thay vì xây wizard riêng); (c) in lại nếu sản phẩm lỗi → tái sử dụng file thiết kế, đặt lại trạng thái "Chờ in"; (d) hoàn tiền &amp; hoàn trả → hôm nay BA xử lý thủ công trên Etsy site + ghi chú vào trao đổi đơn, hệ thống tự động <b>đang thiết kế</b>.</p>
+    <p class="lede">Bốn quy trình hậu mãi (sau khi đơn giao đến khách): (a) tin nhắn từ khách qua Etsy → đường email dự phòng (kênh chính cần Etsy duyệt quyền đọc tin nhắn — đang chờ); (b) yêu cầu đổi địa chỉ → wizard BA Lead duyệt qua FR-017 gate (đã có trong hệ thống — mô hình "Address Change Request" trong `etsy_integration`); (c) in lại nếu sản phẩm lỗi → tái sử dụng file thiết kế, đặt lại trạng thái "Chờ in"; (d) hoàn tiền &amp; hoàn trả → hôm nay BA xử lý thủ công trên Etsy site + ghi chú vào trao đổi đơn, hệ thống tự động <b>đang thiết kế</b> (Story 4.8 — chưa khởi công).</p>
     <div class="pills">
       <span class="pill yellow">Đang xây dựng 60%</span>
       <span class="pill red">Hoàn tiền — trong thiết kế</span>
@@ -154,11 +154,11 @@
       <div class="swim-cell">—</div>
       <div class="swim-cell pending">Cron Gmail 10 phút, khử trùng email — API chưa duyệt</div>
 
-      <div class="swim-row-lbl">2. Đổi địa chỉ <span style="color:#dc2626;font-weight:700">(thiết kế)</span></div>
-      <div class="swim-cell pending">Yêu cầu sửa địa chỉ qua tin nhắn hoặc đơn hàng</div>
-      <div class="swim-cell pending">Bấm wizard "Yêu cầu đổi địa chỉ" + điền địa chỉ mới</div>
-      <div class="swim-cell pending">Duyệt qua form, áp địa chỉ (chỉ pre-production)</div>
-      <div class="swim-cell pending">FR-017 gate: khoá sau trạng thái "Đang in"</div>
+      <div class="swim-row-lbl">2. Đổi địa chỉ</div>
+      <div class="swim-cell done">Yêu cầu sửa địa chỉ qua tin nhắn hoặc đơn hàng</div>
+      <div class="swim-cell done">Bấm wizard "Yêu cầu đổi địa chỉ" + điền địa chỉ mới</div>
+      <div class="swim-cell done">Duyệt qua form, áp địa chỉ (chỉ pre-production)</div>
+      <div class="swim-cell done">FR-017 gate: khoá sau trạng thái "Đang in"</div>
 
       <div class="swim-row-lbl">3. In lại</div>
       <div class="swim-cell">—</div>
@@ -204,23 +204,23 @@
       </div></li>
 
       <li class="step"><div class="n">5</div><div class="body">
-        <div class="who">BA Marketing <span class="badge red">🟥 Thiết kế · chưa có nút</span></div>
+        <div class="who">BA Marketing</div>
         <div class="title">Nếu khách yêu cầu đổi địa chỉ — bấm wizard</div>
-        <div class="desc"><b>(Thiết kế — chưa có trong hệ thống):</b> Mở đơn → bấm nút "Yêu cầu đổi địa chỉ". Wizard hiển thị địa chỉ hiện tại + cho sửa từng trường. Điền địa chỉ mới + lý do (copy từ trao đổi đơn).</div>
-        <div class="sys"><b>Standard-Odoo-First chưa chạy:</b> trước khi xây wizard riêng + bảng yêu cầu, cần cân nhắc dùng quyền chỉnh `partner_shipping_id` trực tiếp trên đơn hàng (có sẵn) + ghi log qua chatter. Owner cần quyết định trước khi code.</div>
+        <div class="desc">Mở đơn → bấm nút <b>"Yêu cầu đổi địa chỉ"</b>. Wizard hiển thị địa chỉ hiện tại + cho sửa từng trường. Điền địa chỉ mới + lý do (copy từ trao đổi đơn).</div>
+        <div class="sys"><b>Sau lưu:</b> trường địa chỉ trên form bị <b>khoá</b> — BA Marketing không sửa trực tiếp được. Hệ thống tạo bản ghi yêu cầu đổi địa chỉ chờ duyệt.<br><i>Mockup gốc: form chuẩn đơn hàng (sale.view_order_form @ addons/sale/views/sale_order_views.xml); wizard yêu cầu lấy từ etsy.address.change.request form view @ etsy_integration/views/etsy_address_change_request_views.xml.</i></div>
       </div></li>
 
       <li class="step"><div class="n">6</div><div class="body">
-        <div class="who">BA Lead <span class="badge red">🟥 Thiết kế</span></div>
+        <div class="who">BA Lead</div>
         <div class="title">Duyệt yêu cầu đổi địa chỉ</div>
-        <div class="desc"><b>(Thiết kế):</b> Menu Vận hành → Address Change Requests. Mở yêu cầu mới → kiểm tra đơn còn ở giai đoạn cho phép hay không (FR-017 gate: chỉ pre-production). Bấm "Duyệt" hoặc "Từ chối".</div>
-        <div class="sys"><b>FR-017 guard (đang thiết kế):</b> Nếu đơn đã ở trạng thái "Đang in" trở đi, nút Duyệt bị vô hiệu hoá + thông báo "Đơn đã in nhãn, không cho đổi". Chỉ pre-production (Chờ duyệt thiết kế, Chờ in, v.v.) mới cho đổi.</div>
+        <div class="desc">Menu Vận hành → Address Change Requests. Mở yêu cầu mới → kiểm tra đơn còn ở giai đoạn cho phép hay không (FR-017 gate: chỉ pre-production). Bấm <b>"Duyệt"</b> hoặc <b>"Từ chối"</b>.</div>
+        <div class="sys"><b>FR-017 guard:</b> Nếu đơn đã ở trạng thái "Đang in" trở đi, nút Duyệt bị vô hiệu hoá + thông báo "Đơn đã in nhãn, không cho đổi". Chỉ pre-production (Chờ duyệt thiết kế, Chờ in, v.v.) mới cho đổi. Ràng buộc đã codified — xem `etsy.address.change.request._check_pipeline_state` (C-AC-001/002/003).</div>
       </div></li>
 
       <li class="step"><div class="n">7</div><div class="body">
-        <div class="who">Hệ thống <span class="badge red">🟥 Thiết kế</span></div>
+        <div class="who">Hệ thống</div>
         <div class="title">Áp địa chỉ mới + ghi trao đổi đơn</div>
-        <div class="desc"><b>(Thiết kế):</b> Nếu duyệt → địa chỉ mới được cập nhật vào đơn + trường mở khoá lại. Trao đổi đơn tự ghi log: "BA Lead duyệt yêu cầu đổi địa chỉ từ BA Marketing — áp địa chỉ mới."</div>
+        <div class="desc">Nếu duyệt → địa chỉ mới được cập nhật vào đơn + trường mở khoá lại (`approve_address_change=True` trong context bypass lock). Trao đổi đơn tự ghi log: "BA Lead duyệt yêu cầu đổi địa chỉ từ BA Marketing — áp địa chỉ mới."</div>
       </div></li>
 
       <li class="step"><div class="n">8</div><div class="body">
@@ -306,7 +306,7 @@
 
     <!-- MOCKUP 2: Address change approval form -->
     <div class="mu-screen">
-      <div class="mu-screen-title">Màn hình 2 · <strong>Wizard duyệt đổi địa chỉ — BA Lead approval gate</strong> <span style="color:#dc2626;font-weight:700">(thiết kế — chưa có trong hệ thống)</span></div>
+      <div class="mu-screen-title">Màn hình 2 · <strong>Wizard duyệt đổi địa chỉ — BA Lead approval gate</strong></div>
       <div class="mu-chrome-bar">
         <span class="mu-app">Vận hành</span><span class="mu-menu">Address Change Requests › #RC-001</span>
         <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
@@ -437,7 +437,7 @@
   <div class="section">
     <h3><span class="num">E</span>Lưu ý và câu hỏi mở</h3>
     <p><b>Conversations API chưa được duyệt:</b> E1 — Etsy chưa duyệt scope `conversations_r` (P1-MSG-SCOPE cần re-submit). Hôm nay phụ thuộc đường email parser; khi API hoạt động, sẽ có cron Conversations chạy song song, tự khử trùng lặp theo `etsy.message.dedupe`.</p>
-    <p><b>Đổi địa chỉ — chưa có trong hệ thống:</b> Toàn bộ luồng đổi địa chỉ (yêu cầu + duyệt + FR-017 gate) hiện ở giai đoạn thiết kế, chưa code. <b>Standard-Odoo-First chưa chạy:</b> trước khi xây mô hình `etsy.address.change.request` + wizard riêng, cần cân nhắc dùng quyền chỉnh `partner_shipping_id` (có sẵn trên đơn hàng chuẩn của Odoo) cộng với quy tắc lock theo trạng thái + ghi log qua chatter. Owner duyệt trước khi triển khai.</p>
+    <p><b>FR-017 lock trên đổi địa chỉ:</b> Hệ thống chỉ cho phép đổi địa chỉ ở các trạng thái pre-production (≤ "Chờ in"). Sau khi in nhãn (state ≥ "Đang in"), không cho đổi. BA Marketing phải giải thích cho khách: đơn đã giao bưu tá, không thể đổi — xử lý qua hoàn trả nếu cần. Cơ chế lock được codified trong mô hình `etsy.address.change.request` (C-AC-001/002/003) — xem `etsy_integration/models/etsy_address_change_request.py`.</p>
     <p><b>Story 4.8 etsy.order.ticket — chưa code:</b> Hôm nay (v1) hoàn tiền + hoàn trả là quy trình thủ công. Model `etsy.order.ticket` sẽ theo dõi mỗi yêu cầu (loại, trạng thái, chi phí). Nằm trong P4-02, Master Plan 007.</p>
     <p><b>Tin nhắn buffer quá nhiều "orphaned":</b> Nếu parser yếu và không khớp được Receipt ID, có thể tin nằm buffer lâu. BA Marketing review hàng tuần → copy nội dung vào chatter đơn đúng hoặc đánh dấu `discarded` nếu spam.</p>
   </div>

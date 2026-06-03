@@ -530,3 +530,32 @@ Green docs (3) — light touch only:
 - Resolve the 7 "Standard-Odoo-First decisions still owed" rows — each becomes its own owner-escalation request after this audit commits.
 - Refresh graphify when `multichannel_hub_fulfillment` ships new payload code (current graph is a snapshot at 2026-06-03T10:05Z, manifest 220 mhc/mhf refs).
 
+### P-DOCS-BUSINESS-FLOWS-AUDIT — correction pass (2026-06-03 Phase 3)
+
+**Why this addendum:** The initial audit (preceding sections) used graphify alone as the code-reality oracle, then ran a narrow `grep` on `address.*wizard`. Both signals returned empty, producing a "NOT BUILT" verdict for the address-change wizard. The HTML correction commit (`00dd25d561a`) relabeled flow-4 + role-1 mockup #3 as `(thiết kế)`. This was wrong.
+
+**Actual reality:**
+
+| Feature | Initial verdict | Correct verdict | Evidence |
+|---|---|---|---|
+| Address-change wizard | ❌ NOT built | ✅ **BUILT** | `etsy_integration/models/etsy_address_change_request.py` (docstring "Spec 003 US4 / P1-04", constraints C-AC-001/002/003), `views/etsy_address_change_request_views.xml` (73 lines list+form+action_approve+action_reject), `__manifest__.py:51` registered, tests in `test_address_change_db.py` + `test_address_change_workflow.py` |
+| Operations Dashboard | ❌ INVENTED (agent verdict) | ✅ **BUILT** | `multichannel_hub_core/views/operations_dashboard_views.xml` (185 lines, P1-01b refactor on sale.order.line with 34 columns from Excel fixture), `__manifest__.py:56` + `menu.xml:15` registered with action `action_operations_dashboard` |
+| Order pipeline framework | ⚠ partial (5 of 17 stages) | ⚠ partial **(verdict stands)** | `mhc/views/order_pipeline_views.xml` 226 lines; `data/order_pipeline_state_seed.xml:22` explicit "5-stage compact; 17-stage detail" |
+
+**Root cause for the wrong verdict:** graphify's community detection skips features with thin Python footprints. A model + list+form view + menu + manifest entry with ~20 LOC of business logic is real shipped code, but its community is too small to surface in `GRAPH_REPORT.md`. The narrow grep template (`address.*wizard`) missed `etsy_address_change_request*` because the model name doesn't contain "wizard" (the model IS the wizard backing — not a TransientModel wrapper around it).
+
+**Lesson codified:** memory `feedback_graphify_xml_blindspot.md`. 3-pronged check now mandatory: graphify + `find custom_addons -path '*/views/*<concept>*'` + `find custom_addons -path '*/models/*<concept>*'`. Any positive flips the verdict.
+
+**Amended verdicts in the main audit table** (now correct):
+- Row 6 (flow-4): POV ✅ · Std-1st ⚠ (refund not built; address-change built) · Mockup ⚠ (now needs baseline footnote, not "thiết kế" label) · Reality ⚠ (refund unbuilt; address-change shipped).
+- Row 7 (role-1): mockup #3 verdict same flip — ✅ for built, baseline `etsy_integration.view_etsy_address_change_request_form`.
+
+**Corrections applied** (Phase 3 of this slice):
+1. Reverted `(thiết kế)` labels in `flow-4-hau-mai.html` swimlane row 2, steps 5/6/7, mockup #2 title, Section E paragraph (restored FR-017-lock framing with code citation).
+2. Reverted `(thiết kế)` qualifier in `role-1-ba-lead.html` mu-lede.
+3. Relabeled `role-3-san-xuat.html` Production EOD Report as `(thiết kế)` — that one IS actually unbuilt (no `eod`/`shift_report` files anywhere in `custom_addons`).
+
+**Still owed for this audit** (not blocking the slice but worth tracking):
+- Baseline XML-ID footnotes on the ~30 ⚠ screens (mostly mechanical; templates in the per-mockup audit table).
+- Coverage gaps: flow-1 step 7 error-drill list, flow-2 partner-match disambiguation dialog. Both can either get a new mockup OR an explicit "uses standard list/dialog" note.
+
