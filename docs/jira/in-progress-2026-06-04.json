@@ -1,0 +1,2347 @@
+{
+  "issues": [
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10436",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10436",
+      "key": "ESTY-197",
+      "fields": {
+        "summary": "7.9 Listing- toàn bộ listing khi đã listing lên etsy shop, sẽ được auto set về shop đó. Khi mình vào shop thì sẽ biết shop đó có những listing nào, cần chỉnh/cập nhật đồng loạt cho 1 shop thì có thể tick hết những listing nào mình muốn.",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": null,
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:14:08.532+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10429",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10429",
+      "key": "ESTY-190",
+      "fields": {
+        "summary": "7.2 Listing - Mở chức năng đẩy sản phẩm lên Etsy sẽ có chỗ để điều chỉnh Title/Description/Hình ảnh khác nhau theo từng channel/shop",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 listing có thể đẩy lên những channel, shop Etsy khác nhau."
+                }
+              ],
+              "attrs": {
+                "localId": "146ee3c1cd80"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Nhưng ở mỗi channel, shop thì sẽ có title/descripiton/ảnh mockup khác nhau do yêu cầu/chiến lược mỗi shop, nền tảng nên cần mở chức năng này."
+                }
+              ],
+              "attrs": {
+                "localId": "e20374f74b51"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ngoài ra title/description/ảnh mockup/giá bán chỉ có bộ phận Marketing nắm và thấy. Còn BA/PD ko được thấy, BA/PD chỉ nắm title dạng ngắn gọn, xúc tích ko phải SEO title như marketing làm để đỡ rối, ko phân tâm. Nên chức năng này cũng giải quyết việc này."
+                }
+              ],
+              "attrs": {
+                "localId": "5c53df690e31"
+              }
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:44.008+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10427",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10427",
+      "key": "ESTY-188",
+      "fields": {
+        "summary": "6.11 b - Lỗi Bug ko publish listing lên Etsy được",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Một số vấn đề gặp phải:"
+                }
+              ],
+              "attrs": {
+                "localId": "906d7a0fff73"
+              }
+            },
+            {
+              "type": "orderedList",
+              "attrs": {
+                "order": 1,
+                "localId": "33037abe376d"
+              },
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "c0ce7c6fcc28"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Không thấy chỗ điền description của sản phẩm, phần category sao nó ko chạy theo category của etsy để chọn nhỉ? "
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "d8c5e51e10eb"
+                      }
+                    },
+                    {
+                      "type": "mediaSingle",
+                      "attrs": {
+                        "width": 643,
+                        "widthType": "pixel",
+                        "localId": "09ef52546c02",
+                        "layout": "align-start"
+                      },
+                      "content": [
+                        {
+                          "type": "media",
+                          "attrs": {
+                            "type": "file",
+                            "id": "8f1270b8-b26f-41fe-8688-d64c957e46eb",
+                            "alt": "image-20260603-084202.png",
+                            "collection": "",
+                            "localId": "c7cf3ea633ce",
+                            "height": 848,
+                            "width": 1557
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "c4d992f1d35a"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Chỉ thấy chỗ up 1 hình chính và các hình phụ, nhưng chưa thấy chỗ up video."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "cfb967eda46b"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "c4d992f1d35a"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Khi bấm publish tử lên draft thì bị lỗi như hình, nội dung lỗi như sau:"
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "a6b9e1b5248e"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 667,
+                "widthType": "pixel",
+                "localId": "5b88232efb52",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "73985f77-ad02-4313-b9eb-e88bfe176d06",
+                    "alt": "image-20260603-090956.png",
+                    "collection": "",
+                    "localId": "72ba9edf2f41",
+                    "height": 772,
+                    "width": 1862
+                  }
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Sau đó bấm Publish inventory only cũng ko được. mà ko có nút lưu nhắp trên odoo hả Bảo ơi? Đẻ bảo vào test chứ nhỉ"
+                }
+              ],
+              "attrs": {
+                "localId": "f90c39a0e362"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "RPC_ERROR"
+                }
+              ],
+              "attrs": {
+                "localId": "ddd42c10a794"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Odoo Server Error"
+                }
+              ],
+              "attrs": {
+                "localId": "fd82e4a02e35"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Occured on "
+                },
+                {
+                  "type": "text",
+                  "text": "odoo.hatafax.com",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "href": "http://odoo.hatafax.com"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " on model etsy.publish.wizard on 2026-06-03 09:07:15 GMT"
+                }
+              ],
+              "attrs": {
+                "localId": "19d2d6bb4a8c"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Traceback (most recent call last):"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2298, in _serve_db"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    return service_model.retrying(serve_func, env=self.env)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/service/model.py\", line 188, in retrying"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    result = func()"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2353, in _serve_ir_http"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    response = self.dispatcher.dispatch(rule.endpoint, args)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2568, in dispatch"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    result = self.request.registry['ir.http']._dispatch(endpoint)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_http.py\", line 355, in _dispatch"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    result = endpoint(**request.params)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 808, in route_wrapper"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    result = endpoint(self, *args, **params_ok)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/addons/web/controllers/dataset.py\", line 38, in call_button"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    action = call_kw(request.env[model], method, args, kwargs)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/odoo/service/model.py\", line 97, in call_kw"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    result = method(recs, *args, **kwargs)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/mnt/extra-addons/etsy_integration/wizards/etsy_publish_wizard.py\", line 52, in action_run_publish_draft_only"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    draft = publisher.create_draft(self.product_tmpl_id, self.shop_id)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/mnt/extra-addons/etsy_integration/services/etsy_listing_publisher.py\", line 299, in create_draft"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    response = client.post(path, json=payload)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/mnt/extra-addons/etsy_integration/services/etsy_api_client.py\", line 342, in post"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    return self._request('POST', path, **kwargs)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/mnt/extra-addons/etsy_integration/services/etsy_api_client.py\", line 278, in _request"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    response.raise_for_status()"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "  File \"/usr/lib/python3/dist-packages/requests/models.py\", line 1021, in raise_for_status"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    raise HTTPError(http_error_msg, response=self)"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: "
+                },
+                {
+                  "type": "text",
+                  "text": "https://openapi.etsy.com/v3/application/shops/60752333/listings",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "href": "https://openapi.etsy.com/v3/application/shops/60752333/listings"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "bfe6beb7130d"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The above server error caused the following client error:"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "RPC_ERROR: Odoo Server Error"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "    RPC_ERROR"
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "        at makeErrorFromResponse ("
+                },
+                {
+                  "type": "text",
+                  "text": "https://odoo.hatafax.com/web/assets/8ecafea/web.assets_web.min.js:3198:165)",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "href": "https://odoo.hatafax.com/web/assets/8ecafea/web.assets_web.min.js:3198:165)"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "        at XMLHttpRequest.<anonymous> ("
+                },
+                {
+                  "type": "text",
+                  "text": "https://odoo.hatafax.com/web/assets/8ecafea/web.assets_web.min.js:3205:13)",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "href": "https://odoo.hatafax.com/web/assets/8ecafea/web.assets_web.min.js:3205:13)"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "9a3b4e67ef4e"
+              }
+            },
+            {
+              "type": "orderedList",
+              "attrs": {
+                "order": 5,
+                "localId": "0f5e76dec7c4"
+              },
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "c0a496e83a1d"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Sản phẩm này 3 kích thước ví dụ như 4 in, 6 in, 8 in. Mỗi kích thước giá là 20$, 30$, 40$ thì điền như nào trên Odoo khi listing ở dây nhỉ?"
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "a525a2bc1da6"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 667,
+                "widthType": "pixel",
+                "localId": "bf8d97e0384c",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "9a7001be-7c58-4d13-8b1c-48e4d146edcd",
+                    "alt": "image-20260603-091325.png",
+                    "collection": "",
+                    "localId": "351fa4b18b95",
+                    "height": 690,
+                    "width": 1533
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:37.832+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10434",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10434",
+      "key": "ESTY-195",
+      "fields": {
+        "summary": "7.7 Listing - Tỷ giá giữa các ngoại tệ USD/ Euro/Canada usd/VND và auto chuyển đổi theo đơn vị của shop etsy listing",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 usd = 0.82 euro = 1.39 CAD = 26.500 vnd"
+                }
+              ],
+              "attrs": {
+                "localId": "b973201a4b23"
+              }
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:33.234+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10430",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10430",
+      "key": "ESTY-191",
+      "fields": {
+        "summary": "7.3 Listing- Listing trên Odoo chưa có chỗ set Processing time, shipping time và giá shipping",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 597,
+                "widthType": "pixel",
+                "localId": "721a437663df",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "f41b2848-036e-4a06-996a-b594d07cd5e7",
+                    "alt": "image-20260604-010745.png",
+                    "collection": "",
+                    "localId": "09ff41b200a5",
+                    "height": 350,
+                    "width": 824
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:23.442+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10433",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10433",
+      "key": "ESTY-194",
+      "fields": {
+        "summary": "7.6 Listing - Cấu hình thuộc tính Shop/ thuộc tính sản phẩm",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 597,
+                "widthType": "pixel",
+                "localId": "75e826ab4457",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "1847c5b0-3fcf-4587-a711-36ab542526b1",
+                    "alt": "image-20260604-010951.png",
+                    "collection": "",
+                    "localId": "e42ef7b56e16",
+                    "height": 434,
+                    "width": 1090
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:14.450+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10432",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10432",
+      "key": "ESTY-193",
+      "fields": {
+        "summary": "7.5 Listing - Test Mục How it made",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 597,
+                "widthType": "pixel",
+                "localId": "c57a7f192c7c",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "593b349d-5e3c-448d-af61-bdcc35e2db4a",
+                    "alt": "image-20260604-010834.png",
+                    "collection": "",
+                    "localId": "f1525e664125",
+                    "height": 497,
+                    "width": 752
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:08.735+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10431",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10431",
+      "key": "ESTY-192",
+      "fields": {
+        "summary": "7.4 Listing - Test phần Matching Attribute",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Trên Etsy listing có mục này, nhưng trên Odoo chưa có (hoặc chưa tự động lấy thông tin điền vào etsy)"
+                }
+              ],
+              "attrs": {
+                "localId": "53ce0eee3e59"
+              }
+            },
+            {
+              "type": "paragraph",
+              "attrs": {
+                "localId": "bad16fe389c1"
+              }
+            },
+            {
+              "type": "mediaSingle",
+              "attrs": {
+                "width": 597,
+                "widthType": "pixel",
+                "localId": "2880715a51f1",
+                "layout": "align-start"
+              },
+              "content": [
+                {
+                  "type": "media",
+                  "attrs": {
+                    "type": "file",
+                    "id": "1a108e88-c192-4a8e-aba1-f5b53318bdca",
+                    "alt": "image-20260604-010550.png",
+                    "collection": "",
+                    "localId": "2f2cbcaba059",
+                    "height": 553,
+                    "width": 1011
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:13:04.838+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10428",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10428",
+      "key": "ESTY-189",
+      "fields": {
+        "summary": "7.1 Listing - Category listing trên Odoo cần đồng nhất với Category listing trên Etsy",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Hiện category listing trên Odoo đang chọn sản phẩm thuộc catalog công ty, ko đúng với yêu cầu etsy."
+                }
+              ],
+              "attrs": {
+                "localId": "7d2cd289e78e"
+              }
+            },
+            {
+              "type": "heading",
+              "attrs": {
+                "level": 1,
+                "localId": "0db464fbac2b"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Category listing trên Odoo cần đồng nhất với Category listing trên Etsy"
+                }
+              ]
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:12:57.934+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10438",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10438",
+      "key": "ESTY-199",
+      "fields": {
+        "summary": "7.0 Listing- Có chỗ up video cho listing",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": null,
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:12:52.427+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10426",
+      "self": "https://erptek.atlassian.net/rest/api/3/issue/10426",
+      "key": "ESTY-187",
+      "fields": {
+        "summary": "6.11 Phản hồi về Module Listing từ Odoo lên Etsy/Amazon",
+        "issuetype": {
+          "self": "https://erptek.atlassian.net/rest/api/3/issuetype/10003",
+          "id": "10003",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://erptek.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "89d98bc6-d0b5-4975-b7ae-c7db803d6d05",
+          "hierarchyLevel": 0
+        },
+        "components": [],
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "File Đính kèm cách thức Listing trên Odoo hiên tại. Có một vài nhận xét như sau:"
+                }
+              ],
+              "attrs": {
+                "localId": "f7836ed0e2cb"
+              }
+            },
+            {
+              "type": "heading",
+              "attrs": {
+                "level": 4,
+                "localId": "0e85ab634380"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1. Vấn đề cốt lõi của luồng hiện tại"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Luồng hiện tại — "
+                },
+                {
+                  "type": "text",
+                  "text": "Inventory → Products → Publish to Etsy",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " — đang dùng đúng một nơi cho hai việc rất khác nhau:"
+                }
+              ],
+              "attrs": {
+                "localId": "e1f3e51b2cd0"
+              }
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "493b842bd11c"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "BA tạo danh mục sản phẩm",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " (product master): Ring Dish là loại sản phẩm, có BOM, có cost, có nguyên vật liệu."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "4e7a31437032"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "29790ed15fc0"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Marketing tạo listing POD",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " (offer/listing): một mẫu ring dish cụ thể với họa tiết, nội dung custom, title SEO cho Etsy."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "20dc305eaef0"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "3d8a1504764b"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Đây là bản chất của vấn đề — hai thứ này trong Odoo đang bị gộp làm một "
+                },
+                {
+                  "type": "text",
+                  "text": "product.template",
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": ". Điều này dẫn đến:"
+                }
+              ],
+              "attrs": {
+                "localId": "b8da8d61a938"
+              }
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "f7a3b05010cc"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Marketing thấy trường "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Cost",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Purchase",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "text",
+                          "text": "BoM",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Reordering Rules",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " — không nên thấy."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "5f41f875fada"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "c285440c5144"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "BA/PD thấy "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Etsy Tags, SEO Title, Personalization settings, Giá bán",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " — không nên thấy và cũng không cần."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "0fc305ad6363"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "fc7184652136"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Kho Inventory bị \"ô nhiễm\" bởi hàng trăm listing POD cá nhân hoá, trong khi về bản chất đó không phải hàng tồn kho thật."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "8988ff7edb82"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "79e3205798e1"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Nên có 2 nơi khác nhau: 1 cái là Product master cho BA/PD access. 1 cái là listing management cho Marketing access và quản lý riêng."
+                }
+              ],
+              "attrs": {
+                "localId": "f58589540270"
+              }
+            },
+            {
+              "type": "heading",
+              "attrs": {
+                "level": 4,
+                "localId": "acf1401f3834"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Luồng lý tưởng theo Hùng diễn giải:"
+                }
+              ]
+            },
+            {
+              "type": "codeBlock",
+              "attrs": {
+                "localId": "e2b2b9af919c"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "BA → tạo Product Template (danh mục: Ring Dish, Mug...)\n      ↓\nMarketing → tạo Listing (Product Variant hoặc riêng)\n            với SEO title, tags, ảnh mockup → Publish to Etsy\n      ↓\nEtsy Order vào → hiển thị trong Sales Dashboard (Order ID)\n      ↓\nBA xử lý design → Marketing duyệt → chuyển PD sản xuất"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Kết nối giữa các phòng "
+                },
+                {
+                  "type": "text",
+                  "text": "chỉ qua Order ID",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " — đây là tư duy đúng và Odoo hỗ trợ tốt."
+                }
+              ],
+              "attrs": {
+                "localId": "5c2ac1d0d8d9"
+              }
+            },
+            {
+              "type": "paragraph",
+              "attrs": {
+                "localId": "d98cb7d82fda"
+              }
+            },
+            {
+              "type": "heading",
+              "attrs": {
+                "level": 4,
+                "localId": "92450bb61fb4"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Đề xuất cụ thể — 3 lựa chọn theo mức độ tùy chỉnh"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Lựa chọn A — Chỉ phân quyền (nhưng không triệt để và Inventory bị loạn bởi listing từ marketing) ",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "0ac728093e76"
+              }
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "1f3b6b3d37b4"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Tạo group "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Marketing User",
+                          "marks": [
+                            {
+                              "type": "code"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " trong Odoo: ẩn tab "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Purchase",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Cost",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "text",
+                          "text": "BoM",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " bằng field-level access."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "5fcee7fc349b"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "421ed5c2bddd"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Tạo group "
+                        },
+                        {
+                          "type": "text",
+                          "text": "BA/PD User",
+                          "marks": [
+                            {
+                              "type": "code"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ": ẩn tab "
+                        },
+                        {
+                          "type": "text",
+                          "text": "Channels",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " (nơi chứa Etsy Tags, SEO, Personalization)."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "2c547fa77db4"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "3c2edb5a3afc"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Giữ nguyên luồng Inventory → Products."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "6877949f3d7b"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "964f7622ed9e"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Hạn chế: Inventory vẫn bị trộn lẫn hàng tồn kho thật với listing POD. Khó báo cáo inventory chính xác."
+                }
+              ],
+              "attrs": {
+                "localId": "98dbd44f5a0f"
+              }
+            },
+            {
+              "type": "paragraph",
+              "attrs": {
+                "localId": "20e993eb39a7"
+              }
+            },
+            {
+              "type": "rule",
+              "attrs": {
+                "localId": "5abf82f1507a"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Lựa chọn B — Tách view (tàm tạm)",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "a1d8bd676146"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "IT tạo "
+                },
+                {
+                  "type": "text",
+                  "text": "hai menu/view riêng",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " trên cùng model "
+                },
+                {
+                  "type": "text",
+                  "text": "product.template",
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": ":"
+                }
+              ],
+              "attrs": {
+                "localId": "40e4bca5bbb2"
+              }
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "461a2e2a1613"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "BA → \"Danh mục sản phẩm\"",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ": form chỉ thấy General Info, Attributes/Variants, Purchase, Inventory, Manufacturing. Không thấy Channels/Etsy, ko thấy các listing etsy, và các nội dung của listing."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "92e76dc58a96"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "095177036421"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Marketing → \"Listing Etsy\"",
+                          "marks": [
+                            {
+                              "type": "strong"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": ": form chỉ thấy Tên (SEO), Tags, Images, Personalization, Price (USD), Channels. Không thấy Cost, Purchase, BoM."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "e57de906010c"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "286717da6abf"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Thêm field "
+                },
+                {
+                  "type": "text",
+                  "text": "product_type_flag",
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " để phân biệt \"product master\" vs \"listing POD\" trong báo cáo inventory."
+                }
+              ],
+              "attrs": {
+                "localId": "8d83324d167a"
+              }
+            },
+            {
+              "type": "rule",
+              "attrs": {
+                "localId": "6d4cf532abad"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Lựa chọn C — Model riêng cho Listing (đúng nhất về kiến trúc)",
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "b13adf97245b"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "IT tạo custom module "
+                },
+                {
+                  "type": "text",
+                  "text": "hatafa_listing",
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": ":"
+                }
+              ],
+              "attrs": {
+                "localId": "a090cc26bc6e"
+              }
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "ea9d71fa6c39"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Model "
+                        },
+                        {
+                          "type": "text",
+                          "text": "hatafa.listing",
+                          "marks": [
+                            {
+                              "type": "code"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " linked to "
+                        },
+                        {
+                          "type": "text",
+                          "text": "product.template",
+                          "marks": [
+                            {
+                              "type": "code"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": " qua Many2one."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "0c2acc525516"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "ddb72b8d1df0"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Marketing tạo listing trong module này, không vào Inventory."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "146178180c30"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "818ddeba6cc8"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Listing publish lên Etsy qua API riêng hoặc trigger vào connector hiện có."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "f4a3dc93422c"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "localId": "905aa965a214"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "BA/PD không thấy module này, Marketing không vào Inventory."
+                        }
+                      ],
+                      "attrs": {
+                        "localId": "5b4711f6e37a"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "attrs": {
+                "localId": "78602f72a11e"
+              }
+            },
+            {
+              "type": "paragraph",
+              "attrs": {
+                "localId": "f20b3515b7c0"
+              }
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "→ Cái mà Hùng hình dùng là lựa chọn C ah Bảo. Bảo xem thử nha."
+                }
+              ],
+              "attrs": {
+                "localId": "9d0496e27629"
+              }
+            }
+          ]
+        },
+        "assignee": {
+          "self": "https://erptek.atlassian.net/rest/api/3/user?accountId=60f648e14c974d0069d34fc4",
+          "accountId": "60f648e14c974d0069d34fc4",
+          "emailAddress": "bao.ha@erptek.net",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/f772943586d3e32d747bfd71a18f8eba?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FBH-6.png"
+          },
+          "displayName": "Bao Ha",
+          "active": true,
+          "timeZone": "Asia/Saigon",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://erptek.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://erptek.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "updated": "2026-06-05T05:12:46.609+0700",
+        "status": {
+          "self": "https://erptek.atlassian.net/rest/api/3/status/10040",
+          "description": "",
+          "iconUrl": "https://erptek.atlassian.net/",
+          "name": "IN PROCESS",
+          "id": "10040",
+          "statusCategory": {
+            "self": "https://erptek.atlassian.net/rest/api/3/statuscategory/4",
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "labels": []
+      }
+    }
+  ],
+  "total": 11
+}
