@@ -74,3 +74,5 @@ from . import test_phase2_pub_weight_dimensions_orm
 from . import test_p1_11_shopid_bootstrap_phase1_db
 from . import test_p1_11_shopid_bootstrap_phase2_orm
 from . import test_p_uat_fix_api_log_http_status
+from . import test_p_bug_esty_188_phase1_db
+from . import test_p_bug_esty_188_phase2_orm
