@@ -5,11 +5,16 @@
     <record id="demo_shop_viktor" model="etsy.shop">
         <field name="name">ViktorDesignStudio</field>
         <field name="active" eval="True"/>
+        <!-- ESTY-188 RCA: createListing 400s without readiness_state_id on
+             physical listings. Pinned to the JaHandmadeArt-known value so
+             fresh demo installs can publish without the bootstrap migration. -->
+        <field name="default_readiness_state_id">1406133708616</field>
     </record>
 
     <record id="demo_shop_julien" model="etsy.shop">
         <field name="name">JulienCraftWorks</field>
         <field name="active" eval="True"/>
+        <field name="default_readiness_state_id">1406133708616</field>
     </record>
 
     <!-- Demo Email Log: successful parse -->
