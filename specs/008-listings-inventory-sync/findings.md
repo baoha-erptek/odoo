@@ -151,3 +151,70 @@ and new-2026-mandatory-field (candidate #3) were not the cause.
   `default_readiness_state_id` value (noupdate=1). Operator workaround:
   manual chatter-fix or set `active_source='api'` and re-run the
   migration. Documented; not promoted to a separate slice.
+
+### Phase 9 deploy (2026-06-05) — hypothesis #1 RULED OUT, slice flipped back to `doing`
+
+**Deploy path** (per `reference_staging_ssh_deploy.md`):
+
+1. `rsync -avz custom_addons/etsy_integration/ → /odoo/esty19/custom_addons/etsy_integration/` (no `--delete`). Sent 23.5 kB, 1.32 MB total. All P-BUG-ESTY-188 files landed (`migrations/__init__.py`, `migrations/_19_0_2_33_0/__init__.py`, `migrations/19.0.2.33.0/post-migrate.py`, both test files, demo_data.xml, manifest 19.0.2.33.0).
+2. `sudo docker exec esty19_odoo odoo -d esty_odoo19 -u etsy_integration --stop-after-init` — Module loaded in 1.53s / 1144 queries; `Running migration [19.0.2.33.0>] post-migrate`; Registry loaded in 6.241s; exit 0.
+3. `sudo docker restart esty19_odoo`; healthy.
+
+**Expected harmless WARNING captured**: `Invalid version for upgrade script '/mnt/extra-addons/etsy_integration/migrations/_19_0_2_33_0'`. Confirms the split-package design works as intended — Odoo's discovery scans the migrations dir, finds the underscored mirror, can't parse it as a version, and skips it. The dotted `19.0.2.33.0/` IS picked up and executed. Future migrations with this pattern will emit the same WARNING; do NOT promote to ERROR.
+
+**Pre-migration baseline psql** on `esty_odoo19.etsy_shop`:
+
+```
+ id |     name      | etsy_api_shop_id | active_source | default_readiness_state_id
+----+---------------+------------------+---------------+----------------------------
+  1 | Julien        |                  | email         |
+  2 | Carina        |                  | email         |
+  3 | Viktor        |                  | email         |
+  4 | Sven          |                  | email         |
+ 10 | JaHandmadeArt | 60752333         | api           | 1406133708616
+```
+
+**Hypothesis #1 (readiness_state_id NULL) is FALSE** on staging. JaHandmadeArt already has the field populated with the JaHandmadeArt-known value (`1406133708616`); the migration was idempotent and bootstrapped 0 shops. The 4 email-only shops were correctly skipped by the `active_source='api'` filter.
+
+**Implication**: the createListing 400 owner reproduced on 2026-06-03 is NOT caused by hypothesis #1. The publisher payload at `etsy_listing_publisher.py:237-238` WAS including `readiness_state_id=1406133708616` in the request. Etsy rejected for a different reason.
+
+**Pivot decision**: the slice is flipped `done → doing` because the *root cause* is still unknown. The defensive code already shipped (`19.0.2.33.0`) is HARMLESS and stays — it's correct prevention for any future shop where the field WOULD be NULL, just not the fix for this specific 400. Re-target investigation to candidate #2 or #3.
+
+**Candidate #2** (personalization-fields regression):
+- Memory `reference_etsy_createlisting_2025_readiness.md` item (2): 4 inline personalization fields deprecated in 2026; createListing 400s "Use the dedicated personalization endpoints instead". Gated OFF in commit `643370c9837`. Follow-up `R-PUB-PERSONALIZATION-ENDPOINTS` re-implementation deferred.
+- **Verify on staging HEAD**: `git -C /odoo/esty19 log --oneline | grep 643370c9837` AND grep `etsy_listing_publisher.py` for `personalization_is_personalizable / personalization_instructions / personalization_char_count_max / personalization_property_id` — if any of those four keys are still in the createListing payload, that's the bug.
+- If staging is on an older build than the gating commit, the cheapest fix is to deploy the current `feature/006-master-plan-coding` HEAD (which includes the gating).
+
+**Candidate #3** (new 2026 mandatory field):
+- Etsy has been adding required fields with little notice (e.g. `readiness_state_id` was the same kind of change in 19.0.2.15.0). The 2026 personalization migration explicitly says "Use the dedicated personalization endpoints instead" but other endpoints may have new requirements.
+- **The authoritative answer is the 400 response body**, per `feedback_capture_response_body_before_blackbox_probe.md` (5-variant probe cap before vendor escalation, capture body FIRST).
+
+**Capture command for next session** (run while owner reproduces the publish):
+
+```bash
+# Terminal A — follow Odoo logs for the next createListing call:
+ssh -i secrets/ssh-key-2023-02-24.key ubuntu@129.150.63.207 \
+  'sudo docker logs -f --tail 0 esty19_odoo 2>&1 | grep -A 8 -i "createListing\|/v3/application/shops.*listings\|400 Client Error\|HTTPError"'
+
+# Terminal B (owner) — click "Publish to Etsy" in the Odoo web UI against
+# JaHandmadeArt with the same product that 400'd on 2026-06-03.
+
+# The 400 response body will appear in the captured tail because
+# EtsyApiClient._request raises HTTPError which logs the body before the
+# RPC layer scrubs it.
+```
+
+If the body is not visible in the basic Odoo log, alternative is querying `etsy.api.log` directly via psql (per `P-UAT-FIX-API-LOG-HTTP-STATUS`):
+
+```bash
+ssh ... 'sudo docker exec esty19_odoo psql postgresql://odoo:odoo@db/esty_odoo19 -c "SELECT id, source, http_status, error_message, payload_excerpt FROM etsy_api_log WHERE http_status = 400 ORDER BY id DESC LIMIT 5;"'
+```
+
+**Fresh-session resume checklist** (paste into the next session's first prompt):
+
+1. Read this Phase 9 deploy section + `p-bug-esty-188-plan.md` (especially the "Pivot 2026-06-05" header that will be added next).
+2. Confirm tracker P-BUG-ESTY-188 is `doing` with the pivot note.
+3. Capture the 400 body on staging using one of the two commands above.
+4. Match the body to candidate #2 (personalization keys present) or candidate #3 (new mandatory field name in the error message).
+5. Plan + RED + GREEN under a new commit on `feature/006-master-plan-coding`, manifest bump `19.0.2.33.0 → 19.0.2.34.0`.
+6. Flip tracker back to `done` only after staging createListing actually returns 201.

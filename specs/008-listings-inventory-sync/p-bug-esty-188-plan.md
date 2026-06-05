@@ -4,7 +4,7 @@
 **Jira**: ESTY-188 (6.11b - "Lỗi Bug ko publish listing lên Etsy được")
 **Branch**: `feature/006-master-plan-coding`
 **Planner**: opus (planner agent, 2026-06-04)
-**Status**: Phase 1 plan landed; awaiting owner approval to proceed to Phase 2 (RED)
+**Status**: Phase 2–9 ran 2026-06-05; defensive code shipped (commit `297fc717b04`, manifest 19.0.2.33.0); slice flipped **`doing`** after Phase 9 staging deploy ruled out hypothesis #1. **See "Pivot 2026-06-05" section at the bottom of this file.**
 
 ---
 
@@ -129,3 +129,40 @@ This slice modifies an EXISTING field on an EXISTING model. No `_name = 'new.mod
 ## Executive summary
 
 P-BUG-ESTY-188 root cause: **staging shop JaHandmadeArt has NULL `default_readiness_state_id`**, so the createListing payload omits the key and Etsy 400s with "A readiness_state_id is required for physical listings". Fix is data-only: (1) post-migrate `19.0.2.33.0` bootstraps the field by calling `/shops/{id}/readiness-state-definitions` for each shop, (2) demo_data.xml gets the JaHandmadeArt value as defensive default. 9 new tests (3 Phase-1 DB + 6 Phase-2 ORM). No new models, no new ACLs. Discovery `psql` query against staging confirms hypothesis before Phase 2 RED — that's GO-condition-zero. If psql shows the field is already populated, pivot to candidate #2 (inventory offerings missing readiness) or #3 (capture the 400 body and grep dev-docs for new mandatory fields).
+
+---
+
+## Pivot 2026-06-05 (post-deploy) — hypothesis #1 ruled out
+
+**What we learned at Phase 9 (staging deploy)**: the planner's GO-condition-zero `psql` check was deferred ("go Phase 2") and the slice ran end-to-end against `namco_odoo19` (local dev DB). Tests went RED→GREEN; reviews APPROVED; commit `297fc717b04` shipped 19.0.2.33.0. Phase 9 rsync + `-u etsy_integration` + restart on staging ran clean.
+
+But the pre-deploy psql baseline (run inside Phase 9, not before Phase 2 as the original plan dictated) showed JaHandmadeArt **already had `default_readiness_state_id='1406133708616'`**. The migration bootstrapped 0 shops because there was nothing to bootstrap. The payload at `etsy_listing_publisher.py:237-238` was already including the key. **The 400 owner reproduced on 2026-06-03 has a different root cause.**
+
+### Lessons captured
+
+1. **GO-condition-zero exists for a reason — don't skip it.** The plan documented an exact discovery psql query as Phase 0 gate; when the orchestrator skipped it ("go Phase 2"), the slice ran on a hypothesis that wasn't validated against staging state. The defensive code is still valuable (correct prevention for future shops) but the bug isn't fixed. Future bug slices: ALWAYS run the discovery step against the affected environment before Phase 2.
+2. **Three candidates → pick by evidence, not order.** Candidates #2 and #3 are now in front. Both require capturing the live 400 response body, which the original plan flagged as the source-of-truth per memory.
+
+### What stays shipped (commit `297fc717b04`)
+
+- `migrations/_19_0_2_33_0/post_migrate(cr, env)` — runs idempotent; warns + skips when nothing to do. Harmless on every future `-u`.
+- `migrations/19.0.2.33.0/post-migrate.py` — Odoo discovery shim. Harmless.
+- `migrations/__init__.py` — empty Python package marker. Required for the `_19_0_2_33_0` import to work. Harmless.
+- `data/demo_data.xml` — pins demo shops' `default_readiness_state_id`. Future fresh installs inherit a working value. Harmless on existing DBs (noupdate=1).
+- Manifest `19.0.2.33.0`. Used as the version baseline for the next iteration (`19.0.2.34.0`).
+- 9 tests — they validate the defensive surface, not the actual 400 fix. They stay GREEN.
+
+### What the next session should do
+
+1. **Capture the live 400 response body** (two paths in `findings.md` "Phase 9 deploy" section; tail `docker logs` OR query `etsy.api.log`).
+2. **Match against candidate matrix**:
+   - Body contains "Use the dedicated personalization endpoints instead" OR any of `personalization_is_personalizable / personalization_instructions / personalization_char_count_max / personalization_property_id` → **candidate #2**, the 4 inline keys are still in the payload on staging. Fix path: verify commit `643370c9837` (personalization gating OFF) is on staging HEAD; if missing, deploy current `feature/006-master-plan-coding` HEAD; if present, grep `etsy_listing_publisher.py` for any new code path that re-introduced the keys.
+   - Body names a field that is NOT `readiness_state_id` and NOT a personalization key → **candidate #3**, a new 2026 mandatory field. Grep `~/.cache/etsy-developer-docs/documentation_tutorials_listings.md` for the named field; cross-check against the publisher's current payload assembly; add the field on `etsy.shop` or compute per-listing.
+   - Body says something about `readiness_state_id` for inventory offerings (NOT the top-level listing) → memory entry says push_inventory offerings must also carry the field; check `etsy_listing_publisher.py:378-384` (the inventory branch) is actually setting it.
+3. **Tests**: write a new RED that asserts the publisher payload either includes the new field (candidate #3) or DOES NOT include the deprecated personalization keys (candidate #2). The existing 9 tests stay as regression guards.
+4. **Manifest bump**: `19.0.2.33.0 → 19.0.2.34.0`. Add `migrations/19.0.2.34.0/` if a data migration is needed; otherwise just code changes.
+5. **Re-deploy + re-test** on staging. T6 closes when createListing returns 201.
+
+### Plan-failure mode to remember (for `feedback_phase1_spec_drift_check.md`)
+
+The planner's hypothesis was reasonable given the available evidence: memory documented the exact failure mode and the comment at `etsy_api_client.py:277` referenced this exact error. **But the hypothesis was not validated before Phase 2 ran.** When the plan documents a GO-condition-zero check that requires the *affected environment*, the orchestrator must run it before scaffolding tests — otherwise the test suite becomes a regression guard for the wrong surface.
