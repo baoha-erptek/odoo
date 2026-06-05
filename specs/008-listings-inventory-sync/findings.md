@@ -95,3 +95,59 @@
 ## E2E surfacing (live)
 
 _(none yet — implementation not started)_
+
+---
+
+## P-BUG-ESTY-188 — createListing 400 readiness_state_id bootstrap (2026-06-05)
+
+**Source**: Jira ESTY-188 sub-step 6.11b ("Lỗi Bug ko publish listing lên
+Etsy được"); owner reproduced on staging JaHandmadeArt 2026-06-03.
+
+**Root cause confirmed**: Planner hypothesis #1 (out of 3 candidates) was
+correct. The staging shop JaHandmadeArt (`etsy_api_shop_id=60752333`) had
+NULL `default_readiness_state_id` because the field was added in
+`19.0.2.15.0` but never bootstrapped on shops created before that release.
+`etsy_listing_publisher.py:237-238` includes the key only when truthy, so
+the createListing payload omitted it → Etsy 400 "A readiness_state_id is
+required for physical listings". Personalization regression (candidate #2)
+and new-2026-mandatory-field (candidate #3) were not the cause.
+
+**Fix shape** (commit `297fc717b04`, manifest 19.0.2.33.0):
+
+- New `migrations/_19_0_2_33_0/` Python package with `post_migrate(cr, env)`
+  function callable directly by tests; new `migrations/19.0.2.33.0/post-migrate.py`
+  Odoo discovery shim that constructs `Environment` and delegates.
+- Per-shop GET `/shops/{etsy_api_shop_id}/readiness-state-definitions` →
+  first definition id → write as Char (Etsy ids overflow XML-RPC int32).
+- Filter `active_source='api'` AND empty field; skip rows missing
+  `etsy_api_shop_id`; per-shop `except Exception` swallow with WARNING.
+- `demo_data.xml` pins both demo shops to `1406133708616` for fresh
+  installs (existing demo records untouched due to `noupdate="1"`).
+
+**New gotchas captured for memory**:
+
+1. Odoo 19 recordset has **no `.refresh()` method**. Use
+   `.invalidate_recordset()` to flush cached field values after a sibling
+   process wrote them (the original tdd-guide draft used `shop.refresh()`
+   and ERRORed with AttributeError).
+2. **Mocking `EtsyApiClient.get` is insufficient** when the test code
+   exercises a path that instantiates the client — `EtsyApiClient.__init__`
+   raises `"client_id missing from credentials"` for a test-fixture shop
+   before `.get()` is ever reached. Patch the whole class
+   (`patch('...EtsyApiClient') as MockClient`) and set
+   `MockClient.return_value.get.return_value = ...`.
+3. **Odoo migration dirs with dots** (`19.0.2.33.0`) are not valid Python
+   identifiers — Phase 2 tests that want to call the migrate function
+   directly cannot do `from ...migrations.19.0.2.33.0 import ...`. Pair the
+   standard Odoo discovery file with an underscore-prefixed sibling package
+   (`migrations/_19_0_2_33_0/__init__.py`) where the actual logic lives.
+   Add a no-op `migrations/__init__.py` so the dir becomes a package.
+
+**Open follow-ups** (not blockers):
+
+- T6 staging publish dry-run on JaHandmadeArt owner-gated — confirm the
+  bootstrap migration ran and the next createListing returns 201.
+- Existing demo records on existing DBs do NOT pick up the new
+  `default_readiness_state_id` value (noupdate=1). Operator workaround:
+  manual chatter-fix or set `active_source='api'` and re-run the
+  migration. Documented; not promoted to a separate slice.
