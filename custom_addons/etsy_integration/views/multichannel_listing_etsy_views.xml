@@ -13,15 +13,25 @@
                ref="multichannel_hub_core.view_multichannel_listing_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='marketing']" position="after">
-                <page string="Etsy" name="etsy">
+                <page string="How It's Made" name="etsy">
+                    <group>
+                        <field name="etsy_who_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_when_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_is_supply"
+                               readonly="state != 'draft'"/>
+                    </group>
+                    <p class="text-muted">
+                        Empty → product fallback → shop default. Etsy
+                        requires all three on every listing.
+                    </p>
+                </page>
+                <page string="Shipping &amp; Variations" name="shipping_variations">
                     <group>
                         <field name="etsy_taxonomy_id"
                                options="{'no_create': True, 'no_open': True}"
                                readonly="state != 'draft'"/>
-                        <!-- P-LIST-UX-FIXES R4 — surface taxonomy cache
-                             freshness so the operator knows whether to
-                             trust the dropdown. Refresh CTA on the Etsy
-                             Shop form. -->
                         <field name="etsy_taxonomy_last_synced_at"
                                readonly="1"
                                nolabel="1"
@@ -33,16 +43,31 @@
                                readonly="1"
                                nolabel="1"
                                invisible="not etsy_shipping_last_synced_at"/>
-                        <field name="etsy_who_made"
-                               readonly="state != 'draft'"/>
-                        <field name="etsy_when_made"
-                               readonly="state != 'draft'"/>
-                        <field name="etsy_is_supply"
-                               readonly="state != 'draft'"/>
                     </group>
+                    <!-- P-LIST-ATTRIBUTES — fallback chain help text per
+                         UX review HIGH #4. -->
+                    <div class="alert alert-info" role="alert">
+                        <strong>Attribute mapping priority:</strong>
+                        Per-listing rows below → Shop default
+                        (<em>Etsy Shop &gt; Attribute Defaults</em>) →
+                        Product global (<em>Product Attribute</em>).
+                        Leave a row's override empty to fall through to the
+                        next tier.
+                    </div>
+                    <field name="attribute_mapping_ids"
+                           readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_attribute_id"
+                                   options="{'no_create': True}"/>
+                            <field name="etsy_property_id_override"
+                                   placeholder="Numeric Etsy property_id"/>
+                            <field name="etsy_property_name_override"
+                                   placeholder="Etsy property_name string"/>
+                        </list>
+                    </field>
                     <p class="text-muted">
-                        Empty → falls back to the shop default. Refresh the
-                        taxonomy / shipping caches from
+                        Refresh the taxonomy / shipping caches from
                         <em>Etsy Shop Settings</em> if the dropdowns look
                         stale.
                     </p>

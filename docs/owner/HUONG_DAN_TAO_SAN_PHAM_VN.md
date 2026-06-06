@@ -421,6 +421,20 @@ Hệ thống làm các bước:
 
 (Lưu ý: `is_supply` không có lớp Sản phẩm — chỉ Listing → Shop. Vì Etsy ít khi override per-product.)
 
+### 7.4d Attribute Mapping per-listing (P-LIST-ATTRIBUTES)
+
+> Mới từ 2026-06-06 (Jira ESTY-192). Khi 1 listing cần ánh xạ thuộc tính (Size / Color / Material) khác với mapping chung của Sản phẩm hoặc Shop, Marketing nhập override theo từng dòng ở đây.
+
+**Vào tab "Shipping & Variations"** (mới — gom shipping profile + taxonomy + attribute mapping vào 1 tab cho đồng bộ với flow đăng listing Etsy).
+
+**Thứ tự ưu tiên publisher đọc** (3 tầng):
+
+1. **Per-listing row** — mỗi dòng có "Product Attribute" + "Etsy Property ID Override" + "Etsy Property Name Override". Marketing nhập ở đây.
+2. → **Shop default mapping** (sẽ ship ở slice tiếp theo P-LIST-ATTR-CONFIG).
+3. → **Product global** — giá trị mặc định ở `product.attribute.x_etsy_property_id` (Admin set 1 lần cho toàn hệ thống).
+
+**Quy tắc**: để trống cả 2 trường override trong 1 dòng → fall through xuống tầng tiếp theo. KHÔNG cần xoá dòng để fall through.
+
 ### 7.4b Upload video cho listing (1 video / shop)
 
 > Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.

@@ -95,7 +95,7 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Marketing copy" name="marketing">
+                        <page string="Listing Basics" name="marketing">
                             <field name="description"
                                    placeholder="Falls back to product.description_sale when empty"
                                    readonly="state != 'draft'"/>

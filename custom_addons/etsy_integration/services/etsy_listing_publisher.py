@@ -204,26 +204,50 @@ class EtsyListingPublisher:
     # stays empty until a buyer picks a combination — return [] in that
     # case, which Etsy already accepts at line 247's prior baseline.
     @staticmethod
-    def _property_value_for(axis, value_name):
+    def _property_value_for(axis, value_name, intent=None):
         """Build one Etsy property_values[] entry for an (axis, value) pair.
 
-        Returns {property_id, property_name, values} or None when the axis is
-        not publishable or is missing its Etsy property id/name. Etsy REQUIRES
-        both a numeric property_id AND a non-null property_name string (the
-        inventory PUT 400s "Expected string value for property_name" without
-        it — verified live 2026-05-28), so an axis lacking either is skipped
-        entirely rather than sent malformed (which would 400 the whole PUT).
+        Returns ``{property_id, property_name, values}`` or ``None`` when the
+        axis is not publishable or is missing its Etsy property id/name. Etsy
+        REQUIRES both a numeric ``property_id`` AND a non-null
+        ``property_name`` string (the inventory PUT 400s "Expected string
+        value for property_name" without it — verified live 2026-05-28), so
+        an axis lacking either is skipped entirely rather than sent malformed
+        (which would 400 the whole PUT).
+
+        **P-LIST-ATTRIBUTES (ADR-015 §3 / spec 012 §US6) resolution chain**:
+          1. ``intent.attribute_mapping_ids`` per-listing override
+          2. ``product.attribute.x_etsy_property_id`` global mapping
+          3. ``None`` (skip with WARNING) when neither carries a numeric id
+
+        Per-listing override allows an operator to publish "Color" against a
+        different Etsy property_id for one specific listing without changing
+        the global attribute config. Empty override row → fall through.
         """
         if not axis.x_publish_as_property:
             return None
-        raw = axis.x_etsy_property_id
-        name = axis.x_etsy_property_name
+        # iter3 P-LIST-ATTRIBUTES — listing override first
+        raw = None
+        name = None
+        if intent and intent.attribute_mapping_ids:
+            for row in intent.attribute_mapping_ids:
+                if row.product_attribute_id.id != axis.id:
+                    continue
+                if row.etsy_property_id_override:
+                    raw = row.etsy_property_id_override
+                if row.etsy_property_name_override:
+                    name = row.etsy_property_name_override
+                break
+        # Fall through to the global product.attribute config
+        if not raw:
+            raw = axis.x_etsy_property_id
+        if not name:
+            name = axis.x_etsy_property_name
         if not raw or not name:
             _logger.warning(
                 "product.attribute id=%s name=%r missing x_etsy_property_id "
-                "or x_etsy_property_name; skipping it as an Etsy variation "
-                "property (Etsy rejects property_values without both).",
-                axis.id, axis.name,
+                "or x_etsy_property_name (and no listing override); skipping "
+                "it as an Etsy variation property.", axis.id, axis.name,
             )
             return None
         return {
@@ -674,6 +698,10 @@ class EtsyListingPublisher:
         # iter2 currency conversion is invoked per offering inside the loop;
         # we still pre-compute the template-level fallback price once.
         template_price = self._convert_to_shop_currency(t.list_price, shop)
+        # P-LIST-ATTRIBUTES — resolve the listing intent ONCE so the
+        # per-axis property_value_for lookup can read the per-listing
+        # mapping overrides.
+        intent = self._resolve_listing_intent(t, shop)
 
         def _offering(qty, price):
             o = {'quantity': max(int(qty or 0), 1), 'price': float(price), 'is_enabled': True}
@@ -702,7 +730,9 @@ class EtsyListingPublisher:
         # Fixed (single-value) properties are identical on every product.
         fixed_props = []
         for line in fixed:
-            pv = self._property_value_for(line.attribute_id, line.value_ids[0].name)
+            pv = self._property_value_for(
+                line.attribute_id, line.value_ids[0].name, intent=intent,
+            )
             if pv:
                 fixed_props.append(pv)
 
@@ -711,7 +741,9 @@ class EtsyListingPublisher:
             for combo in itertools.product(*[list(line.value_ids) for line in varying]):
                 props = list(fixed_props)
                 for line, value in zip(varying, combo):
-                    pv = self._property_value_for(line.attribute_id, value.name)
+                    pv = self._property_value_for(
+                        line.attribute_id, value.name, intent=intent,
+                    )
                     if pv:
                         props.append(pv)
                 combo_ids = {v.id for v in combo}

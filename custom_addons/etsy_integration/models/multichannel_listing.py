@@ -86,3 +86,15 @@ class MultichannelListingEtsy(models.Model):
         string='Shipping cache last synced',
         readonly=True,
     )
+
+    # P-LIST-ATTRIBUTES (ADR-015 §3 / spec 012 §US6)
+    attribute_mapping_ids = fields.One2many(
+        'multichannel.listing.attribute.mapping',
+        'listing_id',
+        string='Attribute mapping overrides',
+        help='Per-listing Etsy property_id overrides. Priority chain when '
+             'the publisher resolves an Etsy property for a variation axis: '
+             '1) listing mapping row, 2) shop default mapping, 3) global '
+             'product.attribute.x_etsy_property_id. Leave a row empty to '
+             'fall through to the next tier.',
+    )
