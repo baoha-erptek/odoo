@@ -218,3 +218,75 @@ ssh ... 'sudo docker exec esty19_odoo psql postgresql://odoo:odoo@db/esty_odoo19
 4. Match the body to candidate #2 (personalization keys present) or candidate #3 (new mandatory field name in the error message).
 5. Plan + RED + GREEN under a new commit on `feature/006-master-plan-coding`, manifest bump `19.0.2.33.0 → 19.0.2.34.0`.
 6. Flip tracker back to `done` only after staging createListing actually returns 201.
+
+### Phase 9 follow-up (2026-06-05, later) — 400 body captured → CANDIDATE #4 (currency mismatch)
+
+Captured the `etsy.publish.wizard` 400 from staging Odoo container logs (the `etsy.api.log` table only records `listing_pull` / `scope_validation` — the publisher does NOT write its own audit row, so docker logs are the only source). **Three identical reproductions on 2026-06-03**:
+
+```
+2026-06-03 09:07:14,809  WARNING  etsy_api_client: Etsy HTTP 400 url=https://openapi.etsy.com/v3/application/shops/60752333/listings
+  body='[{"path":"/price","type":"price_too_low","message":"must be above min price ₫5,040 VND","transformed":false}]'
+2026-06-03 09:11:36,045  WARNING  ... (same body)
+2026-06-03 09:17:07,374  WARNING  ... (same body)
+```
+
+**Classification**: NEITHER candidate #2 (no personalization key in error) NOR candidate #3 (no missing-mandatory-field name) — this is a **new candidate #4: outbound currency mismatch**.
+
+**Evidence chain**:
+
+1. Staging `res_company.currency_id` = **USD** (`id=1, name='My Company'`).
+2. Etsy shop JaHandmadeArt (`id=60752333`) reports its listing currency as **VND** — the error message embeds `₫5,040 VND` minimum.
+3. `etsy_listing_publisher.py:221` (createListing) and `:379` (push_inventory) both emit:
+   ```python
+   'price': float(s.list_price or 0.0)
+   ```
+   No currency conversion, no shop-currency lookup, no scale awareness.
+4. `etsy_shop` model has NO currency field — there's nowhere to even cache the Etsy-reported shop currency for conversion.
+5. The 4 most recent draft products on staging (ids 451–454, `external_ref=NULL` ⇒ failed publishes) carry **USD-shaped list_prices** ($0.00, $12.99, $12.99, $19.99). All below the 5,040 VND minimum once Etsy reinterprets the number as VND.
+6. The 4 prior UAT products (ids 309–312) succeeded with `external_ref` set (4512614292, 4512614444, 4514022027, 4514024054) because their list_prices were 250,000 — a VND-shaped number that *happens* to clear the threshold. They published not because the code is correct but because the test data accidentally matched the assumed unit.
+7. Grep of the etsy_integration `services/` tree for `currency|_convert\(|to_currency` returns ZERO outbound conversion sites. All currency code paths are INBOUND (orders/receipts) only.
+
+**Root cause statement**: the outbound publisher path treats `product.template.list_price` as if it were already denominated in the Etsy shop's listing currency. When company currency ≠ shop currency, the price is misinterpreted by Etsy by the FX ratio. For a USD-priced Odoo company publishing to a VND Etsy shop, the published value is ~24,000× too low.
+
+**Why hypothesis #1 didn't catch this**: hypothesis #1 was about a missing payload key. Candidate #4 is about a payload value being numerically valid but semantically wrong — the createListing endpoint accepts the request structurally and only rejects on the value-range check. Both paths produce a 400 but only one returns "price_too_low".
+
+**Fix options (graded by scope)**:
+
+| Option | Scope | Cost | Preserves invariants |
+|---|---|---|---|
+| **A. Currency-convert at the publisher boundary (proper fix)** | Add `etsy.shop.listing_currency_id` (Many2one→res.currency, Char fallback for unsupported codes); bootstrap via `GET /shops/{shop_id}` on OAuth callback or on first publish; in publisher line 221 + 379, call `company.currency_id._convert(list_price, shop.listing_currency_id, company, fields.Date.context_today(self))` before emitting. Migration to backfill existing shops. Tests assert payload['price'] reflects converted value. | ~120 LOC + migration + 8 tests | YES — uses standard `res.currency._convert`; respects Odoo's existing multi-currency machinery |
+| **B. Per-shop override price field on product** | Add `product.template.x_etsy_shop_price` (or M2M via shop) so operators set the Etsy-currency price manually; publisher uses override when set, falls back to list_price + warning when not. | ~80 LOC + 5 tests | Partial — operators must maintain duplicate price data; no automatic FX |
+| **C. Staging data fix only** | Owner manually sets `list_price` on the 4 broken UAT templates (451–454) to VND-shaped values (e.g. `250000`) like the working batch. NO code change. | 0 LOC | NO — bug recurs on the next published product; the systemic gap stays open |
+
+Option A is the Standard-Odoo-First pick: `res.currency._convert` is a core Odoo CE method; the only new surface is one Many2one on `etsy.shop` (with a discovery probe — analogous to how `default_readiness_state_id` is bootstrapped via `GET /shops/{id}/readiness-state-definitions`). No custom FX logic, no new currency model.
+
+**Standard-Odoo-First gate**: adding `etsy.shop.listing_currency_id` is a new field on an existing model. Per `feedback_standard_odoo_first.md`: **STOP and ping owner before implementing**. Owner must confirm option A vs B vs C before Phase 1 plan + RED. Drafted owner-question payload below.
+
+**Owner question (paste verbatim into AskUserQuestion or Telegram)**:
+
+> P-BUG-ESTY-188 root cause confirmed via captured 400 body: Odoo company currency is USD, Etsy shop JaHandmadeArt is VND, publisher sends `list_price` raw with no FX conversion. The 4 most recent UAT-TAOSP products (12.99, 19.99 USD) all 400 with "must be above min price ₫5,040 VND". Three options:
+> A. Add `etsy.shop.listing_currency_id` + currency conversion at publish (proper fix, ~120 LOC, uses standard `res.currency._convert`).
+> B. Add per-product `x_etsy_shop_price` override field (operator sets VND price manually; ~80 LOC).
+> C. Staging-data-only — set the 4 broken UAT products to VND-shaped list_price like the older batch (0 LOC; bug recurs).
+> Which option ships in 19.0.2.34.0?
+
+**Next-session entry point** (when owner answers):
+
+- Option A: Spawn planner on `etsy_shop.listing_currency_id` + `_build_create_draft_payload` + `push_inventory` conversion; RED includes a payload test that asserts USD→VND conversion at a known FX rate (mock the currency rate row).
+- Option B: Spawn planner on `product.template.x_etsy_shop_price` + publisher fallback chain.
+- Option C: Owner does the data fix; close P-BUG-ESTY-188 as "data only" and open a follow-up tech-debt slice for the systemic FX gap.
+
+### Phase 9 follow-up part 2 (2026-06-05, owner decision + audit)
+
+Owner picked **Option A** + requested live-listing audit before proceeding. Audit script executed via `odoo shell` on staging using stored OAuth credentials (`EtsyApiClient(shop)`):
+
+| external_ref | Result |
+|---|---|
+| 4512614292 | 404 Not Found (deleted on Etsy or scope mismatch) |
+| 4512614444 | 404 Not Found |
+| 4514022027 | 404 Not Found |
+| 4514024054 | `state=draft`, `price=250000/1 VND`, title "UAT AllFields Doormat-CQLGX" |
+
+**Conclusion**: Etsy interpreted the 250,000 as VND, not USD. ≈ $10 USD equivalent. No 24,000× overcharge to undo. The systemic gap is real but no live audit-and-refund action is needed. Three of the four prior "successes" are gone from Etsy anyway. Proceed to Option A planning.
+
+Audit script saved at `/tmp/audit_etsy_listings.py` (local + staging) for future reuse.

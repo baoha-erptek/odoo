@@ -166,3 +166,54 @@ But the pre-deploy psql baseline (run inside Phase 9, not before Phase 2 as the 
 ### Plan-failure mode to remember (for `feedback_phase1_spec_drift_check.md`)
 
 The planner's hypothesis was reasonable given the available evidence: memory documented the exact failure mode and the comment at `etsy_api_client.py:277` referenced this exact error. **But the hypothesis was not validated before Phase 2 ran.** When the plan documents a GO-condition-zero check that requires the *affected environment*, the orchestrator must run it before scaffolding tests — otherwise the test suite becomes a regression guard for the wrong surface.
+
+---
+
+## Pivot 2026-06-05 (later) — candidate matrix expanded, body classified as #4
+
+Captured the 400 response body from staging docker logs (three identical reproductions on 2026-06-03 09:07, 09:11, 09:17):
+
+```
+[{"path":"/price","type":"price_too_low","message":"must be above min price ₫5,040 VND","transformed":false}]
+```
+
+**Neither candidate #2 nor candidate #3** in the original matrix matches this. New entry:
+
+### Candidate #4 — outbound currency mismatch (no FX at publisher boundary)
+
+- Odoo company currency on staging: **USD** (`res_company.currency_id → res_currency.name='USD'`).
+- Etsy shop JaHandmadeArt listing currency: **VND** (per error message).
+- `etsy_listing_publisher.py:221` (createListing) and `:379` (push_inventory) both emit `'price': float(s.list_price or 0.0)` with **no** currency conversion.
+- Recursive grep `currency|_convert\(|to_currency` across `custom_addons/etsy_integration/services/` returns ZERO outbound conversion sites; all currency handling is INBOUND (order receipts).
+- `etsy.shop` model has NO currency field — there is no place to even cache the Etsy-reported shop currency for conversion.
+- Failed publishes on staging carry USD-shaped list_prices (12.99 / 19.99 / 0.00). Earlier UAT publishes succeeded because their list_prices happened to be 250,000 — a VND-shaped value that cleared the threshold by accident, not by design.
+
+### Why the earlier candidates miss it
+
+- Candidate #1 (readiness_state_id NULL) was about a missing payload **key** — already ruled out, defensive migration shipped in `19.0.2.33.0`.
+- Candidate #2 (deprecated personalization keys) is about a key that **must NOT** be present — the captured body contains no personalization marker.
+- Candidate #3 (new mandatory field) is about a **named missing field** — the captured body names `/price` with a value-range error, not a missing field.
+- Candidate #4 is about a key being structurally present and numerically valid but **semantically wrong** because the receiver assumes a different denomination.
+
+### Fix options (full text in `specs/008-listings-inventory-sync/findings.md` "Phase 9 follow-up" entry)
+
+- **A. Currency-convert at publisher boundary** (Standard-Odoo-First pick): new `etsy.shop.listing_currency_id` Many2one→res.currency; bootstrap via `GET /shops/{shop_id}` analogous to `default_readiness_state_id`; in publisher line 221 + 379 call `company.currency_id._convert(list_price, shop.listing_currency_id, company, today)` before emission. ~120 LOC + migration + 8 tests.
+- **B. Per-product override field**: `product.template.x_etsy_shop_price`; publisher uses override when set. ~80 LOC + 5 tests. Operators maintain duplicate price data.
+- **C. Staging data fix only**: set the 4 broken UAT products to VND-shaped list_prices like the older batch. 0 LOC. Bug recurs on next published product.
+
+### Standard-Odoo-First decision
+
+Option A uses standard `res.currency._convert` (Odoo CE base method, no Enterprise dep). The only new surface is one Many2one + one bootstrap probe + two `_convert` call sites. **However**, per `feedback_standard_odoo_first.md`, adding a new field on an existing model REQUIRES owner approval. STOP at Phase 0 / Pivot — do not author Phase 1 plan or scaffold tests until owner picks A, B, or C.
+
+### Next-session entry point
+
+When owner answers:
+- **Option A** → planner agent over `etsy_shop.listing_currency_id` + `_build_create_draft_payload` + `push_inventory`; Phase 2 RED includes a payload test that mocks `res.currency.rate.rate` and asserts the emitted `price` equals the converted value.
+- **Option B** → planner agent over `product.template.x_etsy_shop_price` + publisher fallback chain.
+- **Option C** → owner does the data fix; close P-BUG-ESTY-188 as "data only"; open follow-up tech-debt slice (suggested ID `P-BUG-ESTY-188b-FX-OUTBOUND`) for the systemic gap.
+
+### Lessons captured (extends 2026-06-05 morning entry)
+
+3. **The published candidate matrix is not exhaustive.** Hypothesis-led plans should treat the matrix as "most likely culprits" and reserve a slot for "none of the above". When the captured body doesn't fit, expand the matrix in `findings.md` before scoping a fix.
+4. **Audit-log durability gap on the publisher path.** `etsy_listing_publisher.py` does NOT write to `etsy.api.log` on failure (only `listing_pull` cron + `scope_validation` do). The 400 body was only recoverable from docker logs because `etsy_api_client._request` emits a `_logger.warning` that survives the transaction rollback. Future slice candidate: wrap publisher API calls with a durable audit-log writer (`self.env.registry.cursor()` per memory `feedback_capture_response_body_before_blackbox_probe.md` Defect-11-02 pattern).
+5. **Test data unit-shape coincidences hide bugs.** The earlier UAT batch (`list_price=250000.0`) passed not because the publisher is correct but because the number happened to satisfy Etsy's VND minimum. Owner should be made aware that those four "successful" listings carry USD product priced at 250,000 USD on Etsy — a 24,000× overcharge if any buyer reached checkout. Open audit task to inspect / unpublish.
