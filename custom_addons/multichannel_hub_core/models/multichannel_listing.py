@@ -175,6 +175,50 @@ class MultichannelListing(models.Model):
         return self.image_1920 or self.product_tmpl_id.image_1920
 
     # ------------------------------------------------------------------
+    # P-LIST-SHOP-BULK — bulk server actions on the Listings list view
+    # ------------------------------------------------------------------
+    # State-lock enforcement mirrors the FR-017 write-defense pattern
+    # (memory `feedback_fr017_write_defense_in_depth.md`): refuse rows in
+    # the wrong state, report a notification with the skipped count.
+    def action_bulk_mark_ready(self):
+        """Marketing bulk-flips selected DRAFT listings to READY (= BA
+        review). Skips rows already past Draft and emits a notification
+        with the skipped count."""
+        eligible = self.filtered(lambda r: r.state == 'draft')
+        skipped = len(self) - len(eligible)
+        eligible.sudo().write({'state': 'ready'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Mark Ready',
+                'message': '%s marked ready; %s skipped (not in Draft).' % (
+                    len(eligible), skipped,
+                ),
+                'type': 'success' if skipped == 0 else 'warning',
+            },
+        }
+
+    def action_bulk_reset_to_draft(self):
+        """Bulk-revert selected listings to DRAFT (BA action — flips back
+        from Ready/Error). Published listings are skipped (cannot be
+        unilaterally unpublished from Odoo)."""
+        eligible = self.filtered(lambda r: r.state in ('ready', 'error'))
+        skipped = len(self) - len(eligible)
+        eligible.sudo().write({'state': 'draft'})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Reset to Draft',
+                'message': '%s reset; %s skipped (Published or already Draft).' % (
+                    len(eligible), skipped,
+                ),
+                'type': 'success' if skipped == 0 else 'warning',
+            },
+        }
+
+    # ------------------------------------------------------------------
     # P-LIST-UX-FIXES R1 — Open in Etsy Shop Manager (action_url)
     # ------------------------------------------------------------------
     def action_open_in_etsy_shop_manager(self):

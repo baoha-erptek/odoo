@@ -101,6 +101,27 @@
                                 <field name="weight_unit_pref"/>
                                 <field name="dimensions_unit_pref"/>
                             </group>
+                            <!-- P-LIST-ATTR-CONFIG / UX HIGH #4 — shop
+                                 layer for attribute mapping. Tier-2 of the
+                                 3-tier fallback chain. -->
+                            <div class="alert alert-info" role="alert">
+                                <strong>Attribute mapping priority:</strong>
+                                Per-listing rows (on the Listing form) →
+                                These shop defaults → Product global
+                                (Product Attribute). Leave a row's override
+                                empty to fall through to the next tier.
+                            </div>
+                            <field name="default_attribute_mapping_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_attribute_id"
+                                           options="{'no_create': True}"/>
+                                    <field name="etsy_property_id_override"
+                                           placeholder="Numeric Etsy property_id"/>
+                                    <field name="etsy_property_name_override"
+                                           placeholder="Etsy property_name string"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Orders" name="orders">
                             <field name="order_ids" readonly="1">

@@ -129,6 +129,17 @@ class EtsyShop(models.Model):
         default=False,
     )
 
+    # P-LIST-ATTR-CONFIG (ADR-015 §3 / spec 012 §US6) — shop-wide
+    # default attribute mapping. Tier 2 of the publisher's 3-tier
+    # property-id fallback chain.
+    default_attribute_mapping_ids = fields.One2many(
+        'etsy.shop.attribute.mapping',
+        'shop_id',
+        string='Attribute mapping defaults',
+        help='Shop-wide overrides for product.attribute → Etsy property_id. '
+             'Listings can still override per row.',
+    )
+
     # Spec 011 P-PUB-WEIGHT-DIMENSIONS — shop-wide unit preferences for
     # createListing item_weight + item_dimensions_unit. Odoo stores
     # product.template.weight in kg; convert at publish time.

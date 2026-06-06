@@ -421,6 +421,18 @@ Hệ thống làm các bước:
 
 (Lưu ý: `is_supply` không có lớp Sản phẩm — chỉ Listing → Shop. Vì Etsy ít khi override per-product.)
 
+### 7.4e Bulk-action trên list Listings (P-LIST-SHOP-BULK)
+
+> Mới từ 2026-06-06 (Jira ESTY-197).
+
+**Menu Operations → Listings** giờ:
+- Mặc định lọc theo **state ∈ {Draft, Ready}** (= những row còn editable). Filter "Published" / "Error" để xem khác.
+- Mặc định nhóm theo **Shop** — Marketing nhanh chóng tách listings của từng shop.
+
+**2 server action mới** (tick N row → Action):
+- **Mark Ready for Publish** — flip Draft → Ready để BA review. Row không phải Draft bị bỏ qua, hệ thống báo skipped count.
+- **Reset to Draft** — flip Ready/Error → Draft (Published KHÔNG bị reset; Marketing không tự ý gỡ listing đã đăng).
+
 ### 7.4d Attribute Mapping per-listing (P-LIST-ATTRIBUTES)
 
 > Mới từ 2026-06-06 (Jira ESTY-192). Khi 1 listing cần ánh xạ thuộc tính (Size / Color / Material) khác với mapping chung của Sản phẩm hoặc Shop, Marketing nhập override theo từng dòng ở đây.

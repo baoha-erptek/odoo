@@ -84,3 +84,4 @@ from . import test_p_list_category_orm
 from . import test_p_list_shipping_orm
 from . import test_p_list_how_its_made_orm
 from . import test_p_list_attributes_orm
+from . import test_p_list_attr_config_orm

@@ -33,3 +33,5 @@ access_mhc_listing_attr_map_marketing,multichannel.listing.attribute.mapping mar
 access_mhc_listing_attr_map_ba_user_read,multichannel.listing.attribute.mapping ba user read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_user,1,0,0,0
 access_mhc_listing_attr_map_ba_lead_read,multichannel.listing.attribute.mapping ba lead read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_lead,1,0,0,0
 access_mhc_listing_attr_map_system,multichannel.listing.attribute.mapping system,model_multichannel_listing_attribute_mapping,base.group_system,1,1,1,1
+access_etsy_shop_attr_map_user_read,etsy.shop.attribute.mapping user read,model_etsy_shop_attribute_mapping,base.group_user,1,0,0,0
+access_etsy_shop_attr_map_system,etsy.shop.attribute.mapping system,model_etsy_shop_attribute_mapping,base.group_system,1,1,1,1

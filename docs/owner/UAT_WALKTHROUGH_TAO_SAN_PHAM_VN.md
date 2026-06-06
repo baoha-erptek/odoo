@@ -594,6 +594,8 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-018 | Chọn Shipping Profile per-listing — fallback chain | ☐ | ☐ | ☐ | Sync shipping profiles trước; per-shop scope |
 | TC-019 | "How it's made" per-listing — who/when/is_supply chain | ☐ | ☐ | ☐ | 3-tier listing → product → shop |
 | TC-020 | Attribute mapping per-listing override — 3-tier chain | ☐ | ☐ | ☐ | Marketing override; blank row falls through |
+| TC-021 | Shop attribute defaults — tier-2 fallback | ☐ | ☐ | ☐ | Etsy Shop Settings; pairs with TC-020 |
+| TC-022 | Bulk Mark Ready + Reset to Draft + state-lock | ☐ | ☐ | ☐ | Operations → Listings list-view server actions |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 

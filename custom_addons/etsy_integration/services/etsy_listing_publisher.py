@@ -204,31 +204,26 @@ class EtsyListingPublisher:
     # stays empty until a buyer picks a combination — return [] in that
     # case, which Etsy already accepts at line 247's prior baseline.
     @staticmethod
-    def _property_value_for(axis, value_name, intent=None):
+    def _property_value_for(axis, value_name, intent=None, shop=None):
         """Build one Etsy property_values[] entry for an (axis, value) pair.
 
         Returns ``{property_id, property_name, values}`` or ``None`` when the
-        axis is not publishable or is missing its Etsy property id/name. Etsy
-        REQUIRES both a numeric ``property_id`` AND a non-null
-        ``property_name`` string (the inventory PUT 400s "Expected string
-        value for property_name" without it — verified live 2026-05-28), so
-        an axis lacking either is skipped entirely rather than sent malformed
-        (which would 400 the whole PUT).
+        axis is not publishable or is missing its Etsy property id/name.
 
-        **P-LIST-ATTRIBUTES (ADR-015 §3 / spec 012 §US6) resolution chain**:
-          1. ``intent.attribute_mapping_ids`` per-listing override
-          2. ``product.attribute.x_etsy_property_id`` global mapping
-          3. ``None`` (skip with WARNING) when neither carries a numeric id
+        **3-tier resolution chain (UX review HIGH #4 — spec 012 §US6)**:
+          1. ``intent.attribute_mapping_ids`` per-listing override (P-LIST-ATTRIBUTES)
+          2. ``shop.default_attribute_mapping_ids`` shop-wide default (P-LIST-ATTR-CONFIG)
+          3. ``product.attribute.x_etsy_property_id`` product global
 
-        Per-listing override allows an operator to publish "Color" against a
-        different Etsy property_id for one specific listing without changing
-        the global attribute config. Empty override row → fall through.
+        Empty override at any tier falls through to the next. Returns
+        ``None`` + WARNING when no tier carries a numeric id (Etsy 400s on
+        an empty property_id).
         """
         if not axis.x_publish_as_property:
             return None
-        # iter3 P-LIST-ATTRIBUTES — listing override first
         raw = None
         name = None
+        # Tier 1 — per-listing override
         if intent and intent.attribute_mapping_ids:
             for row in intent.attribute_mapping_ids:
                 if row.product_attribute_id.id != axis.id:
@@ -238,7 +233,17 @@ class EtsyListingPublisher:
                 if row.etsy_property_name_override:
                     name = row.etsy_property_name_override
                 break
-        # Fall through to the global product.attribute config
+        # Tier 2 — shop default mapping
+        if (not raw or not name) and shop and shop.default_attribute_mapping_ids:
+            for row in shop.default_attribute_mapping_ids:
+                if row.product_attribute_id.id != axis.id:
+                    continue
+                if not raw and row.etsy_property_id_override:
+                    raw = row.etsy_property_id_override
+                if not name and row.etsy_property_name_override:
+                    name = row.etsy_property_name_override
+                break
+        # Tier 3 — product.attribute global
         if not raw:
             raw = axis.x_etsy_property_id
         if not name:
@@ -246,8 +251,8 @@ class EtsyListingPublisher:
         if not raw or not name:
             _logger.warning(
                 "product.attribute id=%s name=%r missing x_etsy_property_id "
-                "or x_etsy_property_name (and no listing override); skipping "
-                "it as an Etsy variation property.", axis.id, axis.name,
+                "or x_etsy_property_name across all 3 tiers; skipping it as "
+                "an Etsy variation property.", axis.id, axis.name,
             )
             return None
         return {
@@ -728,10 +733,12 @@ class EtsyListingPublisher:
             )
 
         # Fixed (single-value) properties are identical on every product.
+        sh = shop.sudo()
         fixed_props = []
         for line in fixed:
             pv = self._property_value_for(
-                line.attribute_id, line.value_ids[0].name, intent=intent,
+                line.attribute_id, line.value_ids[0].name,
+                intent=intent, shop=sh,
             )
             if pv:
                 fixed_props.append(pv)
@@ -742,7 +749,8 @@ class EtsyListingPublisher:
                 props = list(fixed_props)
                 for line, value in zip(varying, combo):
                     pv = self._property_value_for(
-                        line.attribute_id, value.name, intent=intent,
+                        line.attribute_id, value.name,
+                        intent=intent, shop=sh,
                     )
                     if pv:
                         props.append(pv)

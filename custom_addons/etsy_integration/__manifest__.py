@@ -1,6 +1,6 @@
 {
     'name': 'Etsy Integration',
-    'version': '19.0.3.6.0',
+    'version': '19.0.3.7.0',
     'category': 'Sales',
     'summary': 'Import Etsy orders from Gmail notifications into Odoo sale orders',
     'description': """

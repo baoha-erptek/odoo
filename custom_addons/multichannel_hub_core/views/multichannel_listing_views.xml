@@ -125,6 +125,11 @@
                 <field name="title"/>
                 <field name="shop_ref"/>
                 <field name="external_ref"/>
+                <!-- P-LIST-SHOP-BULK — default to active work
+                     (draft + ready) so Marketing doesn't drown in
+                     published rows during bulk operations. -->
+                <filter string="Editable" name="state_editable"
+                        domain="[('state', 'in', ['draft', 'ready'])]"/>
                 <filter string="Draft" name="state_draft"
                         domain="[('state', '=', 'draft')]"/>
                 <filter string="Ready" name="state_ready"
@@ -149,6 +154,27 @@
         <field name="res_model">multichannel.listing</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_multichannel_listing_search"/>
+        <field name="context">{'search_default_state_editable': 1, 'search_default_group_shop': 1}</field>
+    </record>
+
+    <!-- P-LIST-SHOP-BULK — server actions for bulk state transitions on
+         the Listings list view. -->
+    <record id="action_bulk_mark_ready" model="ir.actions.server">
+        <field name="name">Mark Ready for Publish</field>
+        <field name="model_id" ref="model_multichannel_listing"/>
+        <field name="binding_model_id" ref="model_multichannel_listing"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_mark_ready()</field>
+    </record>
+
+    <record id="action_bulk_reset_to_draft" model="ir.actions.server">
+        <field name="name">Reset to Draft</field>
+        <field name="model_id" ref="model_multichannel_listing"/>
+        <field name="binding_model_id" ref="model_multichannel_listing"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_reset_to_draft()</field>
     </record>
 
     <menuitem id="menu_multichannel_listing"
