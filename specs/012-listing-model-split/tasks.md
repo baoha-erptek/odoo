@@ -20,17 +20,17 @@ Marker key: `[ ]` todo · `[~]` in progress / deferred · `[X]` done.
 
 Standalone slice that implements ADR-015 §1 §2 §4 §5 §6: ships `multichannel.listing` model + backfill, no Etsy-specific fields yet.
 
-- [ ] T010 [P-LIST-MODEL] Add `multichannel.listing` model in `multichannel_hub_core/models/multichannel_listing.py` (core fields: `product_tmpl_id`, `channel_id`, `shop_ref`, `state`, `external_ref`, `last_synced_at`, `title`, `description`, `image_1920`, `sequence`).
-- [ ] T011 [P-LIST-MODEL] Add `security/ir.model.access.csv` rows for `group_marketing` (RW), `group_ba_lead` / `group_ba_user` (read-only), `group_system` (RW).
-- [ ] T012 [P-LIST-MODEL] Add list + form view for `multichannel.listing` in `multichannel_hub_core/views/multichannel_listing_views.xml` (basic; Wave-2 slices extend).
-- [ ] T013 [P-LIST-MODEL] Add menu entry under existing "Multichannel" menu (after `multichannel.sales.channel` config).
-- [ ] T014 [P-LIST-MODEL] Phase 1 DB tests — table exists, FK to `product_template`, ACL CSV rows match the matrix in ADR-015 §4.
-- [ ] T015 [P-LIST-MODEL] Phase 2 ORM tests — create / write / search; ACL group fences; backfill helper coverage.
-- [ ] T016 [P-LIST-MODEL] Migration `multichannel_hub_core/migrations/<version>/post-migrate.py` — backfill stub row per template with active `etsy.listing` or `product.channel.status[channel.code=etsy]`. Idempotent.
-- [ ] T017 [P-LIST-MODEL] Update `EtsyListingPublisher.run()` to resolve `multichannel.listing` first; fall back to `product.template` when no listing intent row exists (zero-regression behavior).
-- [ ] T018 [P-LIST-MODEL] Update `HUONG_DAN_TAO_SAN_PHAM_VN.md` §6.5 (new) — "Sản phẩm" vs "Listing" — explain the split for the operator.
-- [ ] T019 [P-LIST-MODEL] Add TC-015 to `UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` — verify backfill stub row exists after upgrade for an existing live listing; verify publish still works unchanged.
-- [ ] T020 [P-LIST-MODEL] Phase 9 staging deploy + owner upgrade sanity check.
+- [X] T010 [P-LIST-MODEL] `multichannel.listing` model (commit `696c4068a99`).
+- [X] T011 [P-LIST-MODEL] ACL CSV — 4 rows + record rule blocking unlink-of-published (security-reviewer HIGH applied).
+- [X] T012 [P-LIST-MODEL] List + form + search views.
+- [X] T013 [P-LIST-MODEL] Menu under Operations → Listings.
+- [X] T014 [P-LIST-MODEL] Phase 1 DB tests — 7 tests.
+- [X] T015 [P-LIST-MODEL] Phase 2 ORM tests — 9 tests. Combined 16/16 GREEN.
+- [X] T016 [P-LIST-MODEL] post-migrate backfill in `_19_0_1_0_65/__init__.py` + Odoo-discovery shim. Idempotent.
+- [X] T017 [P-LIST-MODEL] Publisher wiring — `_resolve_listing_intent` helper + title/description fallback in `_build_create_draft_payload`.
+- [X] T018 [P-LIST-MODEL] HUONG_DAN_TAO_SAN_PHAM_VN.md §6.5 "Sản phẩm vs Listing" landed.
+- [X] T019 [P-LIST-MODEL] UAT TC-015 6-part walkthrough landed.
+- [X] T020 [P-LIST-MODEL] Phase 9 staging deploy 2026-06-06 09:25 UTC — `multichannel_hub_core` `latest_version='19.0.1.0.65'` confirmed; `SELECT COUNT(*) FROM multichannel_listing` = **43** stub rows backfilled from live `product.channel.status` data. Container restarted clean.
 
 Exit criterion: existing publish chain on JaHandmadeArt continues to work unchanged; every existing template with an active `etsy.listing` has a corresponding `multichannel.listing` stub row.
 
