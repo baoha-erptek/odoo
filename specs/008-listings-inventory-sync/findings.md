@@ -290,3 +290,54 @@ Owner picked **Option A** + requested live-listing audit before proceeding. Audi
 **Conclusion**: Etsy interpreted the 250,000 as VND, not USD. ≈ $10 USD equivalent. No 24,000× overcharge to undo. The systemic gap is real but no live audit-and-refund action is needed. Three of the four prior "successes" are gone from Etsy anyway. Proceed to Option A planning.
 
 Audit script saved at `/tmp/audit_etsy_listings.py` (local + staging) for future reuse.
+
+### Phase 9 iter2 deploy (2026-06-06)
+
+**Pre-deploy state on staging (`esty_odoo19`)**:
+- Odoo company currency = USD (id=1)
+- VND was `active=False` (id=23, ships dormant in 19 CE)
+- Zero `res_currency_rate` rows for VND
+- 5 etsy_shop rows: 4 email-only, 1 api (JaHandmadeArt id=10) with `listing_currency_id=NULL`
+
+**Pre-deploy setup** (owner-approved via AskUserQuestion):
+- `UPDATE res_currency SET active=TRUE WHERE name='VND'` (UPDATE 1)
+- `INSERT INTO res_currency_rate (currency_id=23, company_id=1, name=CURRENT_DATE, rate=25400.0)` (1 row, mid-market USD/VND for 2026-06-06)
+
+**Deploy path**:
+1. `rsync` `custom_addons/etsy_integration/` → `/odoo/esty19/custom_addons/etsy_integration/` (109 kB, 12.38× speedup; all `migrations/19.0.2.34.0/`, `migrations/_19_0_2_34_0/`, both iter2 test files landed).
+2. `sudo docker exec esty19_odoo odoo -d esty_odoo19 -u etsy_integration --stop-after-init` — Module loaded in 2.25s / 1155 queries; `Running migration [19.0.2.34.0>] post-migrate`; migration emitted `bootstrapped shop id=10 (JaHandmadeArt) listing_currency_id=23 (currency_code=VND)`; Registry loaded in 6.916s; exit 0.
+3. `sudo docker restart esty19_odoo` — healthy after 5s.
+
+**Expected harmless WARNING** (matches iter1 pattern): `Invalid version for upgrade script '/mnt/extra-addons/etsy_integration/migrations/_19_0_2_34_0'`. Confirms split-package design — Odoo's discovery scans the migrations dir, finds the underscored mirror, can't parse it as a version, and skips it. The dotted `19.0.2.34.0/` IS picked up and executed.
+
+**Post-deploy psql verification**:
+
+```
+ id |     name      | active_source | etsy_api_shop_id | listing_currency_id | default_readiness_state_id
+----+---------------+---------------+------------------+---------------------+----------------------------
+  1 | Julien        | email         |                  |                     |
+  2 | Carina        | email         |                  |                     |
+  3 | Viktor        | email         |                  |                     |
+  4 | Sven          | email         |                  |                     |
+ 10 | JaHandmadeArt | api           | 60752333         |                  23 | 1406133708616
+```
+
+JaHandmadeArt's `listing_currency_id` is now `23` (VND). Email-only shops correctly skipped by the migration's `active_source='api'` filter.
+
+**End-to-end verification via odoo shell** on staging confirmed conversion works:
+
+| Test | Input | Output | Notes |
+|---|---|---|---|
+| Helper at 0.50 USD | 0.50 | 12,700 VND | Above Etsy's 5,040 VND minimum ✓ |
+| Helper at 12.99 USD | 12.99 | 329,946 VND | The owner's typical UAT product price ✓ |
+| Helper at 19.99 USD | 19.99 | 507,746 VND | ✓ |
+| Full payload build for real product (id=424, "Aceton", list_price=1.0 USD) | 1.0 | `payload['price']` = 25,400 VND | matches rate ✓ |
+
+**Implication**: The publisher is now emitting Etsy-acceptable VND-denominated prices for JaHandmadeArt. The exact failure mode (`price_too_low ₫5,040 VND`) cannot recur for this shop while: (a) `listing_currency_id` is set, (b) `res_currency_rate` for VND is configured at a non-zero rate.
+
+**T6 exit gate (createListing → 201)**: not yet verified — requires owner to retry the publish that 400'd on 2026-06-03. Tracker stays `doing` until that gate closes. If owner reproduces and the publish succeeds (201, listing_id returned), flip tracker to `done` and trigger Phase 8 (`/learn`).
+
+**Operator follow-up for fresh `etsy.shop` records**: any new api-source shop created on staging must:
+1. Have `etsy_api_shop_id` set (existing FR-017 path covers this on OAuth callback);
+2. Have `listing_currency_id` set — the new field is bootstrapped by the OAuth flow if a future slice wires it, but for now the migration only runs once on install. Documented as a `P-BUG-ESTY-188b` follow-up consideration.
+3. Have a `res_currency_rate` row for that currency. Operators should add rates manually or via a future `ir.cron` to refresh from a vendor feed.
