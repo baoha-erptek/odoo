@@ -19,6 +19,9 @@
                                options="{'no_create': True, 'no_open': True}"/>
                         <field name="etsy_shipping_profile_id"
                                options="{'no_create': True, 'no_open': True}"/>
+                        <field name="etsy_who_made"/>
+                        <field name="etsy_when_made"/>
+                        <field name="etsy_is_supply"/>
                     </group>
                     <p class="text-muted">
                         Empty → falls back to the shop default.

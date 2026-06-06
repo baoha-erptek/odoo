@@ -314,6 +314,29 @@ class EtsyListingPublisher:
         return result
 
     # ------------------------------------------------------------------
+    # P-LIST-HOW-ITS-MADE who_made/when_made/is_supply (ADR-015 / spec 012)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _resolve_who_made(tmpl, shop, intent):
+        if intent and intent.etsy_who_made:
+            return intent.etsy_who_made
+        return tmpl.x_who_made or shop.default_who_made or 'i_did'
+
+    @staticmethod
+    def _resolve_when_made(tmpl, shop, intent):
+        if intent and intent.etsy_when_made:
+            return intent.etsy_when_made
+        return tmpl.x_when_made or shop.default_when_made or 'made_to_order'
+
+    @staticmethod
+    def _resolve_is_supply(tmpl, shop, intent):
+        # is_supply has no per-product surface; intent override wins,
+        # otherwise shop default. Defaults False when neither set.
+        if intent and intent.etsy_is_supply:
+            return True
+        return bool(shop.default_is_supply)
+
+    # ------------------------------------------------------------------
     # P-LIST-SHIPPING shipping-profile resolver (ADR-015 / spec 012)
     # ------------------------------------------------------------------
     def _resolve_shipping_profile_id(self, tmpl, shop):
@@ -408,6 +431,7 @@ class EtsyListingPublisher:
         sh = shop.sudo()
         # P-LIST-MODEL: marketing overrides (title/description) read from the
         # multichannel.listing intent layer; empty fields fall back to template.
+        # Single lookup shared by every resolver in the payload builder.
         intent = self._resolve_listing_intent(s, shop)
         title = (intent.title if intent else '') or s.name or ''
         description = (
@@ -429,9 +453,9 @@ class EtsyListingPublisher:
             # Spec 011 P-PUB-PER-PRODUCT-DEFAULTS — per-product override wins
             # over shop default; falls back to hardcoded legacy default when
             # both are blank. is_supply stays shop-wide (not in override scope).
-            'who_made': s.x_who_made or sh.default_who_made or 'i_did',
-            'when_made': s.x_when_made or sh.default_when_made or 'made_to_order',
-            'is_supply': bool(sh.default_is_supply),
+            'who_made': self._resolve_who_made(s, sh, intent),
+            'when_made': self._resolve_when_made(s, sh, intent),
+            'is_supply': self._resolve_is_supply(s, sh, intent),
             'taxonomy_id': self._resolve_taxonomy_id(s, sh),
             'shipping_profile_id': self._resolve_shipping_profile_id(s, sh),
             'return_policy_id': int(sh.default_return_policy_id or 0),

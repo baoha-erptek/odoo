@@ -404,6 +404,23 @@ Hệ thống làm các bước:
 
 **Thứ tự ưu tiên:** Listing override → Etsy Shop default → 0 (Etsy 400 — sẽ hardening sau).
 
+### 7.4c "How it's made" per-listing (who_made / when_made / is_supply)
+
+> Mới từ 2026-06-06 (P-LIST-HOW-ITS-MADE). 3 trường Etsy bắt buộc giờ có override theo từng listing.
+
+**Operations → Listings → tab Etsy:** 3 trường mới ngay dưới Etsy Category + Shipping Profile:
+- **Who made it** — Selection (I did / Someone else / A member of my shop)
+- **When made** — Selection (Made to order / 2020-2026 / 1990s / ... / before_1700)
+- **Is supply** — Boolean (raw materials, tools)
+
+**Thứ tự ưu tiên publisher đọc:**
+1. Listing override (Marketing nhập ở Listing)
+2. → Sản phẩm (BA nhập `x_who_made` / `x_when_made`)
+3. → Etsy Shop default (Admin set)
+4. → Hard-coded `'i_did'` / `'made_to_order'` / `False` (last-resort)
+
+(Lưu ý: `is_supply` không có lớp Sản phẩm — chỉ Listing → Shop. Vì Etsy ít khi override per-product.)
+
 ### 7.4b Upload video cho listing (1 video / shop)
 
 > Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.

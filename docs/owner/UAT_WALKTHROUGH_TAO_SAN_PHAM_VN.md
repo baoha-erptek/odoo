@@ -592,6 +592,7 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-016 | Upload video lên Etsy listing (1 video/listing) | ☐ | ☐ | ☐ | Cần file .mp4 ≤ 100MB; cleanup video sau |
 | TC-017 | Chọn Etsy Category per-listing — fallback chain | ☐ | ☐ | ☐ | Sync taxonomy trước nếu cache rỗng |
 | TC-018 | Chọn Shipping Profile per-listing — fallback chain | ☐ | ☐ | ☐ | Sync shipping profiles trước; per-shop scope |
+| TC-019 | "How it's made" per-listing — who/when/is_supply chain | ☐ | ☐ | ☐ | 3-tier listing → product → shop |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
