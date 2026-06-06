@@ -39,6 +39,7 @@ class EtsyTaxonomyNode(models.Model):
         string='Parent',
         ondelete='set null',
         index=True,
+        recursive=True,
     )
     child_ids = fields.One2many(
         'etsy.taxonomy.node',
