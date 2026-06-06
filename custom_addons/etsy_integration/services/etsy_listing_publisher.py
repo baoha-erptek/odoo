@@ -314,6 +314,22 @@ class EtsyListingPublisher:
         return result
 
     # ------------------------------------------------------------------
+    # P-LIST-SHIPPING shipping-profile resolver (ADR-015 / spec 012)
+    # ------------------------------------------------------------------
+    def _resolve_shipping_profile_id(self, tmpl, shop):
+        """listing override → shop default → soft 0 (consistent with the
+        P-LIST-CATEGORY pre-hardening behaviour)."""
+        intent = self._resolve_listing_intent(tmpl, shop)
+        if intent and intent.etsy_shipping_profile_id:
+            raw = intent.etsy_shipping_profile_id.etsy_profile_id
+            if raw and raw.isdigit():
+                return int(raw)
+        try:
+            return int(shop.default_shipping_profile_id or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    # ------------------------------------------------------------------
     # P-LIST-CATEGORY taxonomy resolver (ADR-015 / spec 012)
     # ------------------------------------------------------------------
     def _resolve_taxonomy_id(self, tmpl, shop):
@@ -417,7 +433,7 @@ class EtsyListingPublisher:
             'when_made': s.x_when_made or sh.default_when_made or 'made_to_order',
             'is_supply': bool(sh.default_is_supply),
             'taxonomy_id': self._resolve_taxonomy_id(s, sh),
-            'shipping_profile_id': int(sh.default_shipping_profile_id or 0),
+            'shipping_profile_id': self._resolve_shipping_profile_id(s, sh),
             'return_policy_id': int(sh.default_return_policy_id or 0),
             'state': 'draft',
         }

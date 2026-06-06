@@ -18,3 +18,12 @@ class MultichannelListingEtsy(models.Model):
         help='Per-listing Etsy taxonomy override. Empty → falls back to '
              'product.template.x_taxonomy_id → etsy.shop.default_taxonomy_id.',
     )
+
+    # P-LIST-SHIPPING (ADR-015 §3 / spec 012 §US5)
+    etsy_shipping_profile_id = fields.Many2one(
+        'etsy.shipping.profile',
+        string='Etsy Shipping Profile',
+        ondelete='set null',
+        help='Per-listing shipping profile override. Empty → falls back to '
+             'etsy.shop.default_shipping_profile_id.',
+    )

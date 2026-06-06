@@ -15,3 +15,4 @@ from . import etsy_listing_publisher
 from . import etsy_inventory_pusher
 from . import etsy_buyer_message
 from . import etsy_taxonomy_syncer
+from . import etsy_shipping_profile_syncer

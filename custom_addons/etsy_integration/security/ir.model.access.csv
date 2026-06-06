@@ -27,3 +27,5 @@ access_etsy_listing_backfill_wizard_user,etsy.listing.backfill.wizard.user,model
 access_etsy_publish_wizard_user,etsy.publish.wizard.user,model_etsy_publish_wizard,base.group_user,1,1,1,1
 access_etsy_taxonomy_node_user_read,etsy.taxonomy.node user read,model_etsy_taxonomy_node,base.group_user,1,0,0,0
 access_etsy_taxonomy_node_system,etsy.taxonomy.node system rw,model_etsy_taxonomy_node,base.group_system,1,1,1,1
+access_etsy_shipping_profile_user_read,etsy.shipping.profile user read,model_etsy_shipping_profile,base.group_user,1,0,0,0
+access_etsy_shipping_profile_system,etsy.shipping.profile system rw,model_etsy_shipping_profile,base.group_system,1,1,1,1

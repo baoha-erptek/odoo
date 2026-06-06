@@ -17,9 +17,11 @@
                     <group>
                         <field name="etsy_taxonomy_id"
                                options="{'no_create': True, 'no_open': True}"/>
+                        <field name="etsy_shipping_profile_id"
+                               options="{'no_create': True, 'no_open': True}"/>
                     </group>
                     <p class="text-muted">
-                        Empty → falls back to the shop default Etsy category.
+                        Empty → falls back to the shop default.
                     </p>
                 </page>
             </xpath>

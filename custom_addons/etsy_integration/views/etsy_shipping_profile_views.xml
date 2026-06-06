@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_shipping_profile_list" model="ir.ui.view">
+        <field name="name">etsy.shipping.profile.list</field>
+        <field name="model">etsy.shipping.profile</field>
+        <field name="arch" type="xml">
+            <list string="Etsy Shipping Profiles">
+                <field name="shop_id"/>
+                <field name="etsy_profile_id"/>
+                <field name="title"/>
+                <field name="origin_country_iso"/>
+                <field name="is_deleted" widget="boolean_toggle"/>
+                <field name="last_synced_at" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_shipping_profile_search" model="ir.ui.view">
+        <field name="name">etsy.shipping.profile.search</field>
+        <field name="model">etsy.shipping.profile</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/>
+                <field name="etsy_profile_id"/>
+                <field name="shop_id"/>
+                <filter string="Active" name="filter_active"
+                        domain="[('active', '=', True)]"/>
+                <separator/>
+                <filter string="By Shop" name="grp_shop"
+                        context="{'group_by': 'shop_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_etsy_shipping_profile" model="ir.actions.act_window">
+        <field name="name">Etsy Shipping Profiles</field>
+        <field name="res_model">etsy.shipping.profile</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_etsy_shipping_profile_search"/>
+    </record>
+
+    <menuitem id="menu_etsy_shipping_profile"
+              name="Etsy Shipping Profiles"
+              parent="multichannel_hub_core.menu_operations_root"
+              action="action_etsy_shipping_profile"
+              sequence="81"
+              groups="base.group_system"/>
+</odoo>

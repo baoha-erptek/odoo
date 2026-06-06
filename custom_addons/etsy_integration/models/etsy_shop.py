@@ -720,3 +720,40 @@ class EtsyShop(models.Model):
                 'type': 'success',
             },
         }
+
+    @api.model
+    def _cron_sync_shipping_profiles(self):
+        """P-LIST-SHIPPING daily cron — refresh per-shop profile cache."""
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy shipping profile sync is restricted to system tasks.'
+            )
+        from ..services.etsy_shipping_profile_syncer import (
+            sync_shipping_profiles,
+        )
+        shops = self.search([('active_source', '=', 'api')])
+        for shop in shops:
+            try:
+                sync_shipping_profiles(self.env, shop)
+            except Exception:
+                _logger.exception(
+                    'Etsy shipping profile sync failed for shop %s (id=%s)',
+                    shop.name, shop.id,
+                )
+
+    def action_sync_etsy_shipping_profiles(self):
+        """Manual trigger button on the shop form."""
+        self.ensure_one()
+        from ..services.etsy_shipping_profile_syncer import (
+            sync_shipping_profiles,
+        )
+        created, updated = sync_shipping_profiles(self.env, self)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Etsy shipping profiles synced',
+                'message': '%s new, %s updated' % (created, updated),
+                'type': 'success',
+            },
+        }

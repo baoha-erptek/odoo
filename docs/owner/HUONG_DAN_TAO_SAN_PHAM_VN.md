@@ -391,6 +391,19 @@ Hệ thống làm các bước:
 3. → **Etsy Shop.Default Taxonomy ID** (Admin set ở shop)
 4. → Nếu không có gì cả: Etsy trả 400. Hệ thống sẽ siết thành lỗi rõ ràng ở slice hardening sau này — hiện vẫn fall-through để không gãy fixture cũ.
 
+### 7.4a-ship Chọn Shipping Profile cho listing
+
+> Mới từ 2026-06-06 (P-LIST-SHIPPING). Tương tự Etsy Category nhưng theo từng shop.
+
+**Đồng bộ:**
+- Cron `Etsy: Shipping Profile Cache Sync` chạy hàng ngày.
+- Admin có thể bấm thủ công nút **Sync Etsy Shipping Profiles** trên form shop.
+- Operations → Etsy Shipping Profiles (Admin) — xem cache.
+
+**Chọn per-listing:** Operations → Listings → tab Etsy → trường **Etsy Shipping Profile** (autocomplete chỉ hiển thị profile của shop đó).
+
+**Thứ tự ưu tiên:** Listing override → Etsy Shop default → 0 (Etsy 400 — sẽ hardening sau).
+
 ### 7.4b Upload video cho listing (1 video / shop)
 
 > Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.
