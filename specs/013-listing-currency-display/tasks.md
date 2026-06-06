@@ -21,60 +21,60 @@ Estimated LOC: **~150 LOC** total (50 models, 25 views, 15 data, 60 tests). Mode
 
 ### Phase 1 — Plan
 
-- [ ] T101 Dispatch `planner` agent (Sonnet) with spec 013 + ADR-016 as input. Output: file-by-file diff outline.
+- [X] T101 Dispatch `planner` agent (Sonnet) with spec 013 + ADR-016 as input. Output: file-by-file diff outline.
 
 ### Phase 2 — RED
 
-- [ ] T201 `tests/test_p_enh_esty_195_phase1_db.py` — 4 Phase-1 DB assertions per spec §6.
-- [ ] T202 `tests/test_p_enh_esty_195_phase2_orm.py` — 8 Phase-2 ORM tests per spec §6.
-- [ ] T203 Verify all 12 tests RED before any code.
+- [X] T201 `tests/test_p_enh_esty_195_phase1_db.py` — 4 Phase-1 DB assertions per spec §6.
+- [X] T202 `tests/test_p_enh_esty_195_phase2_orm.py` — 8 Phase-2 ORM tests per spec §6.
+- [X] T203 Verify all 12 tests RED before any code.
 
 ### Phase 3 — GREEN
 
-- [ ] T301 Extend `custom_addons/etsy_integration/models/multichannel_listing.py` `_inherit` class:
+- [X] T301 Extend `custom_addons/etsy_integration/models/multichannel_listing.py` `_inherit` class:
   - Add `etsy_shop_id` M2O→`etsy.shop`, `ondelete='set null'`, indexed.
   - Add `display_currency_id` Monetary-driver computed field.
   - Add `display_price_in_shop_currency` Monetary computed field with `@api.depends('product_tmpl_id.list_price', 'etsy_shop_id.listing_currency_id')`. SOFT-FAIL → 0.0 + WARNING.
-- [ ] T302 Extend `custom_addons/etsy_integration/models/etsy_shop.py`:
+- [X] T302 Extend `custom_addons/etsy_integration/models/etsy_shop.py`:
   - Add `_cron_refresh_currency_rates(self)` method reading `etsy_integration.currency_rate_provider` (default `'manual'`); WARNING + no-op on every non-implemented branch.
-- [ ] T303 Add view inherit in `custom_addons/etsy_integration/views/multichannel_listing_etsy_views.xml`:
+- [X] T303 Add view inherit in `custom_addons/etsy_integration/views/multichannel_listing_etsy_views.xml`:
   - Add `etsy_shop_id` widget on existing Etsy tab.
   - Add `display_price_in_shop_currency` Monetary widget (readonly, `widget="monetary"`, options="{'currency_field': 'display_currency_id'}").
   - Tooltip: "Shop currency not configured" when `etsy_shop_id.listing_currency_id` is False.
-- [ ] T304 Create `custom_addons/etsy_integration/data/ir_cron_currency_rates.xml`:
+- [X] T304 Create `custom_addons/etsy_integration/data/ir_cron_currency_rates.xml`:
   - `ir.cron` "Etsy: Refresh Shop Currency Rates", daily 05:00 UTC, calls `model.etsy.shop _cron_refresh_currency_rates`.
-- [ ] T305 Create `custom_addons/etsy_integration/data/ir_config_parameter_currency.xml` (or extend existing config_parameter file):
+- [X] T305 Create `custom_addons/etsy_integration/data/ir_config_parameter_currency.xml` (or extend existing config_parameter file):
   - `etsy_integration.currency_rate_provider` default `'manual'`.
-- [ ] T306 Add files to `__manifest__.py` `data` list. Bump etsy_integration version `19.0.3.7.0 → 19.0.3.8.0` (point release — no schema break beyond optional new M2O column).
-- [ ] T307 Migration package `custom_addons/etsy_integration/migrations/19.0.3.8.0/post-migrate.py` + sibling `_19_0_3_8_0/__init__.py` (dotted-version dir trap per `feedback_odoo19_test_gotchas.md` (c)):
+- [X] T306 Add files to `__manifest__.py` `data` list. Bump etsy_integration version `19.0.3.7.0 → 19.0.3.8.0` (point release — no schema break beyond optional new M2O column).
+- [X] T307 Migration package `custom_addons/etsy_integration/migrations/19.0.3.8.0/post-migrate.py` + sibling `_19_0_3_8_0/__init__.py` (dotted-version dir trap per `feedback_odoo19_test_gotchas.md` (c)):
   - Backfill `multichannel.listing.etsy_shop_id` from `shop_ref` name-lookup.
   - WARNING per ambiguous/missing match.
-- [ ] T308 Run tests: all 12 GREEN under `--test-tags /etsy_integration`.
+- [X] T308 Run tests: all 12 GREEN under `--test-tags /etsy_integration`.
 
 ### Phase 4 — Review (parallel)
 
-- [ ] T401 `code-reviewer` agent (Sonnet) — single Agent call.
-- [ ] T402 `security-reviewer` agent (Sonnet) — single Agent call (parallel with T401).
-- [ ] T403 Apply all CRITICAL/HIGH findings; document accept/decline on MEDIUM/LOW.
+- [X] T401 `code-reviewer` agent (Sonnet) — single Agent call.
+- [X] T402 `security-reviewer` agent (Sonnet) — single Agent call (parallel with T401).
+- [X] T403 Apply all CRITICAL/HIGH findings; document accept/decline on MEDIUM/LOW.
 
 ### Phase 5 — Verify
 
-- [ ] T501 `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration --stop-after-init` exit 0.
-- [ ] T502 Full suite regression: `--test-tags /etsy_integration` matches baseline 18 fail / 5 error of (704 + 12 new) — zero new regressions.
-- [ ] T503 Grep new code for `_logger.info(` / `print(` — must return zero hits per project rules.
-- [ ] T504 Run `ruff check custom_addons/etsy_integration/` — zero new lint hits.
+- [X] T501 `docker exec namco_odoo19 odoo -d namco_odoo19 -u etsy_integration --stop-after-init` exit 0.
+- [X] T502 Full suite regression: `--test-tags /etsy_integration` matches baseline 18 fail / 5 error of (704 + 12 new) — zero new regressions.
+- [X] T503 Grep new code for `_logger.info(` / `print(` — must return zero hits per project rules.
+- [X] T504 Run `ruff check custom_addons/etsy_integration/` — zero new lint hits.
 
 ### Phase 6 — Commit
 
-- [ ] T601 Single conventional commit on `feature/006-master-plan-coding`:
+- [X] T601 Single conventional commit on `feature/006-master-plan-coding`:
   `[etsy_integration] feat(P-ENH-ESTY-195): listing currency display widget + rate-refresh cron skeleton`
 
 ### Phase 7 — Document
 
-- [ ] T701 Update `docs/owner/HUONG_DAN_TAO_SAN_PHAM_VN.md` §7.5b (new) — "Xem giá quy đổi sang tiền tệ shop".
-- [ ] T702 Update `docs/owner/UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` TC-023 (new row).
-- [ ] T703 Update `.claude/plans/006-master-plan-tracking.md` row P-ENH-ESTY-195: `todo → done`, ship note matching the existing Wave-2 row format.
-- [ ] T704 Append Phase 3-9 surprises to `specs/013-listing-currency-display/findings.md`.
+- [X] T701 Update `docs/owner/HUONG_DAN_TAO_SAN_PHAM_VN.md` §7.5b (new) — "Xem giá quy đổi sang tiền tệ shop".
+- [X] T702 Update `docs/owner/UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` TC-023 (new row).
+- [X] T703 Update `.claude/plans/006-master-plan-tracking.md` row P-ENH-ESTY-195: `todo → done`, ship note matching the existing Wave-2 row format.
+- [X] T704 Append Phase 3-9 surprises to `specs/013-listing-currency-display/findings.md`.
 
 ### Phase 8 — Learn
 

@@ -463,6 +463,18 @@ Hệ thống làm các bước:
 - Nếu upload thất bại (rate-limit Etsy, file lỗi format), listing vẫn được publish — hệ thống chỉ log WARNING. BA xem chatter / log để biết.
 - Nếu không upload video, Etsy đăng listing không video — không lỗi.
 
+### 7.5b Xem trước giá quy đổi sang tiền tệ shop
+
+Khi shop Etsy bán bằng VND nhưng Odoo đang để giá USD, listing trên Etsy hiện giá VND cho khách. Trước khi bấm *Publish*, Marketing có thể xem **số VND** mà khách sẽ thực sự thấy — ngay trên form Listing.
+
+- **Vị trí**: form Listing → tab *Shipping & Variations* → group **Shop Currency Preview** ở đầu trang.
+- **Hai trường**:
+  - *Etsy Shop* (dropdown) — chọn shop sẽ đăng. Hệ thống dùng tiền tệ của shop này để quy đổi.
+  - *Price (shop currency)* (chỉ đọc) — giá đã quy đổi theo tỷ giá hôm nay.
+- **Khi hiện `0.00`**: có 1 trong 3 lý do — (1) chưa chọn Etsy Shop, (2) shop chưa cấu hình tiền tệ niêm yết (gửi yêu cầu hệ thống set `listing_currency_id`), (3) chưa có tỷ giá hôm nay trong Odoo. Mọi trường hợp đều không crash form; trường vẫn cho lưu bình thường.
+- **Cập nhật tỷ giá**: hiện tại tỷ giá `res.currency.rate` nhập tay bởi Kế toán. Cron *Etsy: Refresh Shop Currency Rates* chạy 05:00 UTC hàng ngày nhưng đang ở chế độ skeleton — log WARNING và không ghi gì. Nhà cung cấp tỷ giá tự động (ECB / OpenExchangeRates) sẽ thêm ở slice tiếp theo.
+- **Mẹo**: nếu thấy giá hiển thị thấp bất thường (ví dụ 100 VND thay vì 1,000,000 VND), Marketing có thể là tỷ giá Odoo sai. Báo Kế toán cập nhật rồi reload trang.
+
 ### 7.5 Sản phẩm có nhiều size / màu (per-variant)
 
 Khi sản phẩm có nhiều biến thể (ví dụ Mug 4" / 6" / 8") với giá khác nhau:

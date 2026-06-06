@@ -596,6 +596,7 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-020 | Attribute mapping per-listing override — 3-tier chain | ☐ | ☐ | ☐ | Marketing override; blank row falls through |
 | TC-021 | Shop attribute defaults — tier-2 fallback | ☐ | ☐ | ☐ | Etsy Shop Settings; pairs with TC-020 |
 | TC-022 | Bulk Mark Ready + Reset to Draft + state-lock | ☐ | ☐ | ☐ | Operations → Listings list-view server actions |
+| TC-023 | Shop Currency Preview hiển thị đúng số tiền VND | ☐ | ☐ | ☐ | Listing form → Shipping & Variations → Shop Currency Preview. Chọn shop VND, đảm bảo `res.currency.rate` USD→VND có sẵn, kiểm tra giá hiện ≠ 0.00 và bằng `list_price × rate`. Bỏ chọn shop → giá về 0.00, không crash. |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
