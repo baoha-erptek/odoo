@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-MODEL — base views for multichannel.listing.
+
+        Wave-2 slices extend with Etsy-specific tabs (taxonomy,
+        shipping profile, who_made/when_made/is_supply, video,
+        attribute mapping).
+    -->
+
+    <record id="view_multichannel_listing_list" model="ir.ui.view">
+        <field name="name">multichannel.listing.list</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <list string="Listings"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'published'"
+                  decoration-warning="state == 'ready'"
+                  decoration-danger="state == 'error'">
+                <field name="product_tmpl_id"/>
+                <field name="channel_id"/>
+                <field name="shop_ref"/>
+                <field name="title"/>
+                <field name="state" widget="badge"/>
+                <field name="external_ref" optional="show"/>
+                <field name="last_synced_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_multichannel_listing_form" model="ir.ui.view">
+        <field name="name">multichannel.listing.form</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <form string="Listing">
+                <header>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,ready,published"/>
+                </header>
+                <sheet>
+                    <field name="image_1920" widget="image"
+                           class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1><field name="title"
+                                   placeholder="Falls back to product name when empty"/></h1>
+                    </div>
+                    <group>
+                        <group string="Scope">
+                            <field name="product_tmpl_id"/>
+                            <field name="channel_id"/>
+                            <field name="shop_ref"
+                                   placeholder="jahandmadeart / namcohome / ..."/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="External">
+                            <field name="external_ref" readonly="1"/>
+                            <field name="last_synced_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Marketing copy" name="marketing">
+                            <field name="description"
+                                   placeholder="Falls back to product.description_sale when empty"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_multichannel_listing_search" model="ir.ui.view">
+        <field name="name">multichannel.listing.search</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_tmpl_id"/>
+                <field name="title"/>
+                <field name="shop_ref"/>
+                <field name="external_ref"/>
+                <filter string="Draft" name="state_draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Ready" name="state_ready"
+                        domain="[('state', '=', 'ready')]"/>
+                <filter string="Published" name="state_published"
+                        domain="[('state', '=', 'published')]"/>
+                <filter string="Error" name="state_error"
+                        domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="By Channel" name="group_channel"
+                        context="{'group_by': 'channel_id'}"/>
+                <filter string="By Shop" name="group_shop"
+                        context="{'group_by': 'shop_ref'}"/>
+                <filter string="By State" name="group_state"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_multichannel_listing" model="ir.actions.act_window">
+        <field name="name">Listings</field>
+        <field name="res_model">multichannel.listing</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_multichannel_listing_search"/>
+    </record>
+
+    <menuitem id="menu_multichannel_listing"
+              name="Listings"
+              parent="multichannel_hub_core.menu_operations_root"
+              action="action_multichannel_listing"
+              sequence="25"/>
+</odoo>

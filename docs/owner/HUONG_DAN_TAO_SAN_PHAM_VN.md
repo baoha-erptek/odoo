@@ -296,6 +296,38 @@ SKU gợi ý mới:  MUG-CR-F11
 
 ---
 
+## 6.5 Sản phẩm vs Listing — hai lớp riêng biệt
+
+> Từ 2026-06-06 (ADR-015). Để mở đường cho việc bán cùng 1 sản phẩm trên nhiều shop Etsy + Amazon + website với câu chữ marketing khác nhau, hệ thống tách 2 khái niệm:
+
+| Lớp | Menu | Người sở hữu | Chứa gì |
+|---|---|---|---|
+| **Sản phẩm** (`product.template`) | Sản phẩm → Tất cả Sản phẩm | **BA / PD** | "Sản phẩm là gì": tên kỹ thuật, SKU, kích thước/khối lượng, danh mục nội bộ, giá gốc, biến thể size/màu |
+| **Listing** (`multichannel.listing`) | Operations → Listings | **Marketing** | "Ta muốn đăng nó như thế nào, ở đâu": tên rao bán, mô tả marketing, ảnh hero, category Etsy, shipping profile, who_made / when_made, video, ... — riêng cho từng shop |
+
+**Quy tắc đọc của hệ thống khi publish:**
+
+1. Đọc `Listing.<field>` trước (override của Marketing).
+2. Nếu trống → fall back vào `Sản phẩm.<field>` (BA nhập).
+3. Nếu vẫn trống → fall back vào shop default (Admin cấu hình).
+4. Vẫn không có → báo lỗi rõ ràng, KHÔNG gọi Etsy.
+
+**Ví dụ thực tế.** SP "Personalized Leather Tray":
+- BA nhập tên kỹ thuật `Personalized Coordinates Leather Tray` ở Sản phẩm.
+- Marketing tạo 2 dòng Listing — một cho `JaHandmadeArt` (title rao bán `Custom GPS Coordinates Leather Tray — Anniversary Gift`), một cho `NamcoHome` (title rao bán `Engraved Map Tray for Couples`). Cùng SP, hai shop, hai phong cách marketing.
+- Khi publish, hệ thống lấy title của Listing tương ứng từng shop.
+
+**Migration day-1 — không gián đoạn:** sau khi cài bản mới, hệ thống tự tạo 1 dòng Listing rỗng cho mỗi SP đã từng đăng Etsy. Override fields đều null → behaviour publish hệt như trước. Marketing chỉ điền khi nào muốn override.
+
+**Phân quyền:**
+- **BA Lead / BA User:** RW trên Sản phẩm, **read-only** trên Listing (BA chỉ xem được Marketing đã nhập gì).
+- **Marketing:** RW trên Listing, **read-only** trên Sản phẩm (Marketing không sửa kích thước/SKU).
+- **Admin:** RW cả hai.
+
+> Câu hỏi thường gặp: "Tôi nên sửa cái gì ở Sản phẩm, cái gì ở Listing?" → Nếu thay đổi liên quan đến *bản thân sản phẩm* (size, vật liệu, SKU, giá gốc) — sửa ở Sản phẩm. Nếu thay đổi liên quan đến *cách bán nó trên một shop cụ thể* (tên rao bán, mô tả marketing, category Etsy, ảnh đẹp hơn) — sửa ở Listing.
+
+---
+
 ## 7. Đăng sản phẩm lên Etsy
 
 ### 7.1 Điều kiện trước khi đăng

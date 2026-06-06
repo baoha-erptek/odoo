@@ -436,6 +436,65 @@ Sau iter3 hệ thống tự:
 
 ---
 
+## TC-015 — Tách lớp Sản phẩm/Listing — backfill ngày 1 + override title (LIVE JaHandmadeArt)
+
+> Mới từ 2026-06-06 (P-LIST-MODEL, ADR-015). Kiểm tra hệ thống đã tự tạo "dòng Listing" cho mọi SP đã đăng Etsy + Marketing có thể override title riêng cho từng shop.
+
+**Tại sao TC này quan trọng**
+
+ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/SKU/giá) vs "Listing" (Marketing sở hữu — title/mô tả marketing/category Etsy theo từng shop). Hệ thống tự backfill ngày 1 nên không gián đoạn các SP đã đăng. Sau đó Marketing có thể bắt đầu nhập override.
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core` trên Staging.
+- Tài khoản BA Lead + tài khoản Marketing (Admin gán quyền nếu chưa).
+- Có ít nhất 1 SP `product.template` đã đăng Etsy thành công trước đây (ví dụ SP từ TC-014).
+
+**Các bước**
+
+**Phần 1 — Verify backfill (Admin / BA Lead login)**
+
+1. Vào menu **Operations → Listings** (menu MỚI sau khi cài bản này).
+2. Tìm dòng tương ứng SP đã đăng Etsy ở pre-condition.
+3. Kỳ vọng: 1 dòng Listing tồn tại, **State = Draft**, **Title = trống** (rỗng), **Description = trống**, **Channel = Etsy**, **Shop = trống**, **External Reference = trống**.
+4. Backfill chỉ tạo stub — override fields đều null. Vẫn lấy fallback từ SP master.
+
+**Phần 2 — Verify publish không gián đoạn (BA Lead login)**
+
+5. Vào SP master, bấm **Publish to Etsy** như TC-005.
+6. Kỳ vọng: publish thành công, listing Etsy hiển thị title = `product.template.name` (như cũ, không thay đổi).
+
+**Phần 3 — Marketing override title (Marketing login)**
+
+7. Login bằng tài khoản Marketing. Vào **Operations → Listings**.
+8. Mở dòng Listing của SP. **Title** trống → điền `Marketing Override Title <date>`.
+9. Bấm Save.
+10. Kỳ vọng: ghi được. (Nếu báo lỗi AccessError → kiểm tra quyền Marketing đã add đúng group `Multichannel Hub Core / Marketing User`.)
+
+**Phần 4 — Verify override emit khi publish (BA Lead login lại)**
+
+11. Login lại BA Lead. Mở SP master, bấm Publish to Etsy lần nữa với shop khác (hoặc archive listing cũ + publish lại).
+12. Kỳ vọng: listing Etsy mới hiển thị title = `Marketing Override Title <date>` (đã override), KHÔNG dùng `product.template.name`.
+
+**Phần 5 — Verify BA read-only trên Listing (BA Lead login)**
+
+13. Vào **Operations → Listings**, mở 1 dòng bất kỳ.
+14. Thử sửa Title.
+15. Kỳ vọng: hệ thống chặn (AccessError "You do not have write access on multichannel.listing"). BA chỉ xem được, không sửa.
+
+**Phần 6 — Verify record-rule chống unlink published listing (Marketing login)**
+
+16. Login Marketing. Vào **Operations → Listings**.
+17. Filter `State = Published`. Tick 1 dòng → Action → Delete.
+18. Kỳ vọng: hệ thống chặn xoá (AccessError record rule). Marketing phải archive listing Etsy trước rồi mới xoá được.
+
+**Cleanup**
+- Sửa Title về trống ở các dòng đã override trong TC.
+- Archive bất kỳ Etsy Draft nào tạo trong TC.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có tài khoản Marketing riêng)
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -454,6 +513,7 @@ Sau iter3 hệ thống tự:
 | TC-012 | FR-017 non-BA blocked | ☐ | ☐ | ☐ | OK skip + cite unit test |
 | TC-013 | Publish USD→VND không lỗi `price_too_low` | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá hôm nay |
 | TC-014 | Publish SP nhiều size: SKU/giá/hình riêng (per-variant) | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá; cleanup Etsy Draft sau |
+| TC-015 | Tách lớp Sản phẩm/Listing — backfill day-1 + override title | ☐ | ☐ | ☐ | Marketing menu mới; SP đã đăng vẫn publish được không gián đoạn |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 

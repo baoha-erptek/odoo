@@ -17,6 +17,7 @@ from . import mrp_production
 from . import multichannel_enquiry
 from . import label_status_option
 from . import multichannel_sales_channel
+from . import multichannel_listing
 from . import product_channel_status
 from . import sku_family
 from . import product_attribute_value

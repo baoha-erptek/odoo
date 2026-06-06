@@ -314,6 +314,40 @@ class EtsyListingPublisher:
         return result
 
     # ------------------------------------------------------------------
+    # Listing intent resolver (P-LIST-MODEL — ADR-015)
+    # ------------------------------------------------------------------
+    def _resolve_listing_intent(self, tmpl, shop):
+        """Locate the ``multichannel.listing`` row that drives marketing
+        overrides for this (template, etsy channel, shop) tuple.
+
+        Resolution order:
+          1. row matching shop.name (per-shop intent)
+          2. row with shop_ref NULL/empty (template-wide intent — backfill stub)
+          3. nothing → empty recordset; callers fall back to template fields
+        """
+        Listing = self.env['multichannel.listing'].sudo()
+        Channel = self.env.ref(
+            'multichannel_hub_core.channel_etsy',
+            raise_if_not_found=False,
+        )
+        if not Channel:
+            return Listing.browse([])
+        shop_name = (shop.sudo().name or '').strip()
+        if shop_name:
+            specific = Listing.search([
+                ('product_tmpl_id', '=', tmpl.id),
+                ('channel_id', '=', Channel.id),
+                ('shop_ref', '=', shop_name),
+            ], limit=1)
+            if specific:
+                return specific
+        return Listing.search([
+            ('product_tmpl_id', '=', tmpl.id),
+            ('channel_id', '=', Channel.id),
+            '|', ('shop_ref', '=', False), ('shop_ref', '=', ''),
+        ], limit=1)
+
+    # ------------------------------------------------------------------
     # Payload builder
     # ------------------------------------------------------------------
     def _build_create_draft_payload(self, tmpl, shop):
@@ -321,10 +355,20 @@ class EtsyListingPublisher:
         # the wizard's FR-017 gate proved BA membership upstream.
         s = tmpl.sudo()
         sh = shop.sudo()
+        # P-LIST-MODEL: marketing overrides (title/description) read from the
+        # multichannel.listing intent layer; empty fields fall back to template.
+        intent = self._resolve_listing_intent(s, shop)
+        title = (intent.title if intent else '') or s.name or ''
+        description = (
+            (intent.description if intent else '')
+            or s.description_sale
+            or s.name
+            or ''
+        )
         payload = {
             'sku': self._resolve_sku(s),
-            'title': s.name or '',
-            'description': (s.description_sale or s.name or ''),
+            'title': title,
+            'description': description,
             # P-BUG-ESTY-188 iter3: `price` is the listing "starts at" value;
             # derive from the minimum positive variant lst_price (which already
             # includes per-variant price_extra) and convert to shop currency.
