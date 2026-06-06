@@ -162,7 +162,14 @@ class TestPubVariantPropertiesPayload(TransactionCase):
         self.assertEqual(values, {'Black', 'White'})
         for p in products:
             self.assertEqual(p['property_values'][0]['property_name'], 'Primary color')
-            self.assertEqual(p['sku'], products[0]['sku'])  # consistent SKU
+        # P-BUG-ESTY-188 iter3: SKUs are per-variant now (ADR-014 §4.a).
+        # For a dynamic-axis Color template with no per-variant default_code,
+        # the publisher synthesizes `{base}-{slug}` per combo → SKUs MUST
+        # differ across variants (otherwise Etsy 400s on the SKU consistency
+        # vs `sku_on_property` rule).
+        skus = {p['sku'] for p in products}
+        self.assertEqual(len(skus), 2,
+            "iter3 emits distinct per-variant SKUs; got %r" % skus)
 
     def test_more_than_two_varying_axes_raises(self):
         """>2 varying publishable axes → ValueError (Etsy 2-variation cap)."""

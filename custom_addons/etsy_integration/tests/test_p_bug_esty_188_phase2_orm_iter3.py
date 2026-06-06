@@ -272,18 +272,29 @@ class TestPushInventoryPerVariant(_IterTestBase):
         """When variant.default_code is empty, synthesize <base>-<slug>."""
         shop = self._make_shop(api_id='60752336')
         tmpl, attr = self._build_three_size_template(with_default_codes=False)
-        # Force base SKU via template default_code (the publisher's
-        # _resolve_sku ultimately falls back to default_code).
+        # Force a stable BA-approved-legacy SKU resolution so the synthesis
+        # base is deterministic regardless of grammar-v2 catchall behavior
+        # against the test template name.
         tmpl.default_code = 'LT'
+        tmpl.x_sku_v2_status = 'ba_approved_legacy'
+
+        publisher = EtsyListingPublisher(self.env)
+        base_sku = publisher._resolve_sku(tmpl)
+        self.assertEqual(
+            base_sku, 'LT',
+            'fixture must yield a deterministic base SKU; got %r' % base_sku,
+        )
         payload = self._push(tmpl, shop, listing_id='LST-ITER3B')
         skus = sorted(p['sku'] for p in payload['products'])
-        # The exact slug rule is "uppercase alphanumeric of the value name,
-        # joined with '-'". Phase 3 docstring locks the rule; this test asserts
-        # the contract that all SKUs share the LT prefix AND are distinct.
+        # Synthesis contract: each variant SKU starts with the base + '-'.
+        # The slug derives from the variant's attribute value name; the
+        # exact slug rule (uppercase alphanumerics, ``"`` → ``IN``) is
+        # locked in _slugify_value_name. We only assert prefix + distinctness
+        # here so the test does not couple to slug spelling.
         for sku in skus:
             self.assertTrue(
                 sku.startswith('LT-'),
-                'synthetic SKU must start with base SKU; got %r' % sku,
+                'synthetic SKU must start with base SKU prefix; got %r' % sku,
             )
         self.assertEqual(
             len(set(skus)), 3,
@@ -379,22 +390,20 @@ class TestVariationImagesBinding(_IterTestBase):
         # image_1920 — image_1920 auto-falls back to template).
         for variant in tmpl.product_variant_ids:
             variant.image_variant_1920 = _PNG_1x1
-        listing = self._wire_listing(tmpl, shop, 'LST-ITER3IMG')
+        self._wire_listing(tmpl, shop, 'LST-ITER3IMG')
+
         publisher = EtsyListingPublisher(self.env)
         with patch(
             'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
         ) as ClientCls:
             client = ClientCls.return_value
-            # uploadListingImage returns a listing_image_id we then bind to
-            # the variation value.
-            client.post.side_effect = [
-                {'listing_image_id': 9001},
-                {'listing_image_id': 9002},
-                {'listing_image_id': 9003},
-                # variation-images endpoint
-                {'results': []},
-            ]
-            publisher.run(tmpl, shop)  # orchestrator wires upload then bind
+            # uploadListingImage (multipart) returns a listing_image_id.
+            client.post_multipart.return_value = {'listing_image_id': 9000}
+            # variation-images bind call goes through plain post.
+            client.post.return_value = {'results': []}
+            client.put.return_value = {'products': []}
+            client.patch.return_value = {}
+            publisher.run(tmpl, shop)
 
         # Locate the variation-images POST among the calls.
         variation_calls = [
@@ -433,13 +442,16 @@ class TestVariationImagesBinding(_IterTestBase):
                 'value_ids': [(6, 0, [v.id for v in values])],
             })],
         })
-        listing = self._wire_listing(tmpl, shop, 'LST-ITER3IMG2')
+        self._wire_listing(tmpl, shop, 'LST-ITER3IMG2')
         publisher = EtsyListingPublisher(self.env)
         with patch(
             'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
         ) as ClientCls:
             client = ClientCls.return_value
-            client.post.return_value = {'listing_image_id': 1}
+            client.post_multipart.return_value = {'listing_image_id': 1}
+            client.post.return_value = {}
+            client.put.return_value = {'products': []}
+            client.patch.return_value = {}
             publisher.run(tmpl, shop)
         variation_calls = [
             c for c in client.post.call_args_list

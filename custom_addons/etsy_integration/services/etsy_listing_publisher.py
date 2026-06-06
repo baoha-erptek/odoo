@@ -18,6 +18,7 @@ import logging
 import re
 
 from odoo import fields
+from odoo.exceptions import UserError
 
 from .etsy_api_client import EtsyApiClient
 
@@ -43,6 +44,110 @@ class EtsyListingPublisher:
         ):
             return tmpl.x_sku_v2_suggested
         return tmpl.default_code or ''
+
+    # ------------------------------------------------------------------
+    # P-BUG-ESTY-188 iter3 — per-variant SKU / starting price (ADR-014 §4.a)
+    # ------------------------------------------------------------------
+
+    # Etsy SKU max length per /v3/application/listings/.../inventory contract.
+    ETSY_SKU_MAX_LEN = 32
+
+    @staticmethod
+    def _slugify_value_name(name):
+        """Etsy-safe slug: uppercase, alnum only, ``"`` → ``IN`` (inch glyph).
+
+        Empty input returns an empty string — caller decides whether that's
+        fatal (UserError) or a fallback to template SKU.
+        """
+        if not name:
+            return ''
+        # Inch glyphs (straight and curly) → 'IN' so e.g. ``6"`` slugs to
+        # ``6IN`` rather than disappearing entirely.
+        cleaned = name.replace('"', 'IN').replace('”', 'IN').replace("''", 'IN')
+        cleaned = re.sub(r'[^A-Za-z0-9]+', '', cleaned).upper()
+        return cleaned
+
+    @classmethod
+    def _synthesize_variant_sku(cls, base, value_names):
+        """Compose ``{base}-{slug1}{slug2}...`` clamped to ``ETSY_SKU_MAX_LEN``.
+
+        Raises ``UserError`` when both ``base`` and every slug are empty —
+        Etsy 400s on empty SKU and the operator needs a clear hint to set
+        ``default_code`` on the template or a per-variant SKU.
+
+        When truncation kicks in, the suffix end is dropped (preserves the
+        base + most-significant first axis) and a WARNING is logged.
+        """
+        slugs = [cls._slugify_value_name(v) for v in (value_names or [])]
+        slug = ''.join(s for s in slugs if s)
+        base = (base or '').strip()
+        if not base and not slug:
+            raise UserError(
+                "Etsy publish: cannot synthesize a variant SKU — template has "
+                "no default_code AND the variant has no attribute values to "
+                "derive a suffix from. Set default_code on the product or on "
+                "at least one variant."
+            )
+        if not base:
+            sku = slug
+        elif not slug:
+            sku = base
+        else:
+            sku = '%s-%s' % (base, slug)
+        if len(sku) > cls.ETSY_SKU_MAX_LEN:
+            _logger.warning(
+                "Etsy SKU %r exceeds %d chars; truncating from the suffix end.",
+                sku, cls.ETSY_SKU_MAX_LEN,
+            )
+            sku = sku[:cls.ETSY_SKU_MAX_LEN]
+        return sku
+
+    def _resolve_variant_sku(self, tmpl, variant):
+        """Per-variant SKU: ``variant.default_code`` wins; else synthesize.
+
+        For dynamic-variant axes the matching ``product.product`` does not
+        exist; pass an empty recordset and the caller has already passed
+        ``value_names`` separately via ``_synthesize_variant_sku``.
+        """
+        if variant and variant.default_code:
+            return variant.default_code
+        base = self._resolve_sku(tmpl)
+        if variant:
+            value_names = variant.product_template_attribute_value_ids.mapped(
+                lambda ptav: ptav.product_attribute_value_id.name
+            )
+        else:
+            value_names = []
+        return self._synthesize_variant_sku(base, value_names)
+
+    def _resolve_starting_price(self, tmpl, shop):
+        """Listing ``price`` for createListing — minimum positive variant price.
+
+        Strategy:
+          1. Collect positive ``variant.lst_price`` across materialized variants
+             (``product.product``).  ``lst_price`` already includes
+             ``price_extra`` on top of the template ``list_price``.
+          2. If any positives → return min(positives) converted to shop currency.
+          3. Else fall back to the template ``list_price`` converted.
+          4. If the resulting value is still ``0`` → ``UserError``.  Etsy 400s
+             with ``/price: empty`` otherwise; the operator needs to set
+             ``list_price`` on the template or ``price_extra`` on at least one
+             variant.
+        """
+        t = tmpl.sudo()
+        positives = [
+            float(v.lst_price)
+            for v in t.product_variant_ids
+            if v.lst_price and v.lst_price > 0
+        ]
+        raw = min(positives) if positives else float(t.list_price or 0.0)
+        if raw <= 0:
+            raise UserError(
+                "Etsy publish: cannot resolve a positive starting price for "
+                "%r. Set ``list_price`` on the product or ``price_extra`` on "
+                "at least one variant before publishing." % t.name
+            )
+        return self._convert_to_shop_currency(raw, shop)
 
     # ------------------------------------------------------------------
     # Spec 011 P-PUB-MATERIALS — template Material values → materials[]
@@ -220,11 +325,11 @@ class EtsyListingPublisher:
             'sku': self._resolve_sku(s),
             'title': s.name or '',
             'description': (s.description_sale or s.name or ''),
-            # P-BUG-ESTY-188 iter2: convert from company currency to shop
-            # listing currency. Without this, USD-priced templates land at
-            # the same numeric value in a VND shop, well below Etsy's
-            # per-currency minimum, and createListing 400s "price_too_low".
-            'price': self._convert_to_shop_currency(s.list_price, shop),
+            # P-BUG-ESTY-188 iter3: `price` is the listing "starts at" value;
+            # derive from the minimum positive variant lst_price (which already
+            # includes per-variant price_extra) and convert to shop currency.
+            # iter2 currency conversion is encapsulated inside the helper.
+            'price': self._resolve_starting_price(s, shop),
             'quantity': max(int(s.qty_available or 0), 1),
             # Spec 011 P-PUB-PER-PRODUCT-DEFAULTS — per-product override wins
             # over shop default; falls back to hardcoded legacy default when
@@ -395,48 +500,58 @@ class EtsyListingPublisher:
     # Etsy allows at most 2 *varying* variation properties per listing.
     ETSY_MAX_VARIATIONS = 2
 
-    def _variant_qty_for_combo(self, tmpl, combo_value_ids):
-        """Quantity for a value combination (set of product.attribute.value ids),
-        preferring a matching materialized variant's on-hand qty; falls back to
-        the template's qty_available when no product.product matches (dynamic
-        axes carry no materialized variant).
+    def _variant_for_combo(self, tmpl, combo_value_ids):
+        """Materialized ``product.product`` matching the value combination.
+
+        Returns an empty recordset when no variant matches (typical for
+        dynamic-variant axes — variants only materialize on first sale).
         """
         for variant in tmpl.product_variant_ids:
             vids = set(variant.product_template_attribute_value_ids
                        .mapped('product_attribute_value_id').ids)
             if vids and vids.issubset(combo_value_ids):
-                return variant.qty_available
+                return variant
+        return tmpl.product_variant_ids.browse([])
+
+    def _variant_qty_for_combo(self, tmpl, combo_value_ids):
+        """Quantity for a value combination (set of ``product.attribute.value``
+        ids), preferring a matching materialized variant's on-hand qty; falls
+        back to the template's ``qty_available`` when no ``product.product``
+        matches.
+        """
+        variant = self._variant_for_combo(tmpl, combo_value_ids)
+        if variant:
+            return variant.qty_available
         return tmpl.qty_available
 
     def push_inventory(self, tmpl, listing_id, shop):
         """PUT /listings/{listing_id}/inventory with the full products[] array.
 
-        R-PUB-VARIANT-MATERIALIZE (2026-05-28): Etsy variations are built from
-        the cartesian product of the publishable variant-creating attribute
-        lines, NOT from `product.product` records — so dynamic-variant axes
-        (e.g. Color, create_variant='dynamic', which materialize no variants)
-        still produce real Etsy variations instead of the prior empty fallback.
+        Per ADR-014 §4.a (2026-06-06 P-BUG-ESTY-188 iter3 amendment), Etsy's
+        native model is per-variant: each ``products[]`` entry carries its own
+        ``sku`` + ``offerings[].quantity/price``. The sibling
+        ``sku_on_property[]`` / ``quantity_on_property[]`` / ``price_on_property[]``
+        arrays list the varying axes whose values drive distinct SKUs / qty /
+        prices — Etsy rejects mixed dimensions unless the corresponding axis is
+        declared in the sibling list.
 
-        - Varying axes (>1 value) form the product grid; Etsy caps these at 2.
-        - Single-value publishable axes ride along as fixed property_values.
-        - SKU is template-level (ADR-014 §4) and consistent across products
-          (Etsy rejects mixed SKUs: "sku must be consistent across all products").
-        - Quantity prefers a matching materialized variant's on-hand, else the
-          template qty.
-
-        On success, the local `etsy.listing.product` snapshot rows are updated.
+        R-PUB-VARIANT-MATERIALIZE (2026-05-28) still applies: variations come
+        from the cartesian product of publishable variant-creating attribute
+        lines, NOT from ``product.product`` records. Per-variant SKU / price
+        derive from the matching ``product.product`` when materialized; from
+        the synthesized slug + ``list_price`` when not.
         """
         if not listing_id:
             raise ValueError("push_inventory requires a non-empty listing_id")
         t = tmpl.sudo()
-        sku = self._resolve_sku(t)
+        base_sku = self._resolve_sku(t)
         readiness = shop.sudo().default_readiness_state_id
-        # P-BUG-ESTY-188 iter2: convert per offering — push_inventory writes
-        # each variant offering at this price, so the same FX hop applies.
-        price = self._convert_to_shop_currency(t.list_price, shop)
+        # iter2 currency conversion is invoked per offering inside the loop;
+        # we still pre-compute the template-level fallback price once.
+        template_price = self._convert_to_shop_currency(t.list_price, shop)
 
-        def _offering(qty):
-            o = {'quantity': max(int(qty or 0), 1), 'price': price, 'is_enabled': True}
+        def _offering(qty, price):
+            o = {'quantity': max(int(qty or 0), 1), 'price': float(price), 'is_enabled': True}
             if readiness:
                 o['readiness_state_id'] = int(readiness)
             return o
@@ -476,22 +591,54 @@ class EtsyListingPublisher:
                         props.append(pv)
                 combo_ids = {v.id for v in combo}
                 combo_ids.update(line.value_ids[0].id for line in fixed)
+                variant = self._variant_for_combo(t, combo_ids)
+                if variant and variant.default_code:
+                    sku = variant.default_code
+                else:
+                    value_names = [v.name for v in combo]
+                    sku = self._synthesize_variant_sku(base_sku, value_names)
+                if variant and variant.lst_price and variant.lst_price > 0:
+                    price = self._convert_to_shop_currency(variant.lst_price, shop)
+                else:
+                    price = template_price
+                qty = variant.qty_available if variant else t.qty_available
                 products_payload.append({
                     'sku': sku,
                     'property_values': props,
-                    'offerings': [_offering(self._variant_qty_for_combo(t, combo_ids))],
+                    'offerings': [_offering(qty, price)],
                 })
         else:
             # No varying axis → a single product (with any fixed properties).
             products_payload.append({
-                'sku': sku,
+                'sku': base_sku,
                 'property_values': fixed_props,
-                'offerings': [_offering(t.qty_available)],
+                'offerings': [_offering(t.qty_available, template_price)],
             })
+
+        # Sibling arrays — Etsy requires them when SKU / qty / price differ
+        # across products. Compute by looking at distinct dimension values.
+        body = {'products': products_payload}
+        if varying and len(products_payload) > 1:
+            distinct_skus = {p['sku'] for p in products_payload}
+            distinct_qty = {p['offerings'][0]['quantity'] for p in products_payload}
+            distinct_price = {p['offerings'][0]['price'] for p in products_payload}
+            varying_prop_ids = []
+            for line in varying:
+                raw = line.attribute_id.x_etsy_property_id
+                if not raw:
+                    continue
+                varying_prop_ids.append(int(raw) if raw.isdigit() else raw)
+            if varying_prop_ids:
+                if len(distinct_skus) > 1:
+                    body['sku_on_property'] = list(varying_prop_ids)
+                if len(distinct_qty) > 1:
+                    body['quantity_on_property'] = list(varying_prop_ids)
+                if len(distinct_price) > 1:
+                    body['price_on_property'] = list(varying_prop_ids)
 
         client = EtsyApiClient(shop)
         path = "listings/%s/inventory" % listing_id
-        response = client.put(path, json={'products': products_payload})
+        response = client.put(path, json=body)
         self._sync_inventory_snapshot(shop, listing_id, response)
         return response
 
@@ -619,6 +766,108 @@ class EtsyListingPublisher:
         return results
 
     # ------------------------------------------------------------------
+    # P-BUG-ESTY-188 iter3 — Variation images (ADR-014 §4.a)
+    # ------------------------------------------------------------------
+    # Per Etsy OAS:
+    #   POST /v3/application/shops/{shop_id}/listings/{listing_id}/variation-images
+    #   body: {"variation_images": [{"property_id": int, "value_id": int,
+    #                                "image_id": int}]}
+    # Each entry binds ONE image to ONE (property_id × value_id) pair — not per
+    # combo. ``image_id`` is the ``listing_image_id`` returned by a prior
+    # ``uploadListingImage`` call.
+    def push_variation_images(self, tmpl, listing_id, shop):
+        """Upload each variant's ``image_variant_1920`` then bind via
+        ``updateVariationImages``.
+
+        Best-effort: per-variant upload failure logs WARNING and skips that
+        variant; the overall listing publish must not be blocked. Returns the
+        list of bindings actually POSTed (empty when no variant carries an
+        image or every upload failed).
+        """
+        if not listing_id:
+            raise ValueError(
+                "push_variation_images requires a non-empty listing_id"
+            )
+        t = tmpl.sudo()
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            raise ValueError(
+                "Etsy shop %r missing etsy_api_shop_id; cannot push "
+                "variation images." % shop.name
+            )
+
+        # Only variants whose attribute belongs to a *publishable* variation
+        # axis can be bound — otherwise Etsy can't render the variation.
+        publishable_attr_ids = {
+            line.attribute_id.id
+            for line in t.attribute_line_ids
+            if line.attribute_id.create_variant != 'no_variant'
+            and line.attribute_id.x_publish_as_property
+            and line.attribute_id.x_etsy_property_id
+        }
+        if not publishable_attr_ids:
+            return []
+
+        client = EtsyApiClient(shop)
+        upload_path = "shops/%s/listings/%s/images" % (api_shop_id, listing_id)
+        sku_base = t.default_code or 'variant'
+
+        bindings = []
+        for variant in t.product_variant_ids:
+            if not variant.image_variant_1920:
+                continue
+            try:
+                payload_bytes = base64.b64decode(variant.image_variant_1920)
+            except Exception as exc:  # noqa: BLE001 — defensive only
+                _logger.warning(
+                    "Skipping variation image for variant id=%s on listing %s "
+                    "— decode failed: %s",
+                    variant.id, listing_id, exc,
+                )
+                continue
+            files = {
+                'image': (
+                    '%s_v%s.jpg' % (sku_base, variant.id),
+                    payload_bytes,
+                    'image/jpeg',
+                ),
+            }
+            try:
+                upload_response = client.post_multipart(upload_path, files=files)
+            except Exception as exc:  # noqa: BLE001 — partial-failure resilience
+                _logger.warning(
+                    "Variation image upload failed for variant id=%s on "
+                    "listing %s: %s", variant.id, listing_id, exc,
+                )
+                continue
+            image_id = (upload_response or {}).get('listing_image_id')
+            if not image_id:
+                _logger.warning(
+                    "uploadListingImage returned no listing_image_id for "
+                    "variant id=%s on listing %s; skipping binding.",
+                    variant.id, listing_id,
+                )
+                continue
+            for ptav in variant.product_template_attribute_value_ids:
+                if ptav.attribute_id.id not in publishable_attr_ids:
+                    continue
+                raw_prop = ptav.attribute_id.x_etsy_property_id
+                prop_id = int(raw_prop) if str(raw_prop).isdigit() else raw_prop
+                bindings.append({
+                    'property_id': prop_id,
+                    'value_id': ptav.product_attribute_value_id.id,
+                    'image_id': int(image_id),
+                })
+
+        if not bindings:
+            return []
+        bind_path = "shops/%s/listings/%s/variation-images" % (
+            api_shop_id, listing_id,
+        )
+        client.post(bind_path, json={'variation_images': bindings})
+        return bindings
+
+    # ------------------------------------------------------------------
     # Spec 011 P-PUB-PUBLISH T025 — PATCH /listings/{id} state='active'
     # ------------------------------------------------------------------
     def publish(self, listing_id, shop):
@@ -682,6 +931,16 @@ class EtsyListingPublisher:
 
             self.upload_images(tmpl, listing_id, shop)
             self.push_inventory(tmpl, listing_id, shop)
+            # P-BUG-ESTY-188 iter3 — bind per-variant images. Best-effort:
+            # partial / total failure of variation-images must not block
+            # the listing from publishing.
+            try:
+                self.push_variation_images(tmpl, listing_id, shop)
+            except Exception as exc:  # noqa: BLE001 — non-fatal
+                _logger.warning(
+                    "Etsy push_variation_images failed for listing %s: %s; "
+                    "continuing with publish chain", listing_id, exc,
+                )
             self.publish(listing_id, shop)
             existing.write({
                 'state': 'published',
