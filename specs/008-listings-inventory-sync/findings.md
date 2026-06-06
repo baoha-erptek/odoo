@@ -341,3 +341,105 @@ JaHandmadeArt's `listing_currency_id` is now `23` (VND). Email-only shops correc
 1. Have `etsy_api_shop_id` set (existing FR-017 path covers this on OAuth callback);
 2. Have `listing_currency_id` set — the new field is bootstrapped by the OAuth flow if a future slice wires it, but for now the migration only runs once on install. Documented as a `P-BUG-ESTY-188b` follow-up consideration.
 3. Have a `res_currency_rate` row for that currency. Operators should add rates manually or via a future `ir.cron` to refresh from a vendor feed.
+
+---
+
+### iter3 RCA evidence — 2026-06-06 06:57 UTC (post-iter2 owner re-publish)
+
+After iter2 (`d660afd7c4b`, manifest `19.0.2.34.0`) shipped currency conversion, owner re-ran the Etsy publish wizard against JaHandmadeArt. T6 still does NOT close. The 400 body is now different.
+
+**Reproduction**: owner clicked Publish on `product.template` id=**456** "*Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake*" against JaHandmadeArt (shop id=10, etsy_api_shop_id=`60752333`) at 2026-06-06 06:57:18 UTC.
+
+**400 body captured from staging container logs**:
+
+```
+2026-06-06 06:57:18,620  WARNING  etsy_integration.services.etsy_api_client:
+Etsy HTTP 400 url=https://openapi.etsy.com/v3/application/shops/60752333/listings
+body='[{"path":"/price","type":"empty","message":"cannot be empty","transformed":false}]'
+```
+
+| path | type | message |
+|---|---|---|
+| `/price` | `empty` | cannot be empty |
+
+This is a **distinct failure mode** from iter2's `price_too_low ₫5,040 VND`. iter2 fix (currency conversion) is functioning correctly — Etsy is now rejecting because the value passed through the conversion is `0`, not because the value is too low after conversion.
+
+**psql evidence (staging, 2026-06-06)**:
+
+```
+SELECT pt.id, pt.list_price FROM product_template pt WHERE id = 456;
+ id  | list_price
+-----+------------
+ 456 |        0.0
+```
+
+```
+SELECT ptav.price_extra, pa.name->>'en_US' AS attr, pav.name->>'en_US' AS value
+FROM product_template_attribute_value ptav
+LEFT JOIN product_attribute pa  ON pa.id  = ptav.attribute_id
+LEFT JOIN product_attribute_value pav ON pav.id = ptav.product_attribute_value_id
+WHERE ptav.product_tmpl_id = 456;
+ price_extra | attr | value
+-------------+------+-------
+        20.0 | Size | 6"
+        30.0 | Size | 8"
+        10.0 | Size | 4''
+```
+
+So variant `lst_price` = template `list_price` (0) + ptav `price_extra` (10/20/30) = **$10 / $20 / $30**. The template is correctly priced via the variant axis; only the template-level `list_price` is 0.
+
+**Code trace**:
+- `etsy_listing_publisher.py:227` — `payload['price'] = self._convert_to_shop_currency(s.list_price, shop)` → `_convert(0.0, ...)` → `0.0` → JSON `"price": 0.0` → Etsy rejects as "empty".
+- `etsy_listing_publisher.py:436` — `push_inventory` uses the same raw `t.list_price`. Even if createListing were patched, push_inventory would 400 the same way.
+
+**Implication**: the publisher's price source (`tmpl.list_price`) is **incorrect for the standard Odoo variant-pricing pattern**. When pricing is configured via `product.template.attribute.value.price_extra` (legitimate Odoo data shape, not a misconfiguration), `tmpl.list_price` stays 0 and only `variant.lst_price` carries the real price.
+
+**Hypothesis #4 (iter3)**: the publisher must resolve a non-zero "starts at" price from the variant lattice (min `variant.lst_price` across active publishable variants), falling back to `tmpl.list_price` only when there are no variants. If the resolved price is still 0, raise a `UserError` at the boundary with a clear "set list_price or per-variant price_extra" message BEFORE any vendor call.
+
+**Tracker**: stays `doing`. T6 unmet. Iter3 GREEN target: manifest `19.0.2.34.0 → 19.0.3.0.0` (minor bump — payload-shape design change).
+
+---
+
+### iter3 Phase 0 — Etsy docs cache refresh (2026-06-06)
+
+Owner directive (2026-06-06): pivot iter3 to implement Etsy's native per-variant model end-to-end (SKU, qty, price, image per variant), grounded in Etsy docs + Odoo 19 standard variant fields. Phase 0's decision gate: does Etsy v3 expose a per-variant image binding endpoint?
+
+**Source pulled**: `https://www.etsy.com/openapi/generated/oas/3.0.0.json` (full OpenAPI 3.0.2 spec, 895 KB, saved at `/tmp/etsy_oas.json`). This is the authoritative schema source; the docs site `/documentation/reference` is a JS-rendered SPA that crawl4ai and WebFetch cannot capture as static markdown.
+
+**Variation image endpoint found** ✓:
+
+```
+GET  /v3/application/shops/{shop_id}/listings/{listing_id}/variation-images  -> getListingVariationImages
+POST /v3/application/shops/{shop_id}/listings/{listing_id}/variation-images  -> updateVariationImages
+```
+
+`updateVariationImages` body schema (verbatim from OAS):
+
+```json
+{
+  "variation_images": [
+    {"property_id": <int64>, "value_id": <int64>, "image_id": <int64>}
+  ]
+}
+```
+
+All three fields required per entry. Binding is **one image per (property × value)** — NOT per variant combination. For an axis with N values, up to N entries. The `image_id` is the `listing_image_id` returned by a prior `uploadListingImage` call.
+
+**Implication for iter3 publisher**: ship per-variant image binding. Pick one variation-creating axis (the one whose variants carry distinct `image_variant_1920` — typically Color in mixed-axis cases; for Leather Tray it's Size). Upload each variant's image via `uploadListingImage` (gets listing_image_id), then POST `variation-images` with the (property_id, value_id, image_id) triples. Skip the binding when the variant has no `image_variant_1920` (fallback to template image would be a no-op since the template image is already bound at listing level).
+
+**`updateListingInventory` schema** (also verbatim) confirms the per-variant SKU/qty/price model the design relies on:
+
+```
+products[].sku           string, nullable
+products[].offerings[].price          float
+products[].offerings[].quantity       int64
+products[].offerings[].readiness_state_id  int64
+price_on_property[]      array of property_id
+quantity_on_property[]   array of property_id
+sku_on_property[]        array of property_id
+readiness_state_on_property[]  array of property_id (new — supports per-variant processing profiles)
+```
+
+**Decision gate outcome**: iter3 ships **all four** per-variant aspects (SKU, qty, price, image). No follow-up slice needed for images.
+
+**Out-of-scope finding**: `readiness_state_on_property` is also new — sellers can have per-variant processing profiles. Not needed for the Leather Tray UAT (single shop-level default). Note as a future enhancement; do NOT add in iter3.

@@ -123,6 +123,31 @@ Wizard: `product.sku.canonicalise.wizard` exposes two actions per product:
 - **Keep legacy** → writes `x_sku_v2_status = 'ba_approved_legacy'`. Row stops surfacing.
 - **Accept canonical** → moves `default_code` → `x_sku_legacy`, writes `x_sku_v2_suggested` → `default_code`. If the product has a linked active Etsy listing, fires `PUT /listings/{id}/inventory` synchronously; if push fails (rate-limit, 4xx with captured response body), the canonicalisation rolls back (durable audit row remains).
 
+### 4.a Per-variant SKU on Etsy push_inventory (2026-06-06 P-BUG-ESTY-188 iter3 amendment)
+
+§4 above defines the **template's** base SKU resolution (`x_sku_v2_suggested` when status is not `ba_approved_legacy`, else `default_code`). Earlier readings of §4 inferred that the publisher should emit ONE SKU across every `products[]` entry in `updateListingInventory`. That inference produced a structural bug: Etsy's documented variant model requires per-variant SKU/qty/price, and forcing one SKU then cascades into the consistency rule on quantity ("quantity must be consistent across all products"), making per-variant inventory structurally impossible. The first owner-driven re-publish on staging (2026-06-06 07:11 UTC) hit precisely this 400.
+
+This amendment clarifies §4 without contradicting it: §4's resolution defines the **template's base SKU**; per-variant SKUs *derive from* the base.
+
+**Resolution for a `product.product` variant (per-variant SKU on push_inventory)**:
+
+1. If `variant.default_code` is non-empty → that string is the variant's SKU. (Odoo standard per-variant field; preserves any operator-supplied SKU verbatim.)
+2. Else if the template has variant axes → synthesize `"%s-%s" % (base_sku, slug)` where:
+   - `base_sku` = the §4-resolved template SKU (`_resolve_sku(tmpl)` in the publisher).
+   - `slug` = the slugified, hyphen-joined `name` of each variation-creating attribute value on the variant (e.g. `4''` → `4IN`, `Red` → `RED`).
+   - Length clamp at Etsy's 32-char SKU limit; truncate from the suffix end and log a WARNING when truncation occurs.
+3. Else (single-variant template) → the base SKU is the variant's SKU unchanged. Equivalent to the pre-amendment behavior.
+4. If `base_sku` is empty AND the variant has no `default_code` AND there are no variation values to derive a slug, the publisher raises `UserError` at the wizard boundary (no `''` SKU reaches Etsy).
+
+`updateListingInventory` payload composition rules:
+- `sku_on_property[]` lists the `property_id` of every variation-creating axis that produced **distinct** SKUs across the variants. If all variants share one SKU (synthetic suffix is empty or all variants resolve identically — degenerate case), `sku_on_property` is `[]` and the publisher behaves like the pre-amendment template-SKU path.
+- `quantity_on_property[]` lists the same axes that produced distinct quantities (typically identical to `sku_on_property` when SKUs are derived per-variant).
+- `price_on_property[]` lists the axes that produced distinct prices (driven by `product.template.attribute.value.price_extra`).
+
+Canonicalisation wizard semantics (§4 last bullet) are unchanged: when a template's base SKU canonicalises, the existing entire-array PUT to `updateListingInventory` re-emits each variant's now-recomposed SKU. No new wizard step needed.
+
+This amendment is non-breaking for templates *without* variant axes (the single-variant branch produces identical output to pre-amendment) and lifts the bug for templates *with* axes by letting Etsy receive distinct SKUs / qtys / prices per variant — the native Etsy model.
+
 ### 5. Module ownership
 
 Per ADR-003 (module decomposition) and memory `feedback_channel_agnostic_groups_in_mhc`:
