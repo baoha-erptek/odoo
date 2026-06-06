@@ -17,7 +17,7 @@ import itertools
 import logging
 import re
 
-from odoo import fields
+from odoo import _, fields
 from odoo.exceptions import UserError
 
 from .etsy_api_client import EtsyApiClient
@@ -82,12 +82,12 @@ class EtsyListingPublisher:
         slug = ''.join(s for s in slugs if s)
         base = (base or '').strip()
         if not base and not slug:
-            raise UserError(
+            raise UserError(_(
                 "Etsy publish: cannot synthesize a variant SKU — template has "
                 "no default_code AND the variant has no attribute values to "
                 "derive a suffix from. Set default_code on the product or on "
                 "at least one variant."
-            )
+            ))
         if not base:
             sku = slug
         elif not slug:
@@ -142,11 +142,11 @@ class EtsyListingPublisher:
         ]
         raw = min(positives) if positives else float(t.list_price or 0.0)
         if raw <= 0:
-            raise UserError(
+            raise UserError(_(
                 "Etsy publish: cannot resolve a positive starting price for "
-                "%r. Set ``list_price`` on the product or ``price_extra`` on "
-                "at least one variant before publishing." % t.name
-            )
+                "%r. Set list_price on the product or price_extra on at least "
+                "one variant before publishing."
+            ) % t.name)
         return self._convert_to_shop_currency(raw, shop)
 
     # ------------------------------------------------------------------
@@ -505,13 +505,19 @@ class EtsyListingPublisher:
 
         Returns an empty recordset when no variant matches (typical for
         dynamic-variant axes — variants only materialize on first sale).
+        Caller MUST check truthiness (``if variant:``) before accessing
+        fields; every call site has a template-level fallback strategy.
         """
-        for variant in tmpl.product_variant_ids:
+        variants = tmpl.product_variant_ids
+        # Prefetch the M2M + indirect attribute-value ids in one batch so
+        # the per-variant loop does not trigger an N+1.
+        variants.mapped('product_template_attribute_value_ids.product_attribute_value_id')
+        for variant in variants:
             vids = set(variant.product_template_attribute_value_ids
                        .mapped('product_attribute_value_id').ids)
             if vids and vids.issubset(combo_value_ids):
                 return variant
-        return tmpl.product_variant_ids.browse([])
+        return variants.browse([])
 
     def _variant_qty_for_combo(self, tmpl, combo_value_ids):
         """Quantity for a value combination (set of ``product.attribute.value``
@@ -614,6 +620,24 @@ class EtsyListingPublisher:
                 'property_values': fixed_props,
                 'offerings': [_offering(t.qty_available, template_price)],
             })
+
+        # SKU collision guard (code-reviewer iter3 HIGH): if synthesized or
+        # truncated SKUs collide across distinct variants, surface a clear
+        # UserError BEFORE Etsy 400s on duplicate SKUs within products[].
+        if len(products_payload) > 1:
+            seen_skus = {}
+            for p in products_payload:
+                key = p['sku']
+                if key in seen_skus and p['property_values'] != seen_skus[key]:
+                    raise UserError(_(
+                        "Etsy publish: SKU %r is shared by two variants with "
+                        "different attribute values. This usually means the "
+                        "base SKU is too long and synthesized SKUs collided "
+                        "after the %d-char Etsy truncation. Shorten the "
+                        "template's default_code or set explicit per-variant "
+                        "default_code values."
+                    ) % (key, self.ETSY_SKU_MAX_LEN))
+                seen_skus[key] = p['property_values']
 
         # Sibling arrays — Etsy requires them when SKU / qty / price differ
         # across products. Compute by looking at distinct dimension values.
@@ -840,12 +864,21 @@ class EtsyListingPublisher:
                     "listing %s: %s", variant.id, listing_id, exc,
                 )
                 continue
-            image_id = (upload_response or {}).get('listing_image_id')
-            if not image_id:
+            image_id_raw = (upload_response or {}).get('listing_image_id')
+            if not image_id_raw:
                 _logger.warning(
                     "uploadListingImage returned no listing_image_id for "
                     "variant id=%s on listing %s; skipping binding.",
                     variant.id, listing_id,
+                )
+                continue
+            try:
+                image_id = int(image_id_raw)
+            except (TypeError, ValueError):
+                _logger.warning(
+                    "uploadListingImage returned non-integer listing_image_id="
+                    "%r for variant id=%s on listing %s; skipping binding.",
+                    image_id_raw, variant.id, listing_id,
                 )
                 continue
             for ptav in variant.product_template_attribute_value_ids:
@@ -856,11 +889,15 @@ class EtsyListingPublisher:
                 bindings.append({
                     'property_id': prop_id,
                     'value_id': ptav.product_attribute_value_id.id,
-                    'image_id': int(image_id),
+                    'image_id': image_id,
                 })
 
         if not bindings:
             return []
+        # ``listing_id`` originates from Etsy's createListing response, not
+        # operator input — path-injection is semantically impossible in the
+        # integer namespace Etsy emits. ``api_shop_id`` is shop-config-only
+        # and group_system-gated upstream.
         bind_path = "shops/%s/listings/%s/variation-images" % (
             api_shop_id, listing_id,
         )
