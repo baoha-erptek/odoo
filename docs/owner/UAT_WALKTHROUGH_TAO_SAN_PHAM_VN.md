@@ -495,6 +495,46 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 
 ---
 
+## TC-016 — Upload video lên Etsy listing (P-LIST-VIDEO)
+
+> Mới từ 2026-06-06 (P-LIST-VIDEO, Jira ESTY-199). Kiểm tra Marketing upload được 1 video cho từng listing và Etsy nhận đúng.
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core,etsy_integration` trên Staging.
+- Có 1 SP đã đăng Etsy thành công trên `JaHandmadeArt` (dùng TC-014/TC-015 hoặc SP cũ).
+- Có 1 file video `.mp4` ngắn (10-30 giây) cỡ ≤ 50MB để upload.
+- Tài khoản Marketing login.
+
+**Các bước**
+
+1. Login Marketing. Vào **Operations → Listings**.
+2. Mở dòng Listing của SP × `JaHandmadeArt`.
+3. Sang tab **Video** (tab mới).
+4. Bấm vào trường **Video** → tải lên file `.mp4` chuẩn bị.
+5. Save.
+6. Login lại BA Lead.
+7. Mở SP master, bấm **Publish to Etsy** với shop `JaHandmadeArt`.
+8. Đợi hệ thống chạy hết publish chain (~30-60s).
+
+**Kỳ vọng**
+
+- Publish thành công. Trên chatter: không lỗi, có dòng log "Etsy createListing", "Etsy push_inventory", "Etsy uploadListingVideo" (hoặc tương đương).
+- Vào Etsy Shop Manager → tìm draft mới → tab Listing details → mục Video: thấy video đã upload. Click play để xác nhận đúng video.
+
+**Negative path — upload thất bại không chặn publish**
+
+9. (tuỳ chọn) Marketing đổi file video bằng file rỗng (`.mp4` 0 byte) hoặc file lỗi format.
+10. BA bấm Publish lại.
+11. Kỳ vọng: listing vẫn publish thành công (không có video). Log có dòng WARNING "Etsy push_video failed for listing ...". Chatter SP hiển thị listing đã đăng nhưng video trống.
+
+**Cleanup**
+- Etsy Shop Manager → Drafts → xoá draft UAT.
+- Operations → Listings → xoá file video khỏi tab Video (clear trường) — nếu listing chưa published thì có thể xoá luôn cả Listing row.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có file video sẵn)
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -514,6 +554,7 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-013 | Publish USD→VND không lỗi `price_too_low` | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá hôm nay |
 | TC-014 | Publish SP nhiều size: SKU/giá/hình riêng (per-variant) | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá; cleanup Etsy Draft sau |
 | TC-015 | Tách lớp Sản phẩm/Listing — backfill day-1 + override title | ☐ | ☐ | ☐ | Marketing menu mới; SP đã đăng vẫn publish được không gián đoạn |
+| TC-016 | Upload video lên Etsy listing (1 video/listing) | ☐ | ☐ | ☐ | Cần file .mp4 ≤ 100MB; cleanup video sau |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 

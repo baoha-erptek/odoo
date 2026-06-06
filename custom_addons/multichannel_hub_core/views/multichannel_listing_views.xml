@@ -63,6 +63,15 @@
                             <field name="description"
                                    placeholder="Falls back to product.description_sale when empty"/>
                         </page>
+                        <page string="Video" name="video">
+                            <group>
+                                <field name="video_attachment_id"/>
+                            </group>
+                            <p class="text-muted">
+                                Etsy accepts at most one video per listing.
+                                Leave empty to publish without video.
+                            </p>
+                        </page>
                     </notebook>
                 </sheet>
             </form>

@@ -75,6 +75,21 @@ class MultichannelListing(models.Model):
         help='Per-listing hero image; empty → product.template.image_1920.',
     )
 
+    # P-LIST-VIDEO (ADR-015 / spec 012 §US7) — 1 video per listing.
+    # Etsy ``uploadListingVideo`` accepts ``video`` (binary) + ``name``
+    # multipart fields. We hold both via a single ir.attachment so the
+    # operator can drop the file once and the publisher picks up the
+    # binary + filename at push time. Domain restricts to private
+    # attachments to keep the file out of the website front-end.
+    video_attachment_id = fields.Many2one(
+        'ir.attachment',
+        string='Video',
+        domain="[('public', '=', False)]",
+        ondelete='set null',
+        help='Per-listing video file (Etsy caps at one video per listing). '
+             'Empty → no video pushed.',
+    )
+
     # ------------------------------------------------------------------
     # State machine
     # ------------------------------------------------------------------

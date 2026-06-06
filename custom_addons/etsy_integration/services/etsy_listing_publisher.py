@@ -834,6 +834,64 @@ class EtsyListingPublisher:
         return results
 
     # ------------------------------------------------------------------
+    # P-LIST-VIDEO — uploadListingVideo (Etsy: 1 video per listing)
+    # ------------------------------------------------------------------
+    # OAS contract:
+    #   POST /v3/application/shops/{shop_id}/listings/{listing_id}/videos
+    #   multipart/form-data: { name: <filename>, video: <binary> }
+    # The intent record's ir.attachment carries both: ``datas`` is base64
+    # binary content; ``name`` is the original filename. Empty intent or
+    # no attachment → no-op (returns {}).
+    def push_video(self, tmpl, listing_id, shop):
+        """Upload one video per listing to Etsy via uploadListingVideo.
+
+        Reads the multichannel.listing intent attachment for this shop
+        (per ADR-015 layer). No intent / no video → returns {} silently.
+        Failures raise — caller (``run()``) treats them as non-fatal.
+        """
+        if not listing_id:
+            raise ValueError("push_video requires a non-empty listing_id")
+        intent = self._resolve_listing_intent(tmpl, shop)
+        if not intent or not intent.video_attachment_id:
+            return {}
+        # Sudo required: service-layer publisher reads the attachment binary;
+        # the marketing-user ACL on multichannel.listing already proved write
+        # authority to attach the video, so the read at this boundary mirrors
+        # the FR-017 service-layer defense pattern used by upload_images.
+        attachment = intent.video_attachment_id.sudo()
+        raw = attachment.datas
+        if not raw:
+            _logger.warning(
+                "multichannel.listing %s video attachment %s has empty "
+                "datas; skipping push_video for listing %s.",
+                intent.id, attachment.id, listing_id,
+            )
+            return {}
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            raise ValueError(
+                "Etsy shop %r missing etsy_api_shop_id; cannot push video."
+                % shop.name
+            )
+        try:
+            payload_bytes = base64.b64decode(raw)
+        except Exception as exc:  # noqa: BLE001 — defensive only
+            _logger.warning(
+                "Failed to b64-decode video attachment id=%s for listing %s: %s",
+                attachment.id, listing_id, exc,
+            )
+            return {}
+        filename = attachment.name or 'video.mp4'
+        mimetype = attachment.mimetype or 'video/mp4'
+        client = EtsyApiClient(shop)
+        path = "shops/%s/listings/%s/videos" % (api_shop_id, listing_id)
+        files = {
+            'video': (filename, payload_bytes, mimetype),
+        }
+        data = {'name': filename}
+        return client.post_multipart(path, files=files, data=data)
+
+    # ------------------------------------------------------------------
     # P-BUG-ESTY-188 iter3 — Variation images (ADR-014 §4.a)
     # ------------------------------------------------------------------
     # Per Etsy OAS:
@@ -1021,6 +1079,17 @@ class EtsyListingPublisher:
                 _logger.warning(
                     "Etsy push_variation_images failed for listing %s: %s; "
                     "continuing with publish chain", listing_id, exc,
+                )
+            # P-LIST-VIDEO — push the per-listing video when intent carries
+            # one. Best-effort: video failures must not block publish (the
+            # listing is still viable without video; operator can retry
+            # via the wizard).
+            try:
+                self.push_video(tmpl, listing_id, shop)
+            except Exception as exc:  # noqa: BLE001 — non-fatal
+                _logger.warning(
+                    "Etsy push_video failed for listing %s: %s; continuing "
+                    "with publish chain", listing_id, exc,
                 )
             self.publish(listing_id, shop)
             existing.write({

@@ -370,6 +370,22 @@ Hệ thống làm các bước:
 | `int exceeds XML-RPC limits` | Listing ID > 2.1B chưa cast về dạng chuỗi | Hệ thống đã fix; báo nếu tái phát |
 | `Cannot resolve a positive starting price …` | Giá sản phẩm `= 0` VÀ không size nào có "Price Extra" → Etsy sẽ trả `price empty`. Hệ thống chặn trước khi gọi Etsy. | Điền **List Price** trên form sản phẩm HOẶC **Price Extra** trên ít nhất 1 dòng Size/Color ở tab *Attributes & Variants*. |
 
+### 7.4b Upload video cho listing (1 video / shop)
+
+> Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.
+
+**Cách upload:**
+1. Vào **Operations → Listings**, mở Listing tương ứng SP × shop.
+2. Sang tab **Video** (tab mới).
+3. Bấm vào **Video** → chọn file `.mp4` từ máy (cỡ file < ~100MB; Etsy có giới hạn riêng).
+4. Save.
+5. Khi BA bấm **Publish to Etsy**, hệ thống tự upload video qua endpoint `POST /shops/.../listings/.../videos` sau khi tạo listing + push tồn kho.
+
+**Nguyên tắc:**
+- Video nằm ở Listing layer (theo từng shop) — KHÔNG nằm ở Sản phẩm master. Cùng 1 SP nhưng JaHandmadeArt và NamcoHome có thể dùng video khác nhau.
+- Nếu upload thất bại (rate-limit Etsy, file lỗi format), listing vẫn được publish — hệ thống chỉ log WARNING. BA xem chatter / log để biết.
+- Nếu không upload video, Etsy đăng listing không video — không lỗi.
+
 ### 7.5 Sản phẩm có nhiều size / màu (per-variant)
 
 Khi sản phẩm có nhiều biến thể (ví dụ Mug 4" / 6" / 8") với giá khác nhau:
