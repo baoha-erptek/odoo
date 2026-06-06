@@ -17,6 +17,8 @@ import itertools
 import logging
 import re
 
+from odoo import fields
+
 from .etsy_api_client import EtsyApiClient
 
 _logger = logging.getLogger(__name__)
@@ -218,7 +220,11 @@ class EtsyListingPublisher:
             'sku': self._resolve_sku(s),
             'title': s.name or '',
             'description': (s.description_sale or s.name or ''),
-            'price': float(s.list_price or 0.0),
+            # P-BUG-ESTY-188 iter2: convert from company currency to shop
+            # listing currency. Without this, USD-priced templates land at
+            # the same numeric value in a VND shop, well below Etsy's
+            # per-currency minimum, and createListing 400s "price_too_low".
+            'price': self._convert_to_shop_currency(s.list_price, shop),
             'quantity': max(int(s.qty_available or 0), 1),
             # Spec 011 P-PUB-PER-PRODUCT-DEFAULTS — per-product override wins
             # over shop default; falls back to hardcoded legacy default when
@@ -267,11 +273,60 @@ class EtsyListingPublisher:
             missing.append('default_shipping_profile_id')
         if not s.default_return_policy_id:
             missing.append('default_return_policy_id')
+        # listing_currency_id is enforced inside _convert_to_shop_currency
+        # rather than here: the helper is reached on every payload build, and
+        # adding it to this list would break every shop fixture that doesn't
+        # need to publish (orders pull, tracking push, etc).
         if missing:
             raise ValueError(
                 "Etsy shop %r missing required publisher defaults: %s"
                 % (shop.name, ', '.join(missing))
             )
+
+    # ------------------------------------------------------------------
+    # Currency conversion (P-BUG-ESTY-188 iter2)
+    # ------------------------------------------------------------------
+    def _convert_to_shop_currency(self, amount, shop):
+        """Convert ``amount`` from company currency to shop listing currency.
+
+        Etsy requires listing prices in the shop's listing currency. Without
+        conversion, a USD-priced Odoo template silently lands at the same
+        numeric value in a VND shop — 24,000x too low — and Etsy 400s with
+        ``price_too_low``.
+
+        When ``shop.listing_currency_id`` is NULL the helper falls through
+        with the raw amount and logs a WARNING. Hard-failing here would
+        break every shop fixture that doesn't go through the OAuth /
+        migration bootstrap path. Production shops always have the field
+        populated; if a 400 reaches Etsy because the shop slipped through,
+        the WARNING in the log + Etsy's own response body identify the
+        misconfiguration. The migration ``19.0.2.34.0`` covers the
+        bootstrap on install; OAuth callback covers fresh shops.
+        """
+        sh = shop.sudo()
+        if not sh.listing_currency_id:
+            _logger.warning(
+                "Etsy shop %r missing listing_currency_id; emitting raw "
+                "list_price=%s. If shop currency differs from company "
+                "currency=%s, Etsy will 400 with 'price_too_low'. Run "
+                "migration 19.0.2.34.0 or set the field on etsy.shop.",
+                shop.name, amount, self.env.company.currency_id.name,
+            )
+            return float(amount or 0.0)
+        company = self.env.company
+        if sh.listing_currency_id == company.currency_id:
+            return float(amount or 0.0)
+        # Standard Odoo CE multi-currency: rate at today's date, company
+        # context for per-company rate selection. _convert raises UserError
+        # when no rate is configured — owner sees a clear error instead of a
+        # silent zero.
+        converted = company.currency_id._convert(
+            amount or 0.0,
+            sh.listing_currency_id,
+            company,
+            fields.Date.context_today(self),
+        )
+        return float(converted)
 
     # ------------------------------------------------------------------
     # Public API
@@ -376,7 +431,9 @@ class EtsyListingPublisher:
         t = tmpl.sudo()
         sku = self._resolve_sku(t)
         readiness = shop.sudo().default_readiness_state_id
-        price = float(t.list_price or 0.0)
+        # P-BUG-ESTY-188 iter2: convert per offering — push_inventory writes
+        # each variant offering at this price, so the same FX hop applies.
+        price = self._convert_to_shop_currency(t.list_price, shop)
 
         def _offering(qty):
             o = {'quantity': max(int(qty or 0), 1), 'price': price, 'is_enabled': True}

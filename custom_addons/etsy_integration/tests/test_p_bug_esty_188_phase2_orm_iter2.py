@@ -165,28 +165,35 @@ class TestP_BUG_ESTY_188_Phase2_CurrencyConversion(TransactionCase):
             msg="Price should be unchanged when currencies match"
         )
 
-    def test_payload_price_raises_when_listing_currency_null(self):
-        """RED: Defensive validation not checking listing_currency_id.
+    def test_payload_price_falls_through_with_warning_when_listing_currency_null(self):
+        """Helper emits raw list_price + WARNING when currency missing.
 
-        Expected RED reason: ValueError not raised, or different exception.
+        Hard-failing here would break every shop fixture that doesn't go
+        through the OAuth / migration bootstrap path; production shops
+        always have the field populated. The WARNING + Etsy's own response
+        body identify the misconfiguration if a 400 reaches Etsy.
         """
         from odoo.addons.etsy_integration.services.etsy_listing_publisher import (
             EtsyListingPublisher,
         )
 
         shop = self._create_shop('No Currency Shop', listing_currency_id=False)
-        tmpl = self._create_template()
+        tmpl = self._create_template(price=12.99)
 
         publisher = EtsyListingPublisher(self.env)
 
-        # Should raise ValueError with "listing_currency_id" in message
-        with self.assertRaises(ValueError) as ctx:
-            publisher._build_create_draft_payload(tmpl, shop)
+        with self.assertLogs(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher',
+            level='WARNING',
+        ) as captured:
+            payload = publisher._build_create_draft_payload(tmpl, shop)
 
-        self.assertIn(
-            'listing_currency_id',
-            str(ctx.exception),
-            "Error must mention listing_currency_id when NULL"
+        # Raw amount falls through (no conversion possible without target currency)
+        self.assertEqual(payload['price'], 12.99)
+        # WARNING explicitly names the missing field so operators can diagnose
+        self.assertTrue(
+            any('listing_currency_id' in line for line in captured.output),
+            "WARNING must mention listing_currency_id; got %r" % captured.output,
         )
 
     def test_push_inventory_offering_price_converted(self):

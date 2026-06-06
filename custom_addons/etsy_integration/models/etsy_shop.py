@@ -99,6 +99,17 @@ class EtsyShop(models.Model):
              'createDraftListing for physical listings as of the 2025 API update. '
              'Discover via GET /shops/{shop_id}/readiness-state-definitions.',
     )
+    listing_currency_id = fields.Many2one(
+        'res.currency',
+        string='Etsy Listing Currency',
+        groups='base.group_system',
+        ondelete='restrict',
+        help='Etsy shop listing currency (e.g. VND, USD). Discovered via '
+             'GET /shops/{shop_id}; used by the publisher to convert outbound '
+             'list_price from company currency to shop currency. Without it '
+             'Etsy 400s with "price_too_low" when company currency differs '
+             'from shop currency.',
+    )
     default_who_made = fields.Selection(
         selection=[
             ('i_did', 'I did'),
