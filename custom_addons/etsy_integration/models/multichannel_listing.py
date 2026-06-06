@@ -5,11 +5,124 @@ graph one-way). Etsy-specific listing fields therefore live here, as
 classic ``_inherit`` extensions of ``multichannel.listing``.
 """
 
-from odoo import fields, models
+import logging
+
+from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class MultichannelListingEtsy(models.Model):
     _inherit = 'multichannel.listing'
+
+    # P-ENH-ESTY-195 (ADR-016) — typed FK from listing to etsy.shop.
+    # Backfilled in migration 19.0.3.8.0 from the legacy ``shop_ref`` Char
+    # by name-lookup. NULL when no match or ambiguous.
+    etsy_shop_id = fields.Many2one(
+        'etsy.shop',
+        string='Etsy Shop',
+        ondelete='set null',
+        index=True,
+        help='Shop this listing pushes to. Drives the price-display widget '
+             'and per-channel-shop overrides.',
+    )
+
+    # P-ENH-ESTY-195 — sibling field driving the Monetary widget on the
+    # form. Mirrors ``etsy_shop_id.listing_currency_id`` (or False).
+    display_currency_id = fields.Many2one(
+        'res.currency',
+        string='Display Currency',
+        compute='_compute_display_currency_id',
+        help='Listing currency derived from the Etsy shop. Used to drive '
+             'the ``display_price_in_shop_currency`` Monetary widget.',
+    )
+
+    # P-ENH-ESTY-195 — read-only conversion preview. SOFT-FAIL: returns
+    # 0.0 + WARNING when shop / currency / rate is missing. Does NOT
+    # raise — the form must load gracefully (US3 acceptance).
+    display_price_in_shop_currency = fields.Monetary(
+        string='Price (shop currency)',
+        compute='_compute_display_price_in_shop_currency',
+        currency_field='display_currency_id',
+        help='Preview of the list price converted to the shop currency '
+             'using today\'s ``res.currency.rate``. 0.0 means the shop, '
+             'currency, or rate is not configured.',
+    )
+
+    @api.depends('etsy_shop_id', 'etsy_shop_id.listing_currency_id')
+    def _compute_display_currency_id(self):
+        for rec in self:
+            shop = rec.etsy_shop_id
+            rec.display_currency_id = shop.listing_currency_id if shop else False
+
+    @api.depends(
+        'product_tmpl_id.list_price',
+        'etsy_shop_id',
+        'etsy_shop_id.listing_currency_id',
+    )
+    def _compute_display_price_in_shop_currency(self):
+        company = self.env.company
+        from_currency = company.currency_id
+        today = fields.Date.context_today(self)
+        for rec in self:
+            shop = rec.etsy_shop_id
+            if not shop:
+                _logger.warning(
+                    "multichannel.listing %s: no etsy_shop_id — "
+                    "display_price_in_shop_currency=0.0",
+                    rec.id,
+                )
+                rec.display_price_in_shop_currency = 0.0
+                continue
+            # sudo: ``listing_currency_id`` carries ``groups='base.group_system'``
+            # so Marketing reading the listing form lacks direct access. The
+            # currency selector itself is not sensitive — only its identifier
+            # is needed to drive the Monetary widget.
+            to_currency = shop.sudo().listing_currency_id
+            if not to_currency:
+                _logger.warning(
+                    "multichannel.listing %s: etsy_shop_id=%s has no "
+                    "listing_currency_id — display_price_in_shop_currency=0.0",
+                    rec.id, shop.id,
+                )
+                rec.display_price_in_shop_currency = 0.0
+                continue
+            amount = rec.product_tmpl_id.list_price or 0.0
+            if to_currency == from_currency:
+                rec.display_price_in_shop_currency = float(amount)
+                continue
+            # Odoo silently falls back to rate=1 when no ``res.currency.rate``
+            # row exists, which would silently mis-price the listing. Detect
+            # the missing-rate case explicitly so US3 SOFT-FAIL fires.
+            # sudo: ``res.currency.rate`` ACL restricts to accountants. The
+            # widget only needs existence of a rate row for today to decide
+            # whether to render a converted price or fall back to 0.0. No
+            # cross-company data leaks: domain pins ``company_id`` to the
+            # current company (or shared rates with NULL company).
+            rate_row = self.env['res.currency.rate'].sudo().search([
+                ('currency_id', '=', to_currency.id),
+                ('company_id', 'in', [company.id, False]),
+                ('name', '<=', today),
+            ], order='name desc', limit=1)
+            if not rate_row:
+                _logger.warning(
+                    "multichannel.listing %s: no res.currency.rate for "
+                    "%s on or before %s — display_price_in_shop_currency=0.0",
+                    rec.id, to_currency.name, today,
+                )
+                rec.display_price_in_shop_currency = 0.0
+                continue
+            try:
+                rec.display_price_in_shop_currency = from_currency._convert(
+                    amount, to_currency, company, today,
+                )
+            except Exception as exc:  # noqa: BLE001 — SOFT-FAIL per ADR-016 D4
+                _logger.warning(
+                    "multichannel.listing %s: currency conversion %s→%s "
+                    "failed (%s) — display_price_in_shop_currency=0.0",
+                    rec.id, from_currency.name, to_currency.name, exc,
+                )
+                rec.display_price_in_shop_currency = 0.0
 
     etsy_taxonomy_id = fields.Many2one(
         'etsy.taxonomy.node',

@@ -768,3 +768,27 @@ class EtsyShop(models.Model):
                 'type': 'success',
             },
         }
+
+    # ------------------------------------------------------------------
+    # P-ENH-ESTY-195 / ADR-016 — Currency-rate refresh cron skeleton.
+    # Provider implementations (ECB, OpenExchangeRates, Yahoo) are
+    # deferred to a follow-up slice. This cron currently logs a WARNING
+    # under every branch and writes zero ``res.currency.rate`` rows.
+    # ------------------------------------------------------------------
+    @api.model
+    def _cron_refresh_currency_rates(self):
+        provider = self.env['ir.config_parameter'].sudo().get_param(
+            'etsy_integration.currency_rate_provider', 'manual',
+        )
+        if provider == 'manual':
+            _logger.warning(
+                "Etsy currency-rate cron: manual provider — set "
+                "``etsy_integration.currency_rate_provider`` to enable "
+                "auto-refresh. No rates written.",
+            )
+            return
+        _logger.warning(
+            "Etsy currency-rate cron: provider %r not yet implemented; "
+            "manual psql required. No rates written.",
+            provider,
+        )

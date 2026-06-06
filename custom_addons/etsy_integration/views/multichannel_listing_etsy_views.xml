@@ -28,6 +28,20 @@
                     </p>
                 </page>
                 <page string="Shipping &amp; Variations" name="shipping_variations">
+                    <!-- P-ENH-ESTY-195 / ADR-016 — converted-price preview.
+                         Read-only; SOFT-FAIL → 0.0 when shop or currency
+                         unconfigured. -->
+                    <group string="Shop Currency Preview">
+                        <field name="etsy_shop_id"
+                               options="{'no_create': True}"
+                               readonly="state != 'draft'"/>
+                        <field name="display_currency_id" invisible="1"/>
+                        <field name="display_price_in_shop_currency"
+                               readonly="1"
+                               widget="monetary"
+                               options="{'currency_field': 'display_currency_id'}"
+                               help="Shop currency not configured — set Etsy Shop and its listing currency to enable preview."/>
+                    </group>
                     <group>
                         <field name="etsy_taxonomy_id"
                                options="{'no_create': True, 'no_open': True}"
