@@ -173,3 +173,27 @@ class MultichannelListing(models.Model):
     def resolve_image_1920(self):
         self.ensure_one()
         return self.image_1920 or self.product_tmpl_id.image_1920
+
+    # ------------------------------------------------------------------
+    # P-LIST-UX-FIXES R1 — Open in Etsy Shop Manager (action_url)
+    # ------------------------------------------------------------------
+    def action_open_in_etsy_shop_manager(self):
+        """Return an act_url to the Etsy Shop Manager edit screen for
+        this listing. The button is gated in the view to state='published'
+        AND external_ref non-null, so we don't expect to be called in any
+        other state — but defensively redirect to the shop dashboard if
+        either is missing.
+        """
+        self.ensure_one()
+        if self.external_ref and str(self.external_ref).isdigit():
+            url = (
+                'https://www.etsy.com/your/shops/me/tools/listings/%s/edit'
+                % self.external_ref
+            )
+        else:
+            url = 'https://www.etsy.com/your/shops/me/tools/listings'
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'new',
+        }

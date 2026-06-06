@@ -72,3 +72,17 @@ class MultichannelListingEtsy(models.Model):
              'Per-listing — no fallback chain; the shop default is used '
              'only when no listing intent row exists.',
     )
+
+    # P-LIST-UX-FIXES R4 — surface cache freshness next to each dropdown
+    # so operators know whether to trust the choices. Related read-only
+    # mirrors of the picked cache rows' last_synced_at.
+    etsy_taxonomy_last_synced_at = fields.Datetime(
+        related='etsy_taxonomy_id.last_synced_at',
+        string='Taxonomy cache last synced',
+        readonly=True,
+    )
+    etsy_shipping_last_synced_at = fields.Datetime(
+        related='etsy_shipping_profile_id.last_synced_at',
+        string='Shipping cache last synced',
+        readonly=True,
+    )

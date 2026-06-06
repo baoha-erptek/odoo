@@ -34,38 +34,76 @@
         <field name="arch" type="xml">
             <form string="Listing">
                 <header>
+                    <!-- P-LIST-UX-FIXES R1 — Open in Etsy CTA, visible
+                         only for published listings with a known
+                         external_ref. -->
+                    <button name="action_open_in_etsy_shop_manager"
+                            type="object"
+                            string="Open in Etsy Shop Manager"
+                            class="btn-primary"
+                            invisible="state != 'published' or not external_ref"
+                            icon="fa-external-link"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,ready,published"/>
                 </header>
                 <sheet>
+                    <!-- P-LIST-UX-FIXES R2 — workflow context box. -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="state == 'published'">
+                        <strong>Publishing workflow:</strong> Draft (you edit)
+                        → Ready (BA approves) → Published (synced to Etsy).
+                        After publish, edits here overwrite Etsy on the next
+                        sync.
+                    </div>
+                    <!-- P-LIST-UX-FIXES R3 — readonly indicator when
+                         the record is locked (everything except draft). -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state == 'draft'">
+                        <strong>Read-only:</strong> this listing is no longer
+                        in Draft. To edit, ask a BA to revert the state to
+                        Draft or use Reset to Draft below.
+                    </div>
                     <field name="image_1920" widget="image"
-                           class="oe_avatar"/>
+                           class="oe_avatar"
+                           readonly="state != 'draft'"/>
                     <div class="oe_title">
                         <label for="title"/>
                         <h1><field name="title"
-                                   placeholder="Falls back to product name when empty"/></h1>
+                                   placeholder="Falls back to product name when empty"
+                                   readonly="state != 'draft'"/></h1>
                     </div>
+                    <!-- P-LIST-UX-FIXES finding-5 — Scope group collapsed
+                         behind an Advanced settings outer group.
+                         BA/admins can expand; Marketing sees less noise. -->
                     <group>
-                        <group string="Scope">
-                            <field name="product_tmpl_id"/>
-                            <field name="channel_id"/>
-                            <field name="shop_ref"
-                                   placeholder="jahandmadeart / namcohome / ..."/>
-                            <field name="sequence"/>
-                        </group>
                         <group string="External">
                             <field name="external_ref" readonly="1"/>
                             <field name="last_synced_at" readonly="1"/>
                         </group>
                     </group>
+                    <group string="Advanced settings" name="scope_advanced">
+                        <group string="Scope">
+                            <field name="product_tmpl_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="channel_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="shop_ref"
+                                   placeholder="jahandmadeart / namcohome / ..."
+                                   readonly="state != 'draft'"/>
+                            <field name="sequence"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="Marketing copy" name="marketing">
                             <field name="description"
-                                   placeholder="Falls back to product.description_sale when empty"/>
+                                   placeholder="Falls back to product.description_sale when empty"
+                                   readonly="state != 'draft'"/>
                         </page>
                         <page string="Video" name="video">
                             <group>
-                                <field name="video_attachment_id"/>
+                                <field name="video_attachment_id"
+                                       readonly="state != 'draft'"/>
                             </group>
                             <p class="text-muted">
                                 Etsy accepts at most one video per listing.

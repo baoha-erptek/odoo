@@ -16,15 +16,35 @@
                 <page string="Etsy" name="etsy">
                     <group>
                         <field name="etsy_taxonomy_id"
-                               options="{'no_create': True, 'no_open': True}"/>
+                               options="{'no_create': True, 'no_open': True}"
+                               readonly="state != 'draft'"/>
+                        <!-- P-LIST-UX-FIXES R4 — surface taxonomy cache
+                             freshness so the operator knows whether to
+                             trust the dropdown. Refresh CTA on the Etsy
+                             Shop form. -->
+                        <field name="etsy_taxonomy_last_synced_at"
+                               readonly="1"
+                               nolabel="1"
+                               invisible="not etsy_taxonomy_last_synced_at"/>
                         <field name="etsy_shipping_profile_id"
-                               options="{'no_create': True, 'no_open': True}"/>
-                        <field name="etsy_who_made"/>
-                        <field name="etsy_when_made"/>
-                        <field name="etsy_is_supply"/>
+                               options="{'no_create': True, 'no_open': True}"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_shipping_last_synced_at"
+                               readonly="1"
+                               nolabel="1"
+                               invisible="not etsy_shipping_last_synced_at"/>
+                        <field name="etsy_who_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_when_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_is_supply"
+                               readonly="state != 'draft'"/>
                     </group>
                     <p class="text-muted">
-                        Empty → falls back to the shop default.
+                        Empty → falls back to the shop default. Refresh the
+                        taxonomy / shipping caches from
+                        <em>Etsy Shop Settings</em> if the dropdowns look
+                        stale.
                     </p>
                 </page>
             </xpath>

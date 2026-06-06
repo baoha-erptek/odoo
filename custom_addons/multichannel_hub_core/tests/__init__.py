@@ -80,3 +80,4 @@ from . import test_phase2_pub_personalization_validator_orm
 from . import test_phase1_pub_per_product_defaults_db
 from . import test_multichannel_listing_db
 from . import test_multichannel_listing_orm
+from . import test_multichannel_listing_ux_fixes
