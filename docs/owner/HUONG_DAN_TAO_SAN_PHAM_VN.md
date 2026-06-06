@@ -336,6 +336,16 @@ Hệ thống làm các bước:
 | `A readiness_state_id is required for physical listings.` | Shop Etsy nguồn chưa cấu hình Readiness State | Admin vào Etsy → Shop Settings → Publisher Defaults |
 | `All offerings need readiness state` | Push inventory: từng phiên bản chưa carry Readiness State | Hệ thống đã fix; nếu vẫn lỗi → báo Đội Kỹ thuật |
 | `int exceeds XML-RPC limits` | Listing ID > 2.1B chưa cast về dạng chuỗi | Hệ thống đã fix; báo nếu tái phát |
+| `Cannot resolve a positive starting price …` | Giá sản phẩm `= 0` VÀ không size nào có "Price Extra" → Etsy sẽ trả `price empty`. Hệ thống chặn trước khi gọi Etsy. | Điền **List Price** trên form sản phẩm HOẶC **Price Extra** trên ít nhất 1 dòng Size/Color ở tab *Attributes & Variants*. |
+
+### 7.5 Sản phẩm có nhiều size / màu (per-variant)
+
+Khi sản phẩm có nhiều biến thể (ví dụ Mug 4" / 6" / 8") với giá khác nhau:
+
+- **Cách thiết lập**: ở tab *Attributes & Variants*, mỗi giá trị Size có ô **Price Extra** — điền chênh lệch giá so với giá gốc. Ví dụ List Price `0` + Price Extra `10 / 20 / 30` → 3 size có giá `10 / 20 / 30` USD.
+- **Hình theo size**: vào menu **Sản phẩm → Variants** (Biến thể), mở từng variant → upload ảnh ở trường **Variant Image**. Mỗi biến thể có thể có hình riêng; không có cũng được — Etsy dùng hình chính của listing.
+- **Khi đăng**: hệ thống tự gửi từng size sang Etsy với SKU + giá + tồn riêng. Listing trên Etsy hiển thị giá "từ XXX ₫" (lấy size rẻ nhất). Người mua chọn size → Etsy đổi sang giá / hình của size đó.
+- **Lưu ý SKU**: nếu Variant không có SKU riêng (Default Code), hệ thống tự sinh `{SKU template}-{slug size}` (ví dụ `LT-4IN`, `LT-6IN`, `LT-8IN`). Tối đa 32 ký tự, cắt ở đuôi nếu dài hơn.
 
 ---
 

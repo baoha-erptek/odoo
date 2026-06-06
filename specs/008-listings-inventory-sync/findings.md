@@ -443,3 +443,36 @@ readiness_state_on_property[]  array of property_id (new — supports per-varian
 **Decision gate outcome**: iter3 ships **all four** per-variant aspects (SKU, qty, price, image). No follow-up slice needed for images.
 
 **Out-of-scope finding**: `readiness_state_on_property` is also new — sellers can have per-variant processing profiles. Not needed for the Leather Tray UAT (single shop-level default). Note as a future enhancement; do NOT add in iter3.
+
+---
+
+### iter3 Phase 3 GREEN landed — 2026-06-06 08:35 UTC
+
+**Branch**: `feature/006-master-plan-coding`
+**Manifest**: `etsy_integration 19.0.2.34.0 → 19.0.3.0.0` (minor bump — payload shape change)
+
+**New surface** (`custom_addons/etsy_integration/services/etsy_listing_publisher.py`):
+
+- `_slugify_value_name(name)` — static — uppercase-alphanumeric slug; `"` → `IN`.
+- `_synthesize_variant_sku(base, value_names)` — classmethod — `{base}-{slugs}` clamped to 32 chars with WARNING on truncation; `UserError` when base + every slug are empty.
+- `_resolve_variant_sku(tmpl, variant)` — variant.default_code wins; falls through to synthesis.
+- `_resolve_starting_price(tmpl, shop)` — min positive variant.lst_price → fallback to template list_price → `UserError` when both 0. Always converted to shop currency.
+- `_variant_for_combo(tmpl, combo_value_ids)` — refactored helper; prefetches the M2M before the loop to avoid N+1.
+- Rewritten `push_inventory` — emits per-variant `sku` / `offerings[].price` / `offerings[].quantity` using `_variant_for_combo` lookup; computes `sku_on_property[]` / `quantity_on_property[]` / `price_on_property[]` from the varying axes' Etsy property IDs whenever the corresponding dimension actually varies across `products[]`.
+- New `push_variation_images(tmpl, listing_id, shop)` — uploads each variant's `image_variant_1920` via `uploadListingImage` then POSTs `/variation-images` with `{property_id, value_id, image_id}` triples. Best-effort: per-variant decode/upload failure logs WARNING and skips.
+- `run()` orchestrator — calls `push_variation_images` after `push_inventory` and before `publish`; non-fatal try/except so a variation-binding failure does not block publish.
+- `_build_create_draft_payload` — `price` now flows through `_resolve_starting_price` instead of raw `s.list_price`.
+
+**Test results**: 9 RED → 9 GREEN under `--test-tags /etsy_integration`; full suite 18 failed / 5 error of 700 = exact iter2 baseline (18 / 5 / 691) + 9 new iter3 GREEN. Zero new regressions.
+
+**Reviews** (parallel Phase 4):
+- **code-reviewer**: 0 CRITICAL. 1 HIGH (N+1 in `_variant_for_combo` — applied: prefetch `mapped('product_template_attribute_value_ids.product_attribute_value_id')` before the loop). MEDIUMs documented; LOWs accepted.
+- **security-reviewer**: 0 CRITICAL. 1 HIGH (URL-injection risk on `bind_path` — mitigated: `listing_id` originates from Etsy API response not operator; added comment documenting the assumption). 1 MEDIUM (`int(image_id)` malformed-vendor-response — applied: try/except TypeError, ValueError around the cast with WARNING + skip). Slugify regex `[^A-Za-z0-9]+` is sufficient; no PII leakage in logs.
+
+**Owner-facing docs updated**:
+- `docs/owner/UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` — new `TC-014` Per-variant publish + negative-path test added to summary table.
+- `docs/owner/HUONG_DAN_TAO_SAN_PHAM_VN.md` — §7.4 added the new `Cannot resolve a positive starting price …` UserError row; new §7.5 "Sản phẩm có nhiều size / màu (per-variant)" explains Price Extra / Variant Image / synthetic SKU rules.
+
+**Lint / debug**: `ruff` not installed in this dev shell — relying on test gates and reviewer ORM/style scans. Grep clean for `_logger.info(` / `print(`. Linter (likely pre-commit hook) auto-wrapped `UserError` messages with `_()` for translation — accepted, matches Odoo style.
+
+**Owner-gated next**: Phase 9 staging deploy (rsync + `-u etsy_integration` + restart) and owner re-publish on `product.template id=456` to flip T6 → done. Will ping via Telegram when staging is patched.

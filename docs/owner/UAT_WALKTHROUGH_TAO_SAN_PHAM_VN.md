@@ -383,6 +383,59 @@
 
 ---
 
+## TC-014 — Publish SP nhiều size: mỗi size có SKU + giá + hình riêng (LIVE JaHandmadeArt)
+
+> Mới từ 2026-06-06 (P-BUG-ESTY-188 iter3). Kiểm tra hệ thống publish đúng mô hình "biến thể" (per-variant) của Etsy thay vì gửi một SKU/giá chung cho cả listing.
+
+**Tại sao TC này quan trọng**
+
+Trước iter3, hệ thống chỉ gửi 1 SKU + 1 giá + 1 hình cho cả listing (kể cả khi SP có nhiều size). Etsy từ chối với 2 lỗi:
+- `400 /price empty` — nếu giá gốc SP là `0` và giá thật nằm ở "Giá thêm theo size" (price_extra).
+- `quantity must be consistent across all products` — nếu mỗi size có số lượng tồn khác nhau.
+
+Sau iter3 hệ thống tự:
+- Lấy giá thấp nhất trong các biến thể làm giá "từ" cho listing.
+- Mỗi size có SKU + giá + tồn riêng trong payload gửi Etsy.
+- Nếu mỗi size có hình riêng (`Variant Image`), hệ thống tự upload + gán cho từng size trên Etsy.
+
+**Pre-condition**
+- Đã chạy trên **Staging**, shop *JaHandmadeArt*.
+- Tỷ giá USD→VND của ngày hôm nay đã có (xem TC-013 prerequisites).
+- BA Lead login.
+
+**Các bước**
+
+1. Vào menu **Sản phẩm → Tất cả Sản phẩm** → tạo SP mới (hoặc dùng wizard SKU Builder) với:
+   - **Product Name:** `UAT-PV <date>` (PV = per-variant)
+   - **List Price (USD):** `0.00` (cố ý để 0 — giá thật nằm ở size)
+   - **Variants:** tab *Attributes & Variants*, thêm thuộc tính `Size` với 3 giá trị (ví dụ `4"`, `6"`, `8"`).
+2. Mở tab *Attributes & Variants* → ở từng dòng giá trị Size, điền **Price Extra** lần lượt `10.00`, `20.00`, `30.00`.
+3. Vào menu **Sản phẩm → Variants** (Biến thể), tìm 3 variant của SP `UAT-PV` → mỗi variant upload 1 hình khác nhau vào trường **Variant Image** (kích thước ≥ 1 MB, JPEG / PNG).
+4. Quay lại form SP → bấm **Publish to Etsy** với shop `JaHandmadeArt`.
+5. Đợi hệ thống gọi API Etsy. Quan sát thông báo / chatter.
+
+**Kỳ vọng**
+
+- Publish **thành công** — không có lỗi `/price empty` hoặc `quantity must be consistent`.
+- Vào Etsy Shop Manager → tìm draft `UAT-PV <date>` → tab **Variations**:
+  - Có 3 variation Size: 4", 6", 8" — mỗi cái có SKU + giá + tồn kho riêng.
+  - Giá lần lượt khoảng `10 × 25.400 ≈ 254.000 ₫`, `20 × 25.400 ≈ 508.000 ₫`, `30 × 25.400 ≈ 762.000 ₫` (sai số làm tròn được).
+  - Mỗi variation có **hình riêng** (Etsy hiển thị hình variant ở dropdown chọn size). Tức 4" hiện hình đã upload cho variant 4", v.v.
+
+**Negative path — hệ thống chặn khi không có giá**
+
+6. Tạo SP mới `UAT-PV-NOPRICE` với `List Price = 0` và KHÔNG điền `Price Extra` cho bất kỳ size nào.
+7. Bấm **Publish to Etsy**.
+8. Kỳ vọng: hệ thống chặn ngay (UserError "*Cannot resolve a positive starting price …*") — KHÔNG gọi API Etsy. Chatter ghi rõ thông báo. BA biết cần điền giá trước.
+
+**Cleanup**
+- Etsy Shop Manager → Drafts → xoá listing UAT-PV vừa tạo.
+- Archive SP UAT trong Odoo.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có quyền truy cập Etsy Shop Manager)
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -400,6 +453,7 @@
 | TC-011 | SKU Builder DMT-TX-R30X18 | ☐ | ☐ | ☐ | |
 | TC-012 | FR-017 non-BA blocked | ☐ | ☐ | ☐ | OK skip + cite unit test |
 | TC-013 | Publish USD→VND không lỗi `price_too_low` | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá hôm nay |
+| TC-014 | Publish SP nhiều size: SKU/giá/hình riêng (per-variant) | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá; cleanup Etsy Draft sau |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
