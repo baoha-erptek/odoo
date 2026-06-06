@@ -341,6 +341,48 @@
 
 ---
 
+## TC-013 — Publish giá USD lên shop Etsy dùng VND không lỗi `price_too_low`
+
+> Mới từ 2026-06-06. Kiểm tra hệ thống tự đổi giá USD sang đơn vị tiền của shop Etsy (ví dụ VND) khi đăng listing.
+
+**Pre-condition**
+- Đã chạy trên **Staging**, shop *JaHandmadeArt* (đơn vị tiền Etsy = **VND**).
+- Admin đã set sẵn (1 lần) trên môi trường test:
+  - Bật **VND** ở menu *Cài đặt → Đơn vị tiền tệ → Currencies* (active = ✅).
+  - Có **tỷ giá USD → VND** ngày hôm nay ở *Cài đặt → Đơn vị tiền tệ → Rates* (ví dụ `25400`).
+  - Shop Etsy có trường **Listing Currency** = `VND` (hệ thống tự bootstrap khi cài bản mới — Admin xem ở Etsy → Shop Settings).
+- BA Lead login.
+
+**Các bước**
+
+1. Tạo 1 sản phẩm thử qua menu **Operations → Configuration → Build SKU & Create Product** với:
+   - **Product Name:** `UAT-CURRENCY <date>`
+   - **Family / Material / Size:** chọn bất kỳ giá trị hợp lệ
+   - **Listing Price (USD):** `12.99`
+2. Bấm **Create** → SP được tạo, sang form Sản phẩm.
+3. Trên form SP, chọn shop Etsy `JaHandmadeArt` (nếu có chọn nhiều shop) → bấm **Publish to Etsy**.
+4. Đợi hệ thống gọi API Etsy. Quan sát thông báo / chatter.
+
+**Kỳ vọng**
+
+- Publish **thành công** — không có thông báo lỗi `price_too_low`. Trên chatter có dòng "Published to Etsy" (hoặc tương đương) kèm **Listing ID** Etsy trả về.
+- Vào Etsy Shop Manager (https://www.etsy.com/your/shops/JaHandmadeArt/listings) → tìm draft mới — **giá listing hiển thị bằng VND** (ví dụ `12.99 × 25.400 = 329.946 ₫`, có thể sai số do làm tròn).
+- BA chỉ điền giá USD ở Odoo — hệ thống tự đổi sang VND khi đăng. BA không cần tự nhân tỷ giá.
+
+**Trường hợp âm — kiểm tra hệ thống cảnh báo khi thiếu cấu hình**
+
+5. (tuỳ chọn) Admin tạm tắt VND ở *Cài đặt → Đơn vị tiền tệ* HOẶC xoá tỷ giá USD→VND hôm nay.
+6. Lặp lại bước 1–3 với SP mới (USD `12.99`).
+7. Kỳ vọng: hiện thông báo lỗi rõ ràng (ví dụ "*No conversion rate found for VND on …*") — KHÔNG publish thầm với giá sai. Admin bật lại VND / thêm lại tỷ giá → publish lại OK.
+
+**Cleanup**
+- Vào Etsy Shop Manager → xoá draft UAT vừa tạo.
+- Archive SP UAT trong Odoo (Action → Archive).
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có quyền truy cập Etsy Shop Manager)
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -357,11 +399,12 @@
 | TC-010 | SKU Builder APR-TX-AM | ☐ | ☐ | ☐ | |
 | TC-011 | SKU Builder DMT-TX-R30X18 | ☐ | ☐ | ☐ | |
 | TC-012 | FR-017 non-BA blocked | ☐ | ☐ | ☐ | OK skip + cite unit test |
+| TC-013 | Publish USD→VND không lỗi `price_too_low` | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá hôm nay |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
 **Kết luận:**
-- ☐ 11+/12 Pass → Approve.
+- ☐ 12+/13 Pass → Approve.
 - ☐ Có Fail → ghi chi tiết vào `docs/owner/UAT_FINDINGS_<date>.md` → tạo Jira ticket.
 
 ---

@@ -71,11 +71,21 @@
 | **Danh mục sản phẩm** | ✅ | `Mug` | Chọn từ dropdown — quyết định Mã SKU |
 | **Biến thể** | _tuỳ sản phẩm_ | Chất liệu = `Ceramic + Chrome`, Size = `11 oz` | Thêm dòng biến thể nếu sản phẩm có nhiều phiên bản |
 | **Mã SKU (Internal Reference)** | _tự sinh_ | `MUG-CR-F11` | Hệ thống tự điền sau khi chọn Danh mục + Biến thể |
-| **Giá bán (Sales Price USD)** | ✅ | `19.99` | Giá Etsy; phải `> 0` |
+| **Giá bán (Sales Price USD)** | ✅ | `19.99` | Giá Etsy; phải `> 0`. **BA chỉ điền giá USD** — hệ thống tự đổi sang đơn vị tiền của shop Etsy (ví dụ VND) khi đăng listing. Xem mục 3.5. |
 | **Mã SKU Gearment** | ❌ | `GEAR-MUG-11OZ-BL` | Có giá trị → bật chế độ Dropship tự động |
 | **Mô tả** | ❌ | _free text_ | Hiển thị trên Etsy |
 | **Ảnh sản phẩm chính** | ❌ | _upload_ | Có thể upload sau; ảnh phụ nằm ở mục 4.4 |
 | **Các kênh áp dụng** | ✅ | ☑ Etsy | Mặc định Etsy |
+
+> **Về giá USD và đơn vị tiền của shop Etsy**
+>
+> - BA **chỉ điền giá USD** trong ô **Giá bán (Sales Price USD)**. Không cần và không nên nhập giá VND.
+> - Mỗi shop Etsy có **đơn vị tiền riêng** do Etsy quy định (ví dụ shop *JaHandmadeArt* dùng VND). Hệ thống tự đổi giá USD sang đơn vị tiền của shop khi đăng listing — BA không cần làm gì thêm.
+> - Etsy yêu cầu giá đăng listing **lớn hơn giá tối thiểu** theo từng đơn vị tiền (ví dụ với VND tối thiểu khoảng **5.040 ₫**). Vì giá USD thường tương đương vài chục nghìn VND → hệ thống đảm bảo qua được mức này một cách tự nhiên.
+> - Điều kiện hoạt động (Admin set 1 lần khi cài shop):
+>   1. Shop Etsy phải có ô **Listing Currency** (Đơn vị tiền listing) — hệ thống tự lấy từ Etsy khi BA bấm Connect Etsy lần đầu.
+>   2. Phải có **tỷ giá USD ↔ đơn vị tiền của shop** trong menu *Cài đặt → Đơn vị tiền tệ → Tỷ giá*. Admin cập nhật khi tỷ giá thị trường thay đổi nhiều.
+> - Nếu thiếu 1 trong 2 điều trên → khi BA bấm **Publish to Etsy** sẽ hiện thông báo lỗi rõ ràng (không publish thầm sai giá).
 
 ### 3.3 Mã SKU tự sinh — chuyện thực sự xảy ra
 

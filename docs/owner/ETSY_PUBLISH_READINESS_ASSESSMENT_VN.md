@@ -113,7 +113,7 @@ JaHandmadeArt — listing `4511807545` được tạo ngày 26/05/2026.)
 | Tiêu đề | ✅ Đầy đủ | Tên sản phẩm |
 | Mô tả | ✅ Đầy đủ | Ô mô tả bán hàng trên form |
 | Danh mục Etsy | ⚠️ Một phần | Dùng giá trị mặc định toàn shop; chưa cho phép đặt riêng cho từng sản phẩm |
-| Giá | ⚠️ Sắp dọn | Đang dùng trường giá tùy chỉnh; sẽ chuyển về trường giá chuẩn của Odoo |
+| Giá | ✅ Đầy đủ | Dùng trường giá bán chuẩn của Odoo (USD). Hệ thống tự đổi sang đơn vị tiền của shop Etsy (ví dụ VND) khi publish — dựa trên trường *Listing Currency* trên shop + bảng tỷ giá *Cài đặt → Currencies → Rates*. Yêu cầu: 2 thứ phải được set 1 lần (xem mục "Điều kiện hoạt động" trong `HUONG_DAN_TAO_SAN_PHAM_VN.md` §3.2). |
 | Số lượng | ✅ Đầy đủ | Tồn kho sản phẩm (mặc định = 1 cho MTO) |
 | Ai làm / Làm khi nào / Có phải supply không | ⚠️ Một phần | Dùng giá trị mặc định toàn shop; chưa cho phép đặt riêng cho từng sản phẩm |
 | Trạng thái sẵn sàng | ✅ Đầy đủ | Mặc định shop (Made to order 3-5 ngày cho JaHandmadeArt) |
@@ -145,11 +145,15 @@ chất lượng SEO và trải nghiệm khách hàng nếu chưa được bổ s
    - Cho phép BA sửa tay nếu cần.
    - Wizard SKU cũ sẽ ẩn khỏi menu nhưng vẫn dùng cho nhập Excel.
 
-2. **Chuyển trường Giá về chuẩn Odoo**
-   - Hôm nay đang có 1 trường giá tùy chỉnh (chỉ dùng cho Etsy) chạy
-     song song với ô giá bán chuẩn của Odoo. Sẽ rút lại 1 trường duy
-     nhất.
+2. **Chuyển trường Giá về chuẩn Odoo** *(Đã xong 2026-06-06)*
+   - Trước đây có 1 trường giá tùy chỉnh (chỉ dùng cho Etsy) chạy
+     song song với ô giá bán chuẩn của Odoo. Đã rút lại còn 1 trường
+     duy nhất là **Giá bán (Sales Price USD)** chuẩn của Odoo.
    - BA và Kế toán nhìn cùng một con số ở mọi nơi.
+   - Bổ sung 2026-06-06: hệ thống tự **đổi giá USD sang đơn vị tiền
+     của shop Etsy** khi publish (ví dụ shop *JaHandmadeArt* dùng VND →
+     USD `12.99` × tỷ giá `25.400` ≈ `329.946 ₫`). BA chỉ điền giá USD,
+     không cần tự nhân tỷ giá.
 
 3. **Thêm Tags**
    - Bổ sung ô Tags trên form sản phẩm (dùng `product.tag` chuẩn của
