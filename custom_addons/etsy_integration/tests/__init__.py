@@ -80,3 +80,4 @@ from . import test_p_bug_esty_188_phase1_db_iter2
 from . import test_p_bug_esty_188_phase2_orm_iter2
 from . import test_p_bug_esty_188_phase2_orm_iter3
 from . import test_p_list_video_orm
+from . import test_p_list_category_orm

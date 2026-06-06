@@ -535,6 +535,41 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 
 ---
 
+## TC-017 — Chọn Etsy Category per-listing — fallback chain (P-LIST-CATEGORY)
+
+> Mới từ 2026-06-06 (P-LIST-CATEGORY, Jira ESTY-189).
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core,etsy_integration` trên Staging.
+- Tài khoản Marketing + Admin login.
+
+**Bước 1 — Sync taxonomy (Admin login lần đầu)**
+
+1. Vào form Etsy Shop nào đó (Settings → Etsy Shops) → bấm **Sync Etsy Taxonomy** (hoặc đợi cron hàng tuần).
+2. Đợi sync xong → thông báo `Etsy taxonomy synced: N new, 0 updated`.
+3. Vào **Operations → Etsy Taxonomy** → thấy danh sách hàng nghìn nodes với cột `full_path` đầy đủ.
+
+**Bước 2 — Marketing chọn category per-listing**
+
+4. Login Marketing. Vào **Operations → Listings** → mở 1 dòng.
+5. Tab **Etsy** → trường **Etsy Category** → gõ "Cookware" → autocomplete hiển thị `Home & Living / Kitchen / Cookware [#1234]` chẳng hạn → chọn.
+6. Save.
+
+**Bước 3 — BA publish và verify category override**
+
+7. Login BA Lead. Mở SP master → Publish to Etsy với shop tương ứng.
+8. Trên chatter / log: tìm dòng `Etsy createListing payload taxonomy_id=...` (hoặc xem Etsy Shop Manager).
+9. Verify: listing được tạo với category Marketing đã chọn ở Listing layer (KHÔNG dùng category cũ ở Sản phẩm).
+
+**Bước 4 — Negative: clear listing override → fallback về shop default**
+
+10. Marketing vào Listing → clear trường **Etsy Category** → Save.
+11. BA publish lại → verify category dùng `etsy.shop.default_taxonomy_id` (shop default).
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -555,6 +590,7 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-014 | Publish SP nhiều size: SKU/giá/hình riêng (per-variant) | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá; cleanup Etsy Draft sau |
 | TC-015 | Tách lớp Sản phẩm/Listing — backfill day-1 + override title | ☐ | ☐ | ☐ | Marketing menu mới; SP đã đăng vẫn publish được không gián đoạn |
 | TC-016 | Upload video lên Etsy listing (1 video/listing) | ☐ | ☐ | ☐ | Cần file .mp4 ≤ 100MB; cleanup video sau |
+| TC-017 | Chọn Etsy Category per-listing — fallback chain | ☐ | ☐ | ☐ | Sync taxonomy trước nếu cache rỗng |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 

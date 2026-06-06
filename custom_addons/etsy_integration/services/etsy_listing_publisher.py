@@ -314,6 +314,41 @@ class EtsyListingPublisher:
         return result
 
     # ------------------------------------------------------------------
+    # P-LIST-CATEGORY taxonomy resolver (ADR-015 / spec 012)
+    # ------------------------------------------------------------------
+    def _resolve_taxonomy_id(self, tmpl, shop):
+        """Etsy createListing requires a numeric ``taxonomy_id``.
+
+        Resolution order (per ADR-015 §3 fallback chain):
+          1. ``multichannel.listing.etsy_taxonomy_id`` (per-listing override)
+          2. ``product.template.x_taxonomy_id`` (per-product fallback,
+             pre-iter3 site)
+          3. ``etsy.shop.default_taxonomy_id`` (shop default)
+          4. ``0`` — matches the pre-slice behavior. Etsy 400s with a
+             missing-field error in that case; a future hardening slice
+             will raise ``UserError`` here once every production shop is
+             guaranteed to carry a default.
+        """
+        intent = self._resolve_listing_intent(tmpl, shop)
+        if intent and intent.etsy_taxonomy_id:
+            raw = intent.etsy_taxonomy_id.etsy_id
+            if raw and raw.isdigit():
+                return int(raw)
+        per_product = tmpl.x_taxonomy_id if hasattr(tmpl, 'x_taxonomy_id') else None
+        if per_product:
+            try:
+                return int(per_product)
+            except (TypeError, ValueError):
+                pass
+        shop_default = shop.default_taxonomy_id
+        if shop_default:
+            try:
+                return int(shop_default)
+            except (TypeError, ValueError):
+                pass
+        return 0
+
+    # ------------------------------------------------------------------
     # Listing intent resolver (P-LIST-MODEL — ADR-015)
     # ------------------------------------------------------------------
     def _resolve_listing_intent(self, tmpl, shop):
@@ -381,7 +416,7 @@ class EtsyListingPublisher:
             'who_made': s.x_who_made or sh.default_who_made or 'i_did',
             'when_made': s.x_when_made or sh.default_when_made or 'made_to_order',
             'is_supply': bool(sh.default_is_supply),
-            'taxonomy_id': int(s.x_taxonomy_id or sh.default_taxonomy_id or 0),
+            'taxonomy_id': self._resolve_taxonomy_id(s, sh),
             'shipping_profile_id': int(sh.default_shipping_profile_id or 0),
             'return_policy_id': int(sh.default_return_policy_id or 0),
             'state': 'draft',

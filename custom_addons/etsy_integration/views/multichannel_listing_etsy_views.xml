@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-CATEGORY view inherit — add Etsy notebook tab to the
+        multichannel.listing form so Marketing can pick a per-listing
+        taxonomy override. ADR-003: Etsy-specific UI lives here, not
+        in mhc.
+    -->
+    <record id="view_multichannel_listing_form_etsy" model="ir.ui.view">
+        <field name="name">multichannel.listing.form.etsy</field>
+        <field name="model">multichannel.listing</field>
+        <field name="inherit_id"
+               ref="multichannel_hub_core.view_multichannel_listing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='marketing']" position="after">
+                <page string="Etsy" name="etsy">
+                    <group>
+                        <field name="etsy_taxonomy_id"
+                               options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                    <p class="text-muted">
+                        Empty → falls back to the shop default Etsy category.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

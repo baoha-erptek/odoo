@@ -370,6 +370,27 @@ Hệ thống làm các bước:
 | `int exceeds XML-RPC limits` | Listing ID > 2.1B chưa cast về dạng chuỗi | Hệ thống đã fix; báo nếu tái phát |
 | `Cannot resolve a positive starting price …` | Giá sản phẩm `= 0` VÀ không size nào có "Price Extra" → Etsy sẽ trả `price empty`. Hệ thống chặn trước khi gọi Etsy. | Điền **List Price** trên form sản phẩm HOẶC **Price Extra** trên ít nhất 1 dòng Size/Color ở tab *Attributes & Variants*. |
 
+### 7.4a Chọn Etsy Category (taxonomy) cho listing
+
+> Mới từ 2026-06-06 (P-LIST-CATEGORY). Trước đây Etsy Category chỉ có ở cấp Sản phẩm hoặc shop default. Giờ Marketing chọn được theo từng Listing × shop.
+
+**Đồng bộ taxonomy từ Etsy:**
+- Hệ thống tự đồng bộ cây taxonomy Etsy hàng tuần (cron `Etsy: Taxonomy Cache Sync`).
+- Admin có thể bấm thủ công nút **Sync Etsy Taxonomy** trên form Etsy Shop nếu cần refresh ngay.
+- Toàn bộ cây hiển thị ở menu **Operations → Etsy Taxonomy** (chỉ Admin).
+
+**Cách chọn category cho 1 listing:**
+1. Vào **Operations → Listings**, mở Listing tương ứng SP × shop.
+2. Sang tab **Etsy** (mới).
+3. Trường **Etsy Category** → gõ tên ngách (vd "Cookware", "Throw Pillows") → autocomplete sẽ hiển thị các taxonomy đầy đủ đường dẫn (`Home & Living / Kitchen / Cookware`).
+4. Chọn → Save.
+
+**Thứ tự ưu tiên khi publish (publisher đọc):**
+1. **Listing.Etsy Category** (override Marketing nhập)
+2. → **Sản phẩm.x_taxonomy_id** (giá trị BA nhập ở Sản phẩm cũ)
+3. → **Etsy Shop.Default Taxonomy ID** (Admin set ở shop)
+4. → Nếu không có gì cả: Etsy trả 400. Hệ thống sẽ siết thành lỗi rõ ràng ở slice hardening sau này — hiện vẫn fall-through để không gãy fixture cũ.
+
 ### 7.4b Upload video cho listing (1 video / shop)
 
 > Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.

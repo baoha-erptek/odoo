@@ -678,3 +678,45 @@ class EtsyShop(models.Model):
                     'Etsy API sync failed for shop %s (id=%s)',
                     shop.name, shop.id,
                 )
+
+    @api.model
+    def _cron_sync_taxonomy(self):
+        """P-LIST-CATEGORY weekly cron — refresh `etsy.taxonomy.node` cache.
+
+        Etsy taxonomy is a *global* catalog (same node IDs across all shops),
+        so we only need one API call per run. Pick any API-source shop as the
+        credential carrier. If none configured, no-op.
+        """
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy taxonomy sync is restricted to system tasks.'
+            )
+        from ..services.etsy_taxonomy_syncer import sync_taxonomy
+        shop = self.search([('active_source', '=', 'api')], limit=1)
+        if not shop:
+            _logger.debug(
+                'Etsy taxonomy sync cron: no api-source shop available.'
+            )
+            return
+        try:
+            sync_taxonomy(self.env, shop)
+        except Exception:
+            _logger.exception(
+                'Etsy taxonomy sync failed via shop %s (id=%s)',
+                shop.name, shop.id,
+            )
+
+    def action_sync_etsy_taxonomy(self):
+        """Manual trigger button on the shop form — same syncer."""
+        self.ensure_one()
+        from ..services.etsy_taxonomy_syncer import sync_taxonomy
+        created, updated = sync_taxonomy(self.env, self)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Etsy taxonomy synced',
+                'message': '%s new, %s updated' % (created, updated),
+                'type': 'success',
+            },
+        }
