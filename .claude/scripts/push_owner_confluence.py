@@ -297,6 +297,15 @@ PAGES = [
     ("HUONG_DAN_HAU_MAI_VN.md", "Hướng dẫn sử dụng — Hậu mãi", False),
     # Engineering planning (NOT end-user; for Architect + Dev team reference on Confluence)
     ("SKU_GRAMMAR.md", "SKU Grammar — Canonical Specification", False),
+    # UAT walkthroughs (v1.2 covers Wave 2/3 ESTY-187..199; v1.0 retained for TC-006..TC-012)
+    ("UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md", "UAT Walkthrough — Tạo sản phẩm v1.2 (Wave 2/3)", False),
+    # Business-flows companions (added 2026-06-07 alongside Figma HTML exports)
+    ("business-flows/README.md", "Business Flows — Sơ đồ + ảnh chụp UAT", False),
+    ("business-flows/flow-1-tao-san-pham.md", "Flow 1 — Tạo sản phẩm + publish Etsy", False),
+    ("business-flows/flow-2-nhan-don-hang-etsy.md", "Flow 2 — Tiếp nhận đơn hàng Etsy", False),
+    ("business-flows/flow-3a-giao-hang-in-noi-bo.md", "Flow 3a — Giao hàng (In nội bộ)", False),
+    ("business-flows/flow-3b-giao-hang-gearment-dropship.md", "Flow 3b — Giao hàng (Gearment dropship)", False),
+    ("business-flows/flow-4-hau-mai.md", "Flow 4 — Hậu mãi (đổi/trả/refund)", False),
 ]
 
 
