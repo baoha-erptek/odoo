@@ -553,8 +553,8 @@ Tokens canonical: <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</c
 </tr>
 <tr>
 <td>Status bar (buttons + stage pipe)</td>
-<td><code>&lt;header&gt;</code> + <code>&lt;button class="oe_highlight"/&gt;</code> + <code>&lt;field widget="state_selection"/&gt;</code></td>
-<td>CSS override only — apply purple <code>.mu-stage</code> tint to active state</td>
+<td><code>&lt;header&gt;</code> + <code>&lt;button class="oe_highlight"/&gt;</code> + <strong><code>&lt;field widget="statusbar"/&gt;</code></strong></td>
+<td>CSS override only — apply purple <code>.mu-stage</code> tint to <code>.o_statusbar_status .btn-primary</code> active state. NB: <code>widget="state_selection"</code> is for kanban single-state pills (red/orange/green dropdown), NOT linear pipelines — use <code>statusbar</code> for the mockup's Draft→Published→Archived. Standard usage: <code>addons/sale/views/sale_order_views.xml:379</code> <code>&lt;field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/&gt;</code></td>
 </tr>
 <tr>
 <td>Form grid</td>
@@ -568,8 +568,8 @@ Tokens canonical: <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</c
 </tr>
 <tr>
 <td>Stage pipeline (Draft → Published → Archived)</td>
-<td><code>&lt;field widget="state_selection"/&gt;</code> inside <code>&lt;header&gt;</code></td>
-<td><strong>No <code>MuStatusBar</code> component.</strong> Standard widget exists; add <code>.mu-stage</code> CSS overrides</td>
+<td><code>&lt;field widget="statusbar"/&gt;</code> inside <code>&lt;header&gt;</code> (NOT state_selection)</td>
+<td><strong>No <code>MuStatusBar</code> component.</strong> Standard widget exists; add <code>.mu-stage</code> CSS overrides on <code>.o_statusbar_status</code></td>
 </tr>
 <tr>
 <td>Mono token (SKU / listing_id)</td>
@@ -604,9 +604,15 @@ Tokens canonical: <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</c
 </tbody>
 </table>
 <p><strong>Revised Phase 2 MVP scope (CSS-only, no JS components):</strong>
-1. SCSS bundle override loading the design tokens (target: <code>etsy_integration/static/src/scss/mu_tokens.scss</code>)
-2. CSS overrides for <code>.mu-pill-*</code> (decoration colors), <code>.mu-stage</code> (active state), <code>.mu-mono</code> (SKU styling), <code>.mu-tabs</code> (active tab purple tint)
-3. View XML changes on <code>product.template</code> + <code>multichannel.listing</code> to add <code>groups=</code>/<code>invisible=</code> per Tier 3 rules + wrap key fields with <code>class="mu-mono"</code></p>
+1. SCSS bundle override loading the design tokens. Target path (per <code>odoo-standard-first</code> validation 2026-06-07): <code>multichannel_hub_core/static/src/scss/mu_tokens.scss</code> (mhc scope per owner answer A3). Registered in manifest via <code>'web.assets_backend': [...]</code> (note: bundle name has no leading underscore — <code>web._assets_backend_helpers</code> is a different internal bundle).
+2. CSS overrides scoped to mhc/etsy modules:
+   - <code>.text-bg-*</code> (Bootstrap decoration colors used by <code>widget="badge"</code>) — purple-tint the success/info variants
+   - <code>.o_statusbar_status .btn-primary</code> (active stage in <code>widget="statusbar"</code>) — apply <code>.mu-stage.active</code> purple tint
+   - <code>.o_notebook .nav-link.active</code> — purple bottom border per mockup
+   - <code>.mu-mono</code> utility class — apply via <code>class="mu-mono"</code> on SKU/listing_id fields in view XML
+3. View XML changes on <code>product.template</code> + <code>multichannel.listing</code>:
+   - Tier 3 hiding: prefer <code>groups="base.group_no_one"</code> (developer-mode-only) over <code>groups="base.group_system"</code> for technical fields like Routes/MTO/produce_delay — system admins shouldn't have to wade through them either. Reserve <code>groups="base.group_system"</code> for fields only sys-admin should EDIT (e.g. credentials).
+   - Wrap key fields with <code>class="mu-mono"</code></p>
 <p><strong>Estimated effort:</strong> 3–4 dev days (vs prior 5-7 day estimate — dropped because no OWL components).</p>
 <hr>
 <h2 id="phase-1-deliverables-checklist">Phase 1 deliverables checklist</h2>
