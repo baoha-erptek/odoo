@@ -77,11 +77,21 @@
                          BA/admins can expand; Marketing sees less noise. -->
                     <group>
                         <group string="External">
-                            <field name="external_ref" readonly="1"/>
+                            <!-- P-DS-2-MVP-BACKPORT — .mu-mono renders the
+                                 Etsy listing_id in a purple monospace badge
+                                 so users read it as a system-generated
+                                 identifier, not user-edited copy. -->
+                            <field name="external_ref" readonly="1" class="mu-mono"/>
                             <field name="last_synced_at" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Advanced settings" name="scope_advanced">
+                    <!-- P-DS-2-MVP-BACKPORT — Advanced settings group is
+                         set at create-time and never edited by Marketing /
+                         BA after.  Hide behind developer mode to reduce
+                         clutter for BA users. Reversible by toggling
+                         developer mode. -->
+                    <group string="Advanced settings" name="scope_advanced"
+                           groups="base.group_no_one">
                         <group string="Scope">
                             <field name="product_tmpl_id"
                                    readonly="state != 'draft'"/>

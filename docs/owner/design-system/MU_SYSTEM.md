@@ -351,10 +351,10 @@ Backport plan dùng Font Awesome 5 (đã có sẵn trong Odoo 19):
 |---|---|---|
 | Chrome bar | `nav.o_main_navbar` | Skip — keep default |
 | Breadcrumb | `.o_breadcrumb` (auto-rendered) | Skip — keep default |
-| Status bar (buttons + stage pipe) | `<header>` + `<button class="oe_highlight"/>` + `<field widget="state_selection"/>` | CSS override only — apply purple `.mu-stage` tint to active state |
+| Status bar (buttons + stage pipe) | `<header>` + `<button class="oe_highlight"/>` + **`<field widget="statusbar"/>`** | CSS override only — apply purple `.mu-stage` tint to `.o_statusbar_status .btn-primary` active state. NB: `widget="state_selection"` is for kanban single-state pills (red/orange/green dropdown), NOT linear pipelines — use `statusbar` for the mockup's Draft→Published→Archived. Standard usage: `addons/sale/views/sale_order_views.xml:379` `<field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/>` |
 | Form grid | `<group>` + `<group string=""/>` | CSS override only — `.mu-grid2` class on outer `<sheet>` div |
 | Pill badge (4 colors) | `<field widget="badge"/>` (Selection field) + `decoration-success/warning/danger/info` | **No `MuPill` component.** Use standard `widget="badge"`; add `.mu-pill-*` CSS overrides for tone tuning |
-| Stage pipeline (Draft → Published → Archived) | `<field widget="state_selection"/>` inside `<header>` | **No `MuStatusBar` component.** Standard widget exists; add `.mu-stage` CSS overrides |
+| Stage pipeline (Draft → Published → Archived) | `<field widget="statusbar"/>` inside `<header>` (NOT state_selection) | **No `MuStatusBar` component.** Standard widget exists; add `.mu-stage` CSS overrides on `.o_statusbar_status` |
 | Mono token (SKU / listing_id) | `<field/>` + `class="mu-mono"` | CSS-only refinement |
 | Tabs | `<notebook>` + `<page>` (Odoo standard arch) | **No `MuTabs` component.** Apply `.mu-tabs`/`.mu-tab.active` CSS to existing `.o_notebook .nav-tabs` |
 | List table | `<list>` view (Odoo standard) | CSS refinement on `.o_list_view` |
@@ -363,9 +363,15 @@ Backport plan dùng Font Awesome 5 (đã có sẵn trong Odoo 19):
 | Banner | `<div class="alert alert-warning"/>` (Bootstrap, ships with Odoo) | CSS override only |
 
 **Revised Phase 2 MVP scope (CSS-only, no JS components):**
-1. SCSS bundle override loading the design tokens (target: `etsy_integration/static/src/scss/mu_tokens.scss`)
-2. CSS overrides for `.mu-pill-*` (decoration colors), `.mu-stage` (active state), `.mu-mono` (SKU styling), `.mu-tabs` (active tab purple tint)
-3. View XML changes on `product.template` + `multichannel.listing` to add `groups=`/`invisible=` per Tier 3 rules + wrap key fields with `class="mu-mono"`
+1. SCSS bundle override loading the design tokens. Target path (per `odoo-standard-first` validation 2026-06-07): `multichannel_hub_core/static/src/scss/mu_tokens.scss` (mhc scope per owner answer A3). Registered in manifest via `'web.assets_backend': [...]` (note: bundle name has no leading underscore — `web._assets_backend_helpers` is a different internal bundle).
+2. CSS overrides scoped to mhc/etsy modules:
+   - `.text-bg-*` (Bootstrap decoration colors used by `widget="badge"`) — purple-tint the success/info variants
+   - `.o_statusbar_status .btn-primary` (active stage in `widget="statusbar"`) — apply `.mu-stage.active` purple tint
+   - `.o_notebook .nav-link.active` — purple bottom border per mockup
+   - `.mu-mono` utility class — apply via `class="mu-mono"` on SKU/listing_id fields in view XML
+3. View XML changes on `product.template` + `multichannel.listing`:
+   - Tier 3 hiding: prefer `groups="base.group_no_one"` (developer-mode-only) over `groups="base.group_system"` for technical fields like Routes/MTO/produce_delay — system admins shouldn't have to wade through them either. Reserve `groups="base.group_system"` for fields only sys-admin should EDIT (e.g. credentials).
+   - Wrap key fields with `class="mu-mono"`
 
 **Estimated effort:** 3–4 dev days (vs prior 5-7 day estimate — dropped because no OWL components).
 
