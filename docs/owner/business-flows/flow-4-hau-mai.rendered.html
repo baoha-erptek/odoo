@@ -78,9 +78,6 @@ li { margin: 0.25rem 0; }
 <strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_HAU_MAI_VN.md"><code>../FLOW_HAU_MAI_VN.md</code></a>
 <strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_hau_mai.spec.ts</code> (TBD)</p>
 <blockquote>
-<p><strong>TODO ảnh chụp:</strong> Các <code>![placeholder: ...]</code> bên dưới sẽ được thay bằng ảnh
-thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
-Slice kế tiếp đề xuất: <code>P-UAT-FLOW-4-SCREENSHOTS</code>.</p>
 <p>Luồng 4 — xử lý các yêu cầu sau bán: đổi hàng, trả hàng, refund, change-of-address.</p>
 </blockquote>
 <hr>
@@ -102,7 +99,7 @@ Slice kế tiếp đề xuất: <code>P-UAT-FLOW-4-SCREENSHOTS</code>.</p>
 <p><strong>Trigger:</strong> Etsy buyer message hoặc Etsy form "Return/Refund"
 <strong>Ingest:</strong> <code>etsy.conversation.message</code> (qua <code>conversations_r</code> scope — đang chờ approval)</p>
 <blockquote>
-<p><img alt="placeholder: etsy.conversation message" src="./screenshots/flow-4/01-conversation.png" title="etsy.conversation.message — buyer request"></p>
+<p><img alt="multichannel.enquiry — buyer request" src="./screenshots/flow-4/01-conversation.png" title="multichannel.enquiry — buyer request"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-2-address-change-request-rieng">Giai đoạn 2 — Address change request (riêng)</h2>
@@ -110,14 +107,14 @@ Slice kế tiếp đề xuất: <code>P-UAT-FLOW-4-SCREENSHOTS</code>.</p>
 <strong>Model:</strong> <code>etsy.address.change.request</code>
 <strong>POM:</strong> <code>tests/e2e/page-objects/address_change_request_form.ts</code></p>
 <blockquote>
-<p><img alt="placeholder: address.change.request form" src="./screenshots/flow-4/02-address-change.png" title="Address Change Request — pending approval"></p>
+<p><img alt="Address Change Request — pending approval" src="./screenshots/flow-4/02-address-change.png" title="Address Change Request — pending approval"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-3-quyet-inh-replace-refund-reship">Giai đoạn 3 — Quyết định (Replace / Refund / Reship)</h2>
 <p><strong>Vai trò:</strong> BA Lead duyệt
 <strong>Action:</strong> server action chuyển trạng thái <code>pending</code> → <code>approved</code> / <code>rejected</code></p>
 <blockquote>
-<p><img alt="placeholder: decision UI" src="./screenshots/flow-4/03-decision.png" title="BA Lead approval — Replace/Refund/Reship"></p>
+<p><img alt="BA Lead approval — Replace/Refund/Reship (đang phát triển)" src="./screenshots/flow-4/03-decision.png" title="BA Lead approval — Replace/Refund/Reship"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-4-thuc-thi-refund">Giai đoạn 4 — Thực thi refund</h2>

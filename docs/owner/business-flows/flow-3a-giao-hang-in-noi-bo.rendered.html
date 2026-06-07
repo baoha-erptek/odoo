@@ -78,9 +78,6 @@ li { margin: 0.25rem 0; }
 <strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_GIAO_HANG_VN.md"><code>../FLOW_GIAO_HANG_VN.md</code></a>
 <strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_giao_hang.spec.ts</code></p>
 <blockquote>
-<p><strong>TODO ảnh chụp:</strong> Các <code>![placeholder: ...]</code> bên dưới sẽ được thay bằng ảnh
-thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
-Slice kế tiếp đề xuất: <code>P-UAT-FLOW-3A-SCREENSHOTS</code>.</p>
 <p>Luồng 3a — sản phẩm in tại xưởng nội bộ, vận chuyển bằng USPS/UniUni/YunExpress.</p>
 </blockquote>
 <hr>
@@ -100,20 +97,20 @@ Slice kế tiếp đề xuất: <code>P-UAT-FLOW-3A-SCREENSHOTS</code>.</p>
 <p><strong>Trigger:</strong> BA confirm sale.order → tự sinh <code>stock.picking</code> (kho → khách)
 <strong>Vai trò:</strong> BA Shipping</p>
 <blockquote>
-<p><img alt="placeholder: stock.picking từ sale.order" src="./screenshots/flow-3a/01-picking.png" title="Stock Picking auto-tạo từ sale.order"></p>
+<p><img alt="Stock Picking auto-tạo từ sale.order" src="./screenshots/flow-3a/01-picking.png" title="Stock Picking auto-tạo từ sale.order"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-2-in-noi-bo-pack">Giai đoạn 2 — In nội bộ + Pack</h2>
 <p>Sản phẩm in tại xưởng dựa trên SKU + design file (xem <code>design_file</code> model).</p>
 <blockquote>
-<p><img alt="placeholder: design_file kèm sale.order line" src="./screenshots/flow-3a/02-design-file.png" title="Design file đính kèm sale order line"></p>
+<p><img alt="Design file đính kèm sale order line" src="./screenshots/flow-3a/02-design-file.png" title="Design file đính kèm sale order line"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-3-upload-tracking-push-len-etsy">Giai đoạn 3 — Upload tracking + Push lên Etsy</h2>
 <p><strong>Vị trí:</strong> Form sale.order → header → "Upload Tracking" → wizard hiện ra
 <strong>Field bắt buộc:</strong> carrier_name + tracking_number</p>
 <blockquote>
-<p><img alt="placeholder: wizard upload tracking" src="./screenshots/flow-3a/03-tracking-wizard.png" title="Wizard upload tracking — chọn carrier"></p>
+<p><img alt="Wizard upload tracking — chọn carrier" src="./screenshots/flow-3a/03-tracking-wizard.png" title="Wizard upload tracking — chọn carrier"></p>
 </blockquote>
 <p>Wizard gọi <code>EtsyTrackingPusher.push_tracking()</code> → Etsy
 <code>POST /v3/.../receipts/{receipt_id}/tracking</code> → trạng thái Etsy chuyển sang "Shipped".</p>

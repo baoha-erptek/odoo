@@ -6,10 +6,6 @@
 **Tài liệu nghiệp vụ:** [`../FLOW_HAU_MAI_VN.md`](../FLOW_HAU_MAI_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_hau_mai.spec.ts` (TBD)
 
-> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
-> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
-> Slice kế tiếp đề xuất: `P-UAT-FLOW-4-SCREENSHOTS`.
-
 > Luồng 4 — xử lý các yêu cầu sau bán: đổi hàng, trả hàng, refund, change-of-address.
 
 ---
@@ -37,7 +33,7 @@ Buyer           Etsy                 Odoo                  Operator
 **Trigger:** Etsy buyer message hoặc Etsy form "Return/Refund"
 **Ingest:** `etsy.conversation.message` (qua `conversations_r` scope — đang chờ approval)
 
-> ![placeholder: etsy.conversation message](./screenshots/flow-4/01-conversation.png "etsy.conversation.message — buyer request")
+> ![multichannel.enquiry — buyer request](./screenshots/flow-4/01-conversation.png "multichannel.enquiry — buyer request")
 
 ---
 
@@ -47,7 +43,7 @@ Buyer           Etsy                 Odoo                  Operator
 **Model:** `etsy.address.change.request`
 **POM:** `tests/e2e/page-objects/address_change_request_form.ts`
 
-> ![placeholder: address.change.request form](./screenshots/flow-4/02-address-change.png "Address Change Request — pending approval")
+> ![Address Change Request — pending approval](./screenshots/flow-4/02-address-change.png "Address Change Request — pending approval")
 
 ---
 
@@ -56,7 +52,7 @@ Buyer           Etsy                 Odoo                  Operator
 **Vai trò:** BA Lead duyệt
 **Action:** server action chuyển trạng thái `pending` → `approved` / `rejected`
 
-> ![placeholder: decision UI](./screenshots/flow-4/03-decision.png "BA Lead approval — Replace/Refund/Reship")
+> ![BA Lead approval — Replace/Refund/Reship (đang phát triển)](./screenshots/flow-4/03-decision.png "BA Lead approval — Replace/Refund/Reship")
 
 ---
 

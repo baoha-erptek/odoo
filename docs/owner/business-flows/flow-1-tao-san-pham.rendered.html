@@ -130,11 +130,8 @@ duyệt để xem sơ đồ swimlane đầy đủ.</p>
 sang đơn vị tiền tệ của shop (<code>etsy.shop.listing_currency_id</code>) qua
 <code>res.currency._convert()</code>. Xem ô preview <code>display_price_in_shop_currency</code>
 trên form <code>multichannel.listing</code>.</p>
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Current Wave-2/3 spec
-     chỉ RPC-read multichannel.listing, không mở form. Cần slice riêng
-     P-UAT-FLOW-1-LISTING-FORM-TOUR để mở form và chụp tab Shipping & Variations. -->
 <blockquote>
-<p><img alt="placeholder: FX preview trên multichannel.listing" src="./screenshots/flow-1/04-fx-preview.png" title="Tab Shipping &amp; Variations — Shop Currency Preview"></p>
+<p><img alt="Tab Shipping &amp; Variations — Shop Currency Preview" src="./screenshots/flow-1/04-fx-preview.png" title="Tab Shipping &amp; Variations — Shop Currency Preview"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-3-cau-hinh-etsy-specific">Giai đoạn 3 — Cấu hình Etsy-specific</h2>
@@ -168,11 +165,8 @@ hệ thống dùng default từ <code>etsy.shop</code>:</p>
 </table>
 <p>Nếu cần override per-listing (sau publish), mở form <code>multichannel.listing</code>,
 tab "Shipping &amp; Variations" hoặc "How It's Made".</p>
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
-     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab
-     Shipping & Variations để chụp. -->
 <blockquote>
-<p><img alt="placeholder: form multichannel.listing tab Shipping &amp; Variations" src="./screenshots/flow-1/05-listing-shipping.png" title="Form multichannel.listing — Shipping &amp; Variations với taxonomy + shipping profile"></p>
+<p><img alt="Form multichannel.listing — Shipping &amp; Variations với taxonomy + shipping profile" src="./screenshots/flow-1/05-listing-shipping.png" title="Form multichannel.listing — Shipping &amp; Variations với taxonomy + shipping profile"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-4-video-tuy-chon">Giai đoạn 4 — Video (tuỳ chọn)</h2>
@@ -181,10 +175,8 @@ tab "Shipping &amp; Variations" hoặc "How It's Made".</p>
 <strong>Field:</strong> <code>video_attachment_id</code> (Many2one tới <code>ir.attachment</code>)</p>
 <p>Tải video lên <code>ir.attachment</code> (qua nút Upload trên form), chọn từ dropdown.
 Publisher gọi <code>POST /shops/{id}/listings/{id}/videos</code> (multipart) khi publish.</p>
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
-     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab Video. -->
 <blockquote>
-<p><img alt="placeholder: tab Video trên multichannel.listing" src="./screenshots/flow-1/06-listing-video.png" title="Tab Video — chọn file đính kèm"></p>
+<p><img alt="Tab Video trên multichannel.listing" src="./screenshots/flow-1/06-listing-video.png" title="Tab Video — chọn file đính kèm"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-5-publish-draft">Giai đoạn 5 — Publish Draft</h2>

@@ -77,9 +77,10 @@ li { margin: 0.25rem 0; }
 <strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_GIAO_HANG_VN.md"><code>../HUONG_DAN_GIAO_HANG_VN.md</code></a> (mục Gearment)
 <strong>API reference:</strong> <a href="../../GEARMENT_API_REFERENCE.md"><code>../../GEARMENT_API_REFERENCE.md</code></a></p>
 <blockquote>
-<p><strong>TODO ảnh chụp:</strong> Các <code>![placeholder: ...]</code> bên dưới sẽ được thay bằng ảnh
-thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
-Slice kế tiếp đề xuất: <code>P-UAT-FLOW-3B-SCREENSHOTS</code>.</p>
+<p><strong>Trạng thái triển khai:</strong> Ảnh bên dưới là <em>stub preview</em> — module
+<code>gearment_integration</code> (gearment.order / quote.wizard / gearment.api.log)
+đang trong giai đoạn build. Sẽ thay bằng ảnh chụp thật khi pilot vendor
+approval xong.</p>
 <p>Luồng 3b — sản phẩm in + ship bởi Gearment (đối tác dropship POD).
 Tự động hoá qua Gearment API v3 + webhook.</p>
 </blockquote>
@@ -100,7 +101,7 @@ Tự động hoá qua Gearment API v3 + webhook.</p>
 <p><strong>Trigger:</strong> BA mở <code>sale.order</code> → header → "Get Gearment Quote" → wizard
 <strong>Wizard:</strong> <code>gearment_quote_wizard.ts</code> (POM)</p>
 <blockquote>
-<p><img alt="placeholder: Gearment quote wizard" src="./screenshots/flow-3b/01-quote-wizard.png" title="Wizard — chọn SKU + shipping method"></p>
+<p><img alt="Gearment Quote Wizard (đang phát triển)" src="./screenshots/flow-3b/01-quote-wizard.png" title="Wizard — chọn SKU + shipping method"></p>
 </blockquote>
 <p>Wizard gọi <code>POST /v3/orders/quote</code> → trả về <code>quote_id</code> + giá ship + ETA.</p>
 <hr>
@@ -108,7 +109,7 @@ Tự động hoá qua Gearment API v3 + webhook.</p>
 <p><strong>Trigger:</strong> sau quote, BA click "Send to Gearment" → tạo <code>gearment.order</code>
 <strong>Service:</strong> <code>etsy_integration/services/gearment_client.py</code></p>
 <blockquote>
-<p><img alt="placeholder: gearment.order vừa tạo" src="./screenshots/flow-3b/02-gearment-order.png" title="Gearment order — trạng thái Submitted"></p>
+<p><img alt="Gearment Order Form (đang phát triển)" src="./screenshots/flow-3b/02-gearment-order.png" title="Gearment order — trạng thái Submitted"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-3-webhook-tracking">Giai đoạn 3 — Webhook tracking</h2>
@@ -117,7 +118,7 @@ Tự động hoá qua Gearment API v3 + webhook.</p>
 <strong>HMAC verify:</strong> SHA256(secret, path+nonce+timestamp+base64url(body))
 <strong>Header:</strong> <code>X-Connect-Signature</code></p>
 <blockquote>
-<p><img alt="placeholder: webhook log" src="./screenshots/flow-3b/03-webhook-log.png" title="ir.logging — Gearment webhook receive"></p>
+<p><img alt="Gearment Webhook Log (đang phát triển)" src="./screenshots/flow-3b/03-webhook-log.png" title="ir.logging — Gearment webhook receive"></p>
 </blockquote>
 <p>Khi webhook nhận tracking, Odoo tự động push lên Etsy (giống Flow 3a giai đoạn 3).</p>
 <hr>

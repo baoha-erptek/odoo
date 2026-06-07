@@ -6,10 +6,6 @@
 **Tài liệu nghiệp vụ:** [`../FLOW_DON_HANG_ETSY_VN.md`](../FLOW_DON_HANG_ETSY_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_don_hang_etsy.spec.ts`
 
-> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
-> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3 —
-> Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: `P-UAT-FLOW-2-SCREENSHOTS`.
-
 > Luồng 2 mô tả 2 đường nhận đơn:
 > **(a)** API (mới, mặc định) — Etsy gọi webhook → Odoo tạo `sale.order`
 > **(b)** Email (cũ, dự phòng) — Gmail fetch → parser → `sale.order`
@@ -40,9 +36,9 @@ Etsy / Buyer       Odoo etsy_integration       BA User
 **Endpoint controller:** `etsy_integration/controllers/etsy_webhook.py`
 **Dedup model:** `etsy.message.dedupe`
 
-> ![placeholder: form etsy.shop tab Recovery Probe](./screenshots/flow-2/01-shop-api-status.png "etsy.shop — trạng thái OAuth + API status")
+> ![etsy.shop — trạng thái OAuth + API status](./screenshots/flow-2/01-shop-api-status.png "etsy.shop — trạng thái OAuth + API status")
 
-> ![placeholder: log fetch receipts](./screenshots/flow-2/02-cron-log.png "Cron log — GET /receipts pagination")
+> ![Etsy API log — GET /receipts + pagination](./screenshots/flow-2/02-cron-log.png "Etsy API log — GET /receipts + pagination")
 
 ---
 
@@ -52,7 +48,7 @@ Etsy / Buyer       Odoo etsy_integration       BA User
 **Parser:** `etsy_integration/services/email_parser.py` (regex-only, ORM-free)
 **Dedup:** `etsy.email.log.message_id`
 
-> ![placeholder: cấu hình Gmail credentials](./screenshots/flow-2/03-gmail-config.png "Cấu hình Gmail — service account + label")
+> ![Cấu hình Gmail — Settings > Etsy](./screenshots/flow-2/03-gmail-config.png "Cấu hình Gmail — Settings > Etsy")
 
 ---
 
@@ -63,7 +59,7 @@ Etsy / Buyer       Odoo etsy_integration       BA User
 - Listing thumbnail + variant info
 - Personalization (nếu có)
 
-> ![placeholder: sale.order vừa tạo từ Etsy](./screenshots/flow-2/04-sale-order-new.png "Sales Order vừa tạo — preview customer + items")
+> ![Sales Order — customer + items](./screenshots/flow-2/04-sale-order-new.png "Sales Order — customer + items")
 
 BA confirm để chuyển trạng thái sang `sale` (xác nhận); chuyển tiếp sang [Flow 3a hoặc 3b](./flow-3a-giao-hang-in-noi-bo.md) cho khâu giao hàng.
 

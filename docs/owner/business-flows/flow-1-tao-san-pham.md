@@ -70,10 +70,7 @@ sang đơn vị tiền tệ của shop (`etsy.shop.listing_currency_id`) qua
 `res.currency._convert()`. Xem ô preview `display_price_in_shop_currency`
 trên form `multichannel.listing`.
 
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Current Wave-2/3 spec
-     chỉ RPC-read multichannel.listing, không mở form. Cần slice riêng
-     P-UAT-FLOW-1-LISTING-FORM-TOUR để mở form và chụp tab Shipping & Variations. -->
-> ![placeholder: FX preview trên multichannel.listing](./screenshots/flow-1/04-fx-preview.png "Tab Shipping & Variations — Shop Currency Preview")
+> ![Tab Shipping & Variations — Shop Currency Preview](./screenshots/flow-1/04-fx-preview.png "Tab Shipping & Variations — Shop Currency Preview")
 
 ---
 
@@ -91,10 +88,7 @@ hệ thống dùng default từ `etsy.shop`:
 Nếu cần override per-listing (sau publish), mở form `multichannel.listing`,
 tab "Shipping & Variations" hoặc "How It's Made".
 
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
-     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab
-     Shipping & Variations để chụp. -->
-> ![placeholder: form multichannel.listing tab Shipping & Variations](./screenshots/flow-1/05-listing-shipping.png "Form multichannel.listing — Shipping & Variations với taxonomy + shipping profile")
+> ![Form multichannel.listing — Shipping & Variations với taxonomy + shipping profile](./screenshots/flow-1/05-listing-shipping.png "Form multichannel.listing — Shipping & Variations với taxonomy + shipping profile")
 
 ---
 
@@ -108,9 +102,7 @@ tab "Shipping & Variations" hoặc "How It's Made".
 Tải video lên `ir.attachment` (qua nút Upload trên form), chọn từ dropdown.
 Publisher gọi `POST /shops/{id}/listings/{id}/videos` (multipart) khi publish.
 
-<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
-     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab Video. -->
-> ![placeholder: tab Video trên multichannel.listing](./screenshots/flow-1/06-listing-video.png "Tab Video — chọn file đính kèm")
+> ![Tab Video trên multichannel.listing](./screenshots/flow-1/06-listing-video.png "Tab Video — chọn file đính kèm")
 
 ---
 

@@ -78,9 +78,6 @@ li { margin: 0.25rem 0; }
 <strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_DON_HANG_ETSY_VN.md"><code>../FLOW_DON_HANG_ETSY_VN.md</code></a>
 <strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_don_hang_etsy.spec.ts</code></p>
 <blockquote>
-<p><strong>TODO ảnh chụp:</strong> Các <code>![placeholder: ...]</code> bên dưới sẽ được thay bằng ảnh
-thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3 —
-Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: <code>P-UAT-FLOW-2-SCREENSHOTS</code>.</p>
 <p>Luồng 2 mô tả 2 đường nhận đơn:
 <strong>(a)</strong> API (mới, mặc định) — Etsy gọi webhook → Odoo tạo <code>sale.order</code>
 <strong>(b)</strong> Email (cũ, dự phòng) — Gmail fetch → parser → <code>sale.order</code></p>
@@ -105,8 +102,8 @@ Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: <code>P-UAT-FLOW-2
 <strong>Endpoint controller:</strong> <code>etsy_integration/controllers/etsy_webhook.py</code>
 <strong>Dedup model:</strong> <code>etsy.message.dedupe</code></p>
 <blockquote>
-<p><img alt="placeholder: form etsy.shop tab Recovery Probe" src="./screenshots/flow-2/01-shop-api-status.png" title="etsy.shop — trạng thái OAuth + API status"></p>
-<p><img alt="placeholder: log fetch receipts" src="./screenshots/flow-2/02-cron-log.png" title="Cron log — GET /receipts pagination"></p>
+<p><img alt="etsy.shop — trạng thái OAuth + API status" src="./screenshots/flow-2/01-shop-api-status.png" title="etsy.shop — trạng thái OAuth + API status"></p>
+<p><img alt="Etsy API log — GET /receipts + pagination" src="./screenshots/flow-2/02-cron-log.png" title="Etsy API log — GET /receipts + pagination"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-2-uong-email-du-phong">Giai đoạn 2 — Đường Email (dự phòng)</h2>
@@ -114,7 +111,7 @@ Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: <code>P-UAT-FLOW-2
 <strong>Parser:</strong> <code>etsy_integration/services/email_parser.py</code> (regex-only, ORM-free)
 <strong>Dedup:</strong> <code>etsy.email.log.message_id</code></p>
 <blockquote>
-<p><img alt="placeholder: cấu hình Gmail credentials" src="./screenshots/flow-2/03-gmail-config.png" title="Cấu hình Gmail — service account + label"></p>
+<p><img alt="Cấu hình Gmail — Settings &gt; Etsy" src="./screenshots/flow-2/03-gmail-config.png" title="Cấu hình Gmail — Settings &gt; Etsy"></p>
 </blockquote>
 <hr>
 <h2 id="giai-oan-3-ba-xu-ly-on">Giai đoạn 3 — BA xử lý đơn</h2>
@@ -123,7 +120,7 @@ Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: <code>P-UAT-FLOW-2
 - Listing thumbnail + variant info
 - Personalization (nếu có)</p>
 <blockquote>
-<p><img alt="placeholder: sale.order vừa tạo từ Etsy" src="./screenshots/flow-2/04-sale-order-new.png" title="Sales Order vừa tạo — preview customer + items"></p>
+<p><img alt="Sales Order — customer + items" src="./screenshots/flow-2/04-sale-order-new.png" title="Sales Order — customer + items"></p>
 </blockquote>
 <p>BA confirm để chuyển trạng thái sang <code>sale</code> (xác nhận); chuyển tiếp sang <a href="./flow-3a-giao-hang-in-noi-bo.md">Flow 3a hoặc 3b</a> cho khâu giao hàng.</p>
 <hr>
