@@ -528,101 +528,114 @@ Tokens canonical: <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</c
 - <code>fa-times-circle</code> cho error
 - <code>fa-check-circle</code> cho success</p>
 <hr>
-<h2 id="khi-backport-vao-owl-convention">Khi backport vào OWL — convention</h2>
+<h2 id="khi-backport-vao-owl-convention-revised-2026-06-07-per-ba-audit">Khi backport vào OWL — convention (revised 2026-06-07 per BA audit)</h2>
+<p><strong>⚠ Important — Standard-Odoo-First applied:</strong> Phase 2 = <strong>CSS overrides + view XML only</strong>.
+<strong>NO new OWL components.</strong> BA review identified that what we initially planned as
+<code>MuPill</code> / <code>MuStatusBar</code> are already shipped by Odoo 19 CE — we just need to style them.</p>
 <table>
 <thead>
 <tr>
-<th>Pattern</th>
-<th>OWL component name</th>
-<th>XML widget</th>
-<th>Notes</th>
+<th>Mockup pattern</th>
+<th>Standard Odoo equivalent</th>
+<th>Phase 2 action</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Chrome bar</td>
-<td>(use Odoo navbar — không backport)</td>
-<td>—</td>
-<td>Default OK</td>
+<td><code>nav.o_main_navbar</code></td>
+<td>Skip — keep default</td>
 </tr>
 <tr>
 <td>Breadcrumb</td>
-<td><code>MuBreadcrumb</code> (optional)</td>
-<td>—</td>
-<td>Odoo có sẵn .o_breadcrumb — chỉ tinh chỉnh styling</td>
+<td><code>.o_breadcrumb</code> (auto-rendered)</td>
+<td>Skip — keep default</td>
 </tr>
 <tr>
-<td>Status bar</td>
-<td><code>MuStatusBar</code></td>
-<td><code>widget="status_bar"</code></td>
-<td>Wrap default Odoo statusbar với purple stage pipe</td>
+<td>Status bar (buttons + stage pipe)</td>
+<td><code>&lt;header&gt;</code> + <code>&lt;button class="oe_highlight"/&gt;</code> + <code>&lt;field widget="state_selection"/&gt;</code></td>
+<td>CSS override only — apply purple <code>.mu-stage</code> tint to active state</td>
 </tr>
 <tr>
 <td>Form grid</td>
-<td>(CSS-only)</td>
-<td>—</td>
-<td>Add <code>.mu-grid2</code> to form view arch; no JS component</td>
+<td><code>&lt;group&gt;</code> + <code>&lt;group string=""/&gt;</code></td>
+<td>CSS override only — <code>.mu-grid2</code> class on outer <code>&lt;sheet&gt;</code> div</td>
 </tr>
 <tr>
-<td>Pill badge</td>
-<td><code>MuPill</code></td>
-<td><code>widget="mu_pill"</code> (Selection field)</td>
-<td>4 color variants per Selection value</td>
+<td>Pill badge (4 colors)</td>
+<td><code>&lt;field widget="badge"/&gt;</code> (Selection field) + <code>decoration-success/warning/danger/info</code></td>
+<td><strong>No <code>MuPill</code> component.</strong> Use standard <code>widget="badge"</code>; add <code>.mu-pill-*</code> CSS overrides for tone tuning</td>
 </tr>
 <tr>
-<td>Mono token</td>
-<td>(CSS-only)</td>
-<td><code>class="mu-mono"</code></td>
-<td>Wrap SKU/id fields with class</td>
+<td>Stage pipeline (Draft → Published → Archived)</td>
+<td><code>&lt;field widget="state_selection"/&gt;</code> inside <code>&lt;header&gt;</code></td>
+<td><strong>No <code>MuStatusBar</code> component.</strong> Standard widget exists; add <code>.mu-stage</code> CSS overrides</td>
+</tr>
+<tr>
+<td>Mono token (SKU / listing_id)</td>
+<td><code>&lt;field/&gt;</code> + <code>class="mu-mono"</code></td>
+<td>CSS-only refinement</td>
 </tr>
 <tr>
 <td>Tabs</td>
-<td>(no backport)</td>
-<td>—</td>
-<td>Use Odoo's <code>&lt;notebook&gt;</code> with custom CSS</td>
+<td><code>&lt;notebook&gt;</code> + <code>&lt;page&gt;</code> (Odoo standard arch)</td>
+<td><strong>No <code>MuTabs</code> component.</strong> Apply <code>.mu-tabs</code>/<code>.mu-tab.active</code> CSS to existing <code>.o_notebook .nav-tabs</code></td>
 </tr>
 <tr>
 <td>List table</td>
-<td>(no backport)</td>
-<td>—</td>
-<td>Use Odoo <code>&lt;list&gt;</code> with refined CSS</td>
+<td><code>&lt;list&gt;</code> view (Odoo standard)</td>
+<td>CSS refinement on <code>.o_list_view</code></td>
 </tr>
 <tr>
 <td>Kanban cards</td>
-<td>(no backport)</td>
-<td>—</td>
-<td>Use Odoo <code>&lt;kanban&gt;</code> with refined card template</td>
+<td><code>&lt;kanban&gt;</code> view (Odoo standard)</td>
+<td>CSS refinement on <code>.o_kanban_record</code></td>
 </tr>
 <tr>
-<td>Modal</td>
-<td>(no backport)</td>
-<td>—</td>
-<td>Use Odoo <code>WarningDialog</code> with custom header color</td>
+<td>Modal (error 400)</td>
+<td><code>WarningDialog</code> / Odoo's standard modals</td>
+<td>CSS override on <code>.modal-header</code> for danger color</td>
 </tr>
 <tr>
 <td>Banner</td>
-<td><code>MuBanner</code></td>
-<td><code>widget="mu_banner"</code> (HTML field or static)</td>
-<td>Static helper text in forms</td>
+<td><code>&lt;div class="alert alert-warning"/&gt;</code> (Bootstrap, ships with Odoo)</td>
+<td>CSS override only</td>
 </tr>
 </tbody>
 </table>
-<p>Priority MVP backport (per Phase 2): <code>MuPill</code> + status-bar styling + pill colors + mono SKU class — 4 items, 3-4 dev days.</p>
+<p><strong>Revised Phase 2 MVP scope (CSS-only, no JS components):</strong>
+1. SCSS bundle override loading the design tokens (target: <code>etsy_integration/static/src/scss/mu_tokens.scss</code>)
+2. CSS overrides for <code>.mu-pill-*</code> (decoration colors), <code>.mu-stage</code> (active state), <code>.mu-mono</code> (SKU styling), <code>.mu-tabs</code> (active tab purple tint)
+3. View XML changes on <code>product.template</code> + <code>multichannel.listing</code> to add <code>groups=</code>/<code>invisible=</code> per Tier 3 rules + wrap key fields with <code>class="mu-mono"</code></p>
+<p><strong>Estimated effort:</strong> 3–4 dev days (vs prior 5-7 day estimate — dropped because no OWL components).</p>
 <hr>
 <h2 id="phase-1-deliverables-checklist">Phase 1 deliverables checklist</h2>
 <ul>
-<li>[x] <code>mu-design-tokens.css</code> — all 10 patterns extracted from mockups, organized into 15 sections (color, typography, spacing, layout, chrome, buttons, stage, form, pills, tabs, list, kanban, modal, banner, screen frame).</li>
+<li>[x] <code>mu-design-tokens.css</code> — all 10 patterns extracted from mockups, organized into 15 sections.</li>
 <li>[x] <code>MU_SYSTEM.md</code> — this doc.</li>
-<li>[x] <code>FORM_CURATION_GUIDE.md</code> — Tier 1/2/3 rules.</li>
+<li>[x] <code>FORM_CURATION_GUIDE.md</code> — Tier 1/2/3 rules (BA-confirmed all standard Odoo mechanisms).</li>
+<li>[x] BA audit (Standard-Odoo-First) — 5 reinventions identified, all addressed by revised backport table above.</li>
 </ul>
-<h2 id="phase-2-entry-criteria-waiting-on-owner-answers">Phase 2 entry-criteria (waiting on owner answers)</h2>
-<p>5 open questions in <a href="../business-flows/COMPARISON_MOCKUP_VS_ACTUAL.md#open-questions-for-owner"><code>COMPARISON_MOCKUP_VS_ACTUAL.md</code> §"Open questions for owner"</a>. Need answers on:
-1. Mockup intent (ideal vs reference)
-2. Field section priority for hiding
-3. Purple branding scope (all custom views vs Etsy-only)
-4. mhc form split (re-embed vs keep)
-5. Timeline urgency</p>
-<p>Phase 2 MVP starts after owner picks 1-2 backport targets from Q2 + confirms Q3 scope.</p>
+<h2 id="phase-2-entry-criteria">Phase 2 entry-criteria</h2>
+<p><strong>A. BA confirmations needed (Telegram-actionable, before kickoff):</strong>
+1. Confirm Phase 2 scope = <strong>CSS + view XML only</strong>, no new OWL components (per BA audit + revised backport table above).
+2. Confirm targets = <code>product.template</code> + <code>multichannel.listing</code> MVP.
+3. Confirm purple branding = backend bundle CSS override (not standalone).</p>
+<p><strong>B. Owner Q1-Q5 from COMPARISON doc</strong> (less blocking now since BA audit clarified some):
+1. Q1 Mockup intent (ideal vs reference) — answer guides whether to refine more mockup styles into CSS later.
+2. Q2 Field section priority for hiding — needed for Tier 3 <code>groups=</code> decisions on <code>product.template</code>.
+3. Q3 Purple branding scope — needed for SCSS variable injection scope.
+4. Q4 mhc form split — design decision, low Phase 2 impact.
+5. Q5 Timeline urgency — affects sprint planning.</p>
+<h2 id="phase-2-skill-sequence-per-ba-inventory">Phase 2 skill sequence (per BA inventory)</h2>
+<ol>
+<li><strong>odoo-standard-first</strong> — Re-validate the revised plan before any code (~20 min).</li>
+<li><strong>odoo-functional-mockup</strong> — Walk the 2 target forms (product.template + multichannel.listing) through baseline → taste → craft → diff (~90 min).</li>
+<li><strong>od-design-craft + codebase-graph</strong> (parallel) — Craft validates token consistency; graph traces form inheritance to avoid view-conflict regressions (~75 min total).</li>
+<li><strong>taste-skill</strong> (optional, post-MVP) — Anti-slop final pass.</li>
+<li><strong>design-review</strong> (post-MVP) — Quality gate after code lands.</li>
+</ol>
+<p>Skills explicitly SKIPPED: frontend-design, design-consultation, design-shotgun, ascii-ui-mockup-generator, frontend-patterns, design-html (BA reasoning in tracker row P-DS-1-DESIGN-SYSTEM-DOCS).</p>
 <hr>
 <h2 id="reference-mockups">Reference mockups</h2>
 <p>Frozen design intent — these stay as-is for inspiration:</p>

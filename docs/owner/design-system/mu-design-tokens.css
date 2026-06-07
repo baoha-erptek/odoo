@@ -5,10 +5,17 @@
  * (flow-1 through flow-4, designed 2026-06-03). Single canonical source for
  * the visual language used in owner-facing UI mockups.
  *
- * This file is a REFERENCE — not loaded by Odoo at runtime. Backport patterns
- * into real OWL components per the Hybrid (Option 3) plan; see
- * `docs/owner/design-system/MU_SYSTEM.md` for usage guidance + per-pattern
- * mapping into OWL components.
+ * This file is a REFERENCE — not loaded by Odoo at runtime. Phase 2 backport
+ * pulls the TOKEN values + selected pattern CSS into a scoped SCSS bundle
+ * (`etsy_integration/static/src/scss/mu_tokens.scss`).
+ *
+ * STANDARD-ODOO-FIRST NOTE (BA audit 2026-06-07): Several patterns below
+ * (mu-pill, mu-stage, mu-stage-pipe, mu-tabs) DUPLICATE Odoo's standard
+ * widgets (widget="badge", widget="state_selection", <notebook>). Phase 2
+ * DOES NOT implement custom OWL components for these — it applies the CSS
+ * tokens + visual refinements as OVERRIDES on the standard Odoo elements.
+ * See MU_SYSTEM.md §"Khi backport vào OWL — convention" for the per-pattern
+ * standard mapping.
  *
  * Naming convention: every class starts with `mu-` (mockup) to avoid
  * collision with Odoo's `o_*` classes when this CSS is eventually loaded
