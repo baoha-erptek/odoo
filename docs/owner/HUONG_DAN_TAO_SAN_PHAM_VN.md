@@ -469,7 +469,9 @@ Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chun
 2. Sang tab **Video** (tab mới).
 3. Bấm vào **Video** → chọn file `.mp4` từ máy (cỡ file < ~100MB; Etsy có giới hạn riêng).
 4. Save.
-5. Khi BA bấm **Publish to Etsy**, hệ thống tự upload video qua endpoint `POST /shops/.../listings/.../videos` sau khi tạo listing + push tồn kho.
+5. Quay lại form **Sản phẩm** (menu **Products** → mở SP tương ứng).
+6. Bấm nút **Publish to Etsy** ở header form (nút màu vàng, chỉ hiện với BA) → chọn shop → Confirm.
+7. Hệ thống tự upload video qua `POST /shops/.../listings/.../videos` sau khi tạo listing + push tồn kho.
 
 **Nguyên tắc:**
 - Video nằm ở Listing layer (theo từng shop) — KHÔNG nằm ở Sản phẩm master. Cùng 1 SP nhưng JaHandmadeArt và NamcoHome có thể dùng video khác nhau.
