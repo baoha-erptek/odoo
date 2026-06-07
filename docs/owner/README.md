@@ -19,7 +19,39 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 > **Đã sync lên Jira ngày 2026-05-21** (lần đầu) **+ delta sync 2026-05-25** (3 Story Done + Epic 7).
 > **Board Jira:** https://erptek.atlassian.net/jira/software/projects/ESTY/board
 > **Confluence (bản tài liệu đầy đủ):** https://erptek.atlassian.net/wiki/spaces/HEP
+> **Trang Confluence dự án:** https://erptek.atlassian.net/jira/software/projects/ESTY/pages
 > Xem `JIRA_SYNC_REPORT.md` để biết chi tiết keys.
+
+---
+
+## Hướng dẫn nghiệp vụ (4 luồng chính)
+
+| Luồng | Tài liệu nghiệp vụ | Hướng dẫn thao tác | Sơ đồ + ảnh chụp |
+|---|---|---|---|
+| Tạo sản phẩm | [`FLOW_TAO_SAN_PHAM_VN.md`](FLOW_TAO_SAN_PHAM_VN.md) | [`HUONG_DAN_TAO_SAN_PHAM_VN.md`](HUONG_DAN_TAO_SAN_PHAM_VN.md) | [`business-flows/flow-1-tao-san-pham.md`](business-flows/flow-1-tao-san-pham.md) |
+| Tiếp nhận đơn Etsy | [`FLOW_DON_HANG_ETSY_VN.md`](FLOW_DON_HANG_ETSY_VN.md) | [`HUONG_DAN_DON_HANG_ETSY_VN.md`](HUONG_DAN_DON_HANG_ETSY_VN.md) | [`business-flows/flow-2-nhan-don-hang-etsy.md`](business-flows/flow-2-nhan-don-hang-etsy.md) |
+| Giao hàng | [`FLOW_GIAO_HANG_VN.md`](FLOW_GIAO_HANG_VN.md) | [`HUONG_DAN_GIAO_HANG_VN.md`](HUONG_DAN_GIAO_HANG_VN.md) | [`business-flows/flow-3a-giao-hang-in-noi-bo.md`](business-flows/flow-3a-giao-hang-in-noi-bo.md) + [`flow-3b-giao-hang-gearment-dropship.md`](business-flows/flow-3b-giao-hang-gearment-dropship.md) |
+| Hậu mãi | [`FLOW_HAU_MAI_VN.md`](FLOW_HAU_MAI_VN.md) | [`HUONG_DAN_HAU_MAI_VN.md`](HUONG_DAN_HAU_MAI_VN.md) | [`business-flows/flow-4-hau-mai.md`](business-flows/flow-4-hau-mai.md) |
+
+Chỉ mục business-flows: [`business-flows/README.md`](business-flows/README.md)
+Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.html)
+
+## UAT (Owner kiểm thử)
+
+| File | Mục đích | Phiên bản |
+|---|---|---|
+| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md) | Kịch bản click-by-click cho Wave 2/3 (ESTY-189..199) | 1.2 — **dùng** |
+| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md) | Phiên bản trước (TC-006..TC-012 vẫn còn dùng) | 1.0 |
+| [`UAT_FINDINGS_2026-05-26.md`](UAT_FINDINGS_2026-05-26.md) | Kết quả UAT lần 1 (9 PASS / 3 SKIP) | — |
+| [`UAT_FINDINGS_2026-05-28.md`](UAT_FINDINGS_2026-05-28.md) | Kết quả UAT v1.2 form-only | — |
+| [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md) | Checklist trước khi publish live | — |
+| [`INVENTORY_SETUP_VN.md`](INVENTORY_SETUP_VN.md) | Cấu hình kho + bin | — |
+| [`SKU_GRAMMAR.md`](SKU_GRAMMAR.md) | Ngữ pháp SKU + defect matrix | — |
+
+## Lưu trữ (đã archive)
+
+Tài liệu cũ / chạy log / draft email đã chuyển sang [`../archive/2026-06-07/`](../archive/2026-06-07/).
+Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 
 ---
 
@@ -60,6 +92,7 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 |-----------|------|-------------|-----------------|
 | 1.0 | 2026-05-21 | BA Consultant | Tài liệu khởi tạo — 4 file owner-readable, chuẩn bị sync Jira |
 | 1.1 | 2026-05-25 | BA Consultant | Delta sync — 3 Story Done, Epic 7 (Trung tâm sản phẩm + xuất kênh) thêm 7 Story, mirror lên Confluence space HEP |
+| 1.2 | 2026-06-07 | UAT sweep | Thêm 5 business-flows companion markdown + UAT_WALKTHROUGH v1.2 Wave 2/3; archive 19 file E2E run logs / legacy guides sang `../archive/2026-06-07/` |
 
 ---
 
