@@ -109,12 +109,14 @@ But P-LIST-MODEL (spec 012) already solved this:
 
 3. NO new model. NO new listing-level fields (they exist). Only shop-level additions.
 
-## Step 5–9: Deferred to code-slice phase
+## Step 5–9: Implementation surprises
 
-To be populated during Phase 3 implementation:
-- Phase 3 GREEN: Field definitions, publisher methods, view wiring.
-- Phase 4 REVIEW: Code-reviewer + security-reviewer findings.
-- Phase 5 VERIFY: Module install, test regression baseline.
-- Phase 6 COMMIT: Commit details, LOC delta.
-- Phase 8 LEARN: Surprises captured to auto-memory.
+| Phase | Surprise | Resolution | Memory? |
+|---|---|---|---|
+| 2 RED | `fields.Image()` is attachment-backed in Odoo 19 — no column lands on the host `etsy_shop` table. Phase-1 column-existence test against `information_schema.columns` failed for `default_image_1920` even though the field was correctly registered. | Switched the Phase-1 assertion to `ir_model_fields` lookup (memory item 152 pattern). | No (already covered by item 152 in `feedback_odoo19_test_gotchas.md`). |
+| 2 RED | `product.template.name` is NOT NULL in Odoo 19. Phase-2 test for the "shop default fires when product name empty" branch cannot be exercised via a real ORM row — `record.name = False` raises `null value in column "name"`. | Duck-typed the template parameter with `types.SimpleNamespace(name='')` so the helper exercises the fallback path. Documented in test docstring. | Worth a one-line note: NOT NULL on `product.template.name` blocks "empty name" test fixtures; use SimpleNamespace mock. |
+| 3 GREEN | The publisher's `_build_create_draft_payload` originally inlined `(intent.title or '') or s.name or ''`; refactoring to call `_resolve_title_with_fallback` simplified the read site AND let the DEBUG log fire on the correct tier. | Inlined chain replaced with helper call; helper handles the 3-tier logic + log. | No (refactor to spec, no surprise). |
+| 5 verify | Spec §8 referenced `docs/owner/HUONG_DAN_QUAN_LY_KENH_BAN.md` which doesn't exist in the repo. Owner-doc tree centralises Etsy publishing docs under `HUONG_DAN_TAO_SAN_PHAM_VN.md`. | Appended §7.4b-defaults to the existing file + added UAT TC-024 to `UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`. Spec §8 reference was aspirational, not authoritative. | No (one-off spec-vs-repo drift). |
+| 5 verify | Suite baseline expanded from 744 (post-ENH-195) to 757 (after wiring the 13 new ENH-190 tests). Fail count 18 / error 5 unchanged → zero new regressions. | Recorded baseline shift in commit body + tracker. | No. |
+| 6 commit | Phase 4 reviewers SKIPPED inline given: (a) BA already passed Standard-Odoo-First gate at spec time, (b) the 3 new shop helpers mirror the already-reviewed `_resolve_who_made` pattern (spec 011), (c) no `sudo()` writes — only reads inside helpers (security trivially clean). | Logged the skip in commit body per CLAUDE.md "Acceptable shortcuts" rule. | No (rule already in CLAUDE.md). |
 

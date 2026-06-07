@@ -404,6 +404,19 @@ Hệ thống làm các bước:
 
 **Thứ tự ưu tiên:** Listing override → Etsy Shop default → 0 (Etsy 400 — sẽ hardening sau).
 
+### 7.4b-defaults Cài đặt Title / Description / Image mặc định theo từng shop
+
+Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chung tiêu đề / mô tả / hình thương hiệu (brand voice) — ví dụ JaHandmadeArt luôn dùng "Handmade Ceramic by JaHandmadeArt", còn namcohome dùng "Durable Office Ceramic" — không cần sửa từng listing.
+
+- **Vị trí**: vào menu *Operations → Channels → Etsy Shops*, mở shop cần cài đặt → tab **Publisher Defaults** → group **Shop Brand-Voice Defaults**.
+- **3 trường mới**:
+  - *Default Listing Title* (≤140 ký tự) — tiêu đề mặc định nếu listing không override và sản phẩm không có tên riêng.
+  - *Default Listing Description* (text dài) — mô tả mặc định.
+  - *Default Listing Image* (upload ảnh) — hình mặc định, dùng khi sản phẩm chưa có ảnh chính.
+- **Thứ tự fallback** (hệ thống tự chọn): per-listing override → product canonical → shop default → để trống. Ô shop default chỉ kích hoạt khi cả 2 tầng trên đều rỗng.
+- **Khi nào nên dùng**: lập shop mới chưa đủ ảnh/mô tả cho từng sản phẩm, hoặc muốn unify brand voice. Để trống = inherit product canonical (mặc định cũ).
+- **Permission**: nhóm Marketing user trở lên có quyền edit (cùng nhóm chỉnh listing).
+
 ### 7.4c "How it's made" per-listing (who_made / when_made / is_supply)
 
 > Mới từ 2026-06-06 (P-LIST-HOW-ITS-MADE). 3 trường Etsy bắt buộc giờ có override theo từng listing.

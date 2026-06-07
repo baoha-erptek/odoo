@@ -597,6 +597,7 @@ ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/S
 | TC-021 | Shop attribute defaults — tier-2 fallback | ☐ | ☐ | ☐ | Etsy Shop Settings; pairs with TC-020 |
 | TC-022 | Bulk Mark Ready + Reset to Draft + state-lock | ☐ | ☐ | ☐ | Operations → Listings list-view server actions |
 | TC-023 | Shop Currency Preview hiển thị đúng số tiền VND | ☐ | ☐ | ☐ | Listing form → Shipping & Variations → Shop Currency Preview. Chọn shop VND, đảm bảo `res.currency.rate` USD→VND có sẵn, kiểm tra giá hiện ≠ 0.00 và bằng `list_price × rate`. Bỏ chọn shop → giá về 0.00, không crash. |
+| TC-024 | Shop Brand-Voice Defaults — fallback chain | ☐ | ☐ | ☐ | Operations → Channels → Etsy Shops → mở shop → Publisher Defaults → Shop Brand-Voice Defaults. Set `default_title='Shop Title Test'`. Tạo sản phẩm KHÔNG có tiêu đề listing riêng, KHÔNG đổi product name → publish → kiểm tra payload Etsy (audit log) carry `title='Product Name'` (product layer wins, không xuống shop). Sau đó tạo product với name='' (test ORM-level — skip nếu khó) → kiểm tra shop default fires. Bỏ trống shop default → fallback về product name. |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
