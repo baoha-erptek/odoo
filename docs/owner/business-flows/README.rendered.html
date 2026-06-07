@@ -1,0 +1,197 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Readme — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/README.md · rendered for preview</div><h1 id="business-flows-so-o-anh-chup-uat">Business flows — sơ đồ + ảnh chụp UAT</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Đối tượng:</strong> Chủ shop, BA Lead, Đội vận hành</p>
+<p>Bộ sơ đồ kiến trúc nghiệp vụ + ảnh chụp màn hình thực tế cho 5 luồng chính
+của hệ thống Odoo 19 + Etsy + Gearment.</p>
+<h2 id="cau-truc">Cấu trúc</h2>
+<table>
+<thead>
+<tr>
+<th>Loại</th>
+<th>Định dạng</th>
+<th>Nguồn</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sơ đồ luồng (swimlane)</td>
+<td><code>flow-*.html</code> (Figma export)</td>
+<td><code>.0temp/figma/business-flows/</code></td>
+</tr>
+<tr>
+<td>Sơ đồ vai trò</td>
+<td><code>role-*.html</code> (Figma export)</td>
+<td><code>.0temp/figma/business-flows/</code></td>
+</tr>
+<tr>
+<td>Hướng dẫn + ảnh chụp UAT</td>
+<td><code>flow-*.md</code> (companion file này)</td>
+<td>Playwright UAT artifacts</td>
+</tr>
+<tr>
+<td>Trang chỉ mục</td>
+<td><code>index.html</code> (Figma export)</td>
+<td><code>.0temp/figma/business-flows/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Mỗi <code>flow-*.md</code> đi kèm <code>flow-*.html</code> để: (a) tham chiếu sơ đồ kiến trúc bất biến,
+(b) chèn ảnh chụp UAT thật cho từng giai đoạn của luồng, (c) ghi chú vận hành
+tiếng Việt cho người dùng cuối.</p>
+<h2 id="5-luong-nghiep-vu">5 luồng nghiệp vụ</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Mã</th>
+<th>Tên luồng</th>
+<th>Tài liệu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>flow-1</td>
+<td>Tạo sản phẩm + publish lên Etsy</td>
+<td><a href="./flow-1-tao-san-pham.md">flow-1-tao-san-pham.md</a> + <a href="./flow-1-tao-san-pham.html">.html</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td>flow-2</td>
+<td>Tiếp nhận đơn hàng Etsy</td>
+<td><a href="./flow-2-nhan-don-hang-etsy.md">flow-2-nhan-don-hang-etsy.md</a> + <a href="./flow-2-nhan-don-hang-etsy.html">.html</a></td>
+</tr>
+<tr>
+<td>3a</td>
+<td>flow-3a</td>
+<td>Giao hàng — In nội bộ</td>
+<td><a href="./flow-3a-giao-hang-in-noi-bo.md">flow-3a-giao-hang-in-noi-bo.md</a> + <a href="./flow-3a-giao-hang-in-noi-bo.html">.html</a></td>
+</tr>
+<tr>
+<td>3b</td>
+<td>flow-3b</td>
+<td>Giao hàng — Gearment dropship</td>
+<td><a href="./flow-3b-giao-hang-gearment-dropship.md">flow-3b-giao-hang-gearment-dropship.md</a> + <a href="./flow-3b-giao-hang-gearment-dropship.html">.html</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>flow-4</td>
+<td>Hậu mãi (đổi/trả/refund)</td>
+<td><a href="./flow-4-hau-mai.md">flow-4-hau-mai.md</a> + <a href="./flow-4-hau-mai.html">.html</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-vai-tro">5 vai trò</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Vai trò</th>
+<th>Tài liệu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>BA Lead</td>
+<td><a href="./role-1-ba-lead.html">role-1-ba-lead.html</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Marketing</td>
+<td><a href="./role-2-marketing.html">role-2-marketing.html</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Sản xuất</td>
+<td><a href="./role-3-san-xuat.html">role-3-san-xuat.html</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>R&amp;D</td>
+<td><a href="./role-4-rd.html">role-4-rd.html</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Product Development</td>
+<td><a href="./role-5-pd.html">role-5-pd.html</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="cach-cap-nhat-anh-chup-uat">Cách cập nhật ảnh chụp UAT</h2>
+<p>Ảnh chụp trong các <code>flow-*.md</code> được sinh tự động từ test suite Playwright:</p>
+<pre><code class="language-bash">cd tests/e2e
+RUN_ETSY_PUBLISH=1 npm run test:wave-2-3
+# Sau khi chạy: tests/e2e/artifacts/&lt;spec-name&gt;/*.png
+</code></pre>
+<p>Sao chép ảnh chụp đã chọn vào <code>docs/owner/business-flows/screenshots/&lt;flow-id&gt;/</code>
+và cập nhật đường dẫn <code>![]()</code> trong file markdown tương ứng.</p>
+<h2 id="cap-nhat-so-o-figma">Cập nhật sơ đồ Figma</h2>
+<p>File <code>*.html</code> là bản xuất từ Figma. Khi sơ đồ thay đổi:</p>
+<ol>
+<li>Mở dự án Figma → frame tương ứng</li>
+<li>Export → HTML</li>
+<li>Ghi đè vào <code>docs/owner/business-flows/&lt;file&gt;.html</code></li>
+<li>Commit chung với mô tả <code>[docs] chore: re-export business-flows from Figma</code></li>
+</ol>
+<h2 id="tham-chieu-cheo">Tham chiếu chéo</h2>
+<ul>
+<li>Tài liệu nghiệp vụ chi tiết: <code>docs/owner/FLOW_*_VN.md</code></li>
+<li>Hướng dẫn thao tác từng bước: <code>docs/owner/HUONG_DAN_*_VN.md</code></li>
+<li>UAT walkthrough (kịch bản kiểm thử): <code>docs/owner/UAT_WALKTHROUGH_*_VN.md</code></li>
+<li>Playwright tests: <code>tests/e2e/tests/uat_*.spec.ts</code></li>
+</ul></div></body></html>

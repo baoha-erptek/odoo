@@ -1,0 +1,126 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow 3A Giao Hang In Noi Bo — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/flow-3a-giao-hang-in-noi-bo.md · rendered for preview</div><h1 id="flow-3a-giao-hang-in-noi-bo">Flow 3a — Giao hàng (In nội bộ)</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-3a
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-3a-giao-hang-in-noi-bo.html"><code>flow-3a-giao-hang-in-noi-bo.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_GIAO_HANG_VN.md"><code>../HUONG_DAN_GIAO_HANG_VN.md</code></a>
+<strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_GIAO_HANG_VN.md"><code>../FLOW_GIAO_HANG_VN.md</code></a>
+<strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_giao_hang.spec.ts</code></p>
+<blockquote>
+<p>Luồng 3a — sản phẩm in tại xưởng nội bộ, vận chuyển bằng USPS/UniUni/YunExpress.</p>
+</blockquote>
+<hr />
+<h2 id="so-o-tom-tat">Sơ đồ tóm tắt</h2>
+<pre><code>BA Lead         Warehouse              Carrier         Customer
+   │                │                      │                │
+   │── Confirm ───▶│                      │                │
+   │   sale.order  │── Pick + Pack       │                │
+   │                │── In sản phẩm        │                │
+   │                │── Upload tracking ──▶│                │
+   │                │                      │── Ship ───────▶│
+   │                │                      │── Update ─────▶│
+   │                │                      │    status      │
+</code></pre>
+<hr />
+<h2 id="giai-oan-1-confirm-pick">Giai đoạn 1 — Confirm + Pick</h2>
+<p><strong>Trigger:</strong> BA confirm sale.order → tự sinh <code>stock.picking</code> (kho → khách)
+<strong>Vai trò:</strong> BA Shipping</p>
+<blockquote>
+<p><img alt="placeholder: stock.picking từ sale.order" src="./screenshots/flow-3a/01-picking.png" title="Stock Picking auto-tạo từ sale.order" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-2-in-noi-bo-pack">Giai đoạn 2 — In nội bộ + Pack</h2>
+<p>Sản phẩm in tại xưởng dựa trên SKU + design file (xem <code>design_file</code> model).</p>
+<blockquote>
+<p><img alt="placeholder: design_file kèm sale.order line" src="./screenshots/flow-3a/02-design-file.png" title="Design file đính kèm sale order line" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-3-upload-tracking-push-len-etsy">Giai đoạn 3 — Upload tracking + Push lên Etsy</h2>
+<p><strong>Vị trí:</strong> Form sale.order → header → "Upload Tracking" → wizard hiện ra
+<strong>Field bắt buộc:</strong> carrier_name + tracking_number</p>
+<blockquote>
+<p><img alt="placeholder: wizard upload tracking" src="./screenshots/flow-3a/03-tracking-wizard.png" title="Wizard upload tracking — chọn carrier" /></p>
+</blockquote>
+<p>Wizard gọi <code>EtsyTrackingPusher.push_tracking()</code> → Etsy
+<code>POST /v3/.../receipts/{receipt_id}/tracking</code> → trạng thái Etsy chuyển sang "Shipped".</p>
+<blockquote>
+<p><img alt="placeholder: tracking đã push lên Etsy" src="./screenshots/flow-3a/04-etsy-shipped.png" title="Etsy Shop Manager — receipt với trạng thái Shipped + tracking link" /></p>
+</blockquote>
+<hr />
+<h2 id="kiem-thu">Kiểm thử</h2>
+<pre><code class="language-bash">cd tests/e2e
+npm run test:giao-hang
+</code></pre>
+<hr />
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tracking push 400</td>
+<td>Kiểm tra <code>carrier_name</code> phải khớp Etsy carrier list (USPS, UniUni, etc.)</td>
+</tr>
+<tr>
+<td>Design file thiếu</td>
+<td>Cảnh báo BA — không in được khi <code>sale.order.line.design_file_id</code> rỗng</td>
+</tr>
+</tbody>
+</table></div></body></html>

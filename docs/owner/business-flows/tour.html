@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Business Flows — Tour (Cập nhật 2026-06-07)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f5; --ink: #1a1a1a; --muted: #6b6357;
+    --accent: #b85c38; --rule: #d4ccc0; --card-bg: #fff;
+    --serif: 'Crimson Pro', Georgia, serif; --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.65; }
+  .hero { padding: 80px 32px 56px; text-align: center; border-bottom: 2px solid var(--rule); }
+  .hero .badge { display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .hero h1 { font-size: 52px; line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 16px; }
+  .hero p.lede { font-size: 21px; color: var(--muted); max-width: 640px; margin: 0 auto; line-height: 1.5; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 32px; }
+  h2 { font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; }
+  h2:first-of-type { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 20px; }
+  .card { background: var(--card-bg); border: 1px solid var(--rule); border-radius: 8px; padding: 22px 24px; }
+  .card h3 { margin: 0 0 8px; font-size: 19px; color: var(--accent); display: flex; gap: 10px; align-items: baseline; }
+  .card .code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .card p { margin: 6px 0 14px; font-size: 15px; line-height: 1.55; color: var(--muted); }
+  .card .links { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: 13px; }
+  .card .links a { color: var(--accent); text-decoration: none; padding: 4px 0; border-top: 1px dotted var(--rule); }
+  .card .links a:hover { text-decoration: underline; }
+  .card .links a.new { color: #167d3a; font-weight: 600; }
+  .card .links a.new::before { content: "● NEW  "; color: #167d3a; }
+  .meta-row { display: flex; gap: 32px; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 28px; flex-wrap: wrap; }
+  .meta-row span strong { color: var(--ink); }
+  table { border-collapse: collapse; width: 100%; margin: 20px 0; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--card-bg); font-weight: 600; }
+  td.pass { color: #167d3a; font-family: var(--mono); font-weight: 500; }
+  td.code { font-family: var(--mono); font-size: 13px; }
+  .callout { background: #fff8f4; border-left: 3px solid var(--accent); padding: 18px 22px; margin: 28px 0; border-radius: 0 6px 6px 0; }
+  .callout strong { color: var(--accent); }
+  footer { text-align: center; padding: 48px 32px; color: var(--muted); font-family: var(--mono); font-size: 12px; border-top: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge">P-UAT-WAVE-2-3 · 2026-06-07</div>
+  <h1>Business Flows — Cập nhật</h1>
+  <p class="lede">5 sơ đồ luồng nghiệp vụ đã có thêm markdown companion với ảnh chụp UAT placeholders, README chỉ mục mới, và walkthrough v1.2 cho Wave 2/3.</p>
+  <div class="meta-row" style="justify-content: center;">
+    <span><strong>11 ESTY tickets</strong> trong scope</span>
+    <span><strong>3/3 Playwright spec</strong> GREEN</span>
+    <span><strong>9 Confluence pages</strong> đã sync</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <h2>5 luồng nghiệp vụ</h2>
+  <p style="color: var(--muted); margin-top: -8px;">Mỗi luồng có 2 file: <strong>HTML</strong> (sơ đồ Figma export, đã tồn tại) + <strong>MD</strong> (companion mới với screenshot placeholders, được render thành HTML cho tour này).</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Flow 1 <span class="code">flow-1</span></h3>
+      <p>Tạo sản phẩm và publish lên Etsy. Bao trùm Wave 2/3 mới: taxonomy (ESTY-189), brand-voice (190), shipping (191), attributes (192), how-it's-made (193), FX (195), video (199).</p>
+      <div class="links">
+        <a href="flow-1-tao-san-pham.html">📐 HTML sơ đồ swimlane (Figma)</a>
+        <a class="new" href="flow-1-tao-san-pham.rendered.html">📖 MD companion (chi tiết nhất)</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Flow 2 <span class="code">flow-2</span></h3>
+      <p>Tiếp nhận đơn hàng Etsy. 2 đường: API (mới, mặc định) qua webhook + cron, Email (cũ, dự phòng) qua Gmail parser.</p>
+      <div class="links">
+        <a href="flow-2-nhan-don-hang-etsy.html">📐 HTML sơ đồ</a>
+        <a class="new" href="flow-2-nhan-don-hang-etsy.rendered.html">📖 MD companion</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Flow 3a <span class="code">flow-3a</span></h3>
+      <p>Giao hàng — In nội bộ. SA pick + pack + in sản phẩm → upload tracking lên Etsy.</p>
+      <div class="links">
+        <a href="flow-3a-giao-hang-in-noi-bo.html">📐 HTML sơ đồ</a>
+        <a class="new" href="flow-3a-giao-hang-in-noi-bo.rendered.html">📖 MD companion</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Flow 3b <span class="code">flow-3b</span></h3>
+      <p>Giao hàng — Gearment dropship. Quote + create + webhook tracking back qua HMAC-SHA256.</p>
+      <div class="links">
+        <a href="flow-3b-giao-hang-gearment-dropship.html">📐 HTML sơ đồ</a>
+        <a class="new" href="flow-3b-giao-hang-gearment-dropship.rendered.html">📖 MD companion</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Flow 4 <span class="code">flow-4</span></h3>
+      <p>Hậu mãi — đổi/trả/refund/change-of-address. 4 giai đoạn: buyer request → address change → decision → execute.</p>
+      <div class="links">
+        <a href="flow-4-hau-mai.html">📐 HTML sơ đồ</a>
+        <a class="new" href="flow-4-hau-mai.rendered.html">📖 MD companion</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Index & README <span class="code">README</span></h3>
+      <p>Chỉ mục mới mô tả cấu trúc business-flows/, cách refresh ảnh chụp UAT từ Playwright artifacts, cách re-export sơ đồ Figma.</p>
+      <div class="links">
+        <a href="index.html">📐 HTML index (Figma)</a>
+        <a class="new" href="README.rendered.html">📖 README mới (MD)</a>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>5 vai trò</h2>
+  <p style="color: var(--muted); margin-top: -8px;">Sơ đồ swimlane cho từng role. Hiện chỉ có HTML (Figma); markdown companions cho roles là follow-up nếu cần.</p>
+  <div class="grid">
+    <div class="card"><h3>BA Lead</h3><div class="links"><a href="role-1-ba-lead.html">📐 HTML</a></div></div>
+    <div class="card"><h3>Marketing</h3><div class="links"><a href="role-2-marketing.html">📐 HTML</a></div></div>
+    <div class="card"><h3>Sản xuất</h3><div class="links"><a href="role-3-san-xuat.html">📐 HTML</a></div></div>
+    <div class="card"><h3>R&D</h3><div class="links"><a href="role-4-rd.html">📐 HTML</a></div></div>
+    <div class="card"><h3>Product Dev</h3><div class="links"><a href="role-5-pd.html">📐 HTML</a></div></div>
+  </div>
+
+  <h2>UAT outcome (Wave 2/3)</h2>
+  <table>
+    <thead><tr><th>TC ID</th><th>Mô tả</th><th>Kết quả</th><th>Thời gian</th></tr></thead>
+    <tbody>
+      <tr><td class="code">TC-W23-CFG-01</td><td>JaHandmadeArt shop publisher defaults</td><td class="pass">PASS</td><td>8.5s</td></tr>
+      <tr><td class="code">TC-W23-BULK-01</td><td>Bulk Mark Ready ↔ Reset to Draft</td><td class="pass">PASS</td><td>32.8s</td></tr>
+      <tr><td class="code">TC-W23-PUB-01</td><td>Apron live publish + auto-populated fields</td><td class="pass">PASS</td><td>59.1s</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>ESTY-188 đã giải quyết:</strong> Sau 2 vòng (iter4 diagnostic + iter5 test-side fix), createListing 400 hoá ra do test gửi title bắt đầu bằng <code>[</code> + price 250000 trong company currency USD (convert ~6.25B VND, vượt max Etsy 1.26B). Sửa: title prefix <code>UAT 2026-06-07</code>, LIVE_PRICE mặc định 25 USD. Listing 4517779018 đã publish thành công lên JaHandmadeArt.
+  </div>
+
+  <h2>Cách dùng tour này</h2>
+  <p>Mỗi card flow ở trên có 2 link: <strong>HTML Figma</strong> (sơ đồ kiến trúc swimlane bất biến) + <strong>MD companion</strong> (hướng dẫn vận hành tiếng Việt với screenshot placeholders). Sau khi chạy <code>RUN_ETSY_PUBLISH=1 npm run test:wave-2-3</code> và chọn ảnh chụp Playwright artifacts, thay placeholders trong file MD nguồn để cập nhật MD companion.</p>
+
+</div>
+
+<footer>
+  Generated 2026-06-07 · feature/006-master-plan-coding · be5473bd1e5
+</footer>
+</body>
+</html>

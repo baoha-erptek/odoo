@@ -1,0 +1,139 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow 4 Hau Mai — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/flow-4-hau-mai.md · rendered for preview</div><h1 id="flow-4-hau-mai-oi-tra-refund">Flow 4 — Hậu mãi (đổi, trả, refund)</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-4
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-4-hau-mai.html"><code>flow-4-hau-mai.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_HAU_MAI_VN.md"><code>../HUONG_DAN_HAU_MAI_VN.md</code></a>
+<strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_HAU_MAI_VN.md"><code>../FLOW_HAU_MAI_VN.md</code></a>
+<strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_hau_mai.spec.ts</code> (TBD)</p>
+<blockquote>
+<p>Luồng 4 — xử lý các yêu cầu sau bán: đổi hàng, trả hàng, refund, change-of-address.</p>
+</blockquote>
+<hr />
+<h2 id="so-o-tom-tat">Sơ đồ tóm tắt</h2>
+<pre><code>Buyer           Etsy                 Odoo                  Operator
+   │                │                      │                      │
+   │── Message ───▶│                      │                      │
+   │   &quot;broken&quot;    │── Conversation ─────▶│                      │
+   │                │                      │── address.change ───▶│
+   │                │                      │   .request           │
+   │                │                      │                      │── Decide
+   │                │                      │                      │   (replace/refund)
+   │                │                      │── Refund ────────────│
+   │                │◀── Refund ───────────│                      │
+   │◀── Refund ────│                      │                      │
+</code></pre>
+<hr />
+<h2 id="giai-oan-1-yeu-cau-tu-buyer">Giai đoạn 1 — Yêu cầu từ buyer</h2>
+<p><strong>Trigger:</strong> Etsy buyer message hoặc Etsy form "Return/Refund"
+<strong>Ingest:</strong> <code>etsy.conversation.message</code> (qua <code>conversations_r</code> scope — đang chờ approval)</p>
+<blockquote>
+<p><img alt="placeholder: etsy.conversation message" src="./screenshots/flow-4/01-conversation.png" title="etsy.conversation.message — buyer request" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-2-address-change-request-rieng">Giai đoạn 2 — Address change request (riêng)</h2>
+<p><strong>Vị trí:</strong> Form sale.order → header → "Address Change Request"
+<strong>Model:</strong> <code>etsy.address.change.request</code>
+<strong>POM:</strong> <code>tests/e2e/page-objects/address_change_request_form.ts</code></p>
+<blockquote>
+<p><img alt="placeholder: address.change.request form" src="./screenshots/flow-4/02-address-change.png" title="Address Change Request — pending approval" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-3-quyet-inh-replace-refund-reship">Giai đoạn 3 — Quyết định (Replace / Refund / Reship)</h2>
+<p><strong>Vai trò:</strong> BA Lead duyệt
+<strong>Action:</strong> server action chuyển trạng thái <code>pending</code> → <code>approved</code> / <code>rejected</code></p>
+<blockquote>
+<p><img alt="placeholder: decision UI" src="./screenshots/flow-4/03-decision.png" title="BA Lead approval — Replace/Refund/Reship" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-4-thuc-thi-refund">Giai đoạn 4 — Thực thi refund</h2>
+<p><strong>Nếu Refund:</strong>
+1. Tạo <code>account.move</code> (Credit Note) link với sale.order
+2. Gọi <code>POST /v3/.../receipts/{id}/transactions/{id}/refunds</code> lên Etsy
+3. Trạng thái Etsy chuyển sang "Refunded"</p>
+<blockquote>
+<p><img alt="placeholder: Etsy refund confirmation" src="./screenshots/flow-4/04-etsy-refund.png" title="Etsy Shop Manager — refund issued" /></p>
+</blockquote>
+<hr />
+<h2 id="kiem-thu">Kiểm thử</h2>
+<pre><code class="language-bash">cd tests/e2e
+# Spec đang phát triển:
+npm run test:hau-mai
+</code></pre>
+<hr />
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conversation không vào Odoo</td>
+<td><code>conversations_r</code> scope chưa được Etsy approve (xem P1-MSG-SCOPE slice)</td>
+</tr>
+<tr>
+<td>Refund 400 "amount exceeds"</td>
+<td>Kiểm tra <code>refund_amount</code> ≤ tổng <code>transaction_amount</code></td>
+</tr>
+<tr>
+<td>Address change không sync lên Etsy</td>
+<td>Address mutation API chưa hỗ trợ — operator phải sửa thủ công trên Shop Manager</td>
+</tr>
+</tbody>
+</table></div></body></html>

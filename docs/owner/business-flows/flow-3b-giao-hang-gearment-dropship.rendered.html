@@ -1,0 +1,132 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow 3B Giao Hang Gearment Dropship — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/flow-3b-giao-hang-gearment-dropship.md · rendered for preview</div><h1 id="flow-3b-giao-hang-gearment-dropship">Flow 3b — Giao hàng (Gearment dropship)</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-3b
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-3b-giao-hang-gearment-dropship.html"><code>flow-3b-giao-hang-gearment-dropship.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_GIAO_HANG_VN.md"><code>../HUONG_DAN_GIAO_HANG_VN.md</code></a> (mục Gearment)
+<strong>API reference:</strong> <a href="../../GEARMENT_API_REFERENCE.md"><code>../../GEARMENT_API_REFERENCE.md</code></a></p>
+<blockquote>
+<p>Luồng 3b — sản phẩm in + ship bởi Gearment (đối tác dropship POD).
+Tự động hoá qua Gearment API v3 + webhook.</p>
+</blockquote>
+<hr />
+<h2 id="so-o-tom-tat">Sơ đồ tóm tắt</h2>
+<pre><code>BA Lead         Odoo               Gearment            Customer
+   │                │                      │                │
+   │── Confirm ───▶│                      │                │
+   │   sale.order  │── createOrder ──────▶│                │
+   │                │                      │── Produce      │
+   │                │                      │── Ship ───────▶│
+   │                │◀── webhook ──────────│                │
+   │                │   (tracking)         │                │
+   │                │── push tracking ────▶ Etsy           │
+</code></pre>
+<hr />
+<h2 id="giai-oan-1-confirm-quote">Giai đoạn 1 — Confirm + Quote</h2>
+<p><strong>Trigger:</strong> BA mở <code>sale.order</code> → header → "Get Gearment Quote" → wizard
+<strong>Wizard:</strong> <code>gearment_quote_wizard.ts</code> (POM)</p>
+<blockquote>
+<p><img alt="placeholder: Gearment quote wizard" src="./screenshots/flow-3b/01-quote-wizard.png" title="Wizard — chọn SKU + shipping method" /></p>
+</blockquote>
+<p>Wizard gọi <code>POST /v3/orders/quote</code> → trả về <code>quote_id</code> + giá ship + ETA.</p>
+<hr />
+<h2 id="giai-oan-2-create-order-qua-gearment-api">Giai đoạn 2 — Create order qua Gearment API</h2>
+<p><strong>Trigger:</strong> sau quote, BA click "Send to Gearment" → tạo <code>gearment.order</code>
+<strong>Service:</strong> <code>etsy_integration/services/gearment_client.py</code></p>
+<blockquote>
+<p><img alt="placeholder: gearment.order vừa tạo" src="./screenshots/flow-3b/02-gearment-order.png" title="Gearment order — trạng thái Submitted" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-3-webhook-tracking">Giai đoạn 3 — Webhook tracking</h2>
+<p><strong>Trigger:</strong> Gearment ship hàng → POST webhook về Odoo
+<strong>Endpoint:</strong> <code>etsy_integration/controllers/gearment_webhook.py</code>
+<strong>HMAC verify:</strong> SHA256(secret, path+nonce+timestamp+base64url(body))
+<strong>Header:</strong> <code>X-Connect-Signature</code></p>
+<blockquote>
+<p><img alt="placeholder: webhook log" src="./screenshots/flow-3b/03-webhook-log.png" title="ir.logging — Gearment webhook receive" /></p>
+</blockquote>
+<p>Khi webhook nhận tracking, Odoo tự động push lên Etsy (giống Flow 3a giai đoạn 3).</p>
+<hr />
+<h2 id="kiem-thu">Kiểm thử</h2>
+<pre><code class="language-bash">cd tests/e2e
+npm run test:giao-hang
+# Webhook simulation:
+python3 fixtures/gearment_webhook_post.py
+</code></pre>
+<hr />
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quote 400 "missing SKU"</td>
+<td>Kiểm tra <code>gearment_sku</code> trên product.template (auto-derive từ category)</td>
+</tr>
+<tr>
+<td>Webhook 401 invalid signature</td>
+<td>Re-check <code>GEARMENT_API_SECRET</code> trong .env match Gearment dashboard</td>
+</tr>
+<tr>
+<td>Tracking không push tiếp lên Etsy</td>
+<td>Xem <code>etsy.tracking.audit_log.error_msg</code></td>
+</tr>
+</tbody>
+</table></div></body></html>

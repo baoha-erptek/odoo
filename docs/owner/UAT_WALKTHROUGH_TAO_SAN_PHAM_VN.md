@@ -315,7 +315,6 @@
 
 **Pass / Fail:** ☐ Pass  ☐ Fail
 
----
 
 ## TC-012 — FR-017: Non-BA user bị chặn ở Create
 

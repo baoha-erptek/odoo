@@ -1,0 +1,233 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow 1 Tao San Pham — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/flow-1-tao-san-pham.md · rendered for preview</div><h1 id="flow-1-tao-san-pham-va-publish-len-etsy">Flow 1 — Tạo sản phẩm và publish lên Etsy</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-1
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-1-tao-san-pham.html"><code>flow-1-tao-san-pham.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_TAO_SAN_PHAM_VN.md"><code>../HUONG_DAN_TAO_SAN_PHAM_VN.md</code></a>
+<strong>Kịch bản UAT:</strong> <a href="../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md"><code>../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md</code></a>
+<strong>Test tự động:</strong> <code>tests/e2e/tests/uat_wave_2_3_listing.spec.ts</code></p>
+<blockquote>
+<p>Luồng 1 mô tả chuỗi thao tác từ lúc BA Lead tạo sản phẩm mới trong Odoo
+đến lúc draft listing xuất hiện trên Etsy Shop Manager. Bao gồm các tính
+năng Wave-2/3 mới (taxonomy, shipping profile, who/when made, video,
+per-channel overrides, FX conversion).</p>
+</blockquote>
+<hr />
+<h2 id="so-o-tom-tat-swimlane">Sơ đồ tóm tắt (swimlane)</h2>
+<p>Mở <a href="./flow-1-tao-san-pham.html"><code>flow-1-tao-san-pham.html</code></a> trong trình
+duyệt để xem sơ đồ swimlane đầy đủ.</p>
+<pre><code>BA Lead          Odoo Standard Form          Etsy API
+  │                     │                       │
+  │── Tạo sản phẩm ────▶│                       │
+  │   + chọn category   │                       │
+  │   + thuộc tính       │                       │
+  │   + ảnh + giá        │                       │
+  │                     │                       │
+  │── Publish Draft ───▶│── createListing ─────▶│
+  │                     │   + uploadImage(s)    │
+  │                     │   + push_video (op)   │
+  │                     │◀── listing_id ────────│
+  │◀── Listing trên ────│                       │
+  │   Etsy (state=draft) │                       │
+</code></pre>
+<hr />
+<h2 id="giai-oan-1-tao-san-pham">Giai đoạn 1 — Tạo sản phẩm</h2>
+<p><strong>Vị trí:</strong> Menu <code>Inventory &gt; Products &gt; New</code>
+<strong>Vai trò:</strong> BA Lead (<code>multichannel_hub_core.group_ba_lead</code> hoặc cao hơn)</p>
+<p>Người dùng điền các trường cơ bản:</p>
+<ul>
+<li><strong>Tên sản phẩm</strong> (<code>name</code>)</li>
+<li><strong>Category</strong> (<code>categ_id</code>) — tự động sinh SKU theo grammar</li>
+<li><strong>Thuộc tính biến thể</strong> (Tab Attributes &amp; Variants):
+  Material, Apparel Size, Color, …</li>
+</ul>
+<blockquote>
+<p><img alt="placeholder: form tạo sản phẩm — tab General Information" src="./screenshots/flow-1/01-form-general.png" title="Form tạo sản phẩm — General Information" /></p>
+<p><img alt="placeholder: tab Attributes &amp; Variants" src="./screenshots/flow-1/02-attributes.png" title="Tab Attributes &amp; Variants với Material + Color" /></p>
+</blockquote>
+<p><strong>Wave-2 ESTY-192:</strong> Thuộc tính được map sang Etsy property_id qua bảng
+<code>etsy.shop.attribute.mapping</code> (Tier 2) hoặc <code>product.attribute.x_etsy_property_id</code>
+(Tier 3). Bảng map xem ở <code>Etsy &gt; Shops &gt; [shop] &gt; Publisher Defaults</code>.</p>
+<hr />
+<h2 id="giai-oan-2-cau-hinh-kenh-va-gia">Giai đoạn 2 — Cấu hình kênh và giá</h2>
+<p><strong>Tab Channels:</strong> thêm Etsy vào <code>x_channel_applicability_ids</code>.
+<strong>Trường giá:</strong> <code>list_price</code> (đơn vị: VND cho JaHandmadeArt).</p>
+<blockquote>
+<p><img alt="placeholder: tab Channels" src="./screenshots/flow-1/03-channels.png" title="Tab Channels — gán kênh Etsy" /></p>
+</blockquote>
+<p><strong>Wave-3 ESTY-195:</strong> Sau khi publish, hệ thống tự động convert giá VND
+sang đơn vị tiền tệ của shop (<code>etsy.shop.listing_currency_id</code>) qua
+<code>res.currency._convert()</code>. Xem ô preview <code>display_price_in_shop_currency</code>
+trên form <code>multichannel.listing</code>.</p>
+<blockquote>
+<p><img alt="placeholder: FX preview trên multichannel.listing" src="./screenshots/flow-1/04-fx-preview.png" title="Tab Shipping &amp; Variations — Shop Currency Preview" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-3-cau-hinh-etsy-specific">Giai đoạn 3 — Cấu hình Etsy-specific</h2>
+<p><strong>Wave-2 ESTY-189 / 191 / 193:</strong> Các trường sau <strong>không cần điền thủ công</strong>;
+hệ thống dùng default từ <code>etsy.shop</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Trường</th>
+<th>Nguồn fallback (3-tier)</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Taxonomy</td>
+<td>Per-listing → product → <strong>shop default</strong></td>
+<td><code>etsy_taxonomy_id</code></td>
+</tr>
+<tr>
+<td>Shipping profile</td>
+<td>Per-listing → product → <strong>shop default</strong></td>
+<td><code>etsy_shipping_profile_id</code></td>
+</tr>
+<tr>
+<td>Who made / When made / Is supply</td>
+<td>Per-listing → product → <strong>shop default</strong></td>
+<td><code>etsy_who_made</code> etc.</td>
+</tr>
+</tbody>
+</table>
+<p>Nếu cần override per-listing (sau publish), mở form <code>multichannel.listing</code>,
+tab "Shipping &amp; Variations" hoặc "How It's Made".</p>
+<blockquote>
+<p><img alt="placeholder: form multichannel.listing tab Shipping &amp; Variations" src="./screenshots/flow-1/05-listing-shipping.png" title="Form multichannel.listing — Shipping &amp; Variations với taxonomy + shipping profile" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-4-video-tuy-chon">Giai đoạn 4 — Video (tuỳ chọn)</h2>
+<p><strong>Wave-2 ESTY-199:</strong> Mỗi listing Etsy hỗ trợ tối đa 1 video.</p>
+<p><strong>Vị trí:</strong> Form <code>multichannel.listing</code> → Tab "Video"
+<strong>Field:</strong> <code>video_attachment_id</code> (Many2one tới <code>ir.attachment</code>)</p>
+<p>Tải video lên <code>ir.attachment</code> (qua nút Upload trên form), chọn từ dropdown.
+Publisher gọi <code>POST /shops/{id}/listings/{id}/videos</code> (multipart) khi publish.</p>
+<blockquote>
+<p><img alt="placeholder: tab Video trên multichannel.listing" src="./screenshots/flow-1/06-listing-video.png" title="Tab Video — chọn file đính kèm" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-5-publish-draft">Giai đoạn 5 — Publish Draft</h2>
+<p><strong>Nút:</strong> Header form sản phẩm → "Publish to Etsy" → wizard hiện ra
+→ chọn shop → "Run Publish Draft Only"</p>
+<blockquote>
+<p><img alt="placeholder: wizard Publish to Etsy" src="./screenshots/flow-1/07-publish-wizard.png" title="Wizard Publish to Etsy — chọn shop" /></p>
+</blockquote>
+<p><strong>Wave-3 ESTY-190:</strong> Title / Description / Image trên Etsy lấy theo
+fallback chain:</p>
+<ol>
+<li><strong>Per-listing override</strong> trên <code>multichannel.listing.title</code> / <code>.description</code> / <code>.image_1920</code></li>
+<li><strong>Per-product</strong> trên <code>product.template.name</code> / <code>description_sale</code></li>
+<li><strong>Shop default</strong> trên <code>etsy.shop.default_title</code> / <code>.default_description</code> / <code>.default_image_1920</code></li>
+</ol>
+<p>Để override mặc định ở cấp shop, mở <code>Etsy &gt; Shops &gt; [shop] &gt; Publisher
+Defaults &gt; Shop Brand-Voice Defaults</code>.</p>
+<blockquote>
+<p><img alt="placeholder: shop brand-voice defaults" src="./screenshots/flow-1/08-brand-voice-defaults.png" title="Etsy shop — Shop Brand-Voice Defaults" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-6-xac-nhan-tren-etsy">Giai đoạn 6 — Xác nhận trên Etsy</h2>
+<p>Sau khi publish thành công:</p>
+<ul>
+<li><code>product.channel.status.external_ref</code> = listing_id của Etsy</li>
+<li><code>multichannel.listing.state</code> = <code>published</code></li>
+<li>Etsy Shop Manager: https://www.etsy.com/your/shops/jahandmadeart/tools/listings/drafts</li>
+</ul>
+<blockquote>
+<p><img alt="placeholder: Etsy Shop Manager hiển thị draft mới" src="./screenshots/flow-1/09-etsy-draft.png" title="Etsy Shop Manager — Draft mới với listing_id" /></p>
+</blockquote>
+<hr />
+<h2 id="kiem-thu">Kiểm thử</h2>
+<p>Test tự động cho luồng này:</p>
+<pre><code class="language-bash">cd tests/e2e
+# Form-only (không gọi Etsy):
+npm run test:wave-2-3:cfg          # ESTY-194 shop config sanity
+npm run test:wave-2-3:bulk         # ESTY-197 bulk action
+# Live publish (tạo draft thật trên JaHandmadeArt):
+RUN_ETSY_PUBLISH=1 E2E_LISTING_PRICE=250000 npm run test:wave-2-3:publish
+# Dọn draft test sau khi chạy:
+python3 ../../scripts/cleanup_uat_etsy_drafts.py --apply
+</code></pre>
+<p>UAT walkthrough thủ công: <a href="../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md"><code>../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md</code></a></p>
+<hr />
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Publish 400 "price too low"</td>
+<td>Kiểm tra <code>list_price</code> ≥ giá tối thiểu của Etsy cho shop (JaHandmadeArt = 250,000 VND)</td>
+</tr>
+<tr>
+<td><code>external_ref</code> không update</td>
+<td>Chờ 20s rồi refresh; nếu vẫn trống, xem log <code>_logger.warning('publish failed')</code></td>
+</tr>
+<tr>
+<td>Taxonomy / shipping profile trống</td>
+<td>Refresh cache: <code>Etsy Shop &gt; nút "Sync Taxonomy" / "Sync Shipping Profiles"</code></td>
+</tr>
+<tr>
+<td>Brand-voice không áp dụng</td>
+<td>Xác nhận field <code>default_title</code> etc. đã set; kiểm tra fallback chain ở <code>services/etsy_listing_publisher.py:420-494</code></td>
+</tr>
+</tbody>
+</table></div></body></html>

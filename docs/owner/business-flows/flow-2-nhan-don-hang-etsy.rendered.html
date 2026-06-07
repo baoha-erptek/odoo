@@ -1,0 +1,136 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow 2 Nhan Don Hang Etsy — odoo19_esty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #1a1a1a;
+    --muted: #6b6357;
+    --accent: #b85c38;
+    --rule: #d4ccc0;
+    --code-bg: #f0ebe3;
+    --serif: 'Crimson Pro', Georgia, serif;
+    --mono: 'JetBrains Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 96px; }
+  header.nav { position: sticky; top: 0; background: rgba(250,247,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  header.nav .inner { max-width: 760px; margin: 0 auto; padding: 14px 32px; display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  header.nav a { color: var(--accent); text-decoration: none; }
+  header.nav a:hover { text-decoration: underline; }
+  h1 { font-size: 38px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 48px 0 14px; padding-top: 16px; border-top: 2px solid var(--rule); letter-spacing: -0.01em; }
+  h3 { font-size: 19px; margin: 28px 0 10px; color: var(--accent); }
+  p { margin: 14px 0; }
+  blockquote { border-left: 3px solid var(--accent); margin: 24px 0; padding: 4px 0 4px 18px; color: var(--muted); font-style: italic; }
+  code { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  pre { background: #1a1a1a; color: #e8d8c0; padding: 18px 20px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table { border-collapse: collapse; margin: 24px 0; width: 100%; font-size: 15px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+  th { background: var(--code-bg); font-weight: 600; }
+  a { color: var(--accent); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  .meta { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-bottom: 32px; }
+  .placeholder { background: var(--code-bg); color: var(--muted); padding: 24px; border-radius: 6px; text-align: center; font-style: italic; margin: 18px 0; border: 1px dashed var(--rule); }
+</style>
+</head><body>
+<header class="nav"><div class="inner">
+  <a href="index.html">▲ Tour Index</a>
+  <a href="flow-1-tao-san-pham.html">flow-1</a>
+  <a href="flow-2-nhan-don-hang-etsy.html">flow-2</a>
+  <a href="flow-3a-giao-hang-in-noi-bo.html">flow-3a</a>
+  <a href="flow-3b-giao-hang-gearment-dropship.html">flow-3b</a>
+  <a href="flow-4-hau-mai.html">flow-4</a>
+  <a href="README.html">README</a>
+</div></header>
+<div class="wrap"><div class="meta">docs/owner/business-flows/flow-2-nhan-don-hang-etsy.md · rendered for preview</div><h1 id="flow-2-tiep-nhan-on-hang-tu-etsy">Flow 2 — Tiếp nhận đơn hàng từ Etsy</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-2
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-2-nhan-don-hang-etsy.html"><code>flow-2-nhan-don-hang-etsy.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_DON_HANG_ETSY_VN.md"><code>../HUONG_DAN_DON_HANG_ETSY_VN.md</code></a>
+<strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_DON_HANG_ETSY_VN.md"><code>../FLOW_DON_HANG_ETSY_VN.md</code></a>
+<strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_don_hang_etsy.spec.ts</code></p>
+<blockquote>
+<p>Luồng 2 mô tả 2 đường nhận đơn:
+<strong>(a)</strong> API (mới, mặc định) — Etsy gọi webhook → Odoo tạo <code>sale.order</code>
+<strong>(b)</strong> Email (cũ, dự phòng) — Gmail fetch → parser → <code>sale.order</code></p>
+</blockquote>
+<hr />
+<h2 id="so-o-tom-tat">Sơ đồ tóm tắt</h2>
+<pre><code>Etsy / Buyer       Odoo etsy_integration       BA User
+     │                      │                       │
+     │── Order placed ──────▶│                       │
+     │   (webhook v3)        │── parse + dedupe     │
+     │                      │── create sale.order   │
+     │                      │── attach customer     │
+     │                      │── attach photos      │
+     │                      │                       │
+     │                      │── notify ───────────▶│ &quot;Đơn mới&quot;
+     │                      │                       │── Mở xem
+     │                      │                       │── Confirm
+</code></pre>
+<hr />
+<h2 id="giai-oan-1-uong-api-mac-inh">Giai đoạn 1 — Đường API (mặc định)</h2>
+<p><strong>Trigger:</strong> webhook từ Etsy (POST <code>/api/v3/...</code>) hoặc cron poll <code>GET /shops/{id}/receipts</code>
+<strong>Endpoint controller:</strong> <code>etsy_integration/controllers/etsy_webhook.py</code>
+<strong>Dedup model:</strong> <code>etsy.message.dedupe</code></p>
+<blockquote>
+<p><img alt="placeholder: form etsy.shop tab Recovery Probe" src="./screenshots/flow-2/01-shop-api-status.png" title="etsy.shop — trạng thái OAuth + API status" /></p>
+<p><img alt="placeholder: log fetch receipts" src="./screenshots/flow-2/02-cron-log.png" title="Cron log — GET /receipts pagination" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-2-uong-email-du-phong">Giai đoạn 2 — Đường Email (dự phòng)</h2>
+<p><strong>Trigger:</strong> cron poll Gmail 10 phút/lần
+<strong>Parser:</strong> <code>etsy_integration/services/email_parser.py</code> (regex-only, ORM-free)
+<strong>Dedup:</strong> <code>etsy.email.log.message_id</code></p>
+<blockquote>
+<p><img alt="placeholder: cấu hình Gmail credentials" src="./screenshots/flow-2/03-gmail-config.png" title="Cấu hình Gmail — service account + label" /></p>
+</blockquote>
+<hr />
+<h2 id="giai-oan-3-ba-xu-ly-on">Giai đoạn 3 — BA xử lý đơn</h2>
+<p>Đơn mới xuất hiện trong <strong>Sales &gt; Quotations</strong> với:
+- Customer name + Etsy ID
+- Listing thumbnail + variant info
+- Personalization (nếu có)</p>
+<blockquote>
+<p><img alt="placeholder: sale.order vừa tạo từ Etsy" src="./screenshots/flow-2/04-sale-order-new.png" title="Sales Order vừa tạo — preview customer + items" /></p>
+</blockquote>
+<p>BA confirm để chuyển trạng thái sang <code>sale</code> (xác nhận); chuyển tiếp sang <a href="./flow-3a-giao-hang-in-noi-bo.md">Flow 3a hoặc 3b</a> cho khâu giao hàng.</p>
+<hr />
+<h2 id="kiem-thu">Kiểm thử</h2>
+<pre><code class="language-bash">cd tests/e2e
+npm run test:don-hang-etsy
+</code></pre>
+<hr />
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Webhook không nhận</td>
+<td>Kiểm tra <code>etsy.shop.webhook_url</code> + Etsy Dev Portal callback URL</td>
+</tr>
+<tr>
+<td>Đơn duplicate</td>
+<td>Xem <code>etsy.message.dedupe</code> — <code>receipt_id</code> unique constraint</td>
+</tr>
+<tr>
+<td>Email parser fail</td>
+<td>Xem <code>etsy.email.log.parse_error_msg</code></td>
+</tr>
+</tbody>
+</table></div></body></html>
