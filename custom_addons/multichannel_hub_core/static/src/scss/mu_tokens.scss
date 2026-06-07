@@ -76,7 +76,8 @@ span.mu-mono,
  *   .o_notebook .nav-tabs .nav-link.active
  * --------------------------------------------------------------- */
 .o_form_view[name="multichannel.listing"],
-.o_form_view[name="product.template"] {
+.o_form_view[name="product.template"],
+.o_form_view[name="etsy.shop"] {
     .o_notebook .nav-link {
         &.active {
             color: $mu-brand !important;

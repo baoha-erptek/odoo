@@ -64,23 +64,37 @@
                             <field name="name" placeholder="Shop Name"/>
                         </h1>
                     </div>
+                    <!-- P-DS-3a — Tier 1 essentials: shop identity + active
+                         adapter + listing currency. Visible to anyone with
+                         etsy.shop read ACL (sales + system). -->
                     <group>
                         <group>
                             <field name="active" invisible="1"/>
                             <field name="revenue_total" widget="monetary"/>
+                            <field name="listing_currency_id"/>
                         </group>
-                        <group string="Etsy API Configuration"
-                               groups="base.group_system">
+                        <group string="Etsy API Identity">
                             <field name="etsy_api_shop_id"
+                                   class="mu-mono"
                                    placeholder="e.g. 60752333"/>
-                            <field name="active_source"/>
-                            <field name="auto_recovery"/>
-                            <field name="active_source_changed_at" readonly="1"/>
-                            <field name="health_check_consecutive_failures"
-                                   readonly="1"/>
-                            <field name="recovery_probe_consecutive_successes"
-                                   readonly="1"/>
+                            <field name="active_source"
+                                   widget="badge"
+                                   decoration-success="active_source == 'api'"
+                                   decoration-warning="active_source == 'email'"/>
                         </group>
+                    </group>
+                    <!-- P-DS-3a — Tier 3 (dev-only) diagnostics. Hidden
+                         behind base.group_no_one per PHASE_3_SCOPE.md and
+                         owner gate (2026-06-07). Probe counters + audit
+                         timestamp + auto-recovery toggle live here. -->
+                    <group string="Advanced Diagnostics"
+                           groups="base.group_no_one">
+                        <field name="auto_recovery"/>
+                        <field name="active_source_changed_at" readonly="1"/>
+                        <field name="health_check_consecutive_failures"
+                               readonly="1"/>
+                        <field name="recovery_probe_consecutive_successes"
+                               readonly="1"/>
                     </group>
                     <notebook>
                         <page string="Publisher Defaults" name="publisher_defaults">
