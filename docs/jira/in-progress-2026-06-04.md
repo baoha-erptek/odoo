@@ -37,6 +37,38 @@ Priority gate (per owner instruction this session):
 
 ---
 
+## Closure audit (2026-06-07)
+
+Cross-reference of the 11 ESTY rows above against current tracker state in
+`.claude/plans/006-master-plan-tracking.md`:
+
+| Jira | Slice | Tracker state (2026-06-07) | Gate / Notes |
+|------|-------|---------------------------|--------------|
+| ESTY-187 | P-SPEC-LISTING-MODEL-SPLIT | `done` 2026-06-06 | ADR-013 + spec 012 landed; Wave-2 fields placed per Option C decision |
+| ESTY-188 | P-BUG-ESTY-188 | `doing` (iter3 shipped to staging 2026-06-06 08:38 UTC) | **Owner-gated** — needs re-publish on JaHandmadeArt to verify 201 (not 400) |
+| ESTY-189 | P-LIST-CATEGORY | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-190 | P-ENH-ESTY-190 | `done` 2026-06-07 | Wave-3 ship this session (commits 5da85b379c4 + 4bb3ee7d9c3 + 79d5f3a175b). Staging T901-T904 deferred to owner |
+| ESTY-191 | P-LIST-SHIPPING | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-192 | P-LIST-ATTRIBUTES | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-193 | P-LIST-HOW-ITS-MADE | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-194 | P-LIST-ATTR-CONFIG | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-195 | P-ENH-ESTY-195 | `done` 2026-06-06 | Wave-3 ship (commits df6766db30a + f71701ebbc0). Staging T901-T904 deferred to owner |
+| ESTY-197 | P-LIST-SHOP-BULK | `done` 2026-06-06 | Wave-2 ship |
+| ESTY-199 | P-LIST-VIDEO | `done` 2026-06-06 | Wave-2 ship |
+
+**Result**: 10 of 11 ESTY rows are `done` on `feature/006-master-plan-coding`.
+The remaining row — ESTY-188 — is **owner-gated** (waiting on owner
+re-publish to flip iter3 GREEN → `done`); no code action available without
+owner. Jira "IN PROCESS" filter should drop to 1 ticket after owner confirms
+and moves ESTY-188 to "Done" status on Atlassian.
+
+Closures during the 2026-06-06 → 2026-06-07 window (this session window):
+
+- 2026-06-06: ESTY-187 (P-SPEC), Wave-2 7 listing-parity rows, ESTY-195 (Wave-3)
+- 2026-06-07: ESTY-190 (Wave-3) + companion close on P-DOCS-ETSY-READINESS-ASSESSMENT (tracker only, not a Jira row)
+
+---
+
 ## Dispatch decision
 
 Per owner instruction in this task:
