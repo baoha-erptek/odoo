@@ -3,7 +3,7 @@
 
 Strategy:
   1. XML-RPC into staging Odoo (admin) to read etsy.shop credentials +
-     access_token for JaHandmadeArt.
+     etsy_oauth_access_token for JaHandmadeArt.
   2. GET /v3/application/shops/{shop_id}/listings?state=draft (paginated) and
      filter Python-side for titles starting with `[UAT-2026-06-07]`.
   3. DELETE /v3/application/listings/{listing_id} for each match.
@@ -40,7 +40,7 @@ from typing import Iterable
 import requests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_PREFIX = "[UAT-2026-06-07]"
+DEFAULT_PREFIX = "UAT 2026-06-07"
 
 
 def parse_dotenv(env_path: Path) -> dict[str, str]:
@@ -66,6 +66,37 @@ def get_env(key: str, dotenv: dict[str, str], default: str | None = None) -> str
     return val
 
 
+def load_etsy_app_credentials() -> tuple[str, str]:
+    """Read Etsy OAuth app client_id + client_secret.
+
+    Same source-of-truth as `etsy_api_client._read_credentials`:
+      1. env vars ETSY_CLIENT_ID / ETSY_CLIENT_SECRET (highest)
+      2. .env file
+      3. secrets/etsy_credentials.json (matches in-container path)
+      4. secrets/credentials.json (legacy fallback)
+    """
+    env_id = os.environ.get("ETSY_CLIENT_ID")
+    env_secret = os.environ.get("ETSY_CLIENT_SECRET")
+    if env_id and env_secret:
+        return env_id, env_secret
+    dotenv = parse_dotenv(REPO_ROOT / ".env")
+    dotenv_id = dotenv.get("ETSY_CLIENT_ID")
+    dotenv_secret = dotenv.get("ETSY_CLIENT_SECRET")
+    if dotenv_id and dotenv_secret:
+        return dotenv_id, dotenv_secret
+    for candidate in ("etsy_credentials.json", "credentials.json"):
+        path = REPO_ROOT / "secrets" / candidate
+        if not path.exists():
+            continue
+        try:
+            data = __import__("json").loads(path.read_text())
+        except Exception:
+            continue
+        if data.get("client_id") and data.get("client_secret"):
+            return data["client_id"], data["client_secret"]
+    sys.exit("Etsy client_id/client_secret not found (.env or secrets/etsy_credentials.json)")
+
+
 def odoo_login(base_url: str, db: str, login: str, password: str) -> tuple[xmlrpc.client.ServerProxy, int]:
     common = xmlrpc.client.ServerProxy(f"{base_url}/xmlrpc/2/common", allow_none=True)
     uid = common.authenticate(db, login, password, {})
@@ -80,20 +111,24 @@ def load_jahandmadeart_shop(models, db: str, uid: int, password: str) -> dict:
         db, uid, password,
         "etsy.shop", "search_read",
         [[["etsy_api_shop_id", "=", "60752333"]]],
-        {"fields": ["id", "name", "etsy_api_shop_id", "access_token", "access_token_expires_at"], "limit": 1},
+        {"fields": ["id", "name", "etsy_api_shop_id", "etsy_oauth_access_token", "etsy_oauth_token_expires_at"], "limit": 1},
     )
     if not shops:
         sys.exit("JaHandmadeArt shop (etsy_api_shop_id=60752333) not found")
     shop = shops[0]
-    if not shop.get("access_token"):
-        sys.exit(f"shop {shop['name']} has no access_token — re-authorize OAuth and re-run")
+    if not shop.get("etsy_oauth_access_token"):
+        sys.exit(f"shop {shop['name']} has no etsy_oauth_access_token — re-authorize OAuth and re-run")
     return shop
 
 
-def etsy_headers(access_token: str, api_key_combined: str) -> dict[str, str]:
+def get_token(shop: dict) -> str:
+    return shop["etsy_oauth_access_token"]
+
+
+def etsy_headers(etsy_oauth_access_token: str, api_key_combined: str) -> dict[str, str]:
     # Per reference_etsy_api_credentials memory: x-api-key MUST be `id:secret`.
     return {
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": f"Bearer {etsy_oauth_access_token}",
         "x-api-key": api_key_combined,
         "Accept": "application/json",
     }
@@ -141,8 +176,7 @@ def main() -> int:
     db = args.db or get_env("STAGING_DB", dotenv, "esty_odoo19")
     login = get_env("STAGING_ADMIN_LOGIN", dotenv, "admin")
     password = get_env("STAGING_ADMIN_PASSWORD", dotenv)
-    client_id = get_env("ETSY_CLIENT_ID", dotenv)
-    client_secret = get_env("ETSY_CLIENT_SECRET", dotenv)
+    client_id, client_secret = load_etsy_app_credentials()
 
     print(f"[cleanup] connecting to {base_url} (db={db}) as {login}")
     models, uid = odoo_login(base_url, db, login, password)
@@ -150,7 +184,7 @@ def main() -> int:
     shop = load_jahandmadeart_shop(models, db, uid, password)
     print(f"[cleanup] loaded shop name={shop['name']} api_shop_id={shop['etsy_api_shop_id']}")
 
-    headers = etsy_headers(shop["access_token"], f"{client_id}:{client_secret}")
+    headers = etsy_headers(shop["etsy_oauth_access_token"], f"{client_id}:{client_secret}")
     print(f"[cleanup] scanning draft listings for prefix={args.prefix!r}")
 
     matches: list[dict] = []
