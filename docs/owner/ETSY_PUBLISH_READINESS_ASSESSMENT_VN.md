@@ -121,17 +121,22 @@ JaHandmadeArt — listing `4511807545` được tạo ngày 26/05/2026.)
 | Chính sách đổi trả | ✅ Đầy đủ | Mặc định shop |
 | Mã SKU | ✅ Đầy đủ | Trường mã nội bộ chuẩn (`Internal Reference`) — sắp được tự động sinh khi BA chọn Danh mục + Biến thể |
 | Ảnh sản phẩm | ⚠️ Một phần | Chỉ gửi 1 ảnh chính; Etsy cho phép tới 10 |
-| Tags | ❌ Chưa gửi | Chưa được nhập vào form |
-| Vật liệu (Materials) | ❌ Chưa gửi | Đã có sẵn ở biến thể nhưng publisher chưa lấy ra |
-| Cá nhân hóa | ❌ Chưa gửi | Chưa có ô trên form |
-| Biến thể (giá/tồn theo từng biến thể) | ⚠️ Một phần | Có gửi danh sách biến thể với giá/tồn, nhưng chưa gửi nhãn "Material/Color/Size" cho từng biến thể |
-| Cân nặng | ❌ Chưa gửi | Đã có trường chuẩn Odoo nhưng publisher chưa lấy |
-| Kích thước (D/R/C) | ❌ Chưa gửi | Có thể suy ra từ Biến thể kích thước (vd: R30X18) |
+| Tags | ✅ Đầy đủ | Wave-2 P-LIST-* đã ship; nhập trong tab Marketing trên form |
+| Vật liệu (Materials) | ✅ Đầy đủ | Wave-2 ship; lấy từ tab Materials per-variant |
+| Cá nhân hóa | ✅ Đầy đủ | Wave-2 ship; bật check + chỉ dẫn trên form (per-product override) |
+| Biến thể (giá/tồn theo từng biến thể) | ✅ Đầy đủ | Wave-2 P-BUG-ESTY-188 iter3 ship; per-variant SKU/qty/price + nhãn Material/Color/Size đúng cho Etsy v3 |
+| Cân nặng | ✅ Đầy đủ | Wave-2 ship; lấy trường chuẩn Odoo |
+| Kích thước (D/R/C) | ✅ Đầy đủ | Wave-2 ship; per-variant nếu biến thể kích thước |
 | Auto renew | ⚠️ Không quan trọng | Có thể cấu hình sau khi listing đã đăng |
+| Tiền tệ shop (preview giá VND/EUR/CAD) | ✅ Đầy đủ | Wave-3 P-ENH-ESTY-195 (2026-06-06); Marketing xem giá quy đổi trực tiếp trên Listing form trước khi publish |
+| Brand voice mặc định theo shop (Title/Description/Image) | ✅ Đầy đủ | Wave-3 P-ENH-ESTY-190 (2026-06-07); 3-tier fallback listing → product → shop default |
 
-**Kết luận §4**: Mọi mục **bắt buộc** đều đã đáp ứng → có thể publish.
-Phần lớn các mục **tùy chọn nhưng nên có** chưa được gửi → ảnh hưởng
-chất lượng SEO và trải nghiệm khách hàng nếu chưa được bổ sung.
+**Kết luận §4 (cập nhật 2026-06-07)**: Mọi mục **bắt buộc** + gần như mọi
+mục **tùy chọn nên có** đều đã được hệ thống hỗ trợ sau Wave-2 + Wave-3.
+Riêng *Auto renew* không gửi vì có thể chỉnh trực tiếp trên Etsy. Toàn bộ
+danh sách lỗi từ owner review 2026-06-03 đã được closure (Jira ESTY-187 →
+ESTY-199 đã rời "IN PROCESS" trừ ESTY-188 đang đợi owner re-publish xác
+nhận iter3 fix).
 
 ---
 
