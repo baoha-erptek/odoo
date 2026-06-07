@@ -1,0 +1,461 @@
+/* ============================================================================
+ * Hatafa "Mu" Design System — Design Tokens + Component CSS
+ *
+ * Extracted 2026-06-07 from the 5 mockup HTMLs in docs/owner/business-flows/
+ * (flow-1 through flow-4, designed 2026-06-03). Single canonical source for
+ * the visual language used in owner-facing UI mockups.
+ *
+ * This file is a REFERENCE — not loaded by Odoo at runtime. Backport patterns
+ * into real OWL components per the Hybrid (Option 3) plan; see
+ * `docs/owner/design-system/MU_SYSTEM.md` for usage guidance + per-pattern
+ * mapping into OWL components.
+ *
+ * Naming convention: every class starts with `mu-` (mockup) to avoid
+ * collision with Odoo's `o_*` classes when this CSS is eventually loaded
+ * into the Odoo backend bundle.
+ * ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+ * 1. Color tokens
+ * --------------------------------------------------------------------------- */
+:root {
+  /* Brand */
+  --mu-brand:           #714B67;   /* Odoo purple — primary brand color */
+  --mu-brand-50:        #faf5f9;   /* Tinted background (purple wash) */
+  --mu-brand-100:       #f4e8f0;
+  --mu-brand-200:       #e4cee0;
+
+  /* Neutrals (greys) */
+  --mu-ink:             #1a1a1a;   /* Body text */
+  --mu-ink-strong:      #111827;   /* Headings */
+  --mu-ink-soft:        #1f2937;   /* List rows, form values */
+  --mu-muted:           #6b7280;   /* Labels, captions */
+  --mu-muted-strong:    #4b5563;
+  --mu-muted-soft:      #9ca3af;   /* Placeholders, secondary meta */
+  --mu-rule:            #e5e7eb;   /* Borders, dividers */
+  --mu-rule-soft:       #f3f4f6;   /* Subtle dividers between fields */
+  --mu-bg-page:         #fafafa;   /* Page background */
+  --mu-bg-surface:      #ffffff;   /* Card/section background */
+  --mu-bg-sunken:       #f9fafb;   /* Table header / status bar */
+
+  /* Status — paired bg/fg */
+  --mu-success-bg:      #dcfce7;
+  --mu-success-fg:      #15803d;
+  --mu-success-tint:    #f0fdf4;   /* Light tint for "done" cells */
+
+  --mu-warn-bg:         #fef3c7;
+  --mu-warn-fg:         #b45309;
+  --mu-warn-tint:       #fffbeb;
+  --mu-warn-banner-bg:  #fef9c3;
+  --mu-warn-banner-fg:  #854d0e;
+  --mu-warn-banner-rule:#ca8a04;
+
+  --mu-danger-bg:       #fee2e2;
+  --mu-danger-fg:       #b91c1c;
+  --mu-danger-tint:     #fef2f2;
+  --mu-danger-rule:     #fecaca;
+
+  --mu-info-bg:         #dbeafe;
+  --mu-info-fg:         #1d4ed8;
+
+  --mu-neutral-bg:      #f3f4f6;
+  --mu-neutral-fg:      #4b5563;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Typography scale
+ * --------------------------------------------------------------------------- */
+:root {
+  /* Font families */
+  --mu-font-sans:       -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                        Helvetica, Arial, sans-serif;
+  --mu-font-mono:       "SF Mono", Menlo, Consolas, monospace;
+
+  /* Sizes — keep step <= 2px for consistency */
+  --mu-size-xs:         11px;     /* Pill labels, smart-button counts */
+  --mu-size-sm:         12px;     /* Field labels, captions, meta */
+  --mu-size-md:         13px;     /* Body, field values, table cells */
+  --mu-size-lg:         14px;     /* List headers, status bar */
+  --mu-size-xl:         16px;     /* Topbar heading */
+  --mu-size-2xl:        18px;     /* Section h3 */
+  --mu-size-3xl:        20px;     /* Form title (mu-form-title) */
+  --mu-size-4xl:        26px;     /* Page hero h2 */
+
+  /* Weights */
+  --mu-weight-regular:  400;
+  --mu-weight-medium:   500;
+  --mu-weight-semibold: 600;
+  --mu-weight-bold:     700;
+
+  /* Letter spacing */
+  --mu-track-tight:     -0.01em;
+  --mu-track-uppercase: 0.4px;    /* Uppercase column headers */
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Spacing + radii
+ * --------------------------------------------------------------------------- */
+:root {
+  --mu-space-1:  6px;
+  --mu-space-2:  8px;
+  --mu-space-3:  10px;
+  --mu-space-4:  12px;
+  --mu-space-5:  14px;
+  --mu-space-6:  18px;
+  --mu-space-7:  22px;
+  --mu-space-8:  28px;
+  --mu-space-9:  32px;
+
+  --mu-radius-sm: 3px;            /* Buttons */
+  --mu-radius-md: 4px;            /* Cards, banners */
+  --mu-radius-lg: 6px;            /* Modals, info callouts */
+  --mu-radius-xl: 10px;           /* Page sections */
+  --mu-radius-2xl: 12px;          /* Page hero */
+  --mu-radius-pill: 999px;        /* Pills, stage indicators */
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. Layout primitives
+ * --------------------------------------------------------------------------- */
+.mu-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 32px;
+}
+.mu-spacer { flex: 1; }
+@media (max-width: 760px) {
+  .mu-grid2 { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. Chrome bar (top header simulating Odoo nav)
+ * --------------------------------------------------------------------------- */
+.mu-chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 14px;
+  background: var(--mu-brand);
+  color: #fff;
+  font-size: var(--mu-size-md);
+}
+.mu-chrome-bar .mu-app   { font-weight: var(--mu-weight-semibold); }
+.mu-chrome-bar .mu-menu  { color: rgba(255, 255, 255, 0.85); }
+.mu-chrome-bar .mu-user  { color: rgba(255, 255, 255, 0.85); font-size: var(--mu-size-sm); }
+
+/* Breadcrumb under the chrome bar */
+.mu-breadcrumb {
+  padding: 8px 14px;
+  background: var(--mu-bg-surface);
+  border-bottom: 1px solid var(--mu-rule);
+  font-size: var(--mu-size-md);
+  color: var(--mu-muted-strong);
+}
+.mu-breadcrumb .mu-sep    { color: var(--mu-muted-soft); padding: 0 6px; }
+.mu-breadcrumb strong     { color: var(--mu-ink-soft); font-weight: var(--mu-weight-semibold); }
+
+/* Status bar (action buttons + stage pipeline) */
+.mu-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--mu-rule);
+  background: var(--mu-bg-page);
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. Buttons
+ * --------------------------------------------------------------------------- */
+.mu-btn {
+  padding: 5px 12px;
+  font-size: var(--mu-size-sm);
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  border-radius: var(--mu-radius-sm);
+  font-weight: var(--mu-weight-medium);
+}
+.mu-btn-primary {
+  border-color: var(--mu-brand);
+  background: var(--mu-brand);
+  color: #fff;
+}
+.mu-btn-link {
+  border: none;
+  background: transparent;
+  color: var(--mu-brand);
+  padding: 5px 6px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. Stage pipeline (Draft → Published → Archived)
+ * --------------------------------------------------------------------------- */
+.mu-stage-pipe {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--mu-size-xs);
+  color: var(--mu-muted-soft);
+}
+.mu-stage {
+  padding: 4px 10px;
+  border: 1px solid var(--mu-rule);
+  border-radius: var(--mu-radius-pill);
+  color: var(--mu-muted);
+}
+.mu-stage.active {
+  border-color: var(--mu-brand);
+  color: var(--mu-brand);
+  background: var(--mu-brand-50);
+  font-weight: var(--mu-weight-semibold);
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. Form layout (2-column grid of labeled fields)
+ * --------------------------------------------------------------------------- */
+.mu-form           { padding: 16px 18px; }
+.mu-form-title {
+  font-size: var(--mu-size-3xl);
+  font-weight: var(--mu-weight-semibold);
+  color: var(--mu-ink-strong);
+  margin-bottom: 12px;
+}
+.mu-field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--mu-rule-soft);
+}
+.mu-field-label { color: var(--mu-muted); font-size: var(--mu-size-sm); }
+.mu-field-value { color: var(--mu-ink-soft); font-size: var(--mu-size-md); }
+.mu-field-value.mu-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mu-weight-semibold);
+}
+.mu-field-value.mu-link {
+  color: var(--mu-brand);
+  text-decoration: underline;
+}
+
+/* Monospace token (SKU, listing_id, taxonomy_id…) */
+.mu-mono,
+.mu-field-value.mu-mono {
+  font-family: var(--mu-font-mono);
+  background: var(--mu-brand-50);
+  padding: 2px 6px;
+  border-radius: var(--mu-radius-sm);
+  font-size: 12.5px;
+  color: var(--mu-brand);
+  font-weight: var(--mu-weight-semibold);
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. Pill badges (4 status colors)
+ * --------------------------------------------------------------------------- */
+.mu-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: var(--mu-size-xs);
+  font-weight: var(--mu-weight-semibold);
+}
+.mu-pill-success  { background: var(--mu-success-bg); color: var(--mu-success-fg); }
+.mu-pill-warn     { background: var(--mu-warn-bg);    color: var(--mu-warn-fg); }
+.mu-pill-danger   { background: var(--mu-danger-bg);  color: var(--mu-danger-fg); }
+.mu-pill-neutral  { background: var(--mu-neutral-bg); color: var(--mu-neutral-fg); }
+
+/* ---------------------------------------------------------------------------
+ * 10. Tabs (notebook-style horizontal tab bar)
+ * --------------------------------------------------------------------------- */
+.mu-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--mu-rule);
+  margin: 18px -18px 0;
+  padding: 0 18px;
+  overflow-x: auto;
+}
+.mu-tab {
+  padding: 9px 14px;
+  font-size: var(--mu-size-md);
+  color: var(--mu-muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.mu-tab.active {
+  color: var(--mu-brand);
+  border-bottom-color: var(--mu-brand);
+  font-weight: var(--mu-weight-semibold);
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. List tables
+ * --------------------------------------------------------------------------- */
+.mu-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mu-size-md);
+}
+.mu-list thead th {
+  background: var(--mu-bg-sunken);
+  padding: 9px 12px;
+  text-align: left;
+  color: var(--mu-muted);
+  font-size: var(--mu-size-xs);
+  font-weight: var(--mu-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--mu-track-uppercase);
+  border-bottom: 1px solid var(--mu-rule);
+}
+.mu-list tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mu-rule-soft);
+  color: var(--mu-ink-soft);
+}
+.mu-list tbody tr:last-child td { border-bottom: 0; }
+.mu-list .mu-text-danger { color: var(--mu-danger-fg); font-weight: var(--mu-weight-medium); }
+
+/* ---------------------------------------------------------------------------
+ * 12. Kanban cards
+ * --------------------------------------------------------------------------- */
+.mu-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: var(--mu-neutral-bg);
+}
+.mu-kb-card {
+  background: var(--mu-bg-surface);
+  border: 1px solid var(--mu-rule);
+  border-radius: var(--mu-radius-md);
+  padding: 12px 14px;
+}
+.mu-kb-card h4 {
+  font-size: var(--mu-size-md);
+  font-weight: var(--mu-weight-semibold);
+  color: var(--mu-ink-soft);
+  margin-bottom: 6px;
+}
+.mu-kb-meta {
+  font-size: var(--mu-size-sm);
+  color: var(--mu-muted);
+  line-height: 1.65;
+}
+.mu-kb-meta b { color: var(--mu-ink-soft); font-weight: var(--mu-weight-medium); }
+
+/* ---------------------------------------------------------------------------
+ * 13. Modals (used for error dialogs, confirmation prompts)
+ * --------------------------------------------------------------------------- */
+.mu-modal-overlay {
+  padding: 30px 28px;
+  background: rgba(31, 19, 32, 0.6);
+  min-height: 340px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.mu-modal {
+  background: var(--mu-bg-surface);
+  border-radius: var(--mu-radius-lg);
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+.mu-modal-head {
+  background: var(--mu-danger-tint);
+  color: var(--mu-danger-fg);
+  padding: 12px 18px;
+  font-weight: var(--mu-weight-semibold);
+  font-size: var(--mu-size-lg);
+  border-bottom: 1px solid var(--mu-danger-rule);
+}
+.mu-modal-body { padding: 18px; }
+.mu-modal-banner {
+  background: var(--mu-warn-banner-bg);
+  color: var(--mu-warn-banner-fg);
+  padding: 8px 12px;
+  border-radius: var(--mu-radius-md);
+  font-size: 12.5px;
+  margin: 10px 0;
+  line-height: 1.5;
+  border-left: 3px solid var(--mu-warn-banner-rule);
+}
+.mu-modal-foot {
+  padding: 12px 18px;
+  border-top: 1px solid var(--mu-rule);
+  background: var(--mu-bg-page);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 14. Warning banner (standalone — outside modals)
+ * --------------------------------------------------------------------------- */
+.mu-banner {
+  background: var(--mu-warn-bg);
+  border-left: 3px solid var(--mu-warn-banner-rule);
+  padding: 10px 12px;
+  border-radius: var(--mu-radius-md);
+  font-size: 12.5px;
+  color: var(--mu-warn-fg);
+  margin-bottom: 14px;
+  line-height: 1.55;
+}
+
+/* ---------------------------------------------------------------------------
+ * 15. Mockup screen wrapper (frames each screen in tour HTMLs)
+ * --------------------------------------------------------------------------- */
+.mu-screens {
+  background: var(--mu-neutral-bg);
+  border: 1px solid var(--mu-rule);
+  border-radius: var(--mu-radius-xl);
+  padding: 26px 24px 22px;
+  margin-top: 14px;
+}
+.mu-screens > h3 {
+  color: var(--mu-ink-soft);
+  font-size: var(--mu-size-3xl);
+  margin: 0 0 4px;
+  font-weight: var(--mu-weight-bold);
+  display: block;
+}
+.mu-screens > .mu-lede {
+  color: var(--mu-muted);
+  font-size: 13.5px;
+  margin-bottom: 18px;
+  max-width: 780px;
+}
+.mu-screen {
+  background: var(--mu-bg-surface);
+  border: 1px solid #d1d5db;
+  border-radius: var(--mu-radius-md);
+  margin-bottom: 22px;
+  overflow: hidden;
+  font: 13px/1.4 -apple-system, "Segoe UI", system-ui, sans-serif;
+  color: var(--mu-ink-soft);
+}
+.mu-screen-title {
+  padding: 10px 16px;
+  font-size: var(--mu-size-md);
+  color: var(--mu-muted);
+  background: var(--mu-bg-sunken);
+  border-bottom: 1px solid var(--mu-rule);
+  font-weight: var(--mu-weight-medium);
+}
+.mu-screen-title strong { color: var(--mu-ink-soft); font-weight: var(--mu-weight-semibold); }
+.mu-caption {
+  padding: 10px 16px;
+  font-size: var(--mu-size-sm);
+  color: var(--mu-muted);
+  background: var(--mu-bg-page);
+  border-top: 1px solid var(--mu-rule);
+  line-height: 1.55;
+}
+.mu-caption b { color: var(--mu-ink-soft); font-weight: var(--mu-weight-semibold); }
