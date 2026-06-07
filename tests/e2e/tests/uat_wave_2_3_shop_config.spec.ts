@@ -12,9 +12,23 @@
  * Read-only assertions only — no mutations. Safe to run any time, no Etsy fees.
  * Verified against staging etsy_integration 19.0.3.8.0 / mhc 19.0.1.0.64+.
  */
+import { mkdirSync } from 'fs';
+import { join } from 'path';
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from '../fixtures/odoo-auth';
 import { CONFIG } from '../fixtures/env';
+
+// P-UAT-SCREENSHOTS-WAVE-2-3 — harvest flow-1 #08 (brand-voice defaults).
+// SHOT_DIR is OUTSIDE Playwright's outputDir (`artifacts/`) so screenshots
+// from this spec survive an outputDir wipe by a separate Playwright run.
+const SCREENSHOT_CAPTURE = process.env.SCREENSHOT_CAPTURE === '1';
+const SHOT_DIR = join(__dirname, '..', '.harvest', 'business-flows');
+if (SCREENSHOT_CAPTURE) mkdirSync(SHOT_DIR, { recursive: true });
+async function shot(page: import('@playwright/test').Page, name: string): Promise<void> {
+  if (!SCREENSHOT_CAPTURE) return;
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: join(SHOT_DIR, name), fullPage: true });
+}
 
 const EXPECTED_API_SHOP_ID = '60752333'; // JaHandmadeArt — see reference_etsy_shop_id_mapping memory
 
@@ -89,6 +103,7 @@ test.describe('UAT Wave 2/3 — JaHandmadeArt shop publisher defaults', () => {
     if (await defaultsTab.count() > 0) {
       await defaultsTab.click();
       await page.waitForTimeout(300);
+      await shot(page, '08-brand-voice-defaults.png');           // flow-1 #08 — Publisher Defaults tab
 
       const uiChecks = [
         ['default_title (ESTY-190 brand-voice)', '[name="default_title"]'],

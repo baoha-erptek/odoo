@@ -5,6 +5,10 @@
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_GIAO_HANG_VN.md`](../HUONG_DAN_GIAO_HANG_VN.md) (mục Gearment)
 **API reference:** [`../../GEARMENT_API_REFERENCE.md`](../../GEARMENT_API_REFERENCE.md)
 
+> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
+> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
+> Slice kế tiếp đề xuất: `P-UAT-FLOW-3B-SCREENSHOTS`.
+
 > Luồng 3b — sản phẩm in + ship bởi Gearment (đối tác dropship POD).
 > Tự động hoá qua Gearment API v3 + webhook.
 

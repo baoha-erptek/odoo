@@ -48,9 +48,9 @@ Người dùng điền các trường cơ bản:
 - **Thuộc tính biến thể** (Tab Attributes & Variants):
   Material, Apparel Size, Color, …
 
-> ![placeholder: form tạo sản phẩm — tab General Information](./screenshots/flow-1/01-form-general.png "Form tạo sản phẩm — General Information")
+> ![Form tạo sản phẩm — General Information](./screenshots/flow-1/01-form-general.png "Form tạo sản phẩm — General Information")
 
-> ![placeholder: tab Attributes & Variants](./screenshots/flow-1/02-attributes.png "Tab Attributes & Variants với Material + Color")
+> ![Tab Attributes & Variants với Material + Color](./screenshots/flow-1/02-attributes.png "Tab Attributes & Variants với Material + Color")
 
 **Wave-2 ESTY-192:** Thuộc tính được map sang Etsy property_id qua bảng
 `etsy.shop.attribute.mapping` (Tier 2) hoặc `product.attribute.x_etsy_property_id`
@@ -63,13 +63,16 @@ Người dùng điền các trường cơ bản:
 **Tab Channels:** thêm Etsy vào `x_channel_applicability_ids`.
 **Trường giá:** `list_price` (đơn vị: VND cho JaHandmadeArt).
 
-> ![placeholder: tab Channels](./screenshots/flow-1/03-channels.png "Tab Channels — gán kênh Etsy")
+> ![Tab Channels — gán kênh Etsy](./screenshots/flow-1/03-channels.png "Tab Channels — gán kênh Etsy")
 
 **Wave-3 ESTY-195:** Sau khi publish, hệ thống tự động convert giá VND
 sang đơn vị tiền tệ của shop (`etsy.shop.listing_currency_id`) qua
 `res.currency._convert()`. Xem ô preview `display_price_in_shop_currency`
 trên form `multichannel.listing`.
 
+<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Current Wave-2/3 spec
+     chỉ RPC-read multichannel.listing, không mở form. Cần slice riêng
+     P-UAT-FLOW-1-LISTING-FORM-TOUR để mở form và chụp tab Shipping & Variations. -->
 > ![placeholder: FX preview trên multichannel.listing](./screenshots/flow-1/04-fx-preview.png "Tab Shipping & Variations — Shop Currency Preview")
 
 ---
@@ -88,6 +91,9 @@ hệ thống dùng default từ `etsy.shop`:
 Nếu cần override per-listing (sau publish), mở form `multichannel.listing`,
 tab "Shipping & Variations" hoặc "How It's Made".
 
+<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
+     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab
+     Shipping & Variations để chụp. -->
 > ![placeholder: form multichannel.listing tab Shipping & Variations](./screenshots/flow-1/05-listing-shipping.png "Form multichannel.listing — Shipping & Variations với taxonomy + shipping profile")
 
 ---
@@ -102,6 +108,8 @@ tab "Shipping & Variations" hoặc "How It's Made".
 Tải video lên `ir.attachment` (qua nút Upload trên form), chọn từ dropdown.
 Publisher gọi `POST /shops/{id}/listings/{id}/videos` (multipart) khi publish.
 
+<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh chưa thu được. Cần slice
+     P-UAT-FLOW-1-LISTING-FORM-TOUR mở form multichannel.listing trên tab Video. -->
 > ![placeholder: tab Video trên multichannel.listing](./screenshots/flow-1/06-listing-video.png "Tab Video — chọn file đính kèm")
 
 ---
@@ -111,7 +119,7 @@ Publisher gọi `POST /shops/{id}/listings/{id}/videos` (multipart) khi publish.
 **Nút:** Header form sản phẩm → "Publish to Etsy" → wizard hiện ra
 → chọn shop → "Run Publish Draft Only"
 
-> ![placeholder: wizard Publish to Etsy](./screenshots/flow-1/07-publish-wizard.png "Wizard Publish to Etsy — chọn shop")
+> ![Wizard Publish to Etsy — chọn shop](./screenshots/flow-1/07-publish-wizard.png "Wizard Publish to Etsy — chọn shop")
 
 **Wave-3 ESTY-190:** Title / Description / Image trên Etsy lấy theo
 fallback chain:
@@ -123,7 +131,7 @@ fallback chain:
 Để override mặc định ở cấp shop, mở `Etsy > Shops > [shop] > Publisher
 Defaults > Shop Brand-Voice Defaults`.
 
-> ![placeholder: shop brand-voice defaults](./screenshots/flow-1/08-brand-voice-defaults.png "Etsy shop — Shop Brand-Voice Defaults")
+> ![Etsy shop — Shop Brand-Voice Defaults](./screenshots/flow-1/08-brand-voice-defaults.png "Etsy shop — Shop Brand-Voice Defaults")
 
 ---
 
@@ -135,6 +143,9 @@ Sau khi publish thành công:
 - `multichannel.listing.state` = `published`
 - Etsy Shop Manager: https://www.etsy.com/your/shops/jahandmadeart/tools/listings/drafts
 
+<!-- TODO P-UAT-SCREENSHOTS-WAVE-2-3: ảnh không tự chụp được từ Playwright
+     (Etsy Shop Manager là UI public của Etsy). Owner chụp tay từ
+     https://www.etsy.com/your/shops/jahandmadeart/tools/listings/drafts -->
 > ![placeholder: Etsy Shop Manager hiển thị draft mới](./screenshots/flow-1/09-etsy-draft.png "Etsy Shop Manager — Draft mới với listing_id")
 
 ---

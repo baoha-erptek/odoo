@@ -6,6 +6,10 @@
 **Tài liệu nghiệp vụ:** [`../FLOW_GIAO_HANG_VN.md`](../FLOW_GIAO_HANG_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_giao_hang.spec.ts`
 
+> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
+> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
+> Slice kế tiếp đề xuất: `P-UAT-FLOW-3A-SCREENSHOTS`.
+
 > Luồng 3a — sản phẩm in tại xưởng nội bộ, vận chuyển bằng USPS/UniUni/YunExpress.
 
 ---

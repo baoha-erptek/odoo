@@ -19,12 +19,30 @@
  *
  * Verified against staging etsy_integration 19.0.3.8.0+ / mhc 19.0.1.0.64+.
  */
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { test, expect } from '@playwright/test';
 import { loginAsBaLead } from '../fixtures/odoo-auth';
 import { ProductFormPage } from '../page-objects/product_form';
 import { CONFIG } from '../fixtures/env';
+
+// P-UAT-SCREENSHOTS-WAVE-2-3 — harvest flow-1 screenshots when SCREENSHOT_CAPTURE=1.
+// SHOT_DIR is OUTSIDE Playwright's outputDir (`artifacts/`) because Playwright
+// wipes outputDir on every run; we need screenshots to accumulate across
+// invocations of test:wave-2-3:publish vs test:wave-2-3:cfg.
+// Orchestrator copies into `docs/owner/business-flows/screenshots/flow-1/`
+// after the run.
+const SCREENSHOT_CAPTURE = process.env.SCREENSHOT_CAPTURE === '1';
+const STOP_AFTER_SCREENSHOTS = process.env.STOP_AFTER_SCREENSHOTS === '1';
+const SHOT_DIR = join(__dirname, '..', '.harvest', 'business-flows');
+if (SCREENSHOT_CAPTURE) mkdirSync(SHOT_DIR, { recursive: true });
+async function shot(page: import('@playwright/test').Page, name: string): Promise<void> {
+  if (!SCREENSHOT_CAPTURE) return;
+  // Notebook tabs + onchange recomputes are lazy — pause before capture so
+  // tab content is painted and any pending recompute spinner is gone.
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: join(SHOT_DIR, name), fullPage: true });
+}
 
 const RUN_ETSY = process.env.RUN_ETSY_PUBLISH === '1';
 // LIVE_PRICE is in COMPANY currency (staging = USD). Publisher converts to
@@ -109,10 +127,13 @@ test.describe('UAT Wave 2/3 — comprehensive Apron live publish', () => {
     await f.addVariantAttribute('Material', 'Textile');         // ESTY-192
     await f.addVariantAttribute('Apparel Size', 'Medium');
     await f.addVariantAttribute('Color', ['Black', 'White']);   // ESTY-192 multi-value variant
+    await shot(page, '02-attributes.png');                      // flow-1 #02 — Attributes & Variants tab populated
     await f.fillListPrice(LIVE_PRICE);
     await f.addChannel('Etsy');
+    await shot(page, '03-channels.png');                        // flow-1 #03 — Channels tab with Etsy added
     await f.fillWeight(0.40);
     await f.save();
+    await shot(page, '01-form-general.png');                    // flow-1 #01 — Saved product form (General visible)
 
     const sku = await f.readSku();
     console.log(`[PUB-01] created "${name}" sku=${sku}`);
@@ -128,7 +149,25 @@ test.describe('UAT Wave 2/3 — comprehensive Apron live publish', () => {
     }]);
 
     // --- publish draft to JaHandmadeArt ------------------------------------
-    await f.publishDraftOnly('JaHandmadeArt');
+    // STOP_AFTER_SCREENSHOTS path: open the wizard, capture flow-1 #07, then
+    // cancel without submitting. Lets us recapture screenshots if a prior
+    // outputDir wipe lost them, without burning another live Etsy draft.
+    if (STOP_AFTER_SCREENSHOTS) {
+      await f.publishButton.click();
+      const modal = page.locator('.modal-dialog', {
+        has: page.locator('.modal-title:has-text("Publish to Etsy")'),
+      }).first();
+      await modal.waitFor({ state: 'visible', timeout: 10000 });
+      await shot(page, '07-publish-wizard.png');
+      await page.keyboard.press('Escape');
+      console.log('[PUB-01] STOP_AFTER_SCREENSHOTS=1 — wizard captured, publish skipped, no Etsy draft created');
+      return;
+    }
+
+    // flow-1 #07 — capture the Publish-to-Etsy wizard modal while it's open.
+    await f.publishDraftOnly('JaHandmadeArt', {
+      onWizardOpen: async () => { await shot(page, '07-publish-wizard.png'); },
+    });
 
     const ref = await pollExternalRef(request, tmplId);
     expect(ref).toMatch(/^\d+$/);

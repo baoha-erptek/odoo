@@ -6,6 +6,10 @@
 **Tài liệu nghiệp vụ:** [`../FLOW_DON_HANG_ETSY_VN.md`](../FLOW_DON_HANG_ETSY_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_don_hang_etsy.spec.ts`
 
+> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
+> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3 —
+> Wave 2/3 chỉ phủ flow-1). Slice kế tiếp đề xuất: `P-UAT-FLOW-2-SCREENSHOTS`.
+
 > Luồng 2 mô tả 2 đường nhận đơn:
 > **(a)** API (mới, mặc định) — Etsy gọi webhook → Odoo tạo `sale.order`
 > **(b)** Email (cũ, dự phòng) — Gmail fetch → parser → `sale.order`

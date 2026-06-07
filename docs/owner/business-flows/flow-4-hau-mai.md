@@ -6,6 +6,10 @@
 **Tài liệu nghiệp vụ:** [`../FLOW_HAU_MAI_VN.md`](../FLOW_HAU_MAI_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_hau_mai.spec.ts` (TBD)
 
+> **TODO ảnh chụp:** Các `![placeholder: ...]` bên dưới sẽ được thay bằng ảnh
+> thật khi luồng có spec UAT riêng (ngoài phạm vi P-UAT-SCREENSHOTS-WAVE-2-3).
+> Slice kế tiếp đề xuất: `P-UAT-FLOW-4-SCREENSHOTS`.
+
 > Luồng 4 — xử lý các yêu cầu sau bán: đổi hàng, trả hàng, refund, change-of-address.
 
 ---
