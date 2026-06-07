@@ -96,6 +96,20 @@
                                 <field name="default_when_made"/>
                                 <field name="default_is_supply"/>
                             </group>
+                            <!-- P-ENH-ESTY-190 / ADR-017 — shop-level
+                                 brand-voice defaults. 3rd tier of the
+                                 listing → product → shop chain. Empty
+                                 fields continue the chain. -->
+                            <group string="Shop Brand-Voice Defaults"
+                                   groups="multichannel_hub_core.group_marketing_user">
+                                <field name="default_title"
+                                       placeholder="e.g. Handmade Ceramic by JaHandmadeArt"/>
+                                <field name="default_description"
+                                       placeholder="Per-shop fallback description; empty → product description_sale"/>
+                                <field name="default_image_1920"
+                                       widget="image"
+                                       options="{'preview_image': 'default_image_1920'}"/>
+                            </group>
                             <group string="Etsy Publisher Unit Preferences"
                                    groups="base.group_system">
                                 <field name="weight_unit_pref"/>

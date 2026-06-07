@@ -129,6 +129,34 @@ class EtsyShop(models.Model):
         default=False,
     )
 
+    # P-ENH-ESTY-190 / ADR-017 — shop-level brand-voice defaults. Bottom
+    # tier of the 3-layer publisher fallback chain:
+    #   multichannel.listing.title → product.template.name → shop.default_title
+    # Same shape for description and image. Empty → continues to next tier;
+    # never raises.
+    default_title = fields.Char(
+        string='Default Listing Title',
+        size=140,
+        help='Per-shop brand-voice title used when neither the listing '
+             'override nor the product canonical name is set. Marketing '
+             'owns this field — leave empty to inherit product name.',
+    )
+    default_description = fields.Text(
+        string='Default Listing Description',
+        help='Per-shop brand-voice description used when neither the listing '
+             'override nor the product canonical description is set. '
+             'Marketing owns this field — leave empty to inherit product '
+             'description_sale.',
+    )
+    default_image_1920 = fields.Image(
+        string='Default Listing Image',
+        max_width=1920,
+        max_height=1920,
+        help='Per-shop hero image used when neither the listing override '
+             'nor the product canonical image is set. Marketing owns this '
+             'field — leave empty to inherit product image_1920.',
+    )
+
     # P-LIST-ATTR-CONFIG (ADR-015 §3 / spec 012 §US6) — shop-wide
     # default attribute mapping. Tier 2 of the publisher's 3-tier
     # property-id fallback chain.

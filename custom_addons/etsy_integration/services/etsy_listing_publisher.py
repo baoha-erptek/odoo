@@ -417,6 +417,78 @@ class EtsyListingPublisher:
         return 0
 
     # ------------------------------------------------------------------
+    # P-ENH-ESTY-190 / ADR-017 — 3-tier title/description/image fallback
+    # (listing intent → product template → shop default).
+    # ------------------------------------------------------------------
+    def _resolve_title_with_fallback(self, intent, tmpl, shop_sudo):
+        """Resolve listing title across the 3-tier chain.
+
+        ``intent`` may be an empty recordset when no per-shop listing row
+        exists. ``shop_sudo`` is the sudo'd ``etsy.shop`` recordset
+        already used by the payload builder. Returns '' when every tier
+        is empty so the publisher never emits None.
+        """
+        listing_val = intent.title if intent else ''
+        if listing_val:
+            return listing_val
+        product_val = tmpl.name or ''
+        if product_val:
+            return product_val
+        shop_default = shop_sudo.default_title or ''
+        if shop_default:
+            _logger.debug(
+                "P-ENH-ESTY-190: title resolved from shop default; "
+                "shop=%s template=%s",
+                shop_sudo.name, tmpl.id,
+            )
+            return shop_default
+        return ''
+
+    def _resolve_description_with_fallback(self, intent, tmpl, shop_sudo):
+        """Resolve listing description across the 3-tier chain.
+
+        Mirrors title resolution. Preserves the legacy double-fallback to
+        ``tmpl.name`` after ``description_sale`` for compatibility with
+        templates that lack a sales description — shop-default sits
+        between description_sale and that final name-as-description
+        rescue.
+        """
+        listing_val = (intent.description if intent else '') or ''
+        if listing_val:
+            return listing_val
+        product_val = tmpl.description_sale or ''
+        if product_val:
+            return product_val
+        shop_default = shop_sudo.default_description or ''
+        if shop_default:
+            _logger.debug(
+                "P-ENH-ESTY-190: description resolved from shop default; "
+                "shop=%s template=%s",
+                shop_sudo.name, tmpl.id,
+            )
+            return shop_default
+        return tmpl.name or ''
+
+    def _resolve_image_with_fallback(self, tmpl, shop_sudo):
+        """Resolve listing hero image across the 3-tier chain.
+
+        Used by ``upload_images`` when neither the template main image
+        nor any gallery row carries binary data. Returns False when every
+        tier is empty so callers can short-circuit before any POST.
+        """
+        if tmpl.image_1920:
+            return tmpl.image_1920
+        shop_default = shop_sudo.default_image_1920
+        if shop_default:
+            _logger.debug(
+                "P-ENH-ESTY-190: hero image resolved from shop default; "
+                "shop=%s template=%s",
+                shop_sudo.name, tmpl.id,
+            )
+            return shop_default
+        return False
+
+    # ------------------------------------------------------------------
     # Listing intent resolver (P-LIST-MODEL — ADR-015)
     # ------------------------------------------------------------------
     def _resolve_listing_intent(self, tmpl, shop):
@@ -461,14 +533,14 @@ class EtsyListingPublisher:
         # P-LIST-MODEL: marketing overrides (title/description) read from the
         # multichannel.listing intent layer; empty fields fall back to template.
         # Single lookup shared by every resolver in the payload builder.
+        # P-ENH-ESTY-190 / ADR-017: extend 2-tier chain to 3-tier by adding
+        # shop-level brand-voice defaults (etsy.shop.default_title /
+        # .default_description) as the final fallback before the empty
+        # string. Resolution helpers log DEBUG when shop default fires so
+        # operators can audit which tier supplied the final value.
         intent = self._resolve_listing_intent(s, shop)
-        title = (intent.title if intent else '') or s.name or ''
-        description = (
-            (intent.description if intent else '')
-            or s.description_sale
-            or s.name
-            or ''
-        )
+        title = self._resolve_title_with_fallback(intent, s, sh)
+        description = self._resolve_description_with_fallback(intent, s, sh)
         payload = {
             'sku': self._resolve_sku(s),
             'title': title,
@@ -896,12 +968,24 @@ class EtsyListingPublisher:
         if not listing_id:
             raise ValueError("upload_images requires a non-empty listing_id")
         t = tmpl.sudo()
+        sh = shop.sudo()
         candidates = []
         if t.image_1920:
             candidates.append(('main', t.image_1920))
         for row in t.x_extra_image_ids.sorted('sequence'):
             if row.image_1920:
                 candidates.append(('gallery', row.image_1920))
+        # P-ENH-ESTY-190 / ADR-017 — when neither template main image nor
+        # gallery has anything, fall back to shop-level default. Keeps the
+        # listing publishable even for products waiting on Marketing's
+        # photoshoot; the shop default is the brand-voice rescue.
+        if not candidates and sh.default_image_1920:
+            _logger.debug(
+                "P-ENH-ESTY-190: hero image resolved from shop default; "
+                "shop=%s template=%s listing=%s",
+                sh.name, tmpl.id, listing_id,
+            )
+            candidates.append(('shop_default', sh.default_image_1920))
         if not candidates:
             return []
         api_shop_id = shop.sudo().etsy_api_shop_id

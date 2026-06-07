@@ -87,3 +87,5 @@ from . import test_p_list_attributes_orm
 from . import test_p_list_attr_config_orm
 from . import test_p_enh_esty_195_phase1_db
 from . import test_p_enh_esty_195_phase2_orm
+from . import test_p_enh_esty_190_phase1_db
+from . import test_p_enh_esty_190_phase2_orm
