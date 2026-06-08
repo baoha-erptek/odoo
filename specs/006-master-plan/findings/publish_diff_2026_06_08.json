@@ -1,0 +1,317 @@
+{
+  "metadata": {
+    "script": "scripts/etsy_publish_diff.py",
+    "slice": "P-LIST-PUBLISH-DIFF-RUN",
+    "staging_base_url": "https://odoo.hatafax.com",
+    "staging_db": "esty_odoo19"
+  },
+  "listing_record": {
+    "publisher_resolution_tier": null,
+    "row_publisher_would_use": {},
+    "case_insensitive_diagnostic_match": {
+      "id": 62,
+      "product_tmpl_id": {
+        "id": 456,
+        "name": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake"
+      },
+      "channel_id": {
+        "id": 1,
+        "name": "Etsy"
+      },
+      "shop_ref": "jahandmadeart",
+      "etsy_shop_id": {
+        "id": 10,
+        "name": "JaHandmadeArt"
+      },
+      "title": "Personalized Coordinates Leather Tray - Testing 101",
+      "description": "<truncated 1439 chars: Personalized Daughter In Law Gift, Welcome To Our Family, Wedding Keepsake For Bride Ring Dish\n\n🌹 Hey, babes! \nI'm absolutely obsessed with my handmade ceramic dishes, and you will be too! They're tot…>",
+      "image_1920": false,
+      "video_attachment_id": {
+        "id": 1162,
+        "name": "DIvid_dzkrni.mp4"
+      },
+      "etsy_who_made": "collective",
+      "etsy_when_made": "2020_2026",
+      "etsy_is_supply": false,
+      "etsy_taxonomy_id": {
+        "id": 2023,
+        "name": "Home & Living / Kitchen & Dining / Dining & Serving / Trays & Platters [#1053]"
+      },
+      "etsy_shipping_profile_id": false,
+      "state": "ready",
+      "external_ref": false
+    }
+  },
+  "product_record": {
+    "id": 456,
+    "name": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake",
+    "default_code": false,
+    "description_sale": false,
+    "image_1920": "<truncated 479748 chars: UklGRnp9BQBXRUJQVlA4WAoAAAAgAAAAfwcAfwcASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…>",
+    "list_price": 10.0,
+    "qty_available": 35.0,
+    "x_who_made": "collective",
+    "x_when_made": "made_to_order",
+    "x_taxonomy_id": false,
+    "product_tag_ids": {
+      "ids_count": 13,
+      "ids": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46
+      ]
+    },
+    "x_extra_image_ids": {
+      "ids_count": 2,
+      "ids": [
+        59,
+        60
+      ]
+    },
+    "x_is_personalizable": true,
+    "x_personalization_required": true,
+    "x_personalization_char_count": 256,
+    "x_personalization_instructions": "Write your GPS coordinates, your quote, Date (optional)",
+    "x_sku_v2_suggested": "KSK",
+    "x_sku_v2_status": "non_canonical",
+    "weight": 0.0,
+    "attribute_line_ids": {
+      "ids_count": 1,
+      "ids": [
+        88
+      ]
+    }
+  },
+  "shop_record": {
+    "id": 10,
+    "name": "JaHandmadeArt",
+    "etsy_api_shop_id": "60752333",
+    "active_source": "api",
+    "default_taxonomy_id": "2172",
+    "default_shipping_profile_id": "285149016922",
+    "default_return_policy_id": "1397855793400",
+    "default_who_made": "i_did",
+    "default_when_made": "made_to_order",
+    "default_is_supply": false,
+    "default_title": false,
+    "default_description": false,
+    "default_image_1920": false,
+    "listing_currency_id": {
+      "id": 23,
+      "name": "VND"
+    },
+    "default_readiness_state_id": "1406133708616",
+    "weight_unit_pref": "oz",
+    "dimensions_unit_pref": "cm"
+  },
+  "pcs_record": {
+    "id": 83,
+    "product_tmpl_id": [
+      456,
+      "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake"
+    ],
+    "channel_id": [
+      1,
+      "Etsy"
+    ],
+    "external_ref": "4518406711",
+    "state": "draft",
+    "last_sync_at": false
+  },
+  "reconstructed_payload": {
+    "title": {
+      "value": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake",
+      "tier": "template"
+    },
+    "description": {
+      "value": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake",
+      "tier": "hardcoded"
+    },
+    "sku": {
+      "value": "KSK",
+      "tier": "template (v2_suggested)"
+    },
+    "price": {
+      "value": 10.0,
+      "tier": "template (raw, pre-currency-conversion)"
+    },
+    "quantity": {
+      "value": 35,
+      "tier": "template"
+    },
+    "who_made": {
+      "value": "collective",
+      "tier": "template"
+    },
+    "when_made": {
+      "value": "made_to_order",
+      "tier": "template"
+    },
+    "is_supply": {
+      "value": false,
+      "tier": "hardcoded"
+    },
+    "taxonomy_id": {
+      "value": "2172",
+      "tier": "shop"
+    },
+    "shipping_profile_id": {
+      "value": "285149016922",
+      "tier": "shop"
+    },
+    "return_policy_id": {
+      "value": "1397855793400",
+      "tier": "shop"
+    },
+    "tags": {
+      "value_count": 13,
+      "tier": "template (product_tag_ids cap 13)"
+    },
+    "materials": {
+      "value": "derived from variant Material attribute values (server-side compute)",
+      "tier": "template (variant-derived, not introspected via XMLRPC)"
+    },
+    "weight_dimensions": {
+      "value": "raw weight=0.0; dims parsed from Size attribute server-side",
+      "tier": "template"
+    },
+    "images": {
+      "value": {
+        "publisher_reads": "tmpl.image_1920 + tmpl.x_extra_image_ids",
+        "listing_image_1920_set": false,
+        "listing_image_1920_status": "ORPHAN — publisher ignores it (etsy_listing_publisher.py:973)",
+        "tmpl_image_1920_set": true,
+        "tmpl_x_extra_image_count": 2,
+        "shop_default_image_set": false,
+        "etsy_cap": 10
+      },
+      "tier": "template"
+    },
+    "video_attachment_id": {
+      "value": false,
+      "tier": "listing-only"
+    },
+    "personalization": {
+      "value": {
+        "is_personalizable": true,
+        "required": true,
+        "char_count_max": 256,
+        "instructions_set": true
+      },
+      "tier": "template-only (NO listing override field exists today)",
+      "note": "Sent via separate push_personalization() endpoint, not in createDraft payload (Etsy 2026 deprecation)."
+    },
+    "NOT_MODELLED": {
+      "shop_section_id": "not on any Odoo model",
+      "production_partner_ids": "not on any Odoo model",
+      "listing_type": "hardcoded 'physical' in publisher"
+    }
+  },
+  "reconstructed_payload_if_casing_were_fixed": {
+    "title": {
+      "value": "Personalized Coordinates Leather Tray - Testing 101",
+      "tier": "listing"
+    },
+    "description": {
+      "value": "Personalized Daughter In Law Gift, Welcome To Our Family, Wedding Keepsake For Bride Ring Dish\n\n🌹 Hey, babes! \nI'm absolutely obsessed with my handmade ceramic dishes, and you will be too! They're totally customizable, so you can get one that's tailored just to your style.\n\n🌹 DETAILS:\n- Round Dish: Outside Diameter: 3.9 inches\n- Heart Dish: Width x Height: 3.8 x 3.8 inches\n- Wavy Square Dish: 3.5 x 3.5 inches\n- Line Square Dish: 3.3 x 3.3 inches\n- Big Line Square Dish: 4.1 x 4.1 inches\n\n🌹 WHAT MAKES MY DISHES UNIQUE? \nThe design is printed manually on the dish, which means it will last longer than the vinyl can and still look fabulous!\n\n🌹 PERFECT FOR YOU\nThese cuties are perfect for keeping your most precious jewelry items safe and sound. Place them on your dresser, nightstand, or vanity, and you'll never lose track of your fave accessories.\n\n🌹 GET CREATIVE\nI love being creative, and I'd love to make a custom piece just for you! Just shoot me a message with your ideas.\n\n🌹 HOW TO CARE FOR YOUR DISH\n- Clean it gently with a soft cloth, no harsh chemicals\n- Don't put it in the microwave or dishwasher, or use abrasive tools or strong cleaners\n- Be careful not to stick tape to the printed surface\n\n🌹 NOTE\nDue to the manual nature, each piece may have a small difference in appearance\n\n🌹 Discover more exquisite gifts by visiting:\nhttps://www.etsy.com/shop/JaHandmadeArt\n\nThank you for your support—hope to see you again soon!",
+      "tier": "listing"
+    },
+    "sku": {
+      "value": "KSK",
+      "tier": "template (v2_suggested)"
+    },
+    "price": {
+      "value": 10.0,
+      "tier": "template (raw, pre-currency-conversion)"
+    },
+    "quantity": {
+      "value": 35,
+      "tier": "template"
+    },
+    "who_made": {
+      "value": "collective",
+      "tier": "listing"
+    },
+    "when_made": {
+      "value": "2020_2026",
+      "tier": "listing"
+    },
+    "is_supply": {
+      "value": false,
+      "tier": "hardcoded"
+    },
+    "taxonomy_id": {
+      "value": [
+        2023,
+        "Home & Living / Kitchen & Dining / Dining & Serving / Trays & Platters [#1053]"
+      ],
+      "tier": "listing"
+    },
+    "shipping_profile_id": {
+      "value": "285149016922",
+      "tier": "shop"
+    },
+    "return_policy_id": {
+      "value": "1397855793400",
+      "tier": "shop"
+    },
+    "tags": {
+      "value_count": 13,
+      "tier": "template (product_tag_ids cap 13)"
+    },
+    "materials": {
+      "value": "derived from variant Material attribute values (server-side compute)",
+      "tier": "template (variant-derived, not introspected via XMLRPC)"
+    },
+    "weight_dimensions": {
+      "value": "raw weight=0.0; dims parsed from Size attribute server-side",
+      "tier": "template"
+    },
+    "images": {
+      "value": {
+        "publisher_reads": "tmpl.image_1920 + tmpl.x_extra_image_ids",
+        "listing_image_1920_set": false,
+        "listing_image_1920_status": "ORPHAN — publisher ignores it (etsy_listing_publisher.py:973)",
+        "tmpl_image_1920_set": true,
+        "tmpl_x_extra_image_count": 2,
+        "shop_default_image_set": false,
+        "etsy_cap": 10
+      },
+      "tier": "template"
+    },
+    "video_attachment_id": {
+      "value": true,
+      "tier": "listing-only"
+    },
+    "personalization": {
+      "value": {
+        "is_personalizable": true,
+        "required": true,
+        "char_count_max": 256,
+        "instructions_set": true
+      },
+      "tier": "template-only (NO listing override field exists today)",
+      "note": "Sent via separate push_personalization() endpoint, not in createDraft payload (Etsy 2026 deprecation)."
+    },
+    "NOT_MODELLED": {
+      "shop_section_id": "not on any Odoo model",
+      "production_partner_ids": "not on any Odoo model",
+      "listing_type": "hardcoded 'physical' in publisher"
+    }
+  },
+  "etsy_live_payload": {
+    "_skipped": "decryption helper blocked over XMLRPC",
+    "_error": "<Fault 4: \"Private methods (such as 'etsy.shop._get_access_token') cannot be called remotely.\">"
+  },
+  "notes": [
+    "CONFIRMED-BUG: publisher's exact-match on shop_ref MISSED a listing row (id=62, shop_ref='jahandmadeart') that would have matched case-insensitively against shop.name='JaHandmadeArt'. The listing's overrides are silently bypassed by EtsyListingPublisher._resolve_listing_intent (etsy_listing_publisher.py:515). Casing drift here = 100% override miss.",
+    "Etsy GET skipped: cannot read access token via XMLRPC (Private methods (such as 'etsy.shop._get_access_token') cannot be called remotely.)."
+  ]
+}
