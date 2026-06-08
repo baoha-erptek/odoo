@@ -1008,6 +1008,15 @@ class EtsyListingPublisher:
         t = tmpl.sudo()
         sh = shop.sudo()
         candidates = []
+        # P-LIST-IMAGE-WIRE-HERO (2026-06-08) — listing-tier override wins
+        # over the template hero. Marketing populates
+        # multichannel.listing.image_1920 when the listing needs a different
+        # hero than the product master (e.g. cleaner crop, lifestyle shot).
+        # NULL-shop template-wide stubs are an acceptable fallback for the
+        # read side (distinct from state-sync writebacks, where they are not).
+        intent = self._resolve_listing_intent(t, shop)
+        if intent and intent.image_1920:
+            candidates.append(('listing', intent.image_1920))
         if t.image_1920:
             candidates.append(('main', t.image_1920))
         for row in t.x_extra_image_ids.sorted('sequence'):
