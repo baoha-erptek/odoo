@@ -6,6 +6,14 @@
 **Companion data**: `publish_diff_2026_06_08.json` (raw XMLRPC + reconstructed payload, same dir)
 **Script**: `scripts/etsy_publish_diff.py`
 
+> **2026-06-08 update — CONFIRMED-BUG #1 fixed.** P-PUB-RESOLVER-CASING-BUG
+> landed on `feature/006-master-plan-coding` at commit `3754731394c`. Option A
+> shipped (one-line `=ilike` with `\\` / `%` / `_` literal escape at
+> `services/etsy_listing_publisher.py:518`). 6 ORM tests pass. Wave 2
+> listing-tier override slices are unblocked. Live re-run of this diff against
+> staging recommended post-deploy to confirm listing 62 (tmpl 456, Etsy
+> 4518406711) now resolves correctly.
+
 ---
 
 ## TL;DR
