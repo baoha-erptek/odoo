@@ -43,8 +43,17 @@
                             class="btn-primary"
                             invisible="state != 'published' or not external_ref"
                             icon="fa-external-link"/>
+                    <!-- P-LIST-STATUSBAR-CLICKABLE — Draft <-> Ready as
+                         clickable Marketing-approval steps. Published and
+                         Error are not in statusbar_visible so they don't
+                         render as clickable pills; the widget still shows
+                         the state badge on records that are in those
+                         states (Odoo statusbar "fold" behaviour). Setting
+                         Published is the publisher service's job, never a
+                         direct statusbar click. -->
                     <field name="state" widget="statusbar"
-                           statusbar_visible="draft,ready,published"/>
+                           statusbar_visible="draft,ready"
+                           options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
                     <!-- P-LIST-UX-FIXES R2 — workflow context box. -->

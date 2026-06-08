@@ -82,3 +82,4 @@ from . import test_multichannel_listing_db
 from . import test_multichannel_listing_orm
 from . import test_multichannel_listing_ux_fixes
 from . import test_multichannel_listing_shop_bulk
+from . import test_multichannel_listing_statusbar_clickable
