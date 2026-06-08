@@ -509,10 +509,17 @@ class EtsyListingPublisher:
             return Listing.browse([])
         shop_name = (shop.sudo().name or '').strip()
         if shop_name:
+            # P-PUB-RESOLVER-CASING-BUG (2026-06-08): etsy.shop.name is CamelCase
+            # operator-entered (e.g. 'JaHandmadeArt'); multichannel.listing.shop_ref
+            # stores the Etsy URL slug form ('jahandmadeart'). Use case-insensitive
+            # `=ilike` with literal `_` / `%` escaped so the LIKE wildcards don't
+            # leak from shop_name into the SQL pattern. Backslash is also escaped
+            # because Odoo's =ilike emits `ESCAPE '\\'`.
+            escaped = shop_name.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
             specific = Listing.search([
                 ('product_tmpl_id', '=', tmpl.id),
                 ('channel_id', '=', Channel.id),
-                ('shop_ref', '=', shop_name),
+                ('shop_ref', '=ilike', escaped),
             ], limit=1)
             if specific:
                 return specific
