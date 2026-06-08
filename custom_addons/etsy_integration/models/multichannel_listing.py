@@ -7,7 +7,8 @@ classic ``_inherit`` extensions of ``multichannel.listing``.
 
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -211,3 +212,42 @@ class MultichannelListingEtsy(models.Model):
              'product.attribute.x_etsy_property_id. Leave a row empty to '
              'fall through to the next tier.',
     )
+
+    # ------------------------------------------------------------------
+    # P-LIST-PUBLISH-FROM-LISTING — bridge to existing publish wizard.
+    # Marketing curates the Listing form (overrides + shop); the only
+    # publish button used to live on the product form, forcing a bounce.
+    # This action pre-fills the wizard with both product_tmpl_id and
+    # shop_id straight off the Listing record. No resolver needed —
+    # etsy_shop_id is the typed M2O backfilled by migration 19.0.3.8.0
+    # (post-migrate name-lookup from the legacy shop_ref Char).
+    #
+    # FR-017 defense in depth:
+    #   layer-1 view button gate (groups + invisible on etsy_shop_id)
+    #   layer-2 wizard method gate (_check_ba_or_raise on publish action)
+    # This bridge intentionally has NO gate of its own; opening the
+    # wizard is harmless without the second layer.
+    # ------------------------------------------------------------------
+    def action_open_etsy_publish_wizard(self):
+        self.ensure_one()
+        if not self.channel_id or self.channel_id.code != 'etsy':
+            raise UserError(_(
+                "This listing is not bound to the Etsy channel.",
+            ))
+        if not self.etsy_shop_id:
+            raise UserError(_(
+                "This listing has no Etsy Shop resolved. Open the "
+                "Advanced settings group and set the Etsy Shop manually, "
+                "or contact an admin to re-run the shop backfill.",
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Publish to Etsy'),
+            'res_model': 'etsy.publish.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_product_tmpl_id': self.product_tmpl_id.id,
+                'default_shop_id': self.etsy_shop_id.id,
+            },
+        }

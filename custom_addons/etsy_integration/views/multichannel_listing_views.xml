@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-PUBLISH-FROM-LISTING — header buttons on the multichannel
+        listing form so Marketing can publish without bouncing to the
+        product form. Two button variants (Publish to Etsy / Resume
+        Publish) share the same action method; the label flips by state
+        because Odoo XML buttons don't support computed `string=`.
+
+        Defense in depth:
+          - groups= mirrors the wizard's FR-017 method-top gate
+          - invisible= hides for non-Etsy channels and unresolved shops
+          - the bridge method itself raises UserError on the same checks,
+            covering the RPC path where view-side hide can be bypassed
+    -->
+    <record id="view_multichannel_listing_form_etsy_publish_button"
+            model="ir.ui.view">
+        <field name="name">multichannel.listing.form.etsy.publish.button</field>
+        <field name="model">multichannel.listing</field>
+        <field name="inherit_id"
+               ref="multichannel_hub_core.view_multichannel_listing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_open_in_etsy_shop_manager']"
+                   position="before">
+                <button name="action_open_etsy_publish_wizard"
+                        type="object"
+                        string="Publish to Etsy"
+                        class="oe_highlight"
+                        groups="multichannel_hub_core.group_ba_user"
+                        invisible="channel_id.code != 'etsy' or state in ('error', 'published') or not etsy_shop_id"/>
+                <button name="action_open_etsy_publish_wizard"
+                        type="object"
+                        string="Resume Publish"
+                        class="oe_highlight"
+                        groups="multichannel_hub_core.group_ba_user"
+                        invisible="channel_id.code != 'etsy' or state != 'error' or not etsy_shop_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
