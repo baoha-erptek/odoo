@@ -21,6 +21,16 @@
 > staging PCS rows with `external_ref` will resolve naturally on the next
 > publish (no destructive backfill in this slice). Reprioritised queue slot 2
 > closed; next slot is **slot 3 P-LIST-IMAGE-WIRE-HERO**.
+>
+> **2026-06-08 update — image ORPHAN fixed.** P-LIST-IMAGE-WIRE-HERO landed at
+> commit `252a8c3f4f6`. `upload_images` now reads listing tier first via the
+> existing `_resolve_listing_intent` (read-side NULL-shop fallback accepted —
+> distinct from the write-side state-sync slice). 5 ORM tests pass. The dead
+> helper `_resolve_image_with_fallback` at `etsy_listing_publisher.py:472`
+> stays in place because `test_p_enh_esty_190_phase2_orm.py` still references
+> it — refactor-cleaner sweep deferred. Reprioritised queue slot 3 closed; the
+> remaining slots are **slot 4 (live half of this diff — needs SSH/docker
+> access)**, **slot 5 P-LIST-GALLERY-OVERRIDE**, **slot 6 P-LIST-PERSONALIZATION-OVERRIDE**, **slot 7 P-LIST-TAGS-MATERIALS**, **slot 8 P-LIST-MODEL-MISSING-FIELDS**.
 
 ---
 
