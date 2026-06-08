@@ -1,12 +1,14 @@
 # Hướng dẫn sử dụng — Tạo sản phẩm mới
 
-**Phiên bản:** 1.2 · **Ngày:** 2026-05-28 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.3 · **Ngày:** 2026-06-08 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
 
 > Hướng dẫn từng bước cho việc thêm sản phẩm mới vào hệ thống và đăng lên Etsy. Không yêu cầu kiến thức kỹ thuật — chỉ cần biết dùng trình duyệt web.
 
 > **Cập nhật v1.2 (2026-05-28):** Đổi cách tạo sản phẩm — dùng **form Sản phẩm chuẩn** thay cho các Wizard riêng. Mã SKU **tự sinh** từ Danh mục + Biến thể (BA không phải gõ tay đúng format nữa). Bổ sung mục mới **"Thông tin bổ sung khi đăng Etsy"** với 7 nhóm trường: Tags, Cá nhân hoá, Vật liệu, Ảnh phụ (mini gallery), Override Etsy (Danh mục Etsy / Ai làm / Khi nào làm), Cân nặng & Kích thước, Thuộc tính biến thể. Cập nhật checklist UAT (TC-001..TC-007 đổi sang form chuẩn; TC-008..TC-015 mới cho các nhóm trường).
+
+> **Cập nhật v1.3 (2026-06-08):** Thêm nút **Publish to Etsy** ngay trên form **Listing** (Operations → Listings). Marketing không phải nhảy giữa form Listing và form Sản phẩm nữa — bấm nút trên Listing, hệ thống tự chọn shop từ Listing và mở Wizard publish đã điền sẵn. Form Sản phẩm vẫn giữ nút Publish cũ (dành cho BA). Xem mục 7.2.
 
 ---
 
@@ -340,12 +342,29 @@ SKU gợi ý mới:  MUG-CR-F11
 
 ### 7.2 Bấm "Publish to Etsy"
 
+Có **hai cách** mở Wizard publish, chọn cách phù hợp:
+
+**Cách 1 — từ form Listing (mới từ v1.3, khuyên dùng cho Marketing):**
+
+1. Mở menu **Operations → Listings**, mở dòng Listing tương ứng SP × shop.
+2. Nhấn nút **"Publish to Etsy"** ở góc trên bên trái header form (cạnh statusbar Draft / Ready / Published).
+3. Wizard publish mở ra với **shop đã được tự chọn** theo Listing → bỏ qua bước chọn shop.
+4. Khi state của Listing = **Error**, nút đổi tên thành **"Resume Publish"** (chạy lại đoạn còn dang dở).
+
+Nút chỉ hiện khi: kênh của Listing là Etsy + Listing đã có Etsy Shop được phân giải + state chưa phải Published.
+
+**Cách 2 — từ form Sản phẩm (cách cũ, dành cho BA):**
+
 1. Mở form sản phẩm.
 2. Nhấn nút **"Publish to Etsy"** ở header form (mọi BA tier đều thấy).
-3. Wizard publish mở ra:
-   - **Action: Run Publish (full)** — tạo draft → upload ảnh → push tồn kho → đăng active.
-   - **Action: Run Publish Draft Only** — dừng ở Draft, không phát sinh phí Etsy $0.20.
-4. Nhấn nút tương ứng.
+3. Wizard publish mở ra — **BA chọn shop trong Wizard** (vì SP có thể đăng nhiều shop).
+
+**Sau khi Wizard mở (cả 2 cách):**
+
+- **Action: Run Publish (full)** — tạo draft → upload ảnh → push tồn kho → đăng active.
+- **Action: Run Publish Draft Only** — dừng ở Draft, không phát sinh phí Etsy $0.20.
+
+Nhấn nút tương ứng.
 
 Hệ thống làm các bước:
 
