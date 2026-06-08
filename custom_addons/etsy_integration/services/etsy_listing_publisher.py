@@ -529,6 +529,37 @@ class EtsyListingPublisher:
             '|', ('shop_ref', '=', False), ('shop_ref', '=', ''),
         ], limit=1)
 
+    def _resolve_shop_specific_listing(self, tmpl, shop):
+        """Return the shop-specific ``multichannel.listing`` row (no NULL-shop
+        fallback). Used by ``run()`` to write the post-publish state back to
+        the exact row that corresponds to (template, shop) — never the
+        template-wide stub. Mirrors ``_resolve_listing_intent`` step 1 only.
+
+        P-LIST-PUBLISH-STATE-SYNC (2026-06-08): the read-side resolver falls
+        through to the NULL-shop stub on cache miss, which is correct for
+        field-fallback semantics but wrong for writeback (would tag the
+        wrong row as published / errored).
+        """
+        Listing = self.env['multichannel.listing'].sudo()
+        Channel = self.env.ref(
+            'multichannel_hub_core.channel_etsy',
+            raise_if_not_found=False,
+        )
+        if not Channel:
+            return Listing.browse([])
+        shop_name = (shop.sudo().name or '').strip()
+        if not shop_name:
+            return Listing.browse([])
+        # Same escape pattern as _resolve_listing_intent — see comments there.
+        # KEEP IN SYNC with the read-side resolver: if the escape rule changes
+        # there (e.g. Unicode handling), update both helpers in the same commit.
+        escaped = shop_name.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        return Listing.search([
+            ('product_tmpl_id', '=', tmpl.id),
+            ('channel_id', '=', Channel.id),
+            ('shop_ref', '=ilike', escaped),
+        ], limit=1)
+
     # ------------------------------------------------------------------
     # Payload builder
     # ------------------------------------------------------------------
@@ -1302,6 +1333,15 @@ class EtsyListingPublisher:
                 'state': 'published',
                 'last_sync_error': False,
             })
+            # P-LIST-PUBLISH-STATE-SYNC (2026-06-08): mirror the success state
+            # onto the shop-specific multichannel.listing row so the marketing
+            # statusbar reflects what's live on Etsy. sudo() because BA-role
+            # publish must write to the Marketing-owned model. Empty
+            # recordset (no shop-specific listing row, or no shop name) is a
+            # no-op — product.channel.status above stays as the source of truth.
+            listing_row = self._resolve_shop_specific_listing(tmpl, shop)
+            if listing_row:
+                listing_row.write({'state': 'published'})
             return result
         except Exception as exc:
             # Best-effort durable error capture on the status row. If the
@@ -1312,6 +1352,19 @@ class EtsyListingPublisher:
                     'state': 'error',
                     'last_sync_error': (str(exc) or '')[:4000],
                 })
+            # P-LIST-PUBLISH-STATE-SYNC (2026-06-08): mirror error state onto
+            # the shop-specific multichannel.listing row. Wrapped in try/except
+            # so a listing-state write failure cannot mask the original publish
+            # exception that we are about to re-raise.
+            try:
+                listing_row = self._resolve_shop_specific_listing(tmpl, shop)
+                if listing_row:
+                    listing_row.write({'state': 'error'})
+            except Exception as state_exc:  # noqa: BLE001 — best-effort
+                _logger.warning(
+                    "Failed to mirror error state onto multichannel.listing "
+                    "for tmpl=%s shop=%s: %s", tmpl.id, shop.id, state_exc,
+                )
             raise
 
     def _sync_inventory_snapshot(self, shop, listing_id, response):
