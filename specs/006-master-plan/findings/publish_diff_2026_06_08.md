@@ -13,6 +13,14 @@
 > listing-tier override slices are unblocked. Live re-run of this diff against
 > staging recommended post-deploy to confirm listing 62 (tmpl 456, Etsy
 > 4518406711) now resolves correctly.
+>
+> **2026-06-08 update — CONFIRMED-BUG #2 fixed.** P-LIST-PUBLISH-STATE-SYNC
+> landed at commit `dd40bb4e924`. Publisher's `run()` now mirrors success /
+> error state onto the shop-specific `multichannel.listing` row via the new
+> `_resolve_shop_specific_listing` helper. 6 ORM tests pass. The 17 stuck-draft
+> staging PCS rows with `external_ref` will resolve naturally on the next
+> publish (no destructive backfill in this slice). Reprioritised queue slot 2
+> closed; next slot is **slot 3 P-LIST-IMAGE-WIRE-HERO**.
 
 ---
 
