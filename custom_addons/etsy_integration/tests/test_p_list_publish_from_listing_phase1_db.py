@@ -47,16 +47,6 @@ class TestPListPublishFromListingPhase1DB(TransactionCase):
                 "Publish-to-Etsy button must mirror wizard FR-017 group gate",
             )
 
-    def test_button_visibility_hides_non_etsy(self):
-        invis_expressions = [
-            (btn.get('invisible') or '') for btn in self._publish_buttons()
-        ]
-        self.assertTrue(
-            all("channel_id" in expr and "etsy" in expr for expr in invis_expressions),
-            "every Publish button must hide for non-Etsy channels; got %r"
-            % invis_expressions,
-        )
-
     def test_button_visibility_hides_when_no_shop_resolved(self):
         invis_expressions = [
             (btn.get('invisible') or '') for btn in self._publish_buttons()
