@@ -75,6 +75,20 @@ class MultichannelListing(models.Model):
         help='Per-listing hero image; empty → product.template.image_1920.',
     )
 
+    # Surface the product's shared gallery on the listing form. These rows live
+    # on product.template.x_extra_image_ids (P-PUB-MULTI-IMAGE) and are SHARED
+    # across every channel/listing for the product — editing here edits the
+    # product. The Etsy publisher's upload_images already iterates this list
+    # (hero first, then gallery, capped at 10).
+    extra_image_ids = fields.One2many(
+        related='product_tmpl_id.x_extra_image_ids',
+        string='Extra Images',
+        readonly=False,
+        help='Gallery images shared with the product (Etsy publishes the hero '
+             'image first, then these, capped at 10). Shared across all '
+             'sales channels.',
+    )
+
     # P-LIST-VIDEO (ADR-015 / spec 012 §US7) — 1 video per listing.
     # Etsy ``uploadListingVideo`` accepts ``video`` (binary) + ``name``
     # multipart fields. We hold both via a single ir.attachment so the
