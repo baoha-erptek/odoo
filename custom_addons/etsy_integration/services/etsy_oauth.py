@@ -27,6 +27,11 @@ DEFAULT_SCOPES = (
     'listings_r',
     'listings_w',
     'shops_r',
+    # shops_w (P-LIST-SHIP-CREATE / ESTY-201): required to create/update
+    # shop-level resources — shipping profiles, shop sections. Standard
+    # self-serve Etsy scope; adding it forces every shop to re-authorize
+    # (refresh tokens keep their original scope and cannot be upgraded).
+    'shops_w',
     'email_r',
 )
 TOKEN_REQUEST_TIMEOUT_SECONDS = 30

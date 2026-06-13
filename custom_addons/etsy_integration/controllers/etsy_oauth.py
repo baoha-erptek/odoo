@@ -42,7 +42,10 @@ _PENDING_PARAM_PREFIX = 'etsy.oauth.pending.'
 _REQUIRED_SCOPES = frozenset({
     'transactions_r', 'transactions_w',
     'listings_r', 'listings_w',
-    'shops_r', 'email_r',
+    # shops_w added P-LIST-SHIP-CREATE (ESTY-201) — shop-level writes
+    # (createShopShippingProfile etc.) 403 without it. Shops re-authorized
+    # after 2026-06-13 carry it; pre-existing tokens must re-auth.
+    'shops_r', 'shops_w', 'email_r',
 })
 # E1 approval explicitly excludes conversations_r. If Etsy ever returns
 # it (e.g. lingering pre-2026-05-12 grant), reject — proceeding would
