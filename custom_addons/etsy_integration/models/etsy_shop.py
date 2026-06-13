@@ -797,6 +797,16 @@ class EtsyShop(models.Model):
             },
         }
 
+    def action_open_shipping_profile_create_wizard(self):
+        """P-LIST-SHIP-CREATE (ESTY-201): open the create wizard seeded
+        with this shop. The shop id is resolved in Python (not an OWL
+        nested-M2O context expression) to avoid the silent-empty trap."""
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'etsy_integration.action_etsy_shipping_profile_create_wizard')
+        action['context'] = {'default_shop_id': self.id}
+        return action
+
     # ------------------------------------------------------------------
     # P-ENH-ESTY-195 / ADR-016 — Currency-rate refresh cron skeleton.
     # Provider implementations (ECB, OpenExchangeRates, Yahoo) are

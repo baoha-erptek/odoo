@@ -29,6 +29,8 @@ access_etsy_taxonomy_node_user_read,etsy.taxonomy.node user read,model_etsy_taxo
 access_etsy_taxonomy_node_system,etsy.taxonomy.node system rw,model_etsy_taxonomy_node,base.group_system,1,1,1,1
 access_etsy_shipping_profile_user_read,etsy.shipping.profile user read,model_etsy_shipping_profile,base.group_user,1,0,0,0
 access_etsy_shipping_profile_system,etsy.shipping.profile system rw,model_etsy_shipping_profile,base.group_system,1,1,1,1
+access_etsy_ship_profile_create_wiz_ba,etsy.shipping.profile.create.wizard ba rw,model_etsy_shipping_profile_create_wizard,multichannel_hub_core.group_ba_user,1,1,1,1
+access_etsy_ship_profile_create_wiz_system,etsy.shipping.profile.create.wizard system,model_etsy_shipping_profile_create_wizard,base.group_system,1,1,1,1
 access_mhc_listing_attr_map_marketing,multichannel.listing.attribute.mapping marketing rw,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_marketing_user,1,1,1,1
 access_mhc_listing_attr_map_ba_user_read,multichannel.listing.attribute.mapping ba user read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_user,1,0,0,0
 access_mhc_listing_attr_map_ba_lead_read,multichannel.listing.attribute.mapping ba lead read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_lead,1,0,0,0

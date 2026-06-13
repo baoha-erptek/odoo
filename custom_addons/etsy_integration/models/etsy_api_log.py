@@ -52,6 +52,8 @@ _SOURCE_SELECTION = [
     # Spec 010 P-HUB-XLS-* — catalog import surface (co-located here so a single migration carries both)
     ('catalog_import_run', 'Catalog Import Run'),
     ('catalog_image_download', 'Catalog Image Download'),
+    # P-LIST-SHIP-CREATE (ESTY-201) — operator-created shipping profile push.
+    ('shipping_profile_create', 'Shipping Profile Create'),
 ]
 
 

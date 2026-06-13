@@ -47,6 +47,20 @@ class EtsyShippingProfile(models.Model):
     )
     active = fields.Boolean(default=True)
     last_synced_at = fields.Datetime(copy=False)
+    # P-LIST-SHIP-CREATE (ESTY-201): distinguish profiles the operator
+    # created from Odoo (POST createShopShippingProfile) from those merely
+    # pulled by the daily syncer. The daily syncer upserts both kinds
+    # idempotently on (shop_id, etsy_profile_id), so coexistence is safe.
+    source = fields.Selection(
+        [('etsy_sync', 'Synced from Etsy'),
+         ('odoo_create', 'Created in Odoo')],
+        string='Source', default='etsy_sync', required=True, copy=False,
+    )
+    created_at = fields.Datetime(
+        string='Created In Odoo At', copy=False,
+        help='Set when the profile was created from Odoo; NULL for '
+             'profiles that originated in Etsy and were synced.',
+    )
     display_name = fields.Char(
         compute='_compute_display_name', store=True,
     )

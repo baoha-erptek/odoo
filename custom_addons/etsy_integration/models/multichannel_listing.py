@@ -251,3 +251,26 @@ class MultichannelListingEtsy(models.Model):
                 'default_shop_id': self.etsy_shop_id.id,
             },
         }
+
+    def action_open_shipping_profile_create_wizard(self):
+        """P-LIST-SHIP-CREATE (ESTY-201): create a new Etsy shipping
+        profile inline at publish time. Resolves the shop in Python so the
+        OWL form does not need a nested-M2O context expression. On success
+        the wizard sets this listing's shipping-profile override."""
+        self.ensure_one()
+        if not self.etsy_shop_id:
+            raise UserError(_(
+                "This listing has no Etsy Shop resolved; set the Etsy Shop "
+                "before creating a shipping profile.",
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Etsy Shipping Profile'),
+            'res_model': 'etsy.shipping.profile.create.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_shop_id': self.etsy_shop_id.id,
+                'default_set_on_listing_id': self.id,
+            },
+        }

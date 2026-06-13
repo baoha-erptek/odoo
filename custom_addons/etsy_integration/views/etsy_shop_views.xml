@@ -109,6 +109,12 @@
                                 <field name="default_who_made"/>
                                 <field name="default_when_made"/>
                                 <field name="default_is_supply"/>
+                                <button name="action_open_shipping_profile_create_wizard"
+                                        type="object"
+                                        string="Create shipping profile"
+                                        icon="fa-plus"
+                                        class="btn-link"
+                                        groups="multichannel_hub_core.group_ba_user"/>
                             </group>
                             <!-- P-ENH-ESTY-190 / ADR-017 — shop-level
                                  brand-voice defaults. 3rd tier of the

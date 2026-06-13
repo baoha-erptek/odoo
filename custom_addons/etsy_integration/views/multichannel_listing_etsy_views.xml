@@ -53,6 +53,13 @@
                         <field name="etsy_shipping_profile_id"
                                options="{'no_create': True, 'no_open': True}"
                                readonly="state != 'draft'"/>
+                        <button name="action_open_shipping_profile_create_wizard"
+                                type="object"
+                                string="Create new shipping profile"
+                                icon="fa-plus"
+                                class="btn-link"
+                                invisible="state != 'draft'"
+                                groups="multichannel_hub_core.group_ba_user"/>
                         <field name="etsy_shipping_last_synced_at"
                                readonly="1"
                                nolabel="1"
