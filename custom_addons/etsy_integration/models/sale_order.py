@@ -167,6 +167,26 @@ class SaleOrder(models.Model):
                 for req in order.address_change_request_ids
             )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Flow 4 #1 — surface the Etsy buyer note in the order chatter.
+
+        The note is stored in ``etsy_note_from_buyer`` by every ingestion
+        path (email parser, API ingestor, import wizard). Posting it to the
+        chatter on create lets Marketing see the buyer's message in the
+        conversation thread instead of only as a read-only field. Posting
+        from ``create`` (not the service) covers all three paths at once.
+        """
+        orders = super().create(vals_list)
+        for order in orders:
+            note = (order.etsy_note_from_buyer or '').strip()
+            if order.etsy_order_id and note:
+                order.message_post(
+                    subject=_('Note from buyer (Etsy)'),
+                    body=tools.plaintext2html(note),
+                )
+        return orders
+
     def write(self, vals):
         """C-SO-001: block destination-field writes while a request is pending.
 
