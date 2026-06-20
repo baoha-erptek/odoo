@@ -107,17 +107,20 @@ is almost entirely **missing views**.
 
 ## Phase-D backlog distilled from this audit (functional gaps only)
 
-Ordered roughly by ROI / independence:
+Ordered roughly by ROI / independence. Status updated as slices ship (2026-06-20):
 
-1. **Chatter auto-post** of buyer note (Flow 4 #1) — ~5 LOC, no blocker.
-2. **Gearment views** — API log list+form, webhook filtered list, fulfillment tracking detail (Flow 3b #3/#4/#5) — views over existing models.
-3. **Pipeline tab + transition buttons + seed "In lại" state** (Flow 3a #3 / Flow 4 #3).
-4. **Kanban by channel status** (Flow 1 #5) — view over existing model.
-5. **Payload preview tab** (Flow 1 #3) — computed read-only field.
-6. **Error body surfaced** on publish wizard/form (Flow 1 #4) — partial blocker mitigation.
-7. **Refund / `etsy.order.ticket`** (Flow 4 #4) — full new slice.
-8. **QC checklist / production scan** (Flow 3a #4/#5) — confirm with owner whether in scope.
-9. **Conversations ingestion** — BLOCKED on `conversations_r`; tracker row only.
+1. ✅ **DONE** **Chatter auto-post** of buyer note (Flow 4 #1) — commit `b41c0f3`; 3 ORM tests green; QA-verified on local (message posts to chatter).
+2. ✅ **DONE (partial)** **Gearment views** — API log list+form + webhook filtered list (Flow 3b #3/#4) shipped, commit `3d4f42e`; QA-verified local (lists/filters/forms render, inbound verification group shows). Fulfillment tracking detail (#5) still pending (needs new fields).
+3. ⏳ **Pipeline tab + transition buttons + seed "In lại" state** (Flow 3a #3 / Flow 4 #3) — guarded state machine (`_write_pipeline_state`); medium slice.
+4. ✅ **DONE** **Kanban by channel status** (Flow 1 #5) — commit `54225446`; QA-verified local (Draft/Error/Published, error card shows message).
+5. ⏳ **Payload preview tab** (Flow 1 #3) — computed read-only field.
+6. ⏳ **Error body surfaced** on publish wizard/form (Flow 1 #4) — partial blocker mitigation.
+7. ⏳ **Refund / `etsy.order.ticket`** (Flow 4 #4) — full new slice (model+service+views+ACL+tests).
+8. ⏳ **QC checklist / production scan** (Flow 3a #4/#5) — confirm with owner whether in scope.
+9. ⛔ **Conversations ingestion** — BLOCKED on `conversations_r`; tracker row only.
+
+All shipped slices were developed + verified **local-first** (db `namco_odoo19`, seeded via
+`scripts/seed_demo_local.py`); evidence under `screenshots/local/`.
 
 ## Phase-C backlog (UI/UX gaps only)
 
