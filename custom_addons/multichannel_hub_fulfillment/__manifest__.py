@@ -20,6 +20,7 @@
         'views/logistics_partner_views.xml',
         'views/sale_order_views.xml',
         'views/gearment_api_log_views.xml',
+        'views/sale_order_fulfillment_views.xml',
         'wizards/gearment_quote_wizard_views.xml',
     ],
     'external_dependencies': {

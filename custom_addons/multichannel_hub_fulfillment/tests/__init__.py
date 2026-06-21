@@ -33,6 +33,7 @@ from . import test_p4_01_fix_payload_schema
 from . import test_p4_01_fix_log_linkage
 from . import test_p4_01_fix_log_linkage_exception_path
 from . import test_p4_01b_bulk_push_all_orm
+from . import test_p_d8_fulfillment_detail_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -66,4 +67,5 @@ __all__ = [
     'test_p4_01_fix_log_linkage',
     'test_p4_01_fix_log_linkage_exception_path',
     'test_p4_01b_bulk_push_all_orm',
+    'test_p_d8_fulfillment_detail_orm',
 ]
