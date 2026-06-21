@@ -94,8 +94,16 @@ intent. Record-level shots for listings/enquiries/design-files await a populated
 > 0 error** (pipeline wizard 4 + product curation 4 + fulfillment detail 8 + webhook dispatcher 12),
 > on top of the earlier 12-test functional sweep; full stack installs
 > `-u …core,…fulfillment,…etsy_integration --stop-after-init` exit 0. Developed + screenshot-verified
-> local-first on `namco_odoo19`. A **full regression sweep across all module test suites** is queued
-> for a fresh session before sign-off (see `REGRESSION_PROMPT.md`).
+> local-first on `namco_odoo19`. **Full regression sweep DONE (2026-06-21):** combined
+> `-u …core,…fulfillment,…etsy_integration --test-enable` = **1879 tests, 0 failed, 0 error**.
+> The sweep surfaced ~46 PRE-EXISTING latent failures (none caused by this session's Phase C /
+> D#3 / D#8 changes) — repaired across 3 commits (etsy_integration 27, multichannel_hub_core 13,
+> multichannel_hub_fulfillment 6): C-ESY-003 shop fixtures missing `etsy_api_shop_id`, test-isolation
+> hardening for ambient dev-DB data, stale Selection/seed assertions, plus two real code fixes
+> (wizard double-create UniqueViolation; gearment audit-log fresh-cursor fallback). One open finding:
+> the listing-backfill wizard leaves a *matched* (live) listing's channel status `draft` (its
+> `state='published'` create path is dead because `_sync_channel_statuses` seeds a draft first) —
+> published-vs-draft intent gap, flagged for owner review, not changed.
 
 **UAT gates (one per flow) — to pass before sign-off:**
 
