@@ -68,17 +68,22 @@ intent. Record-level shots for listings/enquiries/design-files await a populated
 |---|---|---|---|
 | 1 | Auto-SKU on category/variant onchange | `mhc.sku.family` + product onchange | ✓ working |
 | 1 | Publish draft to Etsy (createListing) | `etsy_listing_publisher.py:566-624` | ✓ working |
-| 1 | Capture Etsy error body | `etsy_api_client.py:273-285` → `last_sync_error` | ⚠ captured, not surfaced |
+| 1 | Capture + **surface** Etsy error body | `etsy_api_client.py` → `last_sync_error`; listing form alert (**D#6** `c66ba56`) | ✓ working |
+| 1 | Products-by-channel-status kanban | `product.channel.status` kanban (**D#4** `54225446`) | ✓ working |
 | 2 | API ingestion (cron) + dedupe | `etsy.api.log`, order syncer cron | ✓ working |
 | 2 | Email fallback parse | `services/email_parser.py`, `etsy.email.log` | ✓ working |
-| 3a | Pipeline state machine + audit | `order.pipeline.state`, `_write_pipeline_state()` | ⚠ no UI tab/buttons |
+| 3a | Pipeline state machine + audit + **UI** | `_write_pipeline_state()`; Pipeline tab + transition wizard + "In Lại" (**D#3** `a818449`) | ✓ working |
 | 3a | Tracking push to Etsy | `EtsyTrackingPusher` | ✓ working |
 | 3b | Gearment quote (/draft + /price) | `gearment_adapter.py`, `gearment_quote_wizard.py` | ✓ working |
-| 3b | Gearment webhook (HMAC + nonce dedupe) | `controllers/gearment_webhook.py`, `services/gearment_webhook_dispatcher.py` | ✓ working (no view) |
+| 3b | Gearment webhook (HMAC + nonce) + **views** | dispatcher + API Log / Webhook Log views (**D#2** `3d4f42e`) | ✓ working |
 | 4 | Address change approval (FR-017 gate) | `etsy_address_change_request.py:26-153` | ✓ working |
-| 4 | Buyer message → chatter | `etsy_note_from_buyer` stored | ✗ not auto-posted |
-| 4 | Refund (`etsy.order.ticket`) | — | ✗ not built |
+| 4 | Buyer message → chatter | auto-posted on create (**D#1** `b41c0f3`) | ✓ working |
+| 4 | Refund (`etsy.order.ticket`) | after-sales ticket + BA-lead state machine (**D#7** `5d8c5e6`) | ✓ working |
 | 4 | Conversations ingestion | `etsy_conversation_id` field only | ⛔ blocked (`conversations_r`) |
+
+> **Verification:** combined 3-module install + Phase-2 ORM sweep — **12 new tests, 0 failed,
+> 0 error**; full stack installs `-u …core,…fulfillment,…etsy_integration --stop-after-init`
+> exit 0. Developed local-first on `namco_odoo19`.
 
 **UAT gates (one per flow) — to pass before sign-off:**
 
