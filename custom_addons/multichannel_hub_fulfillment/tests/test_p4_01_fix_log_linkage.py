@@ -68,6 +68,9 @@ class TestApiLogFailurePathEnrichment(TransactionCase):
             'partner_id': self._partner.id,
             'order_line': [(0, 0, {'product_id': self._product.id, 'product_uom_qty': 1})],
         })
+        # Flush the order to the DB so the FK-referenced record exists for the
+        # fresh cursor's audit-log write (P4-01-FIX-LOG-LINKAGE-EXCEPTION-PATH).
+        self.env.flush_all()
         # Patch the adapter's HTTP client to raise a 400.
         self._error = _http_error(
             400,
@@ -76,13 +79,14 @@ class TestApiLogFailurePathEnrichment(TransactionCase):
 
     def _push_with_failure(self, *, sale_order_id=None):
         """Invoke push_order through the adapter with the HTTP layer raising 400."""
-        adapter = self._GearmentApiAdapter(env=self.env)
-        with mock.patch.object(adapter.client, '_request', side_effect=self._error):
-            try:
-                adapter.push_order(self._payload, sale_order_id=sale_order_id)
-            except Exception:
-                # push_order re-raises; we expect that.
-                pass
+        mock_client = mock.MagicMock()
+        mock_client._request = mock.MagicMock(side_effect=self._error)
+        adapter = self._GearmentApiAdapter(env=self.env, client=mock_client)
+        try:
+            adapter.push_order(self._payload, sale_order_id=sale_order_id)
+        except Exception:
+            # push_order re-raises; we expect that.
+            pass
         # Find the freshly-created api.log row for this push.
         return self.env['gearment.api.log'].search(
             [('endpoint', '=like', 'POST %/orders/draft%')],
@@ -167,10 +171,14 @@ class TestApiLogSuccessPathDirection(TransactionCase):
             'partner_id': partner.id,
             'order_line': [(0, 0, {'product_id': product.id, 'product_uom_qty': 1})],
         })
-        adapter = self._GearmentApiAdapter(env=self.env)
+        # Flush the order to the DB so the FK-referenced record exists for the
+        # fresh cursor's audit-log write (P4-01-FIX-LOG-LINKAGE-EXCEPTION-PATH).
+        self.env.flush_all()
+        mock_client = mock.MagicMock()
         success_resp = {'data': {'reference_id': 'SO-LOG-LINK-OK', 'order_id': 'gearment-9'}}
-        with mock.patch.object(adapter.client, '_request', return_value=success_resp):
-            adapter.push_order(self._payload, sale_order_id=order.id)
+        mock_client._request = mock.MagicMock(return_value=success_resp)
+        adapter = self._GearmentApiAdapter(env=self.env, client=mock_client)
+        adapter.push_order(self._payload, sale_order_id=order.id)
         log = self.env['gearment.api.log'].search(
             [('endpoint', '=like', 'POST %/orders/draft%')],
             order='id desc', limit=1,
