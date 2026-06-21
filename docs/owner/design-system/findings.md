@@ -58,3 +58,57 @@ as MEDIUM follow-up below.
   is validated by prior art; the etsy.shop notebook tab now picks up
   the purple active-tab border for visual consistency across Mu-styled
   forms.
+
+---
+
+## Phase C — product.template Tier-3 curation (2026-06-21)
+
+Shipped `P-C-PRODUCT-CURATION` (commit `c0fdfbb2d74`): hid the stock
+`operations` group (Routes/MTO), the receipt/delivery note blocks
+(`description_pickingin`/`out`), and inventory `responsible_id` behind
+`groups="base.group_no_one"` on the product form. Kept `weight`/`volume`
+and `sale_delay` (lead time) visible — Etsy/dropship need them.
+
+### Surprise: `get_view` is a poor unit-test surface for `base.group_no_one`
+
+`base.group_no_one` visibility is tied to **developer-mode session
+context**, not plain group membership — a non-dev user's `get_view` arch
+still carried `responsible_id` un-hidden, while the pre-existing dynamic
+`invisible` on the `operations` group statically collapsed to `invisible="1"`
+regardless of the new `groups=`. Both confound a render-level assertion.
+The reliable surface is **`ir.ui.view.get_combined_arch()`** (inheritance-
+merged, pre per-user post-process): it deterministically shows each curation
+xpath resolved and stamped the group on the intended node. The 4 ORM tests
+assert there; the *visual* hide is the Phase E screenshot gate.
+
+### `string=` is rejected as an inheritance selector
+
+The two warehouse-note wrapper groups carry only `string="Description for
+Receipts"` / `"...Delivery Orders"` (no `name=`). `<xpath
+expr="//group[@string='...']">` raises *"View inheritance may not use
+attribute 'string' as a selector."* Reached them instead via
+`//field[@name='description_pickingin']/parent::group`.
+
+---
+
+## P-DS-3b — sale.order + stock.picking audit (2026-06-21) — CLOSED, no work
+
+Audit-first per `PHASE_3_SCOPE.md`. **Verdict: no curation gap — closed.**
+
+- **sale.order**: all custom content is already organised into dedicated
+  notebook tabs — Etsy (`invisible="not is_etsy_order"`), Design Files,
+  Pipeline, Gearment (across `multichannel_hub_core/views/sale_order_form.xml`,
+  `etsy_integration/views/sale_order_views.xml`,
+  `multichannel_hub_fulfillment/views/sale_order_views.xml`). No standard
+  fields are dumped on the sheet/header; the only root-sheet additions are
+  smart-button stats. This is the curated state the Flow 2 / Flow 3b mockups
+  call for. Corroborated by the v2 audit verdict (`built+matches`) and the
+  staging render of S00007 (tabs: Order Lines · Other Info · Etsy · Design
+  Files · Gearment).
+- **stock.picking**: zero custom inherits in `custom_addons/`. Pure standard
+  form; no mockup screen demands a curated picking form (the Flow 3a
+  pipeline/scan/QC items are separate not-built/deferred surfaces, not
+  curation of `stock.picking`).
+
+No XML/code changes. P-DS-3c (full OWL library) remains deferred — no gap
+standard widgets cannot fill has surfaced.
