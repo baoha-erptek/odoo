@@ -74,6 +74,49 @@ _log([('nonce_value', '=', 'no-9001-bbb')],
       'signature_verified': True, 'business_handled': False,
       'business_summary': 'duplicate nonce (idempotent 200, log only)'})
 
+# --- Phase E additions: D#3 Pipeline tab + D#8 Fulfillment Tracking Detail ---
+
+# D#3 — make the Pipeline tab show a real state + a transition-log row. The
+# pipeline resolves to the system-default even with no order lines; the first
+# resolve auto-assigns the initial state. Add one transition so the log table
+# is non-empty (and the reprint "In Lại" state is reachable from the wizard).
+order.invalidate_recordset(['x_pipeline_id', 'x_pipeline_state_id'])
+pipeline = order.x_pipeline_id
+if pipeline and order.x_pipeline_state_id and not order.pipeline_transition_log_ids:
+    states = env['order.pipeline.state'].search(
+        [('pipeline_id', '=', pipeline.id)], order='sequence')
+    target = states.filtered(lambda s: s.id != order.x_pipeline_state_id.id)[:1]
+    if target:
+        order._write_pipeline_state(
+            target, note='Demo seed transition (screenshot evidence).')
+
+# D#8 — populate the Gearment/Etsy provenance the new Fulfillment Tracking
+# Detail form surfaces. gearment_order_ref mirrors x_gearment_outbound_ref;
+# the webhook-stamp + etsy-pushed fields are readonly in the UI but writable
+# via ORM. tracking_number is address-locked, so bypass the FR-017 guards.
+order.write({'x_gearment_outbound_ref': 'GEA-9001-001'})
+fulfillment = order.fulfillment_id
+if fulfillment:
+    fulfillment.with_context(
+        bypass_address_change_check=True,
+        bypass_label_status_check=True,
+    ).write({
+        'tracking_number': '9400111202555550000099',
+        'tracking_url': 'https://tools.usps.com/go/TrackConfirmAction'
+                        '?tLabels=9400111202555550000099',
+        'tracking_state': 'in_transit',
+        'gearment_last_webhook_at': now,
+        'gearment_last_webhook_topic': 'tracking_order_updated',
+        'etsy_tracking_pushed': True,
+        'etsy_tracking_pushed_at': now,
+    })
+
 env.cr.commit()
-print('SEED_OK order=%s gearment_logs=%s' % (
-    order.name, Log.search_count([('sale_order_id', '=', order.id)])))
+print('SEED_OK order=%s pipeline=%s state=%s transitions=%s fulfillment=%s '
+      'gearment_logs=%s' % (
+          order.name,
+          order.x_pipeline_id.name if order.x_pipeline_id else None,
+          order.x_pipeline_state_id.name if order.x_pipeline_state_id else None,
+          len(order.pipeline_transition_log_ids),
+          order.fulfillment_id.id if order.fulfillment_id else None,
+          Log.search_count([('sale_order_id', '=', order.id)])))

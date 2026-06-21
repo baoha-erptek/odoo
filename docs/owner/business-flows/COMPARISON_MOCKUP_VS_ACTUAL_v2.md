@@ -120,10 +120,17 @@ Ordered roughly by ROI / independence. Status updated as slices ship (2026-06-20
 9. ⛔ **DEFERRED to v2 (owner decision 2026-06-21)** **QC checklist / production scan** (Flow 3a #4/#5) — in-house-production extras; no shipped slice depends on them. Out of v1 scope.
 10. ⛔ **Conversations ingestion** — BLOCKED on Etsy `conversations_r` scope (external dep E1); tracker row only.
 
-**Shipped this session (6 functional slices): D#1 D#2 D#3 D#4 D#6 D#7** — all unit-tested
-(Phase 2 ORM) + install-clean. D#1/D#2/D#4 also screenshot-validated on local; D#3/D#6/D#7
-test+install-verified (clean local screenshots deferred — browse-session/role/filter friction,
-not a code defect).
+**Shipped across this work (8 functional + UI slices): Phase C, D#1 D#2 D#3 D#4 D#6 D#7 D#8**
+— all unit-tested (Phase 2 ORM) + install-clean. **All now screenshot-validated on local**:
+D#1/D#2/D#4 (earlier), D#6/D#7 + D#3 (pipeline tab) + D#8 (fulfillment detail) + Phase C
+(curated product Inventory tab) captured 2026-06-21 under `screenshots/local/`.
+
+**QA note (2026-06-21):** the deferred D#3 screenshot had been blocked by a *stale web-server
+registry* — `-u <module> --stop-after-init` upgrades the DB out-of-band but the long-running
+container keeps its old in-memory registry, so forms threw a spurious OWL "field is undefined".
+`docker restart namco_odoo19` reloads the registry and the forms render correctly. This is an
+operational step, **not a code defect**; no rework was needed. Targeted QA on the three new
+surfaces (D#3 / D#8 / Phase C) found **0 code bugs**.
 
 All shipped slices were developed + verified **local-first** (db `namco_odoo19`, seeded via
 `scripts/seed_demo_local.py`); evidence under `screenshots/local/`.
