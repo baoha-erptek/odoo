@@ -7,12 +7,32 @@ an `order.pipeline.transition.log` row in the same transaction. This wizard is
 the UI for that helper.
 """
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 
 
 class OrderPipelineTransitionWizard(models.TransientModel):
     _name = 'order.pipeline.transition.wizard'
     _description = 'Pipeline State Transition Wizard'
+
+    @api.model
+    def default_get(self, fields_list):
+        """Seed pipeline_id + current_state_id into the form at open.
+
+        new_state_id's domain filters on `pipeline_id`. The base default_get on
+        a fresh transient returns only the context default (order_id); the
+        `related` pipeline_id/current_state_id are NOT computed into the new
+        record's form data, so without this the domain evaluates against an
+        empty pipeline_id and the New State dropdown lists zero states — the
+        wizard is unusable. Populate both from the order so the domain resolves.
+        """
+        res = super().default_get(fields_list)
+        order_id = res.get('order_id') or self.env.context.get('default_order_id')
+        if order_id:
+            order = self.env['sale.order'].browse(order_id)
+            res.setdefault('order_id', order.id)
+            res['pipeline_id'] = order.x_pipeline_id.id
+            res['current_state_id'] = order.x_pipeline_state_id.id
+        return res
 
     order_id = fields.Many2one(
         'sale.order', string='Order', required=True, ondelete='cascade',

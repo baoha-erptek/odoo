@@ -61,6 +61,29 @@ class TestPipelineTransitionWizard(TransactionCase):
         self.assertEqual(latest.change_type, 'manual')
         self.assertEqual(latest.note, 'Defective — reprint')
 
+    def test_wizard_default_get_populates_pipeline_for_domain(self):
+        # Regression: ISSUE-QA-D3-01 — new_state_id's domain filters on
+        # pipeline_id; if default_get does not seed the related pipeline_id /
+        # current_state_id, the form opens with pipeline_id empty and the New
+        # State dropdown lists ZERO states (wizard unusable). The other wizard
+        # test create()s the record directly, bypassing this path.
+        # Found by /qa on 2026-06-21.
+        order = self._order()
+        order._write_pipeline_state(self.s_production, note='setup')
+        Wizard = self.env['order.pipeline.transition.wizard'].with_context(
+            default_order_id=order.id)
+        defaults = Wizard.default_get(
+            ['order_id', 'pipeline_id', 'current_state_id'])
+        self.assertEqual(defaults.get('order_id'), order.id)
+        self.assertEqual(defaults.get('pipeline_id'), self.vn.id,
+                         'pipeline_id must be seeded so the domain resolves')
+        self.assertEqual(defaults.get('current_state_id'), self.s_production.id)
+        # The new_state domain [('pipeline_id','=',pipeline_id)] must now match
+        # the pipeline's real states.
+        states = self.env['order.pipeline.state'].search(
+            [('pipeline_id', '=', defaults['pipeline_id'])])
+        self.assertIn(self.s_reprint, states)
+
     def test_direct_state_write_still_blocked(self):
         order = self._order()
         with self.assertRaises(ValidationError):
