@@ -49,6 +49,13 @@ pending Phase-A step; this table is the source of truth until they land.
 wizard, webhook controller, adapter, and dispatcher are all built (`multichannel_hub_fulfillment`).
 The gap there is **missing views over working models**, not missing logic.
 
+**Shipped since this snapshot (2026-06-21), all local-screenshot-verified:**
+- Flow 1 product form — **curated** (Phase C `c0fdfbb`): Routes/MTO, Responsible, receipt/delivery
+  notes hidden; Weight/Volume/Lead Time kept. Moves from `needs-curation` → `✓ match`.
+- Flow 3a pipeline tab + transition wizard — **fully working** (D#3 `a818449` + wizard fix
+  `b02af9d`). Moves from `no-view` → `✓ match`.
+- Flow 3b fulfillment tracking detail — **built** (D#8 `6c10014`). Moves from `no-view` → `✓ match`.
+
 **Proof:** 17 live staging renders harvested 2026-06-20 via gstack `/browse`
 (`screenshots/flow-*/v2-*.png`), catalogued in `COMPARISON_MOCKUP_VS_ACTUAL_v2.md`
 §"Staging screenshot harvest". They corroborate every code-grounded verdict; the real top bar
@@ -70,20 +77,25 @@ intent. Record-level shots for listings/enquiries/design-files await a populated
 | 1 | Publish draft to Etsy (createListing) | `etsy_listing_publisher.py:566-624` | ✓ working |
 | 1 | Capture + **surface** Etsy error body | `etsy_api_client.py` → `last_sync_error`; listing form alert (**D#6** `c66ba56`) | ✓ working |
 | 1 | Products-by-channel-status kanban | `product.channel.status` kanban (**D#4** `54225446`) | ✓ working |
+| 1 | Curated product form (Tier-3 hide) | `groups=base.group_no_one` on Routes/MTO + notes + Responsible (**Phase C** `c0fdfbb`) | ✓ working |
 | 2 | API ingestion (cron) + dedupe | `etsy.api.log`, order syncer cron | ✓ working |
 | 2 | Email fallback parse | `services/email_parser.py`, `etsy.email.log` | ✓ working |
-| 3a | Pipeline state machine + audit + **UI** | `_write_pipeline_state()`; Pipeline tab + transition wizard + "In Lại" (**D#3** `a818449`) | ✓ working |
+| 3a | Pipeline state machine + audit + **UI** | `_write_pipeline_state()`; Pipeline tab + transition wizard + "In Lại" (**D#3** `a818449`); wizard New-State seed fix (`b02af9d`) | ✓ working (verified live) |
 | 3a | Tracking push to Etsy | `EtsyTrackingPusher` | ✓ working |
 | 3b | Gearment quote (/draft + /price) | `gearment_adapter.py`, `gearment_quote_wizard.py` | ✓ working |
 | 3b | Gearment webhook (HMAC + nonce) + **views** | dispatcher + API Log / Webhook Log views (**D#2** `3d4f42e`) | ✓ working |
+| 3b | Fulfillment Tracking Detail + provenance | `sale.order.fulfillment` form/list + Gearment/Etsy-pushed fields + dispatcher wiring (**D#8** `6c10014`) | ✓ working |
 | 4 | Address change approval (FR-017 gate) | `etsy_address_change_request.py:26-153` | ✓ working |
 | 4 | Buyer message → chatter | auto-posted on create (**D#1** `b41c0f3`) | ✓ working |
 | 4 | Refund (`etsy.order.ticket`) | after-sales ticket + BA-lead state machine (**D#7** `5d8c5e6`) | ✓ working |
 | 4 | Conversations ingestion | `etsy_conversation_id` field only | ⛔ blocked (`conversations_r`) |
 
-> **Verification:** combined 3-module install + Phase-2 ORM sweep — **12 new tests, 0 failed,
-> 0 error**; full stack installs `-u …core,…fulfillment,…etsy_integration --stop-after-init`
-> exit 0. Developed local-first on `namco_odoo19`.
+> **Verification:** Phase-2 ORM sweep across the session's changed classes — **28 tests, 0 failed,
+> 0 error** (pipeline wizard 4 + product curation 4 + fulfillment detail 8 + webhook dispatcher 12),
+> on top of the earlier 12-test functional sweep; full stack installs
+> `-u …core,…fulfillment,…etsy_integration --stop-after-init` exit 0. Developed + screenshot-verified
+> local-first on `namco_odoo19`. A **full regression sweep across all module test suites** is queued
+> for a fresh session before sign-off (see `REGRESSION_PROMPT.md`).
 
 **UAT gates (one per flow) — to pass before sign-off:**
 
@@ -91,7 +103,7 @@ intent. Record-level shots for listings/enquiries/design-files await a populated
 |---|---|---|
 | UAT-1 | Create product → auto-SKU → publish draft to Etsy → listing live | ☐ pending re-run |
 | UAT-2 | Etsy order ingested (API) → dedupe → sale.order created | ☐ pending re-run |
-| UAT-3 | MTO order → pipeline states → tracking pushed to Etsy | ☐ pending walkthrough (pipeline UI now built — D#3) |
+| UAT-3 | MTO order → pipeline states → tracking pushed to Etsy | ☐ pending walkthrough (pipeline tab + Change State wizard verified live — D#3 + fix `b02af9d`) |
 | UAT-4 | Dropship order → Gearment quote → confirm → webhook → tracking to Etsy | ☐ pending walkthrough (Gearment + fulfillment-detail views now built — D#2/D#8) |
 | UAT-5 | After-sales: address change approved + reprint; refund path | ☐ pending walkthrough (refund ticket now built — D#7) |
 
