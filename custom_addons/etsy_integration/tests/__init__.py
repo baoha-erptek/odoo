@@ -99,3 +99,4 @@ from . import test_p_list_video_draft_parity_orm
 from . import test_p_list_ship_create_db
 from . import test_p_list_ship_create_orm
 from . import test_p4_buyer_note_chatter_orm
+from . import test_p_d7_order_ticket_orm
