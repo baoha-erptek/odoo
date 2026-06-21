@@ -91,7 +91,7 @@ is almost entirely **missing views**.
 | 2 | Gearment Quote Wizard | `built+needs-curation` | Wizard form exists (`gearment_quote_wizard_views.xml:4-30`) but shows only order_id + quote totals — **no recipient/address block** like the mockup. | `/draft` + `/price` flow works via `gearment_adapter.py`; `action_confirm` present. Add recipient/address read-only display. |
 | 3 | Gearment API Log | `built-no-view` | **Model has zero UI** (`gearment_api_log.py:14-198` complete; no `ir.ui.view`). | Logging works. **Phase C/D: add list + form view.** |
 | 4 | Webhook Log | `built-no-view` | No dedicated webhook view. | Webhooks **are** logged — into `gearment.api.log` rows with `direction='inbound'` + `topic_seen`/`nonce_value`/`signature_verified` (`gearment_api_log.py:88-127`); controller + dispatcher built (`controllers/gearment_webhook.py`, `services/gearment_webhook_dispatcher.py`). Missing: a filtered list view (`direction=inbound`). **Phase C/D: add a filtered view (no new model needed).** |
-| 5 | Fulfillment Tracking Detail | `built-no-view` | No dedicated fulfillment-detail form. | `sale.order.fulfillment` has tracking fields; webhook completion hook works. Missing: Gearment order-ref / webhook-timestamp / Etsy-pushed fields surfaced on a form. **Phase C/D.** |
+| 5 | Fulfillment Tracking Detail | `built+matches` (D#8 `6c10014`) | Dedicated `sale.order.fulfillment` form + list + menu (Operations > Gearment). | **DONE** — Gearment order-ref / last-webhook timestamp+topic / Etsy-pushed fields added + webhook-dispatcher wiring + form. |
 
 ## Flow 4 — Hậu mãi (Đổi/Trả/Refund)
 
@@ -116,7 +116,7 @@ Ordered roughly by ROI / independence. Status updated as slices ship (2026-06-20
 5. ⏳ **Payload preview tab** (Flow 1 #3) — deferred (low ROI diagnostic; the resolved fields are already visible across the listing tabs, and a faithful preview needs the cross-module publisher payload builder).
 6. ✅ **DONE** **Error body surfaced** on the listing form (Flow 1 #4) — commit `c66ba56`; 2 ORM tests green. Computed `last_sync_error` + danger alert when `state == 'error'`.
 7. ✅ **DONE** **Refund / `etsy.order.ticket`** (Flow 4 #4) — commit `5d8c5e6`; 4 ORM tests green. After-sales ticket (return/refund/reship) with BA-lead-gated approve/reject/refunded state machine + chatter + menu.
-8. ⏳ **Fulfillment tracking-detail form** (Flow 3b #5) — deferred (needs new Gearment-specific fields on sale.order.fulfillment + webhook wiring; out of "views over existing models" scope).
+8. ✅ **DONE** **Fulfillment tracking-detail form** (Flow 3b #5) — commit `6c10014`; 8 ORM tests green. New `sale.order.fulfillment` form/list/menu (Operations > Gearment) + Gearment provenance fields (`gearment_order_ref`, `gearment_last_webhook_at`/`_topic`) stamped by the webhook dispatcher + `etsy_tracking_pushed`/`_at` set on successful Etsy pushback.
 9. ⏳ **QC checklist / production scan** (Flow 3a #4/#5) — deferred; confirm with owner whether in v1 scope.
 10. ⛔ **Conversations ingestion** — BLOCKED on Etsy `conversations_r` scope (external dep E1); tracker row only.
 
@@ -130,10 +130,10 @@ All shipped slices were developed + verified **local-first** (db `namco_odoo19`,
 
 ## Phase-C backlog (UI/UX gaps only)
 
-- `product.template` Tier-3 hiding (Flow 1 #1).
-- `etsy.shop` curation — verify P-DS-3a shipped + close.
-- `sale.order` / `stock.picking` audit — P-DS-3b (audit-first).
-- Badge/tint pass on Gearment Fulfillment tab + quote wizard (Flow 3b #1/#2).
+- ✅ **DONE** `product.template` Tier-3 hiding (Flow 1 #1) — commit `c0fdfbb`; 4 ORM tests green. Routes/MTO `operations` group, receipt/delivery note blocks, and `responsible_id` hidden behind `groups="base.group_no_one"`; weight/volume + lead time kept.
+- ✅ **DONE** `etsy.shop` curation — P-DS-3a shipped (prior session).
+- ✅ **DONE (no work)** `sale.order` / `stock.picking` audit — P-DS-3b closed; all custom sale.order content is already tab-organised and stock.picking has no custom inherit, so no curation gap (see `design-system/findings.md`).
+- Badge/tint pass on Gearment Fulfillment tab + quote wizard (Flow 3b #1/#2) — optional polish, not blocking.
 
 ---
 
