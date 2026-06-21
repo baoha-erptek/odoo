@@ -125,12 +125,25 @@ Ordered roughly by ROI / independence. Status updated as slices ship (2026-06-20
 D#1/D#2/D#4 (earlier), D#6/D#7 + D#3 (pipeline tab) + D#8 (fulfillment detail) + Phase C
 (curated product Inventory tab) captured 2026-06-21 under `screenshots/local/`.
 
-**QA note (2026-06-21):** the deferred D#3 screenshot had been blocked by a *stale web-server
-registry* — `-u <module> --stop-after-init` upgrades the DB out-of-band but the long-running
-container keeps its old in-memory registry, so forms threw a spurious OWL "field is undefined".
-`docker restart namco_odoo19` reloads the registry and the forms render correctly. This is an
-operational step, **not a code defect**; no rework was needed. Targeted QA on the three new
-surfaces (D#3 / D#8 / Phase C) found **0 code bugs**.
+**QA note (2026-06-21):** two things surfaced during the `/qa` autofix sweep of the three new
+surfaces.
+
+1. *Operational (not a defect):* the deferred D#3 screenshot had been blocked by a **stale
+   web-server registry** — `-u <module> --stop-after-init` upgrades the DB out-of-band but the
+   long-running container keeps its old in-memory registry, so forms threw a spurious OWL "field
+   is undefined". `docker restart namco_odoo19` reloads the registry and forms render correctly.
+
+2. *Real bug found + fixed (ISSUE-QA-D3-01, `b02af9d`):* the D#3 **Change State wizard was
+   unusable** — its New State dropdown listed zero selectable states. The `new_state_id` domain
+   filters on the related `pipeline_id`, which `default_get` never seeded into the fresh transient
+   form, so the domain evaluated against an empty pipeline. Fixed by seeding `pipeline_id` +
+   `current_state_id` in `default_get`; verified live (dropdown now lists the 6 pipeline states and
+   a Chờ File → Đang Sản Xuất transition completes with a "Manual Transition" audit row) + a
+   regression test on the form-open path. The 3 prior D#3 ORM tests `create()`d the transient
+   directly, bypassing the form path, which is why they missed it.
+
+D#8 and Phase C: **0 bugs** (list/filters/group-by/form + curation all verified live).
+Full QA report: `.gstack/qa-reports/qa-report-localhost-2026-06-21.md`.
 
 All shipped slices were developed + verified **local-first** (db `namco_odoo19`, seeded via
 `scripts/seed_demo_local.py`); evidence under `screenshots/local/`.
