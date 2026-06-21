@@ -121,4 +121,48 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Phase C — product.template Tier-3 curation (Flow 1 mockup screen 1).
+         Hides per-module *setup* clutter from BA / BA-Lead-Marketing users so
+         the product form stays focused on the Etsy publish narrative.  All
+         hiding is via groups="base.group_no_one" (developer mode only), so
+         it is fully reversible by toggling developer mode and never removes a
+         capability for users who actually need it.  Targets the stock-owned
+         nodes directly (mhc already depends on `stock`) rather than xpath-ing
+         across sibling inherits.  weight/volume and the customer lead time
+         (sale_delay) stay visible — Etsy/dropship need physical dimensions
+         and fulfillment SLAs.  See MOCKUP_product_template.md §5.b. -->
+    <record id="product_template_form_view_stock_tier3" model="ir.ui.view">
+        <field name="name">product.template.form.stock.tier3</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.view_template_property_form"/>
+        <field name="arch" type="xml">
+            <!-- Routes / MTO / Dropship buy-sell config (per-module setup). -->
+            <xpath expr="//group[@name='operations']" position="attributes">
+                <attribute name="groups">base.group_no_one</attribute>
+            </xpath>
+            <!-- Warehouse receipt / delivery note blocks (not Etsy-relevant).
+                 The wrapping groups carry no name= selector, so reach them via
+                 their note field (string= is rejected as an inherit selector). -->
+            <xpath expr="//field[@name='description_pickingin']/parent::group" position="attributes">
+                <attribute name="groups">base.group_no_one</attribute>
+            </xpath>
+            <xpath expr="//field[@name='description_pickingout']/parent::group" position="attributes">
+                <attribute name="groups">base.group_no_one</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Phase C — hide the inventory Responsible (a per-product owner the BA
+         does not set) on the procurement-button inherit where it lives. -->
+    <record id="product_template_form_view_procurement_tier3" model="ir.ui.view">
+        <field name="name">product.template.form.procurement.tier3</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='responsible_id']" position="attributes">
+                <attribute name="groups">base.group_no_one</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>
