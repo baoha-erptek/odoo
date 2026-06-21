@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub Core',
-    'version': '19.0.1.0.74',
+    'version': '19.0.1.0.75',
     'category': 'Sales',
     'summary': 'Foundation models and services shared across all sales channels and fulfillment partners',
     'description': """
@@ -67,6 +67,7 @@ fulfillment delegation landed:
         'wizards/product_creation_wizard_views.xml',
         'wizards/product_sku_builder_wizard_views.xml',
         'wizards/catalog_import_run_wizard_views.xml',
+        'wizards/order_pipeline_transition_wizard_views.xml',
         'views/product_sku_drift_views.xml',
         'views/product_channel_status_views.xml',
         'views/product_template_views.xml',

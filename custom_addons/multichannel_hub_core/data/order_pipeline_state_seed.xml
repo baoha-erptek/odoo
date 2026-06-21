@@ -62,6 +62,19 @@
       <field name="is_terminal" eval="True"/>
       <field name="color">7</field>
     </record>
+    <!-- P-D3-PIPELINE-UI (Flow 4 #3) — reprint loop. A completed order can be
+         sent back to production for a re-print ("In Lại"); it then re-enters
+         the in_production stage. New record → lands on upgrade even under the
+         noupdate=1 block. -->
+    <record id="state_vn_reprint" model="order.pipeline.state">
+      <field name="pipeline_id" ref="order_pipeline_vn_internal_production"/>
+      <field name="code">reprint</field>
+      <field name="name">In Lại</field>
+      <field name="sequence">60</field>
+      <field name="color">1</field>
+      <field name="team_id" ref="pipeline_team_internal_production"/>
+      <field name="next_state_ids" eval="[(4, ref('state_vn_in_production'))]"/>
+    </record>
 
     <!-- gearment_pod stages (4 stages mapping to draft/quote/confirm/ship cycle). -->
     <record id="state_gearment_draft" model="order.pipeline.state">

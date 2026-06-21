@@ -19,7 +19,7 @@ import logging
 from datetime import timedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -137,6 +137,15 @@ class SaleOrder(models.Model):
              "x_pipeline_id.initial_state_id on first resolve. Mutate via "
              "_write_pipeline_state(new_state, note) to persist a "
              "transition.log row in the same transaction.",
+    )
+
+    # P-D3-PIPELINE-UI — read-only transition history surfaced on the form's
+    # Pipeline tab. Inverse of order.pipeline.transition.log.sale_order_id.
+    pipeline_transition_log_ids = fields.One2many(
+        'order.pipeline.transition.log',
+        'sale_order_id',
+        string='Pipeline History',
+        readonly=True,
     )
 
     # P1-01b — channel-agnostic order-level fields lifted from owner's daily-ops
@@ -296,6 +305,23 @@ class SaleOrder(models.Model):
             'change_type': change_type,
             'note': note,
         })
+
+    def action_open_pipeline_transition_wizard(self):
+        """P-D3 — open the transition wizard for the Pipeline tab button."""
+        self.ensure_one()
+        if not self.x_pipeline_id:
+            raise UserError(_(
+                "This order has no fulfillment pipeline resolved yet. Add a "
+                "product whose category or template maps to a pipeline first."
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Change Pipeline State'),
+            'res_model': 'order.pipeline.transition.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_order_id': self.id},
+        }
 
     @api.depends(
         'order_line',

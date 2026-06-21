@@ -86,3 +86,4 @@ from . import test_multichannel_listing_statusbar_clickable
 from . import test_p_list_image_gallery_surface_db
 from . import test_p_list_image_gallery_surface_orm
 from . import test_p_d6_error_surface_orm
+from . import test_p_d3_pipeline_wizard_orm
