@@ -113,11 +113,11 @@ Ordered roughly by ROI / independence. Status updated as slices ship (2026-06-20
 2. ✅ **DONE (partial)** **Gearment views** — API log list+form + webhook filtered list (Flow 3b #3/#4) shipped, commit `3d4f42e`; QA-verified local (lists/filters/forms render, inbound verification group shows). Fulfillment tracking detail (#5) still pending (needs new fields).
 3. ✅ **DONE** **Pipeline tab + transition wizard + "In Lại" reprint state** (Flow 3a #3 / Flow 4 #3) — commit `a818449`; 3 ORM tests green. Transitions route through the audited `_write_pipeline_state`; direct writes still blocked.
 4. ✅ **DONE** **Kanban by channel status** (Flow 1 #5) — commit `54225446`; QA-verified local (Draft/Error/Published, error card shows message).
-5. ⏳ **Payload preview tab** (Flow 1 #3) — deferred (low ROI diagnostic; the resolved fields are already visible across the listing tabs, and a faithful preview needs the cross-module publisher payload builder).
+5. ⛔ **DEFERRED to v2 (owner decision 2026-06-21)** **Payload preview tab** (Flow 1 #3) — low ROI diagnostic; the resolved fields are already visible across the listing tabs, and a faithful preview needs the cross-module publisher payload builder.
 6. ✅ **DONE** **Error body surfaced** on the listing form (Flow 1 #4) — commit `c66ba56`; 2 ORM tests green. Computed `last_sync_error` + danger alert when `state == 'error'`.
 7. ✅ **DONE** **Refund / `etsy.order.ticket`** (Flow 4 #4) — commit `5d8c5e6`; 4 ORM tests green. After-sales ticket (return/refund/reship) with BA-lead-gated approve/reject/refunded state machine + chatter + menu.
 8. ✅ **DONE** **Fulfillment tracking-detail form** (Flow 3b #5) — commit `6c10014`; 8 ORM tests green. New `sale.order.fulfillment` form/list/menu (Operations > Gearment) + Gearment provenance fields (`gearment_order_ref`, `gearment_last_webhook_at`/`_topic`) stamped by the webhook dispatcher + `etsy_tracking_pushed`/`_at` set on successful Etsy pushback.
-9. ⏳ **QC checklist / production scan** (Flow 3a #4/#5) — deferred; confirm with owner whether in v1 scope.
+9. ⛔ **DEFERRED to v2 (owner decision 2026-06-21)** **QC checklist / production scan** (Flow 3a #4/#5) — in-house-production extras; no shipped slice depends on them. Out of v1 scope.
 10. ⛔ **Conversations ingestion** — BLOCKED on Etsy `conversations_r` scope (external dep E1); tracker row only.
 
 **Shipped this session (6 functional slices): D#1 D#2 D#3 D#4 D#6 D#7** — all unit-tested

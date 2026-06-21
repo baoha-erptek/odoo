@@ -91,22 +91,25 @@ intent. Record-level shots for listings/enquiries/design-files await a populated
 |---|---|---|
 | UAT-1 | Create product → auto-SKU → publish draft to Etsy → listing live | ☐ pending re-run |
 | UAT-2 | Etsy order ingested (API) → dedupe → sale.order created | ☐ pending re-run |
-| UAT-3 | MTO order → pipeline states → tracking pushed to Etsy | ☐ pending (needs pipeline UI) |
-| UAT-4 | Dropship order → Gearment quote → confirm → webhook → tracking to Etsy | ☐ pending (needs Gearment views) |
-| UAT-5 | After-sales: address change approved + reprint; refund path | ☐ pending (refund not built) |
+| UAT-3 | MTO order → pipeline states → tracking pushed to Etsy | ☐ pending walkthrough (pipeline UI now built — D#3) |
+| UAT-4 | Dropship order → Gearment quote → confirm → webhook → tracking to Etsy | ☐ pending walkthrough (Gearment + fulfillment-detail views now built — D#2/D#8) |
+| UAT-5 | After-sales: address change approved + reprint; refund path | ☐ pending walkthrough (refund ticket now built — D#7) |
 
 ---
 
 ## 4. Deferrals / blocked (v2 or external dependency)
 
-- **Refund / `etsy.order.ticket`** (Flow 4 #4) — not built; manual on Etsy + chatter note today.
-  Phase-D slice required.
+- **Refund / `etsy.order.ticket`** (Flow 4 #4) — ✅ **now built** (D#7 `5d8c5e6`); no longer a
+  deferral. After-sales return/refund/reship ticket with BA-lead-gated state machine + chatter.
+- **Payload preview tab** (Flow 1 #3) — **DEFERRED to v2 (owner decision 2026-06-21)**. Low-ROI
+  diagnostic; resolved fields already visible across the listing tabs.
+- **QC checklist + production scan view** (Flow 3a #4/#5) — **DEFERRED to v2 (owner decision
+  2026-06-21)**. In-house-production extras; no shipped slice depends on them.
 - **Conversations ingestion** (Flow 4) — **blocked** on Etsy `conversations_r` OAuth scope, which
   is explicitly forbidden in `etsy_oauth.py:37-39` pending E1 approval (see memory
   `project_external_deps_2026_04_27`). Tracker row only; do not build.
-- **QC checklist + production scan view** (Flow 3a #4/#5) — confirm with owner whether in v1 scope.
-- **Error-body modal** (Flow 1 #4) — partial; full diagnosis depends on
-  `R-PUB-RESPONSE-BODY-DIAGNOSE`.
+- **Error-body modal** (Flow 1 #4) — ✅ surfaced on the listing form (D#6 `c66ba56`); full
+  response-body diagnosis still depends on `R-PUB-RESPONSE-BODY-DIAGNOSE`.
 
 ---
 
