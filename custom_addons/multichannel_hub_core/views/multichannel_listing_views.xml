@@ -72,6 +72,15 @@
                         in Draft. To edit, ask a BA to revert the state to
                         Draft or use Reset to Draft below.
                     </div>
+                    <!-- P-D6-ERROR-SURFACE (Flow 1 #4) — show the last Etsy
+                         publisher error so the operator can diagnose a failed
+                         publish without re-running it. -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'error'">
+                        <strong>Publish failed.</strong> Last error from the
+                        channel:
+                        <field name="last_sync_error" nolabel="1" readonly="1"/>
+                    </div>
                     <field name="image_1920" widget="image"
                            class="oe_avatar"
                            readonly="state != 'draft'"/>

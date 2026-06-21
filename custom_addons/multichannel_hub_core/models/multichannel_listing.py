@@ -130,6 +130,16 @@ class MultichannelListing(models.Model):
         copy=False,
         help='Last successful publish / sync timestamp.',
     )
+    # P-D6-ERROR-SURFACE (Flow 1 #4) — surface the publisher error so an
+    # operator can read WHY a listing failed without re-running the publish.
+    # The message is captured by EtsyListingPublisher and persisted on the
+    # matching product.channel.status row; we mirror it read-only here.
+    last_sync_error = fields.Text(
+        string='Last Sync Error',
+        compute='_compute_last_sync_error',
+        help='Most recent publisher error for this product on this channel '
+             '(read-only diagnostic, sourced from product.channel.status).',
+    )
 
     display_name = fields.Char(
         compute='_compute_display_name', store=True,
@@ -167,6 +177,22 @@ class MultichannelListing(models.Model):
                 rec.display_name = '%s @ %s/%s' % (tmpl, ch, rec.shop_ref)
             else:
                 rec.display_name = '%s @ %s' % (tmpl, ch)
+
+    @api.depends('product_tmpl_id', 'channel_id', 'state')
+    def _compute_last_sync_error(self):
+        # sudo: cross-model diagnostic read of a non-sensitive error string;
+        # product.channel.status is already group_user-readable, sudo only
+        # guards against record-rule edge cases on the comodel.
+        Status = self.env['product.channel.status'].sudo()
+        for rec in self:
+            error = False
+            if rec.product_tmpl_id and rec.channel_id:
+                status = Status.search([
+                    ('product_tmpl_id', '=', rec.product_tmpl_id.id),
+                    ('channel_id', '=', rec.channel_id.id),
+                ], limit=1)
+                error = status.last_sync_error or False
+            rec.last_sync_error = error
 
     # ------------------------------------------------------------------
     # Resolver helpers — read by publisher (and by future channels)
