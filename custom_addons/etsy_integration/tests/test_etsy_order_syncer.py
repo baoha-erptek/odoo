@@ -46,6 +46,7 @@ class TestEtsyOrderSyncer_FirstRun(TransactionCase):
         super().setUp()
         self.shop = self.env['etsy.shop'].create({
             'name': 'FirstRunShop', 'sync_mode': 'api_only',
+            'etsy_api_shop_id': '60752333',
         })
 
     def test_first_run_passes_since_none_to_adapter(self):
@@ -97,6 +98,7 @@ class TestEtsyOrderSyncer_Incremental(TransactionCase):
         super().setUp()
         self.shop = self.env['etsy.shop'].create({
             'name': 'IncrementalShop', 'sync_mode': 'api_only',
+            'etsy_api_shop_id': '60752333',
         })
         self.shop.etsy_last_receipt_sync_at = datetime(2026, 1, 1, 0, 0, 0)
 
@@ -135,6 +137,7 @@ class TestEtsyOrderSyncer_Idempotency(TransactionCase):
         super().setUp()
         self.shop = self.env['etsy.shop'].create({
             'name': 'IdempotencyShop', 'sync_mode': 'api_only',
+            'etsy_api_shop_id': '60752333',
         })
 
     def test_resync_same_receipt_does_not_create_duplicate(self):
@@ -167,6 +170,7 @@ class TestEtsyOrderSyncer_AuditMode(TransactionCase):
             'name': 'AuditModeShop',
             'sync_mode': 'email_only',
             'sync_audit_mode': True,
+            'etsy_api_shop_id': '60752333',
         })
 
     def _adapter_with_page1(self):
@@ -250,6 +254,7 @@ class TestEtsyOrderSyncer_PartialFailure(TransactionCase):
         super().setUp()
         self.shop = self.env['etsy.shop'].create({
             'name': 'PartialFailureShop', 'sync_mode': 'api_only',
+            'etsy_api_shop_id': '60752333',
         })
 
     def test_cursor_advances_only_through_successful_payloads(self):

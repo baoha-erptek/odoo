@@ -43,6 +43,9 @@ class _FakeInvAdapter:
 
     def __init__(self, by_listing):
         self._by_listing = by_listing  # {etsy_listing_id: [raw, ...]}
+        # Provide a mock _client with last_http_status for audit logging
+        self._client = mock.MagicMock()
+        self._client.last_http_status = 200
 
     def fetch_variants(self, listing_id):
         return self._by_listing.get(str(listing_id), [])
@@ -59,6 +62,7 @@ class TestPListInvPull(TransactionCase):
             'name': 'INV Shop', 'active_source': 'api',
             'etsy_oauth_access_token': 'tok-a',
             'etsy_oauth_refresh_token': 'tok-r',
+            'etsy_api_shop_id': '60752333',
         })
         cls.listing = cls.env['etsy.listing'].create({
             'shop_id': cls.shop.id, 'etsy_listing_id': '900',

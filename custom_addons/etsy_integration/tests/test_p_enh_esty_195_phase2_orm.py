@@ -349,8 +349,9 @@ class TestPEnhEsty195Phase2ORM(TransactionCase):
         the expected RED signal. In Phase 3 GREEN, the import will succeed and
         the migration logic will execute.
         """
-        # Create a shop with a known name
-        shop = self._create_etsy_shop('JaHandmadeArt')
+        # Create a shop with a unique name (avoid collisions with ambient DB shops)
+        unique_shop_name = f'TestBackfillShop_{id(self)}'
+        shop = self._create_etsy_shop(unique_shop_name)
 
         # Create a listing with shop_ref but no etsy_shop_id
         product = self.env['product.template'].create({
@@ -361,7 +362,7 @@ class TestPEnhEsty195Phase2ORM(TransactionCase):
         listing = self._create_multichannel_listing(
             product_tmpl=product,
             etsy_shop_id=False,
-            shop_ref='JaHandmadeArt',
+            shop_ref=unique_shop_name,
         )
 
         # Before migration, etsy_shop_id should be NULL

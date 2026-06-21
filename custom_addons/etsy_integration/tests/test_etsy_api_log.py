@@ -85,6 +85,8 @@ class TestEtsyApiLog_Model(TransactionCase):
             'listing_inventory_push', 'listing_publish',
             # Spec 010 catalog import
             'catalog_import_run', 'catalog_image_download',
+            # P-LIST-SHIP-CREATE (ESTY-201) shipping profile create
+            'shipping_profile_create',
         ]
 
         for source in required_sources:
@@ -93,8 +95,8 @@ class TestEtsyApiLog_Model(TransactionCase):
                 f"Source '{source}' missing from selection"
             )
         self.assertEqual(
-            len(selection_keys), 18,
-            f"Selection should have exactly 18 values, got {len(selection_keys)}"
+            len(selection_keys), 19,
+            f"Selection should have exactly 19 values, got {len(selection_keys)}"
         )
 
     def test_source_selection_rejects_invalid_value(self):

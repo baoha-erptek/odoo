@@ -33,6 +33,7 @@ class TestEtsyTrackingPusherHappyPath(TransactionCase):
         # The shop_id path parameter in API calls is simply shop.id (the Odoo record id).
         cls.shop = cls.env['etsy.shop'].create({
             'name': 'Test Etsy Shop',
+            'etsy_api_shop_id': '60752333',
         })
 
         # Create partner
@@ -265,6 +266,7 @@ class TestEtsyTrackingPusherErrorCases(TransactionCase):
 
         cls.shop = cls.env['etsy.shop'].create({
             'name': 'Test Etsy Shop',
+            'etsy_api_shop_id': '60752333',
         })
 
         cls.partner = cls.env['res.partner'].create({
@@ -560,6 +562,7 @@ class TestEtsyTrackingPusherStateMachine(TransactionCase):
 
         cls.shop = cls.env['etsy.shop'].create({
             'name': 'Test Etsy Shop',
+            'etsy_api_shop_id': '60752333',
         })
 
         cls.partner = cls.env['res.partner'].create({
@@ -710,6 +713,7 @@ class TestEtsyTrackingPusherButton(TransactionCase):
 
         cls.shop = cls.env['etsy.shop'].create({
             'name': 'Test Etsy Shop',
+            'etsy_api_shop_id': '60752333',
         })
 
         cls.partner = cls.env['res.partner'].create({
