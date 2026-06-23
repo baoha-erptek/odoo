@@ -2,6 +2,32 @@
 
 Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers, and deferred decisions discovered during implementation. Each entry stands on its own; do not delete entries — supersede them with new ones.
 
+## 2026-06-23 — ESTY-207 button-placement RESOLVED (OWL control-panel patch)
+
+Owner chose the OWL control-panel patch (always-visible button next to "New").
+Implemented as a minimal list-view extension (commit fbd89832464):
+- `static/src/views/etsy_pull_list/`: js_class `etsy_pull_list` spreading
+  `sale_onboarding_list` (preserves onboarding + file-upload), controller method
+  `onPullEtsyOrders` (orm.call → doAction notification), buttons template
+  inheriting `account.FileuploadListView.Buttons` to append into
+  `web.ListView.Buttons` (the always-visible CP slot).
+- `sale_order_views.xml`: inheriting view swaps `js_class` instead of injecting
+  a `<header>` button. Manifest registers the 3 files in `web.assets_backend`.
+- `test_manual_pull_button` Phase 1 now asserts the js_class swap.
+
+Verified on staging after redeploy (`-u etsy_integration` clean + restart):
+- /browse as admin, Sales → Quotations list: control panel shows
+  `New | Pull Etsy Orders` with NO row selected (was previously only in the
+  selection action bar). Screenshot `pull_btn_always_visible.png`.
+- Real click → `POST .../sale.order/action_pull_etsy_orders → 200` → success
+  toast "Pulled Etsy orders: 1 ingested, 0 audited, 0 errors."
+- Local targeted tests (manual-pull + scoping, both phases): 0 failed of 9.
+
+GATE STATUS: all four staging-E2E items now PASS for ESTY-205/206/207. Remaining
+before close: run the full etsy_integration regression once more, then JIRA
+transitions (ESTY-205/206/207 → In Review, transition 31, ADF evidence) and
+tracker rows → done with commit shas.
+
 ## 2026-06-23 — Staging deploy + E2E (3 of 4 gate items PASS; 1 HIGH UX gap blocks sign-off)
 
 Deployed the 4 feature commits to staging (`esty_odoo19`, container `esty19_odoo`):
