@@ -223,6 +223,68 @@ class SaleOrder(models.Model):
             },
         }
 
+    def action_pull_etsy_orders(self):
+        """Manual Etsy API receipt pull scoped to the caller's shops."""
+        Shop = self.env['etsy.shop']
+        if (
+            self.env.user.has_group('base.group_system')
+            or self.env.user.has_group('sales_team.group_sale_manager')
+        ):
+            shops = Shop.search([('active_source', '=', 'api')])
+        else:
+            shops = Shop.search([
+                ('active_source', '=', 'api'),
+                ('user_id', '=', self.env.user.id),
+            ])
+        if not shops:
+            return self._etsy_pull_notification(
+                _('Pull Etsy Orders'),
+                _('No Etsy shops assigned to you.'),
+                'warning',
+            )
+
+        from ..services.etsy_order_syncer import EtsyOrderSyncer
+        # sudo(): OAuth tokens and etsy_api_shop_id are system-only fields.
+        # The user->shop search above is the authorization gate; elevation is
+        # applied only after computing the allowed shops from env.user.
+        syncer = EtsyOrderSyncer(self.sudo().env)
+        totals = {'ingested': 0, 'audited': 0, 'errors': 0}
+        for shop in shops:
+            try:
+                result = syncer.sync_shop_orders(shop.sudo())
+            except Exception:
+                totals['errors'] += 1
+                _logger.exception(
+                    'Manual Etsy pull failed for shop %s (id=%s)',
+                    shop.name, shop.id,
+                )
+                continue
+            for key in totals:
+                totals[key] += int((result or {}).get(key, 0) or 0)
+        message = _(
+            'Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, '
+            '%(errors)s errors.'
+        ) % {
+            'ingested': totals['ingested'],
+            'audited': totals['audited'],
+            'errors': totals['errors'],
+        }
+        level = 'warning' if totals['errors'] else 'success'
+        return self._etsy_pull_notification(_('Pull Etsy Orders'), message, level)
+
+    @staticmethod
+    def _etsy_pull_notification(title, message, notification_type):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notification_type,
+                'sticky': False,
+            },
+        }
+
     def _etsy_auto_confirm(self):
         """Confirm the order, force-validate its pickings, mark as invoiced.
 

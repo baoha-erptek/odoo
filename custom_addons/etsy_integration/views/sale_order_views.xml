@@ -119,6 +119,21 @@
         </field>
     </record>
 
+    <record id="view_quotation_tree_with_onboarding_etsy_pull" model="ir.ui.view">
+        <field name="name">sale.order.quotation.list.etsy.pull</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_pull_etsy_orders"
+                        type="object"
+                        string="Pull Etsy Orders"
+                        class="btn-secondary"
+                        groups="base.group_user"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- ============================================================ -->
     <!-- Inherit sale.order search: add Etsy filters                   -->
     <!-- ============================================================ -->
