@@ -991,3 +991,108 @@ the slice but useful to capture):
   Pairs nicely with the SHOPID-BOOTSTRAP slice if the same author
   touches the file.
 
+
+---
+
+## 2026-06-23 — Review of Codex ESTY-205/206/207 (working tree, NOT yet committed) — BLOCKED
+
+Reviewed Codex's implementation of the three stories per `codex/review-plan.md`.
+Tests GREEN (`0 failed, 0 error(s) of 856`), module upgrades clean, parallel
+`code-reviewer` + `security-reviewer` run. Two blockers prevent sign-off.
+
+### CRITICAL — `_check_etsy_total_reconciles` is self-contradictory; blocks real-order ingest
+`services/order_creator.py:701,713-722`. The gate raises `UserError` when Odoo
+`order.amount_total` != Etsy `grandtotal` (>0.01). Adapter sets
+`payload.amount_total = grandtotal` (`etsy_api_adapter.py:132`). But Odoo
+`amount_total` = product lines (`total_price`) + shipping line ONLY — the new
+tax/discount/gift-wrap fields are written informational-only (brief A2 says "do
+NOT overwrite computed pricing").
+
+Etsy schema (authoritative, `getShopReceipt`):
+`grandtotal = total_price − coupon discount + tax + shipping`.
+So for ANY receipt with sales tax, a coupon, or gift wrap,
+`grandtotal != total_price + shipping` → gate raises → ingest aborts. In the
+cron path the syncer catches the exception and `break`s WITHOUT advancing the
+cursor (`etsy_order_syncer.py:95-103`) → the shop's sync wedges permanently on
+its first taxed order. US shops collect sales tax on most orders ⇒ near-total
+production breakage.
+
+The synthetic fixture `tests/fixtures/receipt_3818231452.json` hides this: its
+`grandtotal`=110.00 = subtotal(100)+shipping(10), which CONTRADICTS Etsy's own
+definition (should be 100 − 2.5 + 5 + 3 + 10 = 115.5). The test passes only
+because the fixture is constructed wrong.
+
+Fix options: (a) reconcile against `subtotal + total_shipping_cost` (= what Odoo
+actually builds), or (b) make the check a non-fatal `_logger.warning` + set an
+`etsy_needs_review`-style flag, or (c) model tax/discount/gift-wrap as real Odoo
+lines so amount_total genuinely equals grandtotal. (a)+(b) recommended; the brief's
+"amount_total must equal grandtotal" requirement is itself wrong vs the schema.
+
+### HIGH — A1 live diff never run against real staging data (process gap)
+Brief §A1 made the staging diff on real receipt 3818231452 the FIRST step ("the
+diff output drives which candidate fields are real; prune the rest"). The script
+`scripts/etsy_receipt_diff.py` exists but the saved fixture is synthetic ("Alice
+Buyer", round numbers, schema-violating grandtotal) — A1 was clearly not executed.
+Consequence: the field set in A2 and the reconciliation target are unvalidated
+guesses. Pull the real receipt before sign-off.
+
+### Confirmed GOOD (no action)
+- Per-user shop scoping record rules: restrictive(base.group_user) +
+  permissive(group_sale_manager+group_system) OR-combine correctly. Proven by
+  `test_shop_user_scoping.py` with_user tests (scoped sees own+non-Etsy only;
+  manager & non-manager system admin see all). `user_id` ondelete='set null'.
+- Manual pull button FR-017 write-defense: allowed-shop set computed from
+  env.user BEFORE sudo(); sudo never applied to a user-supplied shop id; inline
+  justification present.
+- `_resolve_line_product` tiers 1-2 never auto-create; duplicate-SKU first-by-id
+  determinism; create+flag sets `etsy_needs_product_review`. All tier tests pass.
+- `_variation_line_vals` maps known axes + text fallback into etsy_option; writes
+  the mhc `*_manual` override fields (multichannel_hub_core is a manifest dep).
+- No new model ⇒ no missing ACL. No raw SQL. No print()/_logger.info-as-debug.
+
+### MEDIUM (non-blocking, fix if cheap)
+- `action_pull_etsy_orders` bare `except Exception` masks programming errors;
+  notification gives only an error count (no "check logs" hint).
+- `_variation_line_vals` unmapped-axis concat into etsy_option has no length cap.
+
+---
+
+## 2026-06-23 — Hybrid reconciliation fix applied (resolves the CRITICAL above)
+
+Owner chose the hybrid (Standard-Odoo-First). Grounded in Odoo 19 source:
+everything the buyer pays is an order LINE except tax, which is an engine-computed
+attribute of lines (`sale/models/sale_order_line.py:_compute_tax_ids`). Etsy is a
+marketplace facilitator that remits tax (`fiscal_pos_etsy_marketplace` note), so
+tax stays informational; booking it as `account.tax` would create a liability the
+seller does not owe.
+
+Changes (working tree, on top of Codex's):
+- `data/etsy_marketplace_adjustment_products.xml` (new) — `product_etsy_gift_wrap`
+  (ETSY-GIFTWRAP) + `product_etsy_discount` (ETSY-DISCOUNT) service products,
+  mirroring the existing shipping product. Added to manifest before fiscal data.
+- `order_creator._append_adjustment_lines` — shipping (+), gift-wrap (+) and
+  discount (−) each become an order line, so `amount_total` reflects the buyer-paid
+  figure minus the marketplace-remitted tax.
+- `order_creator._check_etsy_total_reconciles(order, payload)` — now reconciles
+  `amount_total` against `grandtotal − tax_total` and, on mismatch, sets
+  `sale.order.etsy_total_mismatch = True` + `_logger.warning` instead of raising
+  `UserError`. This removes the production blocker (a raise wedged the sync cursor
+  on the first taxed order — syncer breaks without advancing). Removed the unused
+  `UserError` import.
+- `sale_order.etsy_total_mismatch` Boolean (indexed, readonly) + surfaced in the
+  Receipt Status group of the Etsy tab.
+- Fixture `receipt_3818231452.json` corrected to satisfy Etsy's schema formula
+  (grandtotal 115.50 = total_price 100 − discount 2.50 + tax 5 + shipping 10 +
+  giftwrap 3). NOTE: still SYNTHETIC — the real-receipt A1 staging diff + staging
+  E2E remain a prerequisite before JIRA transition / `done`.
+- Tests: `test_receipt_fixture_maps_full_order_coverage` asserts amount_total=110.5,
+  `amount_total + etsy_tax_total == grandtotal`, gift/discount lines present, no
+  mismatch. New `test_total_mismatch_flags_order_without_raising` proves an
+  unreconcilable grandtotal flags (not raises).
+
+Verify: `-u etsy_integration --test-enable` → **0 failed, 0 error(s) of 857 tests**;
+module upgrades clean. ruff not installed on host (skipped per review-plan "if
+available"); `py_compile` clean.
+
+STILL OPEN before sign-off: real-receipt A1 diff on staging (esty_odoo19) + the
+review-plan staging E2E (scoped-user visibility, admin-sees-all, Pull button counts).
