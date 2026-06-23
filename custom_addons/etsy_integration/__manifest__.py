@@ -71,6 +71,13 @@ Features:
     'demo': [
         'data/demo_data.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'etsy_integration/static/src/views/etsy_pull_list/etsy_pull_list_controller.js',
+            'etsy_integration/static/src/views/etsy_pull_list/etsy_pull_list_view.js',
+            'etsy_integration/static/src/views/etsy_pull_list/etsy_pull_list_controller.xml',
+        ],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

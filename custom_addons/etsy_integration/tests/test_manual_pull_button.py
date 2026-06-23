@@ -6,10 +6,13 @@ from odoo.tests.common import TransactionCase, tagged
 @tagged('at_install', '-post_install')
 class TestManualPullButtonPhase1(TransactionCase):
 
-    def test_quotation_list_arch_contains_pull_button(self):
+    def test_quotation_list_uses_etsy_pull_js_class(self):
+        # The button now lives in an always-visible control-panel slot rendered
+        # by the etsy_pull_list OWL view (the action method is exercised in
+        # Phase 2); the view XML only swaps the js_class.
         view = self.env.ref(
             'etsy_integration.view_quotation_tree_with_onboarding_etsy_pull')
-        self.assertIn('action_pull_etsy_orders', view.arch)
+        self.assertIn('etsy_pull_list', view.arch)
 
 
 @tagged('post_install', '-at_install')

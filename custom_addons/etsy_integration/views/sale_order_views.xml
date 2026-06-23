@@ -136,13 +136,15 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_pull_etsy_orders"
-                        type="object"
-                        string="Pull Etsy Orders"
-                        class="btn-secondary"
-                        groups="base.group_user"/>
-            </xpath>
+            <!-- Swap the onboarding list js_class for our extension, which adds
+                 an always-visible "Pull Etsy Orders" control-panel button (next
+                 to "New"). A list <header> button only renders in the row-
+                 selection action bar and is unreachable on an empty list, so it
+                 was the wrong placement for a global pull action. etsy_pull_list
+                 spreads sale_onboarding_list, so onboarding behaviour stays. -->
+            <list position="attributes">
+                <attribute name="js_class">etsy_pull_list</attribute>
+            </list>
         </field>
     </record>
 
