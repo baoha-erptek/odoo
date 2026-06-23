@@ -158,6 +158,8 @@ class OrderCreator:
     # XMLIDs of the master data records loaded by data/etsy_*.xml. Looked up
     # lazily and memoized per-instance via the helpers below.
     _XMLID_SHIPPING_PRODUCT = 'etsy_integration.product_etsy_shipping'
+    _XMLID_GIFT_WRAP_PRODUCT = 'etsy_integration.product_etsy_gift_wrap'
+    _XMLID_DISCOUNT_PRODUCT = 'etsy_integration.product_etsy_discount'
     _XMLID_FISCAL_POSITION = 'etsy_integration.fiscal_pos_etsy_marketplace'
     _XMLID_PAYMENT_TERM = 'etsy_integration.payment_term_etsy_prepaid'
     _XMLID_SALES_TEAM = 'etsy_integration.team_etsy'
@@ -187,6 +189,24 @@ class OrderCreator:
         tmpl = self._ref('shipping_template', self._XMLID_SHIPPING_PRODUCT)
         product = tmpl.product_variant_id if tmpl else False
         self._cache['shipping_product'] = product
+        return product
+
+    def _get_gift_wrap_product(self):
+        """Returns the product.product variant of the Etsy Gift Wrap template."""
+        if 'gift_wrap_product' in self._cache:
+            return self._cache['gift_wrap_product']
+        tmpl = self._ref('gift_wrap_template', self._XMLID_GIFT_WRAP_PRODUCT)
+        product = tmpl.product_variant_id if tmpl else False
+        self._cache['gift_wrap_product'] = product
+        return product
+
+    def _get_discount_product(self):
+        """Returns the product.product variant of the Etsy Discount template."""
+        if 'discount_product' in self._cache:
+            return self._cache['discount_product']
+        tmpl = self._ref('discount_template', self._XMLID_DISCOUNT_PRODUCT)
+        product = tmpl.product_variant_id if tmpl else False
+        self._cache['discount_product'] = product
         return product
 
     def _get_fiscal_position(self):
@@ -294,8 +314,13 @@ class OrderCreator:
                 _logger.info(
                     'Skipping duplicate transaction %s', txn.transaction_id)
                 continue
-            product = self.find_or_create_product(
-                txn.product_name, getattr(txn, 'image_url', ''))
+            image_url = getattr(txn, 'image_url', '') or ''
+            product = self._resolve_line_product(
+                getattr(txn, 'sku', '') or '',
+                txn.product_name,
+                getattr(txn, 'listing_id', None),
+                image_url,
+            )
             line_vals = self._build_line_vals(txn, product)
             order_vals['order_line'].append((0, 0, line_vals))
 
@@ -447,6 +472,7 @@ class OrderCreator:
         vals = {
             'name': name,
             'is_etsy_product': True,
+            'etsy_needs_product_review': True,
             'type': 'consu',
             'is_storable': True,
             'etsy_image_url': image_url or False,
@@ -457,6 +483,52 @@ class OrderCreator:
         product = Product.create(vals)
         _logger.info('Created product %s (id=%d)', product.name, product.id)
         return product
+
+    def _resolve_line_product(self, sku, title, listing_id=None, image_url=''):
+        """Resolve an Etsy line to product.product without SKU duplicates."""
+        clean_sku = (sku or '').strip()
+        if clean_sku:
+            linked = self._resolve_listing_product(clean_sku, listing_id)
+            if linked:
+                return linked
+            default_code_match = self._resolve_default_code_product(clean_sku)
+            if default_code_match:
+                return default_code_match
+        name_match = self._env['product.product'].search([
+            ('name', '=', (title or '').strip()),
+        ], limit=1)
+        if name_match:
+            return name_match
+        return self.find_or_create_product(title, image_url)
+
+    def _resolve_listing_product(self, sku, listing_id=None):
+        ListingProduct = self._env['etsy.listing.product']
+        candidates = ListingProduct.search([
+            ('sku', '=', sku),
+            ('is_active', '=', True),
+            ('product_id', '!=', False),
+        ], order='id')
+        if not candidates:
+            return self._env['product.product'].browse()
+        clean_listing_id = str(listing_id or '').strip()
+        if clean_listing_id:
+            preferred = candidates.filtered(
+                lambda rec: rec.listing_id.etsy_listing_id == clean_listing_id)
+            if preferred:
+                return preferred[0].product_id
+        return candidates[0].product_id
+
+    def _resolve_default_code_product(self, sku):
+        candidates = self._env['product.product'].search(
+            [('default_code', '=', sku)], order='id')
+        if not candidates:
+            return candidates
+        if len(candidates) > 1:
+            _logger.warning(
+                'SKU %s matches %d products; using first-by-id (id=%s) for order ingest.',
+                sku, len(candidates), candidates[0].id,
+            )
+        return candidates[0]
 
     def _get_categorizer(self):
         """Lazy-construct the ProductCategorizer (loads JSON on first use)."""
@@ -555,6 +627,12 @@ class OrderCreator:
             'etsy_processing_time': payload.processing_time or '',
             'etsy_discount_code': payload.discount_code or '',
             'etsy_subtotal': payload.subtotal or 0.0,
+            'etsy_tax_total': payload.tax_total or 0.0,
+            'etsy_receipt_status': payload.receipt_status or '',
+            'etsy_is_shipped': bool(payload.is_shipped),
+            'etsy_discount_amount': payload.discount_amount or 0.0,
+            'etsy_needs_gift_wrap': bool(payload.needs_gift_wrap),
+            'etsy_gift_wrap_price': payload.gift_wrap_price or 0.0,
             # Multichannel foundation (mhc FR-024) — see process_parse_result
             # for rationale. Both ingest paths must stamp these consistently.
             'sales_channel': 'etsy',
@@ -587,7 +665,12 @@ class OrderCreator:
                     item.transaction_id,
                 )
                 continue
-            product = self.find_or_create_product(item.title, '')
+            product = self._resolve_line_product(
+                item.sku,
+                item.title,
+                item.listing_id,
+                getattr(item, 'image_url', '') or '',
+            )
             line_vals = {
                 'product_id': product.id,
                 'product_uom_qty': item.quantity or 1,
@@ -595,10 +678,12 @@ class OrderCreator:
                 'etsy_transaction_id': str(item.transaction_id),
                 'etsy_personalisation': item.personalisation or '',
                 'etsy_sku': item.sku or '',
+                'etsy_image_url': getattr(item, 'image_url', '') or '',
                 # P1-01b-FIX-DASHBOARD-GAPS (2026-05-10) — channel-agnostic
                 # shadows so api-ingested lines render in the dashboard.
                 'transaction_id': str(item.transaction_id),
                 'personalisation': item.personalisation or '',
+                'image_url': getattr(item, 'image_url', '') or '',
                 # P1-DESIGN-AUTO-CREATE-FROM-EMAIL — channel-agnostic design
                 # URLs feed `design.file._seed_design_files_from_lines` after
                 # order create. EtsyLineItemPayload defaults to '' until a
@@ -606,6 +691,7 @@ class OrderCreator:
                 'design_link_front': getattr(item, 'design_link_front', '') or '',
                 'design_link_back': getattr(item, 'design_link_back', '') or '',
             }
+            line_vals.update(self._variation_line_vals(item.variations))
             # P0-22 — when the adapter supplied a custom display name (email
             # path uses the buyer-facing product_name with rendered options),
             # honour it. None means "use product.display_name" (default).
@@ -620,17 +706,14 @@ class OrderCreator:
             )
             return None
 
-        shipping_total = payload.shipping_total or 0.0
-        shipping_product = self._get_shipping_product()
-        if shipping_total > 0 and shipping_product:
-            order_vals['order_line'].append((0, 0, {
-                'product_id': shipping_product.id,
-                'product_uom_qty': 1.0,
-                'price_unit': shipping_total,
-                'name': shipping_product.display_name,
-            }))
+        # Buyer-paid money components become their own lines (standard Odoo:
+        # delivery line, loyalty reward line, service line) so amount_total
+        # reflects what the buyer paid. Tax is the deliberate exception — it
+        # stays informational on etsy_tax_total because Etsy collects/remits it.
+        self._append_adjustment_lines(order_vals, payload)
 
         order = self._env['sale.order'].create(order_vals)
+        self._check_etsy_total_reconciles(order, payload)
         _logger.info(
             'Created sale.order %s (Etsy #%s, source=api) with %d lines',
             order.name, payload.etsy_order_id, len(order.order_line),
@@ -641,6 +724,82 @@ class OrderCreator:
         self._env['design.file']._seed_design_files_from_lines(
             order, created_via='api_ingest')
         return order
+
+    def _append_adjustment_lines(self, order_vals, payload):
+        """Append shipping, gift-wrap (+) and discount (-) money lines."""
+        components = (
+            (payload.shipping_total, self._get_shipping_product()),
+            (payload.gift_wrap_price, self._get_gift_wrap_product()),
+            # Discount nets the order down, so the line carries a negative price.
+            (-(payload.discount_amount or 0.0), self._get_discount_product()),
+        )
+        for amount, product in components:
+            amount = round(float(amount or 0.0), 2)
+            if amount and product:
+                order_vals['order_line'].append((0, 0, {
+                    'product_id': product.id,
+                    'product_uom_qty': 1.0,
+                    'price_unit': amount,
+                    'name': product.display_name,
+                }))
+
+    @staticmethod
+    def _check_etsy_total_reconciles(order, payload):
+        """Reconcile Odoo amount_total against the buyer-paid figure.
+
+        Etsy `grandtotal` includes tax, which we keep informational (Etsy
+        remits it), so the reconciliation target is grandtotal - tax. A
+        mismatch flags the order for review rather than blocking ingest —
+        a hard failure here would wedge the sync cursor on the first taxed
+        order (the syncer breaks without advancing on any exception).
+        """
+        expected = round(float(payload.amount_total or 0.0)
+                         - float(payload.tax_total or 0.0), 2)
+        actual = round(order.amount_total, 2)
+        if abs(actual - expected) > 0.01:
+            order.etsy_total_mismatch = True
+            _logger.warning(
+                'Etsy receipt total mismatch for %s: Odoo amount_total=%s, '
+                'Etsy grandtotal-tax=%s. Flagged for review.',
+                order.etsy_order_id, actual, expected,
+            )
+
+    @staticmethod
+    def _variation_line_vals(variations):
+        fields = {
+            'etsy_option': '',
+            'etsy_color': '',
+            'etsy_size': '',
+            'etsy_side': '',
+            'etsy_face_mask_size': '',
+        }
+        unmapped = []
+        for raw_name, value in (variations or {}).items():
+            key = (raw_name or '').strip().lower().replace('-', ' ')
+            value = value or ''
+            if key == 'color':
+                fields['etsy_color'] = value
+            elif key == 'size':
+                fields['etsy_size'] = value
+            elif key == 'option':
+                fields['etsy_option'] = value
+            elif key == 'side':
+                fields['etsy_side'] = value
+            elif key == 'face mask size':
+                fields['etsy_face_mask_size'] = value
+            else:
+                unmapped.append('%s: %s' % (raw_name, value))
+        if unmapped:
+            fields['etsy_option'] = '; '.join(
+                [v for v in (fields['etsy_option'], '; '.join(unmapped)) if v])
+        fields.update({
+            'option_label_manual': fields['etsy_option'],
+            'color_manual': fields['etsy_color'],
+            'size_manual': fields['etsy_size'],
+            'side_manual': fields['etsy_side'],
+            'face_mask_size_manual': fields['etsy_face_mask_size'],
+        })
+        return fields
 
     def _payload_partner(self, payload):
         """Map `EtsyOrderPayload.shipping_address` into the namespace

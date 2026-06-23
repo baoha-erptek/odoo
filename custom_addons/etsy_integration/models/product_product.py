@@ -19,6 +19,12 @@ class ProductTemplate(models.Model):
     etsy_image_url = fields.Char(string='Etsy Image URL')
     is_etsy_product = fields.Boolean(
         string='Is Etsy Product', default=False, index=True)
+    etsy_needs_product_review = fields.Boolean(
+        string='Needs Etsy Product Review',
+        default=False,
+        index=True,
+        help='Set when Etsy order ingest had to auto-create this product.',
+    )
 
     def _push_sku_to_channel(self, channel_code):
         """Spec 009 P-HUB-SKU-DRIFT checkpoint b — Etsy override.

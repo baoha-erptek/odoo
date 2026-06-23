@@ -170,6 +170,16 @@ class EtsyApiAdapter:
                 self._money_amount(receipt.get('grandtotal'))
                 - self._money_amount(receipt.get('total_shipping_cost'))
             ),
+            tax_total=(
+                self._money_amount(receipt.get('total_tax_cost'))
+                + self._money_amount(receipt.get('total_vat_cost'))
+            ),
+            receipt_status=receipt.get('status') or None,
+            is_shipped=receipt.get('is_shipped'),
+            discount_amount=self._first_money_amount(
+                receipt, ('discount_amt', 'total_discount_cost', 'discount_amount')),
+            needs_gift_wrap=receipt.get('needs_gift_wrap'),
+            gift_wrap_price=self._money_amount(receipt.get('gift_wrap_price')),
         )
 
     @staticmethod
@@ -197,7 +207,32 @@ class EtsyApiAdapter:
             unit_price=self._money_amount(txn.get('price')),
             variations=self._variations_to_dict(txn.get('variations')),
             personalisation=txn.get('personalization') or None,
+            image_url=self._transaction_image_url(txn),
         )
+
+    def _first_money_amount(self, data: dict, keys: tuple[str, ...]) -> float:
+        for key in keys:
+            if key in data:
+                return self._money_amount(data.get(key))
+        return 0.0
+
+    @staticmethod
+    def _transaction_image_url(txn: dict) -> str:
+        for key in (
+            'image_url',
+            'listing_image_url',
+            'image_url_75x75',
+            'image_url_170x135',
+            'image_url_570xN',
+        ):
+            if txn.get(key):
+                return txn[key]
+        for nested_key in ('image', 'listing_image'):
+            image = txn.get(nested_key) or {}
+            for key in ('url_fullxfull', 'url_570xN', 'url_170x135', 'url_75x75'):
+                if image.get(key):
+                    return image[key]
+        return ''
 
     @staticmethod
     def _money_amount(money: dict | None) -> float:

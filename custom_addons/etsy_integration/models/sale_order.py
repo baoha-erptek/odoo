@@ -29,7 +29,21 @@ class SaleOrder(models.Model):
     etsy_processing_time = fields.Char(string='Processing Time')
     etsy_shipping_cost = fields.Float(string='Etsy Shipping Cost', digits=(12, 2))
     etsy_discount_code = fields.Char(string='Discount Code')
+    etsy_discount_amount = fields.Float(
+        string='Etsy Discount Amount', digits=(12, 2), readonly=True)
     etsy_subtotal = fields.Float(string='Etsy Subtotal', digits=(12, 2))
+    etsy_tax_total = fields.Float(
+        string='Etsy Tax Total', digits=(12, 2), readonly=True)
+    etsy_receipt_status = fields.Char(string='Etsy Receipt Status', readonly=True)
+    etsy_is_shipped = fields.Boolean(string='Etsy Shipped', readonly=True)
+    etsy_needs_gift_wrap = fields.Boolean(string='Needs Gift Wrap', readonly=True)
+    etsy_gift_wrap_price = fields.Float(
+        string='Etsy Gift Wrap Price', digits=(12, 2), readonly=True)
+    etsy_total_mismatch = fields.Boolean(
+        string='Etsy Total Mismatch', readonly=True, index=True,
+        help='Set when Odoo amount_total did not reconcile with the Etsy '
+             'buyer-paid total (grandtotal minus marketplace-remitted tax). '
+             'Review pricing/line mapping for this order.')
     etsy_email_log_id = fields.Many2one(
         'etsy.email.log', string='Source Email', ondelete='set null')
     # Spec 005 P0-16b1 — provenance for orders ingested via canonical

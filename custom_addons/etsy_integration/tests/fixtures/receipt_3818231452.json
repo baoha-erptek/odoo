@@ -1,0 +1,49 @@
+{
+  "receipt_id": 3818231452,
+  "name": "Alice Buyer",
+  "first_line": "123 Main St",
+  "second_line": "",
+  "city": "Boston",
+  "state": "MA",
+  "zip": "02108",
+  "country_iso": "US",
+  "buyer_email": "alice@example.com",
+  "is_gift": true,
+  "gift_message": "Happy birthday",
+  "message_from_buyer": "Please make it blue",
+  "created_timestamp": 1714294800,
+  "last_modified_tsz": 1714381200,
+  "is_paid": true,
+  "is_shipped": false,
+  "status": "paid",
+  "grandtotal": {"amount": 11550, "divisor": 100, "currency_code": "USD"},
+  "subtotal": {"amount": 9750, "divisor": 100, "currency_code": "USD"},
+  "total_price": {"amount": 10000, "divisor": 100, "currency_code": "USD"},
+  "total_shipping_cost": {"amount": 1000, "divisor": 100, "currency_code": "USD"},
+  "total_tax_cost": {"amount": 500, "divisor": 100, "currency_code": "USD"},
+  "total_vat_cost": {"amount": 0, "divisor": 100, "currency_code": "USD"},
+  "discount_amt": {"amount": 250, "divisor": 100, "currency_code": "USD"},
+  "needs_gift_wrap": true,
+  "gift_wrap_price": {"amount": 300, "divisor": 100, "currency_code": "USD"},
+  "coupon_code": "SAVE",
+  "shipping_method": "Standard",
+  "min_processing_days": 3,
+  "max_processing_days": 5,
+  "transactions": [
+    {
+      "transaction_id": 99990001,
+      "listing_id": 55550001,
+      "sku": "SKU-COVERAGE-1",
+      "title": "Custom Mug",
+      "quantity": 1,
+      "price": {"amount": 10000, "divisor": 100, "currency_code": "USD"},
+      "image_url": "https://i.etsystatic.com/test/custom-mug.jpg",
+      "personalization": "Alice",
+      "variations": [
+        {"property_id": 1, "formatted_name": "Color", "formatted_value": "Blue"},
+        {"property_id": 2, "formatted_name": "Size", "formatted_value": "Large"},
+        {"property_id": 3, "formatted_name": "Finish", "formatted_value": "Glossy"}
+      ]
+    }
+  ]
+}

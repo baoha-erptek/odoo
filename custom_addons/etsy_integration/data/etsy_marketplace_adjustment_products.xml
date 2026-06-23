@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!--
+        Etsy marketplace money-component products. Etsy's `grandtotal` is the
+        buyer-paid figure = total_price - discount + tax + shipping (+ gift wrap).
+        Odoo's `amount_total` is built strictly from order lines, so every
+        buyer-paid component except tax is represented as its own line (the
+        standard Odoo pattern: delivery line, loyalty reward line, service line).
+        Tax stays informational on sale.order.etsy_tax_total because Etsy is the
+        marketplace facilitator that collects and remits it (see the Etsy
+        fiscal position note) - booking it as an Odoo tax would create a tax
+        liability the seller does not owe.
+        Service type: no stock move generated on picking validation.
+    -->
+    <record id="product_etsy_gift_wrap" model="product.template">
+        <field name="name">Etsy Gift Wrap</field>
+        <field name="type">service</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="list_price">0.0</field>
+        <field name="default_code">ETSY-GIFTWRAP</field>
+        <field name="description_sale">Gift wrap charged via Etsy checkout.</field>
+    </record>
+
+    <record id="product_etsy_discount" model="product.template">
+        <field name="name">Etsy Discount</field>
+        <field name="type">service</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="list_price">0.0</field>
+        <field name="default_code">ETSY-DISCOUNT</field>
+        <field name="description_sale">Coupon/discount applied via Etsy checkout (negative amount).</field>
+    </record>
+
+</odoo>

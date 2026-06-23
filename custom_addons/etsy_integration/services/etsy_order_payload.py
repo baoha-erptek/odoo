@@ -68,6 +68,7 @@ class EtsyLineItemPayload:
     # extracts URLs from the receipt's variations / personalisation block.
     design_link_front: str = ''
     design_link_back: str = ''
+    image_url: str = ''
 
 
 @dataclass(frozen=True)
@@ -118,3 +119,9 @@ class EtsyOrderPayload:
     processing_time: str | None = None
     discount_code: str | None = None
     subtotal: float | None = None
+    tax_total: float | None = None
+    receipt_status: str | None = None
+    is_shipped: bool | None = None
+    discount_amount: float | None = None
+    needs_gift_wrap: bool | None = None
+    gift_wrap_price: float | None = None

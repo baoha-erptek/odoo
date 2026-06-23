@@ -37,6 +37,7 @@ Features:
         'data/ir_config_parameter.xml',
         'data/ir_config_parameter_currency.xml',
         'data/etsy_shipping_product.xml',
+        'data/etsy_marketplace_adjustment_products.xml',
         'data/etsy_fiscal_data.xml',
         'data/etsy_product_categories.xml',
         'data/etsy_attribute_defaults.xml',

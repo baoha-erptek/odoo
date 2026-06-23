@@ -68,7 +68,16 @@
                         </group>
                         <group string="Pricing">
                             <field name="etsy_discount_code"/>
+                            <field name="etsy_discount_amount" readonly="1"/>
                             <field name="etsy_subtotal"/>
+                            <field name="etsy_tax_total" readonly="1"/>
+                            <field name="etsy_gift_wrap_price" readonly="1"/>
+                            <field name="etsy_needs_gift_wrap" readonly="1"/>
+                        </group>
+                        <group string="Receipt Status">
+                            <field name="etsy_receipt_status" readonly="1"/>
+                            <field name="etsy_is_shipped" readonly="1"/>
+                            <field name="etsy_total_mismatch" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -105,6 +114,9 @@
                 <field name="etsy_color" optional="hide" column_invisible="not parent.is_etsy_order"/>
                 <field name="etsy_size" optional="hide" column_invisible="not parent.is_etsy_order"/>
                 <field name="etsy_option" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_side" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_face_mask_size" optional="hide" column_invisible="not parent.is_etsy_order"/>
+                <field name="etsy_image_url" optional="hide" column_invisible="not parent.is_etsy_order"/>
             </xpath>
 
             <!-- P1-IMG-LINE-WIDGET: product image thumbnail column on order-line list.
