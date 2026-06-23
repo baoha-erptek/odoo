@@ -11,6 +11,7 @@
         <field name="arch" type="xml">
             <list string="Etsy Shops">
                 <field name="name"/>
+                <field name="user_id"/>
                 <field name="order_count"/>
                 <field name="revenue_total" widget="monetary"/>
                 <field name="active"/>
@@ -70,6 +71,7 @@
                     <group>
                         <group>
                             <field name="active" invisible="1"/>
+                            <field name="user_id"/>
                             <field name="revenue_total" widget="monetary"/>
                             <field name="listing_currency_id"/>
                         </group>

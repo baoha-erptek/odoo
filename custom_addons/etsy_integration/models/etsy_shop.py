@@ -14,6 +14,13 @@ class EtsyShop(models.Model):
 
     name = fields.Char(string='Shop Name', required=True, index=True)
     active = fields.Boolean(default=True)
+    user_id = fields.Many2one(
+        'res.users',
+        string='Responsible',
+        help='Odoo user who manages this shop; scopes order visibility and manual pull.',
+        ondelete='set null',
+        index=True,
+    )
     order_ids = fields.One2many('sale.order', 'etsy_shop_id', string='Orders')
     order_count = fields.Integer(
         string='Order Count', compute='_compute_order_count')
