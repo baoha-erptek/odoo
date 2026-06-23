@@ -2,6 +2,61 @@
 
 Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers, and deferred decisions discovered during implementation. Each entry stands on its own; do not delete entries — supersede them with new ones.
 
+## 2026-06-23 — Staging deploy + E2E (3 of 4 gate items PASS; 1 HIGH UX gap blocks sign-off)
+
+Deployed the 4 feature commits to staging (`esty_odoo19`, container `esty19_odoo`):
+rsync etsy_integration → `-u etsy_integration --stop-after-init` (clean) → restart.
+Branch pushed to `namco/feature/006-master-plan-coding` (HEAD 161302044bf).
+
+Ran the review-plan staging E2E in an odoo shell (sections rolled back unless noted):
+
+- **[A1 reconcile-after-fix] PASS** — dry-create from the REAL receipt 3818231452
+  through the live `order_creator` path: `amount_total = 411708.00` exactly
+  (= grandtotal 494050 − tax 82342), `etsy_total_mismatch = False`, lines =
+  product 538677 + shipping 196237 − discount 323206; tax stays informational.
+  Rolled back.
+- **[Per-user scoping] PASS** — mirrored the unit-test setup live (scoped =
+  base.group_user + sales_team.group_sale_salesman): scoped salesperson sees
+  own-shop etsy + non-etsy, NOT other-shop etsy; sale-manager sees all;
+  non-manager base.group_system admin (id≠1) sees all. Rolled back.
+  - NOTE: a plain `base.group_user` with NO sales group cannot read sale.order
+    at all (standard Odoo ACL) — the rule layers on top of a sales group. The
+    review-plan's "plain base.group_user" wording means "a salesperson", as the
+    unit test encodes.
+- **[Pull button — function] PASS** — scoped user with no shops → clean warning
+  "No Etsy shops assigned to you." (no traceback); admin path → 1 api shop →
+  success "Pulled Etsy orders: 1 ingested, 0 audited, 0 errors." (this DID
+  ingest 1 real receipt on staging via the new hybrid path — expected).
+- **[Pull button — render] HIGH / FAIL-FOR-INTENT** — live browser check (gstack
+  /browse, logged in as admin, Sales → Quotations list). The `Pull Etsy Orders`
+  button renders ONLY in the list **selection action bar** (visible after
+  selecting ≥1 row), next to `Create Invoices | Pull Etsy Orders | Print |
+  Actions`. With zero rows selected it is absent from the control panel.
+  Root cause: the button was added via `<xpath expr="//header" position="inside">`
+  on `sale.view_quotation_tree_with_onboarding`; Odoo renders list-view
+  `<header>` buttons in the multi-select bar, NOT as always-visible CP buttons.
+  Why this is a problem for THIS action: "pull new orders from Etsy" is a global
+  operation that ignores selection, yet it (a) sits among record-scoped actions
+  implying it acts on the selected rows, and (b) is unreachable on an empty
+  quotation list — exactly when you'd pull. Resolved arch test passed (button
+  node present), so XML/arch checks alone miss this — the live render check is
+  what caught it, as the review-plan anticipated.
+  Evidence screenshot: `pull_btn_selection_bar.png` (session scratchpad).
+
+Decision needed (escalated; NOT signing off ESTY-207 until resolved). Candidate
+standard-Odoo fixes for an always-available global pull entry point:
+  1. Dedicated menu item under Sales → Orders bound to an `ir.actions.server`
+     (always visible, selection-independent) — cleanest standard pattern.
+  2. `ir.actions.server` with `binding_model_id` on sale.order surfaced in the
+     cog "Actions" menu (still tends to be selection-scoped in list view).
+  3. OWL control-panel patch to inject an always-visible CP button (heaviest).
+  4. Accept current selection-bar placement (weak — fails the empty-list case).
+
+GATE STATUS: ESTY-205 (scoping) and ESTY-206 (coverage + reconciliation) pass
+their staging E2E. ESTY-207 (manual pull) is functionally correct but BLOCKED on
+the button-placement UX decision above. No JIRA transition / tracker `done` until
+resolved.
+
 ---
 
 ## 2026-05-30 — P1-11-SHOPID-BOOTSTRAP landed (`f6b96fe2eb6`)
