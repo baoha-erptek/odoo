@@ -1096,3 +1096,46 @@ available"); `py_compile` clean.
 
 STILL OPEN before sign-off: real-receipt A1 diff on staging (esty_odoo19) + the
 review-plan staging E2E (scoped-user visibility, admin-sees-all, Pull button counts).
+
+## 2026-06-23 — Real-receipt A1 diff on staging (validates the hybrid fix)
+
+Ran a read-only probe against staging `esty_odoo19` (`esty19_odoo` container) via
+the existing deployed `EtsyApiClient` — live GET of receipt 3818231452, no deploy,
+no writes. Figures (shop-currency, divisor applied; values only, buyer PII omitted):
+
+| Etsy field                      | value      |
+|---------------------------------|------------|
+| grandtotal                      | 494050.00  |
+| subtotal                        | 215471.00  |
+| total_price                     | 538677.00  |
+| total_shipping_cost             | 196237.00  |
+| total_tax_cost + total_vat_cost | 82342.00   |
+| discount_amt                    | 323206.00  |
+| gift_wrap_price                 | 0.00       |
+| status                          | Completed  |
+
+Formula confirmed exactly: `subtotal + shipping + tax + giftwrap = grandtotal`
+(494050.00 = 494050.00, diff 0.00), and `subtotal = total_price − discount_amt`
+(215471 = 538677 − 323206). Real data exercises a LARGE discount and material tax;
+no gift wrap. Matches the Etsy `ShopReceipt` schema we coded to.
+
+Fix validation (arithmetic on real figures):
+- Expected `amount_total` = grandtotal − tax = 494050 − 82342 = **411708.00**.
+- New code: product line(s) = total_price 538677 (txn price is pre-discount) +
+  shipping 196237 + giftwrap 0 − discount 323206 = **411708.00** → matches;
+  `etsy_total_mismatch` would be **False**. Adapter picks `discount_amt` first, so
+  the negative discount line is created correctly.
+- CURRENT deployed order S00007 (old code) `amount_total = 734914.00`, off by
+  **+323206.00 = exactly the discount** (product line booked at pre-discount
+  total_price 538677 + shipping, with NO discount line). The old code mis-states
+  this real order by the full discount; the hybrid fix corrects it.
+
+Conclusion: the hybrid reconciliation is correct on real production data. The
+committed test fixture stays SYNTHETIC (no buyer PII in repo); these real figures
+are the validation evidence.
+
+STILL OPEN before sign-off: this was a read-only A1 (arithmetic proof). Proving the
+ingested order equals 411708.00 end-to-end requires deploying the 4 commits to
+staging + re-ingesting S00007 (mutates staging data) — not done without explicit
+go-ahead. Plus the review-plan staging E2E (scoped-user visibility, admin-sees-all,
+Pull button counts).
