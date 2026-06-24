@@ -1284,3 +1284,31 @@ or ingest raises — verify rates on staging/prod before relying on this.
 - Follow-up (MEDIUM, deferred): add an explicit missing-rate test asserting the
   fail-loud path; consider a domain allowlist on the rendered image URL if stricter
   hardening is wanted (internal back-office view, low risk today).
+
+### 2026-06-24 — Staging deploy + re-ingest evidence (esty_odoo19)
+Deployed commit 8adaea956da to staging (rsync etsy_integration + multichannel_hub_core,
+`-u` clean, container restart). Pre-deploy DB backup at
+`/odoo/esty19/backup_pre_reingest_20260624_074323.sql.gz` (verified gzip, 3.8M).
+
+Staging state before: ONE api order S03337 (receipt 3818231452), currency **EUR**
+(inactive!) holding VND-magnitude amounts (amount_total 411708.00), with a negative
+`ETSY-DISCOUNT` line and no image — the exact misalignment the owner reported.
+Company currency = USD; VND active, single rate 25400 dated 2026-06-06.
+
+Gotcha hit: the order date is 2024-04-28 but the only VND rate was 2026-06-06, so
+`_convert` would `COALESCE(...,1.0)` → silently no-op. Backfilled a VND rate dated
+2020-01-01 = 25400 (matches the owner's configured rate) so the historical order
+converts. Both rates now present.
+
+Targeted re-ingest (live GET of receipt 3818231452, delete old, recreate; fetch done
+BEFORE delete so a failure can't orphan the order). Result **S03338**:
+- currency **USD**, amount_total **16.21** (= 411708 VND / 25400 = grandtotal − tax),
+  `etsy_total_mismatch = False`.
+- product line: price_unit 21.21 (538677/25400), **discount 60.00 %**, image_url
+  populated from the live `listings/{id}/images` fetch
+  (`i.etsystatic.com/60752333/.../il_570xN...jpg`) — proves the listing-image
+  fallback works against real Etsy data.
+- shipping line 7.73, discount 0; **no ETSY-DISCOUNT line**.
+- old S03337 deleted (count 0).
+
+All three fixes validated end-to-end on real production data.
