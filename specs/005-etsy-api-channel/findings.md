@@ -1220,3 +1220,67 @@ ingested order equals 411708.00 end-to-end requires deploying the 4 commits to
 staging + re-ingesting S00007 (mutates staging data) — not done without explicit
 go-ahead. Plus the review-plan staging E2E (scoped-user visibility, admin-sees-all,
 Pull button counts).
+
+---
+
+## 2026-06-24 — Owner-requested order-pull fixes (image / discount / currency)
+
+Owner reviewed pulled orders on staging (S03337 VND vs S03332 USD) and asked for
+three changes. Two REVERSE earlier decisions — recorded here as the decision log.
+Slices: `P1-ORD-IMG-URL`, `P1-ORD-DISCOUNT-PCT`, `P1-ORD-CURRENCY-NORMALIZE`.
+All on `feature/006-master-plan-coding`. Verify: `-u etsy_integration,multichannel_hub_core`
+clean; **0 failed, 0 error(s) of 1554 tests**.
+
+### P1-ORD-IMG-URL — images were blank because the URL was never populated
+Root cause was twofold: (1) the line list rendered `product_image_thumb` (a Binary
+computed from `product_id…image_128`) that only fills after the 30-min download
+cron; (2) more fundamentally, Etsy `getShopReceipt` transactions do NOT carry image
+URLs, so `image_url`/`etsy_image_url` were empty — nothing to download or render.
+Fix: `etsy_api_adapter._resolve_image_url` now falls back to
+`client.get('listings/{listing_id}/images')` (primary image, `url_570xN`/`url_fullxfull`),
+cached per sync pass; views render the channel `image_url` Char with
+`widget="image_url"` (verified to exist in CE core at
+`addons/web/static/src/views/fields/image_url/image_url_field.js:68` — renders a
+remote URL as `<img>`, no async download needed). `product_image_thumb` kept as an
+optional fallback column for manual orders. NOTE: a security-reviewer pass claimed
+the widget doesn't exist — FALSE POSITIVE (it searched only custom_addons/); the
+core registration was confirmed before keeping the change.
+
+### P1-ORD-DISCOUNT-PCT — coupon now a per-line discount % (SUPERSEDES 2026-06-23)
+**Reverses** the 2026-06-23 hybrid negative-`ETSY-DISCOUNT`-line decision. Etsy
+sends an order-level coupon AMOUNT, not a per-line %. Allocated proportionally to
+line value it collapses to ONE uniform percentage
+`pct = discount_amount / pre_discount_product_total * 100` (rounded to 4 dp for
+reconciliation precision), booked on `sale.order.line.discount`. `_append_adjustment_lines`
+no longer adds a discount line (shipping/gift-wrap stay as lines); the orphaned
+`_get_discount_product` + `_XMLID_DISCOUNT_PRODUCT` were removed (the
+`product_etsy_discount` data record is LEFT for back-compat with already-ingested
+orders). Reconciliation math is unchanged: `amount_total = subtotal + shipping +
+gift_wrap = grandtotal − tax`; `etsy_total_mismatch` flag retained as the non-fatal
+safety net. Owner-approved 2026-06-24.
+
+### P1-ORD-CURRENCY-NORMALIZE — book in company currency (AMENDS Spec 005)
+**Amends** Spec 005 "respect the receipt's currency" (spec.md:184). `res.company.currency_id`
+is the consolidation currency; previously each pulled order kept its receipt currency
+(VND), so VND and USD orders coexisted and the resolver even assigned a VND order the
+EUR pricelist (only EUR/USD/GBP pricelists exist). Now every money field is converted
+to the company currency at ingest via new `order_creator._company_converter` (delegates
+to `res.currency._convert`, which RAISES on a missing rate — deliberate, a silent 1.0
+would mis-state the order). Order `currency_id` + pricelist are the company's; raw Etsy
+figures stay on `etsy_*` fields in original currency for audit. Discount % is computed
+on raw receipt amounts (currency-invariant ratio) before conversion. **Load-bearing
+precondition:** an active exchange rate must exist for every shop currency (VND etc.)
+or ingest raises — verify rates on staging/prod before relying on this.
+
+### Migration / open items
+- Already-ingested orders (S00007, S03337) were created under the old rules and do
+  NOT retro-convert — left as historical. Re-ingest requires a controlled delete.
+- Tests: existing `test_receipt_fixture_maps_full_order_coverage` updated (no discount
+  line; product-line `discount==2.5`; currency=company); new
+  `test_foreign_currency_normalized_to_company` (VND→company with seeded rate) +
+  3 adapter listing-image fallback tests. etsy_v3 syncer fixtures gained inline
+  `image_url` so the real-adapter pagination tests don't consume mocked pages on
+  image fetches.
+- Follow-up (MEDIUM, deferred): add an explicit missing-rate test asserting the
+  fail-loud path; consider a domain allowlist on the rendered image URL if stricter
+  hardening is wanted (internal back-office view, low risk today).

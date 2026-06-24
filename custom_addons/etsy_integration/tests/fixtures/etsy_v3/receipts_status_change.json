@@ -30,7 +30,8 @@
             "divisor": 100,
             "currency_code": "USD"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-2001/inline.jpg"
         }
       ],
       "first_line": "999 Diamond St",

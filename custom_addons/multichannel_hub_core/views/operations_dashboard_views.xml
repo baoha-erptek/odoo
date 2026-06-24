@@ -36,10 +36,11 @@
 
                 <!-- Excel column 1: TRANSACTION_ID (channel-agnostic Char on mhc) -->
                 <field name="transaction_id" string="TRANSACTION_ID" optional="show"/>
-                <!-- Excel column 2: IMG_URL -->
-                <field name="image_url" string="IMG_URL" optional="hide"/>
-                <!-- Excel column 3: IMG (P1-IMG-LINE-WIDGET) -->
-                <field name="product_image_thumb" widget="image" string="IMG" optional="show"/>
+                <!-- Excel column 2 + 3: IMG (P1-ORD-IMG-URL) — render the channel
+                     image URL directly; product_image_thumb is the fallback for
+                     manual orders with no URL. -->
+                <field name="image_url" widget="image_url" string="IMG" optional="show"/>
+                <field name="product_image_thumb" widget="image" string="IMG (product)" optional="hide"/>
                 <!-- Excel column 4: DATE -->
                 <field name="date_order" string="DATE" optional="show"/>
                 <!-- Excel column 5: NOTE_FROM_BUYER -->

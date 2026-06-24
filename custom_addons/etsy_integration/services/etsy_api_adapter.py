@@ -47,6 +47,10 @@ class EtsyApiAdapter:
         for the shop being synced. The adapter does not own auth — that's
         the orchestrator's responsibility."""
         self._client = client
+        # P1-ORD-IMG-URL — per-pass cache of listing_id -> primary image URL.
+        # Etsy receipt transactions usually omit image fields, so we fetch the
+        # listing's image once and reuse it for every line on the same listing.
+        self._listing_image_cache = {}
 
     def fetch_new_orders(
         self, shop_id: int, since: datetime | None,
@@ -207,8 +211,45 @@ class EtsyApiAdapter:
             unit_price=self._money_amount(txn.get('price')),
             variations=self._variations_to_dict(txn.get('variations')),
             personalisation=txn.get('personalization') or None,
-            image_url=self._transaction_image_url(txn),
+            image_url=self._resolve_image_url(txn),
         )
+
+    def _resolve_image_url(self, txn: dict) -> str:
+        """Resolve a product image URL for a transaction line.
+
+        Etsy `getShopReceipt` transactions usually omit image fields, so when
+        the inline lookup misses we fetch the listing's primary image once per
+        `listing_id` (cached for this pass). Best-effort: any failure leaves the
+        URL empty and never breaks ingest.
+        """
+        url = self._transaction_image_url(txn)
+        if url:
+            return url
+        listing_id = txn.get('listing_id')
+        if not listing_id:
+            return ''
+        return self._listing_image_url(str(listing_id))
+
+    def _listing_image_url(self, listing_id: str) -> str:
+        if listing_id in self._listing_image_cache:
+            return self._listing_image_cache[listing_id]
+        url = ''
+        try:
+            resp = self._client.get(f'listings/{listing_id}/images')
+            results = (resp or {}).get('results') or []
+            if results:
+                first = results[0] or {}
+                url = (first.get('url_570xN') or first.get('url_fullxfull')
+                       or first.get('url_170x135') or first.get('url_75x75')
+                       or '')
+        # Best-effort enrichment — a missing/blocked image must never wedge the
+        # sync, so we catch broadly, warn, and fall through to an empty URL.
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning(
+                'Etsy: could not fetch images for listing %s: %s',
+                listing_id, exc)
+        self._listing_image_cache[listing_id] = url
+        return url
 
     def _first_money_amount(self, data: dict, keys: tuple[str, ...]) -> float:
         for key in keys:

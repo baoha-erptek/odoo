@@ -29,7 +29,8 @@
             "divisor": 100,
             "currency_code": "GBP"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-1004/inline.jpg"
         }
       ],
       "first_line": "10 King's Road",
@@ -71,7 +72,8 @@
             "divisor": 100,
             "currency_code": "AUD"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-1005/inline.jpg"
         }
       ],
       "first_line": "42 Flinders Lane",

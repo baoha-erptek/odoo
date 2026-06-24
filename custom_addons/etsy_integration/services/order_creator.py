@@ -159,7 +159,6 @@ class OrderCreator:
     # lazily and memoized per-instance via the helpers below.
     _XMLID_SHIPPING_PRODUCT = 'etsy_integration.product_etsy_shipping'
     _XMLID_GIFT_WRAP_PRODUCT = 'etsy_integration.product_etsy_gift_wrap'
-    _XMLID_DISCOUNT_PRODUCT = 'etsy_integration.product_etsy_discount'
     _XMLID_FISCAL_POSITION = 'etsy_integration.fiscal_pos_etsy_marketplace'
     _XMLID_PAYMENT_TERM = 'etsy_integration.payment_term_etsy_prepaid'
     _XMLID_SALES_TEAM = 'etsy_integration.team_etsy'
@@ -200,15 +199,6 @@ class OrderCreator:
         self._cache['gift_wrap_product'] = product
         return product
 
-    def _get_discount_product(self):
-        """Returns the product.product variant of the Etsy Discount template."""
-        if 'discount_product' in self._cache:
-            return self._cache['discount_product']
-        tmpl = self._ref('discount_template', self._XMLID_DISCOUNT_PRODUCT)
-        product = tmpl.product_variant_id if tmpl else False
-        self._cache['discount_product'] = product
-        return product
-
     def _get_fiscal_position(self):
         return self._ref('fiscal_position', self._XMLID_FISCAL_POSITION)
 
@@ -236,6 +226,29 @@ class OrderCreator:
             [('name', '=', currency_code)], limit=1)
         self._cache[key] = currency
         return currency
+
+    def _company_converter(self, payload):
+        """Return a callable converting a receipt-currency amount to the
+        company currency at the order date (P1-ORD-CURRENCY-NORMALIZE).
+
+        Identity when the receipt currency is unknown or already the company
+        currency. Otherwise delegates to ``res.currency._convert`` — which
+        raises when no rate exists; we deliberately let that surface rather than
+        silently apply a 1.0 rate that would mis-state the order.
+        """
+        company = self._env.company
+        company_currency = company.currency_id
+        receipt_currency = self._get_currency(payload.currency)
+        date = (odoo_fields.Date.to_date(payload.order_date)
+                or odoo_fields.Date.today())
+
+        def convert(amount):
+            amount = float(amount or 0.0)
+            if not receipt_currency or receipt_currency == company_currency:
+                return amount
+            return receipt_currency._convert(
+                amount, company_currency, company, date)
+        return convert
 
     # ------------------------------------------------------------------
     # Public API
@@ -601,8 +614,15 @@ class OrderCreator:
             return None
 
         partner = self._payload_partner(payload)
-        currency = self._get_currency(payload.currency)
-        pricelist = self._get_pricelist(payload.currency)
+        # P1-ORD-CURRENCY-NORMALIZE — book the order in the company currency
+        # (the consolidation currency on res.company). Etsy receipts arrive in
+        # the shop's listing currency (e.g. VND); we convert every money field
+        # to company currency at ingest so pulled and manual orders share one
+        # currency. Raw Etsy figures stay on the etsy_* fields below for audit.
+        # Supersedes Spec 005 "respect receipt currency" (owner 2026-06-24).
+        company_currency = self._env.company.currency_id
+        to_company = self._company_converter(payload)
+        pricelist = self._get_pricelist(company_currency.name)
         fiscal_position = self._get_fiscal_position()
         payment_term = self._get_payment_term()
         sales_team = self._get_sales_team()
@@ -647,8 +667,7 @@ class OrderCreator:
             'shipping_cost': str(payload.shipping_total or ''),
             'order_line': [],
         }
-        if currency:
-            order_vals['currency_id'] = currency.id
+        order_vals['currency_id'] = company_currency.id
         if pricelist:
             order_vals['pricelist_id'] = pricelist.id
         if fiscal_position:
@@ -658,13 +677,25 @@ class OrderCreator:
         if sales_team:
             order_vals['team_id'] = sales_team.id
 
-        for item in payload.line_items:
-            if self.is_duplicate_transaction(item.transaction_id):
-                _logger.info(
-                    'Skipping duplicate transaction %s (api ingest)',
-                    item.transaction_id,
-                )
-                continue
+        product_items = [
+            item for item in payload.line_items
+            if not self.is_duplicate_transaction(item.transaction_id)
+        ]
+        # P1-ORD-DISCOUNT-PCT — Etsy sends an order-level coupon amount, not a
+        # per-line %. Allocated proportionally to line value it collapses to a
+        # single uniform percentage (discount / pre-discount product total), so
+        # we book it on sale.order.line.discount instead of a negative
+        # adjustment line (owner 2026-06-24, supersedes the 2026-06-23 hybrid
+        # negative-line). Currency-invariant: computed on raw receipt amounts.
+        pre_discount_total = sum(
+            (item.unit_price or 0.0) * (item.quantity or 1)
+            for item in product_items)
+        discount_pct = 0.0
+        if pre_discount_total and payload.discount_amount:
+            discount_pct = round(
+                payload.discount_amount / pre_discount_total * 100.0, 4)
+
+        for item in product_items:
             product = self._resolve_line_product(
                 item.sku,
                 item.title,
@@ -674,7 +705,8 @@ class OrderCreator:
             line_vals = {
                 'product_id': product.id,
                 'product_uom_qty': item.quantity or 1,
-                'price_unit': item.unit_price or 0.0,
+                'price_unit': to_company(item.unit_price or 0.0),
+                'discount': discount_pct,
                 'etsy_transaction_id': str(item.transaction_id),
                 'etsy_personalisation': item.personalisation or '',
                 'etsy_sku': item.sku or '',
@@ -706,14 +738,14 @@ class OrderCreator:
             )
             return None
 
-        # Buyer-paid money components become their own lines (standard Odoo:
-        # delivery line, loyalty reward line, service line) so amount_total
-        # reflects what the buyer paid. Tax is the deliberate exception — it
-        # stays informational on etsy_tax_total because Etsy collects/remits it.
-        self._append_adjustment_lines(order_vals, payload)
+        # Shipping and gift-wrap become their own lines so amount_total reflects
+        # what the buyer paid; the coupon is booked as a per-line discount %
+        # above. Tax is the deliberate exception — it stays informational on
+        # etsy_tax_total because Etsy collects/remits it.
+        self._append_adjustment_lines(order_vals, payload, to_company)
 
         order = self._env['sale.order'].create(order_vals)
-        self._check_etsy_total_reconciles(order, payload)
+        self._check_etsy_total_reconciles(order, payload, to_company)
         _logger.info(
             'Created sale.order %s (Etsy #%s, source=api) with %d lines',
             order.name, payload.etsy_order_id, len(order.order_line),
@@ -725,16 +757,16 @@ class OrderCreator:
             order, created_via='api_ingest')
         return order
 
-    def _append_adjustment_lines(self, order_vals, payload):
-        """Append shipping, gift-wrap (+) and discount (-) money lines."""
+    def _append_adjustment_lines(self, order_vals, payload, to_company):
+        """Append shipping (+) and gift-wrap (+) money lines, converted to the
+        company currency. The Etsy coupon is NOT a line here — it is booked as a
+        per-line discount % in ``process_etsy_payload`` (P1-ORD-DISCOUNT-PCT)."""
         components = (
             (payload.shipping_total, self._get_shipping_product()),
             (payload.gift_wrap_price, self._get_gift_wrap_product()),
-            # Discount nets the order down, so the line carries a negative price.
-            (-(payload.discount_amount or 0.0), self._get_discount_product()),
         )
         for amount, product in components:
-            amount = round(float(amount or 0.0), 2)
+            amount = round(to_company(amount or 0.0), 2)
             if amount and product:
                 order_vals['order_line'].append((0, 0, {
                     'product_id': product.id,
@@ -744,17 +776,18 @@ class OrderCreator:
                 }))
 
     @staticmethod
-    def _check_etsy_total_reconciles(order, payload):
+    def _check_etsy_total_reconciles(order, payload, to_company):
         """Reconcile Odoo amount_total against the buyer-paid figure.
 
         Etsy `grandtotal` includes tax, which we keep informational (Etsy
-        remits it), so the reconciliation target is grandtotal - tax. A
-        mismatch flags the order for review rather than blocking ingest —
-        a hard failure here would wedge the sync cursor on the first taxed
-        order (the syncer breaks without advancing on any exception).
+        remits it), so the reconciliation target is grandtotal - tax, converted
+        to the company currency (the order is normalized at ingest). A mismatch
+        flags the order for review rather than blocking ingest — a hard failure
+        here would wedge the sync cursor on the first taxed order (the syncer
+        breaks without advancing on any exception).
         """
-        expected = round(float(payload.amount_total or 0.0)
-                         - float(payload.tax_total or 0.0), 2)
+        expected = round(to_company(float(payload.amount_total or 0.0)
+                                    - float(payload.tax_total or 0.0)), 2)
         actual = round(order.amount_total, 2)
         if abs(actual - expected) > 0.01:
             order.etsy_total_mismatch = True

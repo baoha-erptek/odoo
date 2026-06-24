@@ -52,6 +52,9 @@ def _make_receipt(receipt_id=1234, **overrides):
                 "title": "Custom Mug",
                 "quantity": 1,
                 "price": {"amount": 10000, "divisor": 100, "currency_code": "USD"},
+                # Inline image keeps mapping HTTP-free; the listing-image fetch
+                # fallback (P1-ORD-IMG-URL) has its own dedicated tests below.
+                "image_url": "https://i.etsystatic.com/inline/mug.jpg",
                 "variations": [
                     {"property_id": 1, "formatted_name": "Color",
                      "formatted_value": "Blue"},
@@ -155,6 +158,59 @@ class TestEtsyApiAdapterFetchNewOrders(TransactionCase):
         list(self.adapter.fetch_new_orders(shop_id=42, since=None))
         called_params = self.client.get.call_args.kwargs.get('params', {})
         self.assertNotIn('min_last_modified', called_params)
+
+
+@tagged('post_install', '-at_install')
+class TestEtsyApiAdapterListingImageFallback(TransactionCase):
+    """P1-ORD-IMG-URL — when a transaction carries no inline image URL, the
+    adapter fetches the listing's primary image once (cached per pass)."""
+
+    def setUp(self):
+        super().setUp()
+        from odoo.addons.etsy_integration.services.etsy_api_adapter import (
+            EtsyApiAdapter,
+        )
+        self._AdapterCls = EtsyApiAdapter
+        self.client = mock.Mock()
+
+    def _txn(self, listing_id=5555, transaction_id=9999):
+        return {
+            "transaction_id": transaction_id,
+            "listing_id": listing_id,
+            "sku": "MUG-001",
+            "title": "Custom Mug",
+            "quantity": 1,
+            "price": {"amount": 10000, "divisor": 100, "currency_code": "USD"},
+        }
+
+    def test_fetches_listing_image_when_transaction_has_none(self):
+        self.client.get.return_value = {
+            "results": [{"url_570xN": "https://i.etsystatic.com/5555_570xN.jpg"}]}
+        adapter = self._AdapterCls(self.client)
+        receipt = _make_receipt(transactions=[self._txn()])
+        payload = adapter._receipt_to_payload(receipt, shop_id=42)
+        self.assertEqual(
+            payload.line_items[0].image_url,
+            "https://i.etsystatic.com/5555_570xN.jpg")
+        self.client.get.assert_called_once_with('listings/5555/images')
+
+    def test_blank_image_when_listing_fetch_fails(self):
+        self.client.get.side_effect = RuntimeError('boom')
+        adapter = self._AdapterCls(self.client)
+        receipt = _make_receipt(transactions=[self._txn()])
+        payload = adapter._receipt_to_payload(receipt, shop_id=42)
+        self.assertEqual(payload.line_items[0].image_url, '')
+
+    def test_listing_image_cached_across_lines(self):
+        self.client.get.return_value = {
+            "results": [{"url_fullxfull": "https://i.etsystatic.com/x.jpg"}]}
+        adapter = self._AdapterCls(self.client)
+        receipt = _make_receipt(transactions=[
+            self._txn(transaction_id=1), self._txn(transaction_id=2)])
+        payload = adapter._receipt_to_payload(receipt, shop_id=42)
+        self.assertEqual(len(payload.line_items), 2)
+        self.assertTrue(all(li.image_url for li in payload.line_items))
+        self.client.get.assert_called_once()  # one fetch, both lines reuse it
 
 
 @tagged('post_install', '-at_install')
