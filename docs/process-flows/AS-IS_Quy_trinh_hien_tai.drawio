@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="AS-IS Quy trinh hien tai">
+    <mxGraphModel dx="1500" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="3150" pageHeight="1680" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- TITLE -->
+        <mxCell id="2" value="&lt;b style=&apos;font-size:18px&apos;&gt;Quy trình sản xuất hiện tại — Trước khi dùng Odoo&lt;/b&gt;&lt;br/&gt;&lt;span style=&apos;font-size:12px;color:#555555&apos;&gt;Sơ đồ AS-IS | Dành cho: Owner, MP, BA, PD, Kho, RD&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="12" width="3050" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== SWIMLANE CONTAINERS ==================== -->
+
+        <mxCell id="L1" value="&lt;b&gt;Khách hàng&lt;/b&gt;" style="swimlane;startSize=150;horizontal=0;fillColor=#f5f5f5;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=13;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="70" width="3050" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L2" value="&lt;b&gt;Etsy&lt;/b&gt;" style="swimlane;startSize=150;horizontal=0;fillColor=#e8f4fd;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=13;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="210" width="3050" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L3" value="&lt;b&gt;Hệ thống cũ&lt;/b&gt;&lt;br/&gt;(Email Auto-feed)" style="swimlane;startSize=150;horizontal=0;fillColor=#e8f4fd;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="330" width="3050" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L4" value="&lt;b&gt;MP&lt;/b&gt;&lt;br/&gt;(Marketing / Xử lý đơn)" style="swimlane;startSize=150;horizontal=0;fillColor=#fff9e6;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="490" width="3050" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L5" value="&lt;b&gt;BA&lt;/b&gt;&lt;br/&gt;(Thiết kế / Điều phối)" style="swimlane;startSize=150;horizontal=0;fillColor=#e8f5e9;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="700" width="3050" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L6" value="&lt;b&gt;PD&lt;/b&gt;&lt;br/&gt;(Sản xuất nội bộ)" style="swimlane;startSize=150;horizontal=0;fillColor=#e8f5e9;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="920" width="3050" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L7" value="&lt;b&gt;Kho&lt;/b&gt;&lt;br/&gt;(Nguyên liệu)" style="swimlane;startSize=150;horizontal=0;fillColor=#fff3e0;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1140" width="3050" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L8" value="&lt;b&gt;RD&lt;/b&gt;&lt;br/&gt;(Kiểm tra giá hàng ngày)" style="swimlane;startSize=150;horizontal=0;fillColor=#f3e5f5;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1300" width="3050" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="L9" value="&lt;b&gt;Gearment&lt;/b&gt;&lt;br/&gt;+ Vận chuyển" style="swimlane;startSize=150;horizontal=0;fillColor=#f5f5f5;strokeColor=#1e4d78;fontColor=#1e4d78;fontSize=12;fontStyle=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1460" width="3050" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PROCESS STEPS — MAIN FLOW ==================== -->
+
+        <!-- S01: Khach hang dat hang (Lane 1, x=165) -->
+        <mxCell id="S01" value="&lt;b&gt;Đặt hàng&lt;/b&gt;&lt;br/&gt;trên Etsy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L1">
+          <mxGeometry x="165" y="40" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- S02: Etsy gui email xac nhan (Lane 2, x=360) -->
+        <mxCell id="S02" value="Gửi email xác nhận&#xa;đơn hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L2">
+          <mxGeometry x="360" y="30" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- S03: He thong tu doc email (Lane 3, x=555) -->
+        <mxCell id="S03" value="Tự đọc email,&#xa;đẩy đơn vào&#xa;Google Sheet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L3">
+          <mxGeometry x="555" y="30" width="170" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- P03: Pain ~1% Amazon nhap tay -->
+        <mxCell id="P03" value="⚠ ~1% đơn Amazon&#xa;vẫn nhập tay" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L3">
+          <mxGeometry x="555" y="108" width="170" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- S04: MP doc Sheet (Lane 4, x=750) -->
+        <mxCell id="S04" value="Đọc Sheet, cập nhật&#xa;ghi chú theo&#xa;yêu cầu của khách" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L4">
+          <mxGeometry x="750" y="35" width="170" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- P04: Pain Ai cung sua Sheet -->
+        <mxCell id="P04" value="⚠ Ai cũng sửa được&#xa;Sheet — không phân quyền" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L4">
+          <mxGeometry x="750" y="118" width="170" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- S05: BA lam file thiet ke (Lane 5, x=945) -->
+        <mxCell id="S05" value="Làm file thiết kế&#xa;theo đơn hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L5">
+          <mxGeometry x="945" y="40" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- P05: Pain File >20MB bounce -->
+        <mxCell id="P05" value="⚠ File &gt;20MB bị bounce&#xa;— phải dùng Google Drive" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L5">
+          <mxGeometry x="945" y="110" width="170" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- S06: BA gui file, MP xem (Lane 4, x=1140) -->
+        <mxCell id="S06" value="BA gửi file thiết kế&#xa;→ MP xem xét, duyệt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L4">
+          <mxGeometry x="1140" y="40" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- P06: Pain File that lac Discord -->
+        <mxCell id="P06" value="⚠ File thất lạc qua Discord&#xa;— mất giờ tìm lại" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L4">
+          <mxGeometry x="1140" y="110" width="170" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- D01: Decision File thiet ke dung? (Lane 4, x=1335) -->
+        <mxCell id="D01" value="File thiết kế&#xa;đúng không?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="L4">
+          <mxGeometry x="1335" y="60" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- S07: MP gui preview (Lane 4, x=1535, narrow) -->
+        <mxCell id="S07" value="MP gửi preview&#xa;cho khách xem trước" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L4">
+          <mxGeometry x="1535" y="8" width="160" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- S08: Khach xem preview (Lane 1, x=1535) -->
+        <mxCell id="S08" value="Xem preview,&#xa;xác nhận OK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L1">
+          <mxGeometry x="1535" y="40" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- D02: Decision Tuyen san xuat? (Lane 4, x=1750) -->
+        <mxCell id="D02" value="Tuyến&#xa;sản xuất?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;fontStyle=1;" vertex="1" parent="L4">
+          <mxGeometry x="1740" y="60" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ROUTE LABELS ==================== -->
+
+        <mxCell id="RL1" value="Route US-od (đối tác Gearment)" style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=center;verticalAlign=middle;fontSize=11;fontStyle=3;rounded=1;" vertex="1" parent="L5">
+          <mxGeometry x="1940" y="5" width="200" height="22" as="geometry" />
+        </mxCell>
+
+
+        <!-- ==================== BRANCH B: US-od → Gearment ==================== -->
+
+        <!-- B01: BA copy thu cong Gearment portal (Lane 5, x=1940) -->
+        <mxCell id="B01" value="Copy thông tin đơn +&#xa;file thiết kế, gửi&#xa;thủ công lên portal&#xa;Gearment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L5">
+          <mxGeometry x="1940" y="35" width="180" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- PB1: Pain Copy paste thu cong -->
+        <mxCell id="PB1" value="⚠ Copy/paste thủ công&#xa;— mất giờ, dễ sai" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L5">
+          <mxGeometry x="1940" y="130" width="180" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- B02: Gearment nhan don san xuat (Lane 9, x=2160) -->
+        <mxCell id="B02" value="Nhận đơn,&#xa;tiến hành sản xuất" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L9">
+          <mxGeometry x="2160" y="40" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- B03: Gearment giao hang tra tracking (Lane 9, x=2360) -->
+        <mxCell id="B03" value="Giao hàng đến khách,&#xa;trả mã tracking" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L9">
+          <mxGeometry x="2360" y="40" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- B04: BA chep tracking vao Sheet (Lane 5, x=2560) -->
+        <mxCell id="B04" value="Chép mã tracking&#xa;vào Google Sheet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L5">
+          <mxGeometry x="2560" y="45" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PB4: Pain Chep tracking tay -->
+        <mxCell id="PB4" value="⚠ Chép tay — chậm, dễ nhầm" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="2560" y="115" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== BRANCH A: Vietnam-od → In-house ==================== -->
+
+        <!-- SUB-STATE ribbon in PD lane -->
+        <mxCell id="SS1" value="Chuỗi tình trạng: CHỜ FILE → CHỜ DUYỆT → Vietnam-od → VN-Dish / VN-Apron / VN-Handkerchief → VN-Packed → VN-Fulfilled" style="text;html=1;strokeColor=#d6b656;fillColor=#fffde7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;fontStyle=2;" vertex="1" parent="L6">
+          <mxGeometry x="1940" y="5" width="900" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- A01: PD doc don xep lich (Lane 6, x=1940) -->
+        <mxCell id="A01" value="Đọc đơn, gom theo loại&#xa;sản phẩm, xếp lịch&#xa;sản xuất" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L6">
+          <mxGeometry x="1940" y="35" width="180" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- PA1: Pain Mat gio tim file Discord -->
+        <mxCell id="PA1" value="⚠ Mất giờ tìm file Discord,&#xa;sắp lại trong Photoshop" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L6">
+          <mxGeometry x="1940" y="120" width="180" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- A02: Kho xuat nguyen lieu (Lane 7, x=2160) -->
+        <mxCell id="A02" value="Xuất nguyên liệu&#xa;(đếm tay, cập nhật&#xa;~1 lần/tháng)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L7">
+          <mxGeometry x="2160" y="30" width="170" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- PA2: Pain Ton kho biet khi mo thung -->
+        <mxCell id="PA2" value="⚠ Tồn kho chỉ biết&#xa;khi mở thùng thấy trống" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;" vertex="1" parent="L7">
+          <mxGeometry x="2160" y="112" width="170" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- A03: PD san xuat (Lane 6, x=2360) -->
+        <mxCell id="A03" value="Sản xuất, cập nhật&#xa;tình trạng:&#xa;VN-Dish / VN-Apron..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L6">
+          <mxGeometry x="2360" y="35" width="170" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- A04: PD dong goi VN-Packed (Lane 6, x=2560) -->
+        <mxCell id="A04" value="Đóng gói hàng&#xa;→ VN-Packed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L6">
+          <mxGeometry x="2560" y="45" width="170" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- A05: BA mua nhan ship (Lane 5, x=2760) -->
+        <mxCell id="A05" value="Mua nhãn ship trên&#xa;portal carrier&#xa;(USPS / UniUni / YunExpress)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L5">
+          <mxGeometry x="2760" y="35" width="185" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- A06: PD quet parcel ban giao carrier (Lane 6, x=2760) -->
+        <mxCell id="A06" value="Quét parcel, bàn giao&#xa;carrier → VN-Fulfilled" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L6">
+          <mxGeometry x="2760" y="45" width="185" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- A07: Carrier giao hang den khach (Lane 9, x=2760) -->
+        <mxCell id="A07" value="Carrier giao hàng&#xa;đến khách" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L9">
+          <mxGeometry x="2760" y="40" width="185" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== MERGE + FINAL ==================== -->
+
+        <!-- F01: MP copy tracking dan vao Etsy (Lane 4, x=2970) -->
+        <mxCell id="F01" value="MP copy mã tracking&#xa;từ Sheet → dán vào Etsy&#xa;&apos;Mark as shipped&apos;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L4">
+          <mxGeometry x="2960" y="35" width="180" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- PF1: Pain Khong co ticket hoan doi -->
+        <mxCell id="PF1" value="⚠ Không có ticket hoàn/đổi&#xa;— mất dấu sau 7 ngày" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="L4">
+          <mxGeometry x="2960" y="120" width="180" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- F02: Etsy gui thong bao ship (Lane 2, x=2970) -->
+        <mxCell id="F02" value="Gửi thông báo&#xa;đã ship cho khách" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L2">
+          <mxGeometry x="2960" y="30" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- F03: Khach nhan hang (Lane 1, x=2970) -->
+        <mxCell id="F03" value="Nhận hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;" vertex="1" parent="L1">
+          <mxGeometry x="2960" y="40" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== RD PARALLEL PROCESS ==================== -->
+
+        <!-- R01: RD kiem tra gia MOI NGAY -->
+        <mxCell id="R01" value="Kiểm tra giá bán +&#xa;giá ship MỖI NGÀY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="L8">
+          <mxGeometry x="165" y="45" width="190" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- R02: Decision Co lech gia? -->
+        <mxCell id="R02" value="Có&#xa;lệch giá?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="L8">
+          <mxGeometry x="400" y="40" width="130" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- R03: Thong bao Discord -->
+        <mxCell id="R03" value="Thông báo lệch giá&#xa;trên Discord / nhóm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="L8">
+          <mxGeometry x="585" y="45" width="175" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- PR3: Pain Tinh gia tay -->
+        <mxCell id="PR3" value="⚠ Tính giá tay — bán lệch&#xa;mà không hay" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="L8">
+          <mxGeometry x="585" y="122" width="175" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- R04: MP sua gia (shown in MP lane at same x as R03) -->
+        <mxCell id="R04" value="MP sửa giá&#xa;trong ngày" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="L4">
+          <mxGeometry x="585" y="70" width="155" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EDGES ==================== -->
+
+        <!-- S01 → S02 -->
+        <mxCell id="E01" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S01" target="S02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S02 → S03 -->
+        <mxCell id="E02" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S02" target="S03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S03 → S04 -->
+        <mxCell id="E03" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S03" target="S04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S04 → S05 -->
+        <mxCell id="E04" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S04" target="S05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S05 → S06 -->
+        <mxCell id="E05" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S05" target="S06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S06 → D01 -->
+        <mxCell id="E06" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S06" target="D01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D01 → S05 (Sai, lam lai — loop back, routes above L4) -->
+        <mxCell id="E07" value="Sai, làm lại" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="D01" target="S05">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1460" y="470" />
+              <mxPoint x="1080" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- D01 → S07 (Can preview) -->
+        <mxCell id="E08" value="Cần preview" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="D01" target="S07">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S07 → S08 (MP gui → Khach xem) -->
+        <mxCell id="E09" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S07" target="S08">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S08 → D02 (Khach OK) -->
+        <mxCell id="E10" value="Khách OK" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="S08" target="D02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D01 → D02 (Dung luon) -->
+        <mxCell id="E11" value="Đúng" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="D01" target="D02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D02 → B01 (US-od) -->
+        <mxCell id="E12" value="US-od" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="D02" target="B01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D02 → A01 (Vietnam-od) -->
+        <mxCell id="E13" value="Vietnam-od" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="D02" target="A01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Branch B edges -->
+        <mxCell id="E14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="B01" target="B02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="B02" target="B03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E16" value="trả tracking" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="B03" target="B04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="B04" target="F01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Gearment also delivers to customer (Route B) -->
+        <mxCell id="E17b" value="giao cho khách" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="B03" target="F03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Branch A edges -->
+        <mxCell id="E18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A01" target="A02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A02" target="A03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E20" value="xong" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A03" target="A04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A04" target="A05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E22" value="nhãn đã mua" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A05" target="A06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E23" value="bàn giao" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A06" target="A07">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- A07 → F01 (carrier tracking → MP dan Etsy) -->
+        <mxCell id="E24" value="mã tracking" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="A07" target="F01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- A07 → F03 (carrier delivers to customer) -->
+        <mxCell id="E24b" value="giao cho khách" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="A07" target="F03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Final edges -->
+        <mxCell id="E25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="F01" target="F02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="F02" target="F03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- RD parallel process edges -->
+        <mxCell id="E27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="R01" target="R02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E28" value="Có lệch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="R02" target="R03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="R03" target="R04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- R02 loop back (Khong lech → loop daily) -->
+        <mxCell id="E30" value="Không lệch&#xa;(hôm sau tiếp tục)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="R02" target="R01">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="515" y="1440" />
+              <mxPoint x="260" y="1440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

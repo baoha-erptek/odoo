@@ -24,6 +24,20 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 
 ---
 
+## Sơ đồ quy trình (Process Flow Diagrams)
+
+Sơ đồ bơi làn (swimlane) — ai làm gì, theo thứ tự nào — dùng để phổ biến nội bộ và onboard nhân viên mới.
+
+| Sơ đồ | Mô tả | Xem PNG | Chỉnh sửa |
+|---|---|---|---|
+| **AS-IS — Quy trình hiện tại** | Toàn bộ luồng thủ công trước khi dùng Odoo: 9 làn (Khách hàng, Etsy, Hệ thống cũ, MP, BA, PD, Kho, RD, Gearment). Có điểm đau (⚠) và 2 nhánh Route US-od / Vietnam-od. | [`process-flows/AS-IS_Quy_trinh_hien_tai.drawio.png`](../process-flows/AS-IS_Quy_trinh_hien_tai.drawio.png) | [`process-flows/AS-IS_Quy_trinh_hien_tai.drawio`](../process-flows/AS-IS_Quy_trinh_hien_tai.drawio) |
+| **TO-BE — Với Odoo Standard** | Luồng sau triển khai Odoo 19 CE: Hệ thống tự nhận đơn, tự tạo Lệnh SX / Yêu cầu mua hàng Gearment, tự trừ kho, tự gửi tracking về Etsy. 3 nhánh Route A (nội bộ) / Route B (Gearment POD) / Route C (chờ xếp loại). | [`process-flows/TO-BE_Voi_Odoo_Standard.drawio.png`](../process-flows/TO-BE_Voi_Odoo_Standard.drawio.png) | [`process-flows/TO-BE_Voi_Odoo_Standard.drawio`](../process-flows/TO-BE_Voi_Odoo_Standard.drawio) |
+
+> **Cách mở để chỉnh sửa:** Tải file `.drawio` về → mở bằng [draw.io Desktop](https://github.com/jgraph/drawio-desktop/releases) hoặc truy cập [draw.io online](https://app.diagrams.net/) và kéo file vào.
+> **Định dạng SVG** (vector, phóng to không vỡ): [`AS-IS_Quy_trinh_hien_tai.svg`](../process-flows/AS-IS_Quy_trinh_hien_tai.svg) · [`TO-BE_Voi_Odoo_Standard.svg`](../process-flows/TO-BE_Voi_Odoo_Standard.svg)
+
+---
+
 ## Hướng dẫn nghiệp vụ (4 luồng chính)
 
 | Luồng | Tài liệu nghiệp vụ | Hướng dẫn thao tác | Sơ đồ + ảnh chụp |
