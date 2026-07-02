@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <menuitem id="menu_design_order"
+            name="Design Orders"
+            parent="multichannel_hub_core.menu_operations_root"
+            action="action_design_order"
+            sequence="25"/>
+</odoo>

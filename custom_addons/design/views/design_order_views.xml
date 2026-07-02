@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_design_order_form" model="ir.ui.view">
+    <field name="name">design.order.form</field>
+    <field name="model">design.order</field>
+    <field name="arch" type="xml">
+      <form string="Design Order">
+        <header>
+          <button name="action_approve" string="Approve (Duyệt)" type="object"
+                  class="btn-primary" invisible="state == 'approved'"
+                  groups="multichannel_hub_core.group_production_team"/>
+          <button name="action_reject" string="Reject" type="object"
+                  invisible="state in ('approved', 'rejected')"
+                  groups="multichannel_hub_core.group_production_team"/>
+          <button name="action_reset_to_pending" string="Reset to Pending"
+                  type="object" invisible="state in ('pending', 'proof_sent')"
+                  groups="multichannel_hub_core.group_production_team"/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="pending,proof_sent,approved"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_sale_order" type="object"
+                    class="oe_stat_button" icon="fa-shopping-cart">
+              <div class="o_stat_info">
+                <span class="o_stat_text">Sale Order</span>
+              </div>
+            </button>
+          </div>
+          <div class="oe_title">
+            <h1><field name="name" readonly="1"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="sale_order_id"
+                     options="{'no_create': True}"
+                     readonly="state != 'pending'"/>
+              <field name="partner_id"/>
+              <field name="company_id" groups="base.group_multi_company"/>
+            </group>
+            <group>
+              <field name="design_files_count"/>
+              <field name="approved_files_count"/>
+              <field name="approved_by" readonly="1"/>
+              <field name="approved_at" readonly="1"/>
+            </group>
+          </group>
+          <field name="rejection_reason" placeholder="Reason (required to reject)…"
+                 invisible="state != 'rejected' and not rejection_reason"/>
+          <notebook>
+            <page string="Design Files" name="files">
+              <field name="design_file_ids">
+                <list>
+                  <field name="name"/>
+                  <field name="storage_mode"/>
+                  <field name="file_url" widget="url" optional="show"/>
+                  <field name="state"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_design_order_list" model="ir.ui.view">
+    <field name="name">design.order.list</field>
+    <field name="model">design.order</field>
+    <field name="arch" type="xml">
+      <list string="Design Orders"
+            decoration-success="state == 'approved'"
+            decoration-danger="state == 'rejected'"
+            decoration-muted="state == 'pending'">
+        <field name="name"/>
+        <field name="sale_order_id"/>
+        <field name="partner_id"/>
+        <field name="design_files_count"/>
+        <field name="approved_files_count"/>
+        <field name="state"/>
+        <field name="create_date"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_design_order_search" model="ir.ui.view">
+    <field name="name">design.order.search</field>
+    <field name="model">design.order</field>
+    <field name="arch" type="xml">
+      <search string="Design Orders">
+        <field name="name"/>
+        <field name="sale_order_id"/>
+        <field name="partner_id"/>
+        <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+        <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+        <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+        <group>
+          <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+          <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_design_order" model="ir.actions.act_window">
+    <field name="name">Design Orders</field>
+    <field name="res_model">design.order</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_design_order_search"/>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">No design orders yet</p>
+      <p>Design orders are created automatically when a sale order is confirmed.</p>
+    </field>
+  </record>
+
+</odoo>

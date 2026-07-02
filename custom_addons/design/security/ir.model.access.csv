@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_design_order_salesman_read,design.order salesman read,model_design_order,sales_team.group_sale_salesman,1,0,0,0
+access_design_order_production_team,design.order production team,model_design_order,multichannel_hub_core.group_production_team,1,1,1,0
+access_design_order_manager_full,design.order manager full,model_design_order,sales_team.group_sale_manager,1,1,1,1
