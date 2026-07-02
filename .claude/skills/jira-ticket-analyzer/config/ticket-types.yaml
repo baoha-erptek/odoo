@@ -1,0 +1,137 @@
+# Ticket Type Definitions
+# Each type has keywords (EN + VN), detection signals, and confidence weights
+
+types:
+  gui-only:
+    description: "UI/UX issues - CSS, JS, XML views, layout problems"
+    keywords:
+      high_weight:  # 3x multiplier
+        en: [css, javascript, js, owl, qweb, template, layout, display, render, responsive, style, font, color, button, icon, widget]
+        vn: [khong hien thi, hien thi sai, giao dien, nut bam, bieu tuong]
+      medium_weight:  # 2x multiplier
+        en: [view, form, tree, kanban, list, menu, sidebar, dialog, modal, popup, dropdown, tab, header, footer]
+        vn: [trinh bay, man hinh, danh sach, bieu mau]
+      low_weight:  # 1x multiplier
+        en: [screenshot, image, alignment, spacing, margin, padding, position, visible, hidden, click, hover]
+        vn: [anh chup, canh le, khoang cach, an, hien]
+    signals:
+      - "Has screenshot attachments"
+      - "No model/field references in description"
+      - "Issue type is Bug with UI-related labels"
+    confidence_threshold: 60
+
+  backend-only:
+    description: "Python/ORM issues - compute, constraints, methods, data processing"
+    keywords:
+      high_weight:
+        en: [compute, constraint, method, function, override, inherit, model, field, recordset, api.depends, api.constrains, api.onchange, write, create, unlink]
+        vn: [tinh toan, rang buoc, phuong thuc, ghi de, ke thua, truong, tinh lai]
+      medium_weight:
+        en: [python, orm, sql, query, filter, domain, search, browse, mapped, filtered, sorted, sudo, context]
+        vn: [truy van, loc, tim kiem, du lieu]
+      low_weight:
+        en: [error, traceback, exception, log, debug, value, result, return, calculation, formula]
+        vn: [loi, gia tri, ket qua, cong thuc]
+    signals:
+      - "References specific model names (e.g., sale.order, product.template, etsy.shop)"
+      - "Contains Python traceback or error messages"
+      - "Mentions compute fields or constraints"
+    confidence_threshold: 60
+
+  full-stack:
+    description: "Both backend + frontend changes needed"
+    keywords:
+      high_weight:
+        en: [form view, tree view, action, menu item, wizard, report]
+        vn: [bieu mau, danh sach, hanh dong, trinh huong dan, bao cao]
+      medium_weight:
+        en: [model, view, controller, route, template, security, acl]
+        vn: [mo hinh, giao dien, bao mat, quyen]
+      low_weight:
+        en: [feature, module, install, upgrade, functionality]
+        vn: [tinh nang, phan he, cai dat, nang cap, chuc nang]
+    signals:
+      - "References both model names AND view elements"
+      - "Issue type is Story or Epic"
+      - "Description mentions both data changes and UI changes"
+    confidence_threshold: 65
+
+  data-fix:
+    description: "Database data issues - orphaned records, wrong values, migration"
+    keywords:
+      high_weight:
+        en: [orphan, orphaned, migration, corrupt, data fix, foreign key, constraint violation, null, duplicate, wrong value, missing data]
+        vn: [du lieu mo coi, di chuyen, hong, sua du lieu, khoa ngoai, trung lap, gia tri sai, thieu du lieu, mat du lieu]
+      medium_weight:
+        en: [record, database, table, column, index, cleanup, restore, backup]
+        vn: [ban ghi, co so du lieu, bang, cot, don dep, khoi phuc, sao luu]
+      low_weight:
+        en: [id, ids, specific, particular, employee id, sheet id]
+        vn: [cu the, rieng biet]
+    signals:
+      - "Mentions specific record IDs"
+      - "References database tables directly"
+      - "Issue arose after migration or restore"
+    confidence_threshold: 55
+
+  investigation:
+    description: "Unclear root cause - needs analysis before fix can be determined"
+    keywords:
+      high_weight:
+        en: [intermittent, sometimes, random, unclear, investigate, reproduce, inconsistent, unexpected]
+        vn: [khong on dinh, doi khi, ngau nhien, khong ro, dieu tra, khong nhat quan, bat ngo]
+      medium_weight:
+        en: [why, how, cause, reason, analyze, debug, trace, understand]
+        vn: [tai sao, nguyen nhan, ly do, phan tich, tim hieu]
+      low_weight:
+        en: [issue, problem, happen, occur, behavior, situation]
+        vn: [van de, xay ra, tinh huong, hien tuong]
+    signals:
+      - "Description lacks specific error messages"
+      - "Multiple possible causes mentioned"
+      - "Reported as 'sometimes happens'"
+    confidence_threshold: 50
+
+  performance:
+    description: "Speed/performance issues - slow queries, browser freeze, N+1"
+    keywords:
+      high_weight:
+        en: [slow, freeze, hang, timeout, performance, n+1, heavy, bottleneck, memory, cpu]
+        vn: [cham, treo, dong bang, hieu suat, nang, tat nghen, bo nho]
+      medium_weight:
+        en: [query, optimize, cache, index, batch, prefetch, load time, response time]
+        vn: [truy van, toi uu, bo dem, chi muc, tai, thoi gian]
+      low_weight:
+        en: [long, wait, delay, spinning, loading, progress]
+        vn: [lau, cho, tre, tai, dang xu ly]
+    signals:
+      - "Mentions load times or response times"
+      - "Browser developer tools screenshots"
+      - "References large record counts"
+    confidence_threshold: 60
+
+  configuration:
+    description: "Access rights, permissions, groups, cron, system settings"
+    keywords:
+      high_weight:
+        en: [access rights, permission, security, group, role, acl, record rule, ir.rule, res.groups]
+        vn: [phan quyen, quyen truy cap, bao mat, nhom, vai tro, quy tac]
+      medium_weight:
+        en: [cron, scheduled, automation, settings, configuration, parameter, system]
+        vn: [tu dong, cai dat, cau hinh, tham so, he thong, lich trinh]
+      low_weight:
+        en: [admin, user, company, multi-company, access denied, forbidden]
+        vn: [quan tri, nguoi dung, cong ty, tu choi, cam]
+    signals:
+      - "Error message contains 'Access Denied' or 'AccessError'"
+      - "Issue type involves user roles or permissions"
+      - "References ir.model.access or ir.rule"
+    confidence_threshold: 60
+
+# Classification algorithm:
+# 1. Extract all text: summary + description + comments
+# 2. Normalize: lowercase, strip diacritics for VN matching
+# 3. For each type, count keyword matches with weights
+# 4. Calculate confidence: (weighted_score / max_possible_score) * 100
+# 5. Select type with highest confidence >= threshold
+# 6. If no type >= threshold, default to "investigation"
