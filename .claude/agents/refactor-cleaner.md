@@ -2,7 +2,7 @@
 name: refactor-cleaner
 description: Dead code cleanup and consolidation specialist for Odoo modules. Use PROACTIVELY for removing unused code, duplicate methods, dead fields, and orphaned models. Runs vulture and pylint to identify dead code and safely removes it.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: opus
+model: sonnet
 ---
 
 # Odoo Refactor & Dead Code Cleaner

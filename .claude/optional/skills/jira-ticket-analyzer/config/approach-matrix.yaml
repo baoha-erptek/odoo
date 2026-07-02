@@ -1,0 +1,273 @@
+# Approach Matrix: Ticket Type -> Resolution Approach
+# Maps each ticket type to skills, testing, environment, and steps
+
+approaches:
+  gui-only:
+    skills:
+      required: [odoo-15-developer]
+      optional: [agent-browser]
+    remote_investigation: false
+    fresh_environment:
+      needed: false
+      level: null
+    testing:
+      phase_1_db: false
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Read the ticket and examine screenshots/attachments"
+      - "Identify the affected view XML and JS/OWL components"
+      - "Check view inheritance chain (XPath)"
+      - "Write E2E test to capture current (broken) behavior"
+      - "Fix the view/JS/CSS code"
+      - "Verify E2E test passes"
+      - "Test in browser at http://localhost:8079"
+    plan_sections: [view, test]
+    devin_eligible: yes
+    devin_eligibility_reason: "View XML / JS / CSS changes are bounded, sibling patterns easy to mirror, E2E test provides clear acceptance."
+    estimated_complexity: simple
+    implementor:
+      default: opencode
+      opencode_model: opencode-go/glm-5   # simple tier
+      devin_fallback: true                # /opencode-implement --use-devin
+    devin_eligible: yes
+    devin_eligibility_reason: "View XML / JS / CSS changes are bounded, sibling patterns easy to mirror, E2E test provides clear acceptance."
+
+  backend-only:
+    skills:
+      required: [odoo-15-developer, postgresql-db-analyze, tdd-workflow]
+      optional: [issue-reproducer]
+    remote_investigation: true
+    fresh_environment:
+      needed: conditional  # If modifying compute fields or constraints
+      level: 2  # hr,hr_attendance,hr_contract,hr_holidays
+      condition: "Needed when: modifying compute/constraint, risk of data corruption, or need isolated ORM tests"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: false
+    approach_sequence:
+      - "Fetch JIRA data and analyze the error/behavior"
+      - "Query remote DB to understand current data state"
+      - "Identify affected model(s) and method(s)"
+      - "Write Phase 1 DB verification test"
+      - "Write Phase 2 ORM unit test (failing)"
+      - "Implement the fix"
+      - "Run tests on test DB"
+      - "Verify on hr_project_db"
+    plan_sections: [planning, model, test]
+    devin_eligible: maybe
+    devin_eligibility_reason: "Backend changes vary widely — eligible when scope is a single model/method with sibling pattern. Ineligible when touching rm_hr_attendance_sheet 6000-line compute methods or designing new compute architecture. Planner must confirm."
+    estimated_complexity: medium
+    implementor:
+      default: opencode
+      opencode_model: opencode-go/kimi-k2.6   # medium tier
+      devin_fallback: true                    # /opencode-implement --use-devin
+    devin_eligible: maybe
+    devin_eligibility_reason: "Backend changes vary widely — eligible when scope is a single model/method with sibling pattern. Ineligible when touching rm_hr_attendance_sheet 6000-line compute methods or designing new compute architecture. Planner must confirm."
+
+  full-stack:
+    skills:
+      required: [odoo-15-developer, postgresql-db-analyze, tdd-workflow, agent-browser]
+      optional: [issue-reproducer, security-review]
+    remote_investigation: true
+    fresh_environment:
+      needed: conditional
+      level: 3  # Phases 1-5: base through nc_hr,nwf_hr
+      condition: "Needed when: new models/fields, security changes, or cross-module dependencies"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Fetch JIRA data and analyze requirements"
+      - "Query remote DB for data context"
+      - "Plan architecture: models, views, security"
+      - "Create fresh test env if needed (Level 3)"
+      - "Write Phase 1 + Phase 2 tests (failing)"
+      - "Implement model changes"
+      - "Implement view changes"
+      - "Add security (ACLs, record rules)"
+      - "Run all tests"
+      - "E2E validation in browser"
+      - "Verify on hr_project_db"
+    plan_sections: [planning, model, security, view, test]
+    devin_eligible: maybe
+    devin_eligibility_reason: "Full-stack work can be Devin-friendly if existing modules provide a mirror pattern (e.g. add a column to an existing report, add a field + view tweak). Ineligible when introducing net-new domain models, novel security architecture, or OWL widgets without sibling. Planner must confirm."
+    estimated_complexity: complex
+    implementor:
+      default: opencode
+      opencode_model: opencode-go/qwen3.7-max   # complex tier (or google/gemini-3.1-pro-preview)
+      devin_fallback: true                       # /opencode-implement --use-devin
+    devin_eligible: maybe
+    devin_eligibility_reason: "Full-stack work can be Devin-friendly if existing modules provide a mirror pattern (e.g. add a column to an existing report, add a field + view tweak). Ineligible when introducing net-new domain models, novel security architecture, or OWL widgets without sibling. Planner must confirm."
+
+  data-fix:
+    skills:
+      required: [postgresql-db-analyze]
+      optional: [postgres-db-fixer, issue-reproducer]
+    remote_investigation: true
+    fresh_environment:
+      needed: false  # Data fixes work directly on target DB
+      level: null
+    testing:
+      phase_1_db: true
+      phase_2_orm: false
+      e2e: false
+    approach_sequence:
+      - "Fetch JIRA data to understand the data problem"
+      - "Query remote DB to assess scope of data issue"
+      - "Write diagnostic SQL to identify affected records"
+      - "Write fix SQL with safety checks (BEGIN/ROLLBACK)"
+      - "Test fix on local DB (hr_project_db) first"
+      - "Apply fix to target environment"
+      - "Verify with Phase 1 DB check"
+    plan_sections: [planning, logic]
+    devin_eligible: no
+    devin_eligibility_reason: "Data fixes directly mutate production / shared DBs and require human sign-off on the BEGIN/ROLLBACK plan. Devin auto-approval at --permission-mode dangerous is too risky for live data. Keep manual."
+    estimated_complexity: medium
+    implementor:
+      default: claude-manual   # never auto-implement: live-data mutation needs human BEGIN/ROLLBACK sign-off
+      opencode_model: null
+      devin_fallback: false
+    devin_eligible: no
+    devin_eligibility_reason: "Data fixes directly mutate production / shared DBs and require human sign-off on the BEGIN/ROLLBACK plan. Devin auto-approval at --permission-mode dangerous is too risky for live data. Keep manual."
+
+  investigation:
+    skills:
+      required: [postgresql-db-analyze]
+      optional: [issue-reproducer, agent-browser, tdd-workflow]
+    remote_investigation: true
+    fresh_environment:
+      needed: false  # Investigation phase doesn't need fresh env
+      level: null
+    testing:
+      phase_1_db: true
+      phase_2_orm: conditional  # After root cause found
+      e2e: conditional  # If GUI-related
+    approach_sequence:
+      - "Fetch JIRA data and gather all context"
+      - "Create investigation-plan.md in task directory"
+      - "Query remote DB to understand data state"
+      - "Analyze code paths related to reported symptoms"
+      - "Form hypotheses and test each"
+      - "Document root cause"
+      - "Re-classify ticket (may become backend-only, gui-only, etc.)"
+      - "Apply the approach for the reclassified type"
+    plan_sections: [planning]
+    devin_eligible: no
+    devin_eligibility_reason: "Investigation is hypothesis formation + judgment, not bounded code change. Per Devin's own best-practices: avoid 'subjective judgment or design decisions'. Re-evaluate eligibility on the reclassified ticket type after root cause is found."
+    estimated_complexity: medium
+    implementor:
+      default: claude-manual   # never auto-implement: hypothesis/judgment, reclassify after root cause
+      opencode_model: null
+      devin_fallback: false
+    note: "Investigation tickets get reclassified after root cause is found"
+    devin_eligible: no
+    devin_eligibility_reason: "Investigation is hypothesis formation + judgment, not bounded code change. Per Devin's own best-practices: avoid 'subjective judgment or design decisions'. Re-evaluate eligibility on the reclassified ticket type after root cause is found."
+
+  performance:
+    skills:
+      required: [postgresql-db-analyze, odoo-15-developer, tdd-workflow]
+      optional: [agent-browser]
+    remote_investigation: true
+    fresh_environment:
+      needed: true  # Need isolated env for benchmarking
+      level: 3  # Phases 1-5 for realistic module set
+      condition: "Always needed: isolate performance testing from production data"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Fetch JIRA data and identify performance symptoms"
+      - "Query remote DB for data volume context"
+      - "Create fresh test env (Level 3) with seed data"
+      - "Profile the slow operation (SQL EXPLAIN, Python profiling)"
+      - "Identify bottleneck (N+1, missing index, heavy compute)"
+      - "Write benchmark test (before)"
+      - "Implement optimization"
+      - "Run benchmark test (after) - verify improvement"
+      - "E2E test for UI responsiveness if applicable"
+    plan_sections: [planning, model, test]
+    devin_eligible: maybe
+    devin_eligibility_reason: "Eligible when bottleneck is clearly diagnosed (e.g. missing index, well-known N+1) and fix is mechanical. Ineligible when optimisation requires architectural redesign of a compute chain. Planner must confirm after profiling."
+    estimated_complexity: complex
+    implementor:
+      default: opencode
+      opencode_model: opencode-go/qwen3.7-max   # complex tier (or google/gemini-3.1-pro-preview)
+      devin_fallback: true                       # /opencode-implement --use-devin
+    devin_eligible: maybe
+    devin_eligibility_reason: "Eligible when bottleneck is clearly diagnosed (e.g. missing index, well-known N+1) and fix is mechanical. Ineligible when optimisation requires architectural redesign of a compute chain. Planner must confirm after profiling."
+
+  configuration:
+    skills:
+      required: [odoo-15-developer, security-review]
+      optional: [postgresql-db-analyze]
+    remote_investigation: true
+    fresh_environment:
+      needed: false
+      level: null
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: conditional  # If involves user-facing permission changes
+    approach_sequence:
+      - "Fetch JIRA data to understand permission/config issue"
+      - "Query remote DB to check current ACL/rule state"
+      - "Review ir.model.access.csv and ir.rule records"
+      - "Identify missing/incorrect security definitions"
+      - "Write Phase 2 test for permission behavior"
+      - "Implement security fix"
+      - "Run tests"
+      - "If user-facing, add E2E test"
+    plan_sections: [security, test]
+    devin_eligible: maybe
+    devin_eligibility_reason: "Adding/correcting ACL rows is bounded. Designing record-rule security from scratch (new model + multi-company + per-user rules) is not. Planner must confirm scope."
+    estimated_complexity: medium
+    implementor:
+      default: opencode
+      opencode_model: opencode-go/kimi-k2.6   # medium tier; ACL/security edits are bounded
+      devin_fallback: true                    # /opencode-implement --use-devin
+    devin_eligible: maybe
+    devin_eligibility_reason: "Adding/correcting ACL rows is bounded. Designing record-rule security from scratch (new model + multi-company + per-user rules) is not. Planner must confirm scope."
+
+# Implementor reference (default path):
+# implementor.default = opencode     -> /opencode-implement runs `opencode run` headless
+#                                       with implementor.opencode_model (tier by complexity)
+# implementor.default = claude-manual -> no auto-implement; use /tdd (data-fix, investigation)
+# implementor.devin_fallback = true  -> Devin available via /opencode-implement --use-devin
+# Model tiers by estimated_complexity: simple->glm-5, medium->kimi-k2.6, complex->qwen3.7-max
+# Source of truth: .claude/rules/common/performance.md "Implementor Routing".
+#
+# Devin eligibility reference (now the OPT-IN fallback, not the default):
+# yes   -> --use-devin runs without prompt
+# maybe -> --use-devin asks 'proceed? (y/N)' and prints the eligibility_reason
+# no    -> --use-devin refuses, suggests /tdd + manual implementation
+# Decision is overridable at /opencode-implement time with --force-eligibility yes
+# Source: docs.devin.ai/use-cases/best-practices + project task-fitness matrix in
+# .docs/architecture/devin-task-fitness.md (to be created in Phase 4).
+
+# Fresh environment level reference:
+# Level 1: base only (~30s)
+# Level 2: base + HR core (~2min)
+# Level 3: Phases 1-5: base through nc_hr,nwf_hr (~5-8min)
+# Level 4: All 6 phases including MRP (~15-20min)
+#
+# See: .claude/skills/fresh-test-env/config/module-levels.yaml
+
+# Recommended template (consumed by jira-to-task -> worktree-env.sh up --template):
+# The analyzer derives `recommended_template` from fresh_environment.level plus
+# a functional DOMAIN inferred from the ticket's modules/keywords:
+#   no fresh env needed            -> (none; test on hr_project_db)
+#   level N, no clear domain       -> test_tpl_l<N>            (modules only)
+#   level N + domain keyword match -> test_tpl_l<N>_<domain>   (modules + anon data)
+#
+# Domain inference (keyword -> domain, mirrors issue-reproducer pipelines):
+#   attendance / sheet / check-in / overtime / device  -> attendance
+#   payslip / payroll / salary / wage                  -> payroll
+#   mrp / production / bom / manufacturing / wfx GDN    -> mrp
+#   fppo / wfx sync / delivery order                   -> wfx
+# Domain templates are built by utils/build_domain_template.sh (security-gated).
+# If the chosen domain template does not exist yet, worktree-env.sh up prints the
+# build command; use test_tpl_l<N> (modules only) meanwhile.

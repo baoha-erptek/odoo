@@ -114,6 +114,20 @@ Use these agents for code review:
 - **Warning**: Only HIGH issues (merge with caution)
 - **Block**: CRITICAL issues found
 
+## Anti-rationalization table
+
+Common excuses for skipping a review step, and the rebuttal. If you catch yourself
+thinking the left column, do the right column.
+
+| Rationalization | Rebuttal |
+|---|---|
+| "It's a tiny change, skip review" | Tiny diffs cause outsized regressions in shared Odoo methods — grep the callers first. |
+| "Tests are slow, I'll run them later" | "Later" is where broken merges live. A slice doesn't exit until tests pass (playbook Phase 5). |
+| "The `sudo()` is obviously safe" | Then the one-line justification comment costs nothing. No comment = blocked. |
+| "I'll add the ACL after it works" | New model without `ir.model.access.csv` is a CRITICAL, not a follow-up. |
+| "It works on my data" | Write the failing test for the edge case you're hand-waving, then make it pass. |
+| "Refactor while I'm in here" | Surgical changes only — unrelated refactors hide the real diff. Note it, don't do it. |
+
 ## Integration with Other Rules
 
 This rule works with:

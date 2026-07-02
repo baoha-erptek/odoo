@@ -2,7 +2,7 @@
 name: security-reviewer
 description: Odoo security specialist reviewing ACLs, record rules, sudo usage, and SQL injection risks. Use PROACTIVELY when implementing authentication, data access, or security-sensitive features.
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 ---
 
 # Odoo Security Reviewer

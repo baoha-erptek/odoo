@@ -2,7 +2,7 @@
 name: doc-updater
 description: Documentation and codemap specialist for Odoo modules. Use PROACTIVELY for updating module documentation, generating codemaps, and maintaining __manifest__.py descriptions. Analyzes Python AST to extract model structure.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: opus
+model: sonnet
 ---
 
 # Odoo Documentation & Codemap Specialist
