@@ -46,7 +46,7 @@ Sync documentation from source-of-truth for Odoo modules:
 # Extract this information for docs
 {
     'name': 'HR Certifications',           # → Title
-    'version': '15.0.1.0.0',               # → Version
+    'version': '19.0.1.0.0',               # → Version
     'summary': 'Track certifications',      # → Short description
     'description': """Long description""",  # → Full description
     'depends': ['hr', 'mail'],             # → Dependencies
@@ -97,7 +97,7 @@ Track employee training certifications with expiry notifications.
 
 ## Version
 
-15.0.1.0.0
+19.0.1.0.0
 
 ## Dependencies
 

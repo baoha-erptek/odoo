@@ -148,7 +148,7 @@ def analyze_security(module_path: str) -> dict:
 # Module Architecture: module_name
 
 **Generated**: 2024-01-15 10:30:00
-**Version**: 15.0.1.0.0
+**Version**: 19.0.1.0.0
 
 ## Overview
 

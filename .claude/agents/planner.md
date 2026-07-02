@@ -7,7 +7,7 @@ model: opus
 
 # Odoo Module Planner
 
-You are an expert planning specialist focused on creating comprehensive, actionable implementation plans for Odoo 15 module development.
+You are an expert planning specialist focused on creating comprehensive, actionable implementation plans for Odoo 19 module development.
 
 ## Your Role
 
@@ -64,7 +64,7 @@ Create detailed steps with:
 ## Requirements
 - [Requirement 1]
 - [Requirement 2]
-- [Odoo version: 15.0]
+- [Odoo version: 19.0]
 
 ## Affected Models
 | Model | Type | Changes |

@@ -4,7 +4,7 @@
 approaches:
   gui-only:
     skills:
-      required: [odoo-15-developer]
+      required: [odoo-19-developer]
       optional: [agent-browser]
     remote_investigation: false
     fresh_environment:
@@ -35,7 +35,7 @@ approaches:
 
   backend-only:
     skills:
-      required: [odoo-15-developer, postgresql-db-analyze, tdd-workflow]
+      required: [odoo-19-developer, postgresql-db-analyze, tdd-workflow]
       optional: [issue-reproducer]
     remote_investigation: true
     fresh_environment:
@@ -68,7 +68,7 @@ approaches:
 
   full-stack:
     skills:
-      required: [odoo-15-developer, postgresql-db-analyze, tdd-workflow, agent-browser]
+      required: [odoo-19-developer, postgresql-db-analyze, tdd-workflow, agent-browser]
       optional: [issue-reproducer, security-review]
     remote_investigation: true
     fresh_environment:
@@ -168,7 +168,7 @@ approaches:
 
   performance:
     skills:
-      required: [postgresql-db-analyze, odoo-15-developer, tdd-workflow]
+      required: [postgresql-db-analyze, odoo-19-developer, tdd-workflow]
       optional: [agent-browser]
     remote_investigation: true
     fresh_environment:
@@ -202,7 +202,7 @@ approaches:
 
   configuration:
     skills:
-      required: [odoo-15-developer, security-review]
+      required: [odoo-19-developer, security-review]
       optional: [postgresql-db-analyze]
     remote_investigation: true
     fresh_environment:
