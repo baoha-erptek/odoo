@@ -1,5 +1,7 @@
 # Feature Specification: Etsy Order Migration to Odoo 19 CE
 
+> **STATUS (2026-07-03)**: Completed. All P1 and P2 user stories shipped and active in production. Email-based order ingestion remains as maintenance-mode legacy channel; live orders now ingest via Etsy API v3 (Spec 005, Phase 0+). Open remainders consolidated into specs/015-project-completion/.
+
 **Feature Branch**: `001-etsy-order-migration`
 **Created**: 2026-04-02
 **Status**: Draft

@@ -1,5 +1,11 @@
 # Execution Tracker — Master Plan 006
 
+> **CONSOLIDATION (2026-07-03)**: All non-done items in this tracker have been consolidated into
+> [specs/015-project-completion/](../../specs/015-project-completion/spec.md) (with a traceability
+> appendix mapping every tracker ID). Dispatch new work from spec 015's prioritized backlog; this
+> file remains the historical record of Master Plan 006 execution. Rebuilt project docs:
+> [docs/srs/](../../docs/srs/README.md) + [docs/sds/](../../docs/sds/README.md).
+
 **Created**: 2026-04-13
 **Source of truth**: [specs/006-master-plan/MASTER_PLAN.md](../../specs/006-master-plan/MASTER_PLAN.md) + [ADR-008](../../specs/006-master-plan/adrs/ADR-008-api-first-pivot.md)
 **Update cadence**: weekly (every Monday), or on phase-boundary events

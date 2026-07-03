@@ -1,5 +1,7 @@
 # Feature Specification: GKE Tracking Import, Carrier Detection, and Process Dashboard Handoff
 
+> **STATUS (2026-07-03)**: Completed. All P2-01 user stories (GKE import wizard, carrier detection, stock moves, logging) shipped and production-ready. US6 (GDrive polling) deferred pending external dependency (E3). Open remainders consolidated into specs/015-project-completion/.
+
 **Feature Branch**: `004a-tracking-import`
 **Created**: 2026-04-13 · **Revised**: 2026-04-13 (GDrive polling added per Q7 answer)
 **Status**: Draft (Wave B — pending plan.md + data-model.md)

@@ -263,18 +263,16 @@ This rule exists because the harness does not auto-invoke skills on Telegram mes
 
 ## Specs Reference
 
-Planning documents for the Etsy-to-Odoo migration at `specs/001-etsy-order-migration/`:
+**Canonical project documentation (rebuilt 2026-07-03):**
 
 | Document | Description |
 |----------|-------------|
-| spec.md | Feature spec with 10 user stories (US1-US10) |
-| plan.md | 3-phase implementation plan |
-| tasks.md | 57 actionable tasks by phase |
-| data-model.md | 7 Odoo models design |
-| research.md | Technical research on Etsy API + Odoo 19 CE |
-| investigation.md | BA + Tech + Devil's Advocate analysis |
-| contracts/ | Service layer contracts (email-parser, gmail-client, order-creator, image-downloader) |
-| agent-reports/ | Detailed analysis reports |
+| `docs/srs/` | Consolidated SRS — all functional requirements with Shipped/Partial/Planned status + code evidence |
+| `docs/sds/` | Consolidated SDS — architecture, ER/data model, integrations, sequence flows, security (mermaid diagrams) |
+| `specs/015-project-completion/` | Closure spec — the single consolidated backlog of ALL remaining work (supersedes open remainders of specs 001–014) |
+| `docs/README.md` | Top-level docs navigation index |
+
+Historical per-feature specs live in `specs/001` … `specs/014` (finished ones carry STATUS banners; treat as archive — new work goes through spec 015).
 
 ---
 
