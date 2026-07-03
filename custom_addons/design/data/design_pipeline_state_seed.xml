@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- ESTY-244 (Option B, ADR-018): 'Design Ready' as a pipeline stage on
+         each production pipeline, driven from design.order approval. Placed
+         right after the initial stage so it reads as "design approved, ready
+         to produce". -->
+
+    <record id="state_vn_design_ready" model="order.pipeline.state">
+      <field name="pipeline_id" ref="multichannel_hub_core.order_pipeline_vn_internal_production"/>
+      <field name="code">design_ready</field>
+      <field name="name">Design Ready</field>
+      <field name="sequence">15</field>
+      <field name="color">2</field>
+      <field name="team_id" ref="multichannel_hub_core.pipeline_team_internal_production"/>
+    </record>
+
+    <record id="state_gearment_design_ready" model="order.pipeline.state">
+      <field name="pipeline_id" ref="multichannel_hub_core.order_pipeline_gearment_pod"/>
+      <field name="code">design_ready</field>
+      <field name="name">Design Ready</field>
+      <field name="sequence">15</field>
+      <field name="color">2</field>
+      <field name="team_id" ref="multichannel_hub_core.pipeline_team_drop_ship_liaison"/>
+    </record>
+
+    <record id="state_hybrid_design_ready" model="order.pipeline.state">
+      <field name="pipeline_id" ref="multichannel_hub_core.order_pipeline_multi_technique_hybrid"/>
+      <field name="code">design_ready</field>
+      <field name="name">Design Ready</field>
+      <field name="sequence">15</field>
+      <field name="color">2</field>
+      <field name="team_id" ref="multichannel_hub_core.pipeline_team_internal_production"/>
+    </record>
+  </data>
+</odoo>
