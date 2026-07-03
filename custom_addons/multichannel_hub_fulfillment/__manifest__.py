@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub - Fulfillment',
-    'version': '19.0.1.0.23',
+    'version': '19.0.1.0.24',
     'category': 'Sales/Fulfillment',
     'summary': 'Fulfillment integration service for multichannel operations',
     'author': 'Etsy Migration Team',
@@ -23,6 +23,7 @@
         'views/sale_order_views.xml',
         'views/gearment_api_log_views.xml',
         'views/sale_order_fulfillment_views.xml',
+        'views/stock_picking_views.xml',
         'wizards/gearment_quote_wizard_views.xml',
     ],
     'external_dependencies': {

@@ -36,6 +36,8 @@ from . import test_p4_01b_bulk_push_all_orm
 from . import test_p_d8_fulfillment_detail_orm
 from . import test_esty_246_phase1_db
 from . import test_esty_246_phase2_orm
+from . import test_esty_248_phase1_db
+from . import test_esty_248_phase2_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -72,4 +74,6 @@ __all__ = [
     'test_p_d8_fulfillment_detail_orm',
     'test_esty_246_phase1_db',
     'test_esty_246_phase2_orm',
+    'test_esty_248_phase1_db',
+    'test_esty_248_phase2_orm',
 ]

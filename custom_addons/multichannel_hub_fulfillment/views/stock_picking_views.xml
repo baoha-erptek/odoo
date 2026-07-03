@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ESTY-248 — surface Gearment order-processing status (from the linked sale
+         order's fulfillment record) on the picking form, next to the existing
+         origin/owner_id order info. Block reason only shown when blocked. -->
+    <record id="view_picking_form_gearment_status" model="ir.ui.view">
+        <field name="name">stock.picking.form.gearment.status</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <field name="origin" position="after">
+                <field name="x_gearment_tracking_state" invisible="not x_gearment_tracking_state"/>
+                <field name="x_gearment_production_blocked" invisible="not x_gearment_production_blocked"/>
+                <field name="x_gearment_block_reason" invisible="not x_gearment_production_blocked"/>
+            </field>
+        </field>
+    </record>
+</odoo>
