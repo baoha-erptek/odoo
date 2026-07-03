@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vai trò 3 — Sản xuất — Hatafa Ops</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;
+    --bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;
+    --ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}
+  /* top brand bar (cross-page nav) */
+  .appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}
+  .appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}
+  .appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  /* hero */
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}
+  header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  header.hero .hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  /* layout */
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}
+  h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}
+  p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  /* section block (numbered like v1: A/B/C…) */
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .goal{background:#faf7fb;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0}.goal b{color:var(--brand-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .note{background:#eaf1fd;border-left:4px solid var(--info);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .tip{background:#edf8f2;border-left:4px solid var(--ok);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .warnbox{background:#fdeceb;border-left:4px solid var(--bad);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  /* ===== SWIMLANE (role x milestone) ===== */
+  .swim{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;margin:12px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9!important;font-weight:600;color:var(--brand-d);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .swim-row-lbl{background:#faf8fb!important;color:var(--muted);font-weight:600;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.act{background:#f0fbf5!important}.swim-cell.wait{background:#fffbeb!important;color:#a16207}
+  .swim-cell.dim{color:#c3bdcb}
+  /* ===== STEP LIST (detailed, with role + system note) ===== */
+  .steps{list-style:none;margin:8px 0;padding:0}
+  .steps>li{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid #f1eef3}
+  .steps>li:last-child{border-bottom:none}
+  .steps>li .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:var(--brand);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li .body{flex:1}
+  .steps>li .who{font-size:11.5px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .steps>li .title{font-weight:700;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .steps>li .desc{color:#555;font-size:13.7px;line-height:1.6}
+  .steps>li .sys{margin-top:7px;background:#faf8fb;border-left:3px solid var(--brand);padding:8px 12px;font-size:12.7px;color:#4b5563;border-radius:0 6px 6px 0}
+  .steps>li .sys b{color:#1f2937}
+  /* ordered counter variant (no role) */
+  ol.nsteps{counter-reset:s;list-style:none;margin:14px 0;padding:0}
+  ol.nsteps>li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px 14px 56px;margin:10px 0}
+  ol.nsteps>li::before{content:counter(s);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ol.nsteps>li b{color:var(--brand-d)}
+  /* ===== TABLES ===== */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:last-child td{border-bottom:none}
+  /* status badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-ok{background:#e6f6ee;color:var(--ok)}.b-warn{background:#fdf3dd;color:var(--warn)}
+  .b-info{background:#eaf1fd;color:var(--info)}.b-bad{background:#fdeceb;color:var(--bad)}.b-brand{background:#eee9f7;color:var(--brand-d)}
+  /* ===== FULL-CHROME SCREEN MOCKUP (mu-*) ===== */
+  .mu-wrap{background:#f1edf2;border:1px solid var(--line);border-radius:12px;padding:20px 18px 16px;margin:16px 0}
+  .mu-wrap>.mu-h{color:#1f2937;font-size:16px;font-weight:700;margin:0 0 4px}
+  .mu-wrap>.mu-lede{color:var(--muted);font-size:13.3px;margin-bottom:14px;max-width:820px}
+  .mu-screen{background:#fff;border:1px solid #d8d2dd;border-radius:6px;margin-bottom:18px;overflow:hidden;font:13px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937;box-shadow:0 6px 18px rgba(87,58,80,.08)}
+  .mu-screen:last-child{margin-bottom:0}
+  .mu-ttl{padding:9px 16px;font-size:12.5px;color:var(--muted);background:#faf8fb;border-bottom:1px solid var(--line)}.mu-ttl strong{color:#1f2937}
+  .mu-chrome{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--brand);color:#fff;font-size:13px}
+  .mu-chrome .mu-app{font-weight:700;margin-right:6px}
+  .mu-chrome .mu-tab{color:rgba(255,255,255,.82);padding:3px 8px;border-radius:6px;font-size:12.5px}
+  .mu-chrome .mu-tab.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+  .mu-chrome .mu-sp{flex:1}.mu-chrome .mu-user{color:rgba(255,255,255,.8);font-size:12px}
+  /* role-aware left sidebar inside chrome */
+  .mu-body{display:flex;min-height:60px}
+  .mu-sb{background:var(--brand-d);color:#fff;width:178px;flex-shrink:0;padding:8px 0;font-size:12.5px}
+  .mu-sb .g{padding:7px 14px 2px;opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .mu-sb .i{padding:5px 14px}.mu-sb .i.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent);padding-left:11px}
+  .mu-main{flex:1;min-width:0}
+  .mu-crumb{padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);font-size:12.5px;color:#4b5563}.mu-crumb .s{color:#b6aebf;padding:0 6px}.mu-crumb strong{color:#1f2937}
+  .mu-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);background:#faf8fb;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d3ccd9;background:#fff;color:#374151;border-radius:5px;font-weight:600}
+  .mu-btn.pri{border-color:var(--brand);background:var(--brand);color:#fff}
+  .mu-btn.link{border:none;background:transparent;color:var(--brand);padding:5px 6px}
+  /* KPI band */
+  .mu-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:14px}
+  @media(max-width:760px){.mu-kpis{grid-template-columns:repeat(2,1fr)}}
+  .mu-kpi{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#faf8fb}
+  .mu-kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+  .mu-kpi .n{font-size:23px;font-weight:800;color:var(--brand-d);line-height:1.1}
+  .mu-kpi.alert{background:#fdeceb;border-color:#f3c7c2}.mu-kpi.alert .n{color:var(--bad)}
+  .mu-kpi.good .n{color:var(--ok)}
+  /* filter chips */
+  .mu-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 12px}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 12px;background:#fff;color:var(--muted)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  /* data list */
+  .mu-list{width:100%;border-collapse:collapse;font-size:12.7px;margin:0;border:none;border-radius:0}
+  .mu-list thead th{background:#faf8fb;padding:8px 12px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .mu-list tbody td{padding:9px 12px;border-bottom:1px solid #f1eef3;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--brand);font-weight:600;font-size:12px}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+  .mu-pill.ok{background:#dcfce7;color:#15803d}.mu-pill.warn{background:#fef3c7;color:#b45309}
+  .mu-pill.bad{background:#fee2e2;color:#b91c1c}.mu-pill.neu{background:#f1eef3;color:#4b5563}
+  .mu-pill.info{background:#dbeafe;color:#1d4ed8}.mu-pill.brand{background:#eee9f7;color:var(--brand-d)}
+  /* tabs inside a form */
+  .mu-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;background:#fff}
+  .mu-tab2{padding:9px 14px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab2.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+  /* form fields */
+  .mu-form{padding:16px 18px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}@media(max-width:760px){.mu-grid2{grid-template-columns:1fr}}
+  .mu-fld{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f0f5}
+  .mu-fld .k{color:var(--muted);font-size:12px}.mu-fld .v{color:#1f2937;font-size:13px}
+  .mu-fld .v.amt{font-variant-numeric:tabular-nums;font-weight:700}
+  /* kanban board */
+  .mu-kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;background:#f3f0f4;overflow-x:auto}
+  .mu-kcol{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:150px}
+  .mu-kcol h5{margin:2px 4px 8px;font-size:11.5px;color:var(--brand-d);display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.3px}
+  .mu-kcol h5 .c{background:#faf5f9;border:1px solid var(--line);border-radius:20px;padding:0 8px;font-weight:700}
+  .mu-kc{background:#faf8fb;border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:8px}
+  .mu-kc.late{border-left:3px solid var(--bad);background:#fdf6f5}
+  .mu-kc h6{margin:0 0 4px;font-size:12.5px;color:var(--brand-d);font-weight:700}
+  .mu-kc .m{font-size:11.3px;color:var(--muted);line-height:1.55}
+  /* modal */
+  .mu-modal-ov{padding:24px;background:rgba(31,19,32,.55);display:flex;justify-content:center}
+  .mu-modal{background:#fff;border-radius:7px;max-width:540px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.2);overflow:hidden}
+  .mu-modal .h{padding:12px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+  .mu-modal .h.warn{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .mu-modal .h.brandh{background:#faf5f9;color:var(--brand-d)}
+  .mu-modal .b{padding:16px 18px}
+  .mu-modal .banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:5px;font-size:12.5px;margin:10px 0;border-left:3px solid #ca8a04}
+  .mu-modal .f{padding:12px 18px;border-top:1px solid var(--line);background:#faf8fb;display:flex;justify-content:flex-end;gap:8px}
+  .mu-cap{padding:10px 16px;font-size:12.3px;color:var(--muted);background:#faf8fb;border-top:1px solid var(--line);line-height:1.55}.mu-cap b{color:#1f2937}
+  /* ===== permissions / kpi-list ===== */
+  .deflist{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0;padding:0}
+  .deflist li{background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:#374151}
+  .deflist li b{color:var(--brand-d);display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+  /* ===== cross-link grid ===== */
+  .xlinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:10px 0}
+  .xlinks a{display:block;background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;text-decoration:none;color:inherit;font-size:13px;transition:.14s}
+  .xlinks a:hover{border-color:var(--brand-l);box-shadow:0 4px 12px rgba(87,58,80,.08)}
+  .xlinks a b{display:block;color:var(--brand);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  /* ===== index link cards ===== */
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:16px 0}
+  .lcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:.14s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .lcard:hover{border-color:var(--brand-l);box-shadow:0 6px 18px rgba(87,58,80,.10);transform:translateY(-2px)}
+  .lcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--brand-l);font-weight:700;margin-bottom:6px}
+  .lcard .t{font-weight:700;color:var(--brand-d);font-size:15px;margin-bottom:4px}
+  .lcard .d{font-size:13px;color:var(--muted)}
+  /* footer */
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· Cẩm nang vận hành</span></div>
+  <nav>
+    <a href="index.html">Tổng quan</a>
+    <a href="etsy-quy-trinh.html">Quy trình Etsy</a>
+    <a href="flow-1-tao-san-pham.html">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html">Hậu mãi</a>
+    <a href="index.html#roles" class="active">Vai trò</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Vai trò 3</div>
+  <h1>Sản xuất</h1>
+  <div class="sub">Anh Long, trưởng ca sản xuất, nhận đơn hàng đã duyệt thiết kế, chạy quy trình in → QC → đóng gói → chuẩn bị vận chuyển. Ngày làm việc 8 giờ, 50–80 đơn đi qua tay. Mỗi đơn cần 4–5 click trạng thái trên web; tương lai sẽ scan QR trên mobile tự động chuyển trạng thái.</div>
+  <div class="pills">
+    <span class="hpill">17 trạng thái sản xuất</span>
+    <span class="hpill">Pipeline kanban</span>
+    <span class="hpill">EOD báo cáo</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Section A: Bối cảnh vai trò -->
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh</h3>
+    <p>Anh Long, 30 tuổi, là trưởng ca sản xuất tại Hatafa. Hôm nay anh phụ trách 4 thợ in và 2 thợ QC, quản lý ~50–80 đơn hàng đi qua các công đoạn: chờ in → đang in → chờ QC → đóng gói → chờ vận chuyển. Mỗi đơn từ khách đã có thiết kế được duyệt bởi nhóm thiết kế; anh Long không duyệt thiết kế (đó là việc của nhóm thiết kế), chỉ nhận đơn đã duyệt và bắt đầu in. Anh cũng không sửa giá, không sửa địa chỉ, không đăng lên Etsy hay đẩy đơn sang xưởng in — mỗi việc đó là trách nhiệm riêng của trưởng nhóm vận hành, marketing, hoặc nhân viên giao vận. Trách nhiệm chính của anh là chuyển trạng thái nhanh, chính xác, ghi chú lại khi gặp vấn đề (lỗi in, hỏng hàng, máy bảo dưỡng), và lập báo cáo cuối ca. Anh kéo-thả thẻ đơn trên bảng pipeline, hoặc quét mã QR của đơn bằng điện thoại để tự động chuyển trạng thái khi xong từng công đoạn — không phải bấm tay từng nút.</p>
+  </div>
+
+  <!-- Section B: Một ngày trong hệ thống (hour-by-hour) -->
+  <div class="section">
+    <h3><span class="num">B</span>Một ngày trong hệ thống</h3>
+    <ul class="steps">
+      <li>
+        <div class="n">1</div>
+        <div class="body">
+          <div class="who">08:00 · 30 phút</div>
+          <div class="title">Kiểm tra danh sách đơn hôm nay</div>
+          <div class="desc">Anh Long mở pipeline kanban, lọc "Đã duyệt thiết kế + Hôm nay", xem ~22 đơn cần in trong ca sáng. Kiểm tra SKU, kích thước, color, deadline giao. Phân công 4 thợ in chọn đơn.</div>
+          <div class="sys"><b>Màn hình:</b> Pipeline kanban 3 cột (Đã duyệt / Đang in / Chờ QC). Lọc MTO ẩn các đơn Gearment—không cần anh can thiệp. Badge tông đơn quá hạn (late) hiển thị đỏ.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">2</div>
+        <div class="body">
+          <div class="who">08:30 · 60 phút</div>
+          <div class="title">In lô đầu tiên</div>
+          <div class="desc">Thợ in Khánh pick đơn #S00228 từ kanban, chuyển trạng thái "Đã duyệt → Đang in". Anh Long bấm nút "Move → Đang in" từ form đơn hoặc kéo thẻ trên kanban. Hệ thống ghi lại: ai bấm, khi nào, từ trạng thái nào sang trạng thái nào. 4 thợ in song song, mỗi người một đơn khác.</div>
+          <div class="sys"><b>Màn hình:</b> Form Đơn hàng › tab Pipeline: nút "Move → Chờ QC". Thẻ kanban tự cập nhật vào cột "Đang in". Không có tự động — mỗi transition cần click tay.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">3</div>
+        <div class="body">
+          <div class="who">09:30 · 30 phút</div>
+          <div class="title">Batch in xong, chuyển sang QC</div>
+          <div class="desc">Batch 10 đơn in xong. Anh Long chuyển từng đơn từ "Đang in" → "Chờ QC". Có thể drag-drop thẻ trên kanban hoặc mở form bấm nút Move. Đợi QC duyệt, cố gắng không để đơn chờ quá 30 phút ở "Chờ QC".</div>
+          <div class="sys"><b>Màn hình:</b> Kanban drag-drop hoặc Form tab Pipeline + nút Move. Mỗi transition ghi timestamp, người làm. Có thể thêm note ghi chú vào chatter nếu có vấn đề.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">4</div>
+        <div class="body">
+          <div class="who">10:00 · 60 phút</div>
+          <div class="title">QC kiểm tra và đánh dấu lỗi</div>
+          <div class="desc">Thợ QC Kiếp Long kiểm tra 8 đơn từ "Chờ QC", pass 7 đơn (chuyển → "Đóng gói"), reject 1 đơn (lỗi mực). Anh Long tạo task "In lại" cho đơn reject: ghi lý do lỗi, gắn vào đơn cha, assign cho thợ in. Task tự hiển thị trong timeline của đơn, thợ in nhận notification.</div>
+          <div class="sys"><b>Màn hình:</b> QC form hoặc kanban. Nút "Reject + Create Reprint Task" → form tạo task (Lý do, Loại in, Thợ). Chatter auto-post task notification.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">5</div>
+        <div class="body">
+          <div class="who">12:00–13:00</div>
+          <div class="title">Nghỉ trưa</div>
+          <div class="desc">—</div>
+          <div class="sys">—</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">6</div>
+        <div class="body">
+          <div class="who">13:00 · 120 phút</div>
+          <div class="title">Đợt 2: sản xuất lô + in lại</div>
+          <div class="desc">Chiều Anh Long chạy lô thứ 2: ~35 đơn MTO khác. Lưu ý: đơn Dropship Gearment KHÔNG đi qua phòng in anh—hệ thống tự skip "Đã giao Gearment", nên anh không thấy chúng trên kanban (lọc MTO). In lại 1 đơn lỗi sáng nay: thợ Khánh xử lý, anh bấm "Move → In lại xong" khi xong.</div>
+          <div class="sys"><b>Màn hình:</b> Kanban filter "MTO" ẩn Dropship. Tab "In lại" trên kanban hoặc task list. Gearment tự xử lý ở bên Mỹ.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">7</div>
+        <div class="body">
+          <div class="who">15:30 · 60 phút</div>
+          <div class="title">Đóng gói + chuẩn bị giao</div>
+          <div class="desc">QC + Đóng gói hoàn tất ~28 đơn. Anh Long bấm "Move → Chờ nhãn vận chuyển". BA Shipping sẽ in nhãn vận chuyển riêng (không anh in). Tuỳ chọn: ghi số tracking từ hãng vận chuyển vào chatter để tham khảo; BA Shipping import chính thức sau.</div>
+          <div class="sys"><b>Màn hình:</b> Kanban hoặc Form tab Pipeline. Nút "Move → Chờ nhãn". Chưa push lên Etsy/Gearment—BA Lead làm sau khi nhãn in xong.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">8</div>
+        <div class="body">
+          <div class="who">16:30 · 30 phút</div>
+          <div class="title">Báo cáo cuối ca</div>
+          <div class="desc">Anh Long lập Production EOD Report: 56 đơn hoàn tất, 2 đơn in lại, 0 đơn hư/mất, thời gian trung bình 7 phút/đơn. Hệ thống tự tính từ pipeline transitions; anh chỉ confirm + ghi ghi chú nếu có (bảo dưỡng máy, sự cố). Bấm "Submit EOD → BA Lead nhận notification + duyệt báo cáo (không cần ký từng dòng).</div>
+          <div class="sys"><b>Màn hình:</b> Production EOD Report form (ở Báo cáo › Production EOD hoặc link từ Operations Dashboard). KPI tự động từ pipeline; ghi chú tuỳ chọn. Submit → notification cho BA Lead.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Section: Màn hình của Sản xuất -->
+  <div class="mu-wrap">
+    <h3 class="mu-h">Màn hình của Sản xuất</h3>
+    <div class="mu-lede">4 màn hình mô phỏng quy trình sản xuất của Anh Long. Từ kanban pipeline filter thiết kế, form chuyển trạng thái, màn nhập mã vận đơn, đến EOD report cuối ca.</div>
+
+    <!-- MOCKUP 1: Pipeline kanban -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 1 · <strong>Pipeline kanban — 22 đơn hôm nay cần in (filter "Đã duyệt + MTO")</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Hatafa Ops</span>
+        <span class="mu-tab on">Đơn hàng › Pipeline</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-main">
+        <div class="mu-crumb">Đơn hàng <span class="s">›</span> <strong>Pipeline: Đã duyệt (MTO)</strong></div>
+        <div class="mu-bar">
+          <button class="mu-btn">Lọc: Đã duyệt + Hôm nay</button>
+          <button class="mu-btn">Loại: MTO (ẩn Gearment)</button>
+          <span style="flex:1"></span>
+          <span style="font-size:12px;color:#6b7280">22 đơn · Giao 2026-06-03 · Hôm qua: 18 đơn</span>
+        </div>
+        <div class="mu-kanban" style="grid-template-columns:repeat(3,1fr)">
+          <div class="mu-kcol">
+            <h5><span>Đã duyệt thiết kế</span><span class="c">8</span></h5>
+            <div class="mu-kc"><h6>S00234</h6><div class="m"><b>SKU:</b> MUG-CR-F11<br><b>Kích thước:</b> 11oz<br><b>Giao:</b> 16:00</div></div>
+            <div class="mu-kc"><h6>S00235</h6><div class="m"><b>SKU:</b> APR-LN-AM<br><b>Kích thước:</b> M<br><b>Giao:</b> 18:00</div></div>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Đang in</span><span class="c">9</span></h5>
+            <div class="mu-kc"><h6>S00228</h6><div class="m"><b>SKU:</b> DMT-TX-R30X18<br><b>In từ:</b> 08:30 (45 phút)<br><b>Thợ:</b> Khánh</div></div>
+            <div class="mu-kc"><h6>S00229</h6><div class="m"><b>SKU:</b> RDS-CE-SQ<br><b>In từ:</b> 08:45<br><b>Trạng thái:</b> OK</div></div>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Chờ QC</span><span class="c">5</span></h5>
+            <div class="mu-kc"><h6>S00220</h6><div class="m"><b>SKU:</b> MUG-CR-F11-BK<br><b>Chờ QC:</b> 15 phút<br><b>QC:</b> Kiếp Long</div></div>
+            <div class="mu-kc late"><h6>S00221</h6><div class="m"><b>SKU:</b> APR-LN-AXL<br><b>Chờ QC:</b> 28 phút<br><b>⚠ Quá 30 min</b></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap"><b>Kanban này cho Anh Long một cái nhìn tổng quát:</b> 8 đơn sẵn sàng in, 9 đơn đang in song song (4 thợ), 5 đơn chờ QC duyệt. Kéo thẻ từ cột này sang cột khác để chuyển trạng thái. Thẻ đỏ cảnh báo quá 30 phút ở "Chờ QC". Lọc MTO ẩn các đơn Dropship Gearment (không cần anh can thiệp).</div>
+    </div>
+
+    <!-- MOCKUP 2: Form chuyển trạng thái -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 2 · <strong>Form Đơn hàng — tab Pipeline, chuyển "Đang in" → "Chờ QC"</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Hatafa Ops</span>
+        <span class="mu-tab on">Đơn hàng › S00228</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-main">
+        <div class="mu-crumb">Đơn hàng <span class="s">›</span> <strong>Order #S00228</strong></div>
+        <div class="mu-bar">
+          <button class="mu-btn">Discard</button>
+          <button class="mu-btn pri">Save</button>
+        </div>
+        <div class="mu-form">
+          <div style="margin-bottom:12px;font-size:15px;font-weight:700">Order #S00228 · Doormat 30x18 Welcome <span class="mu-pill warn" style="margin-left:8px">ĐANG IN</span></div>
+          <div class="mu-tabs">
+            <div class="mu-tab2 on">Pipeline</div>
+            <div class="mu-tab2">Sản phẩm</div>
+            <div class="mu-tab2">Thiết kế</div>
+            <div class="mu-tab2">Khách hàng</div>
+            <div class="mu-tab2">Gearment</div>
+          </div>
+          <div style="padding:14px 0">
+            <div style="padding:0 18px;margin-bottom:12px;font-size:13.5px;color:#555;line-height:1.6">
+              <b>Trạng thái hiện tại:</b> Đang in (kể từ 08:30 — 45 phút đã qua)<br>
+              <b>Người xử lý:</b> Thợ in Khánh<br>
+              <b>Lịch sử:</b> Chuyển từ "Đã duyệt" lúc 08:30 · production.long
+            </div>
+            <div style="padding:0 18px">
+              <div style="background:#faf5f9;border:1px solid #e4cee0;border-radius:6px;padding:12px;margin-bottom:12px">
+                <div style="margin-bottom:6px">
+                  <button class="mu-btn" style="width:100%;text-align:left">Move → Chờ QC</button>
+                </div>
+                <div style="margin-bottom:6px">
+                  <button class="mu-btn" style="width:100%;text-align:left">Hỏi QC nhanh (inline)</button>
+                </div>
+                <div>
+                  <button class="mu-btn" style="width:100%;text-align:left">Cancel: In lại</button>
+                </div>
+              </div>
+              <div style="font-size:12px;color:#4b5563;line-height:1.6">Mỗi đơn đi qua các chặng: Chờ QC → Đóng gói → Chờ nhãn → Đã in nhãn → Giao bưu vận. Anh kéo-thả thẻ trên bảng pipeline, hoặc quét mã QR của đơn bằng điện thoại để tự động chuyển khi xong từng công đoạn.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Khi in xong batch, Anh Long mở từng đơn → tab Pipeline → bấm <b>"Move → Chờ QC"</b>. Hệ thống ghi: ai bấm, khi nào, từ trạng thái nào sang trạng thái nào. Nút "Cancel: In lại" dùng khi phát hiện lỗi giữa quá trình (chỉ Anh + BA Lead thấy).</div>
+    </div>
+
+    <!-- MOCKUP 3: Nhập mã vận đơn -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 3 · <strong>Nhập mã vận đơn — hệ thống tự nhận diện hãng, đánh dấu đã gửi</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Hatafa Ops</span>
+        <span class="mu-tab">Đơn hàng › Pipeline</span>
+        <span class="mu-tab on">Nhập mã vận đơn</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-main">
+        <div class="mu-crumb">Đơn hàng <span class="s">›</span> <strong>Nhập mã vận đơn (2026-06-03)</strong></div>
+        <div class="mu-bar">
+          <span style="font-size:12px;color:#6b7280">28 đơn chờ nhãn</span>
+          <span style="flex:1"></span>
+          <button class="mu-btn">⬇ Tải file mẫu</button>
+          <button class="mu-btn">⬆ Import file mã</button>
+        </div>
+        <table class="mu-list" style="margin:0">
+          <thead>
+            <tr><th>Đơn hàng</th><th>Mã vận đơn</th><th>Hãng</th><th>Trạng thái</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">S00201</span></td><td><span class="mono">VNXSP1234567</span></td><td><span class="mu-pill info">Vietnam Post</span></td><td><span class="mu-pill ok">Đã nhận</span></td></tr>
+            <tr><td><span class="mono">S00207</span></td><td><span class="mono">GHN88774521</span></td><td><span class="mu-pill info">GHN</span></td><td><span class="mu-pill ok">Đã nhận</span></td></tr>
+            <tr><td><span class="mono">S00213</span></td><td><span class="mono">—</span></td><td><span class="mu-pill neu">Chưa nhập</span></td><td><span class="mu-pill warn">Chờ</span></td></tr>
+            <tr><td><span class="mono">S00220</span></td><td><span class="mono">AHA12334789</span></td><td><span class="mu-pill info">AHA</span></td><td><span class="mu-pill ok">Đã nhận</span></td></tr>
+          </tbody>
+        </table>
+        <div style="padding:14px 18px;background:#faf8fb;border-top:1px solid var(--line);display:flex;gap:8px">
+          <button class="mu-btn pri">Đánh dấu 27 đơn đã gửi</button>
+          <button class="mu-btn">Xem chi tiết import</button>
+        </div>
+      </div>
+      <div class="mu-cap">Anh Long upload file mã vận đơn từ các hãng (csv/xlsx); hệ thống tự nhận diện hãng từ định dạng mã (VNXSP → Vietnam Post, GHN → GHN, AHA → AHA). Mỗi dòng nhập được chuyển trạng thái đơn → "Đã in nhãn". Nút "Đánh dấu đã gửi" bulk-update 27 đơn từ "Chờ nhãn" → "Đã gửi".</div>
+    </div>
+
+    <!-- MOCKUP 4: Duyệt thiết kế (read-only) -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 4 · <strong>Bảng duyệt thiết kế — Anh Long xem (read-only) thiết kế đã approved để biết in như thế nào</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Hatafa Ops</span>
+        <span class="mu-tab">Đơn hàng › Pipeline</span>
+        <span class="mu-tab on">Duyệt thiết kế</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">production.long@hatafa</span>
+      </div>
+      <div class="mu-main">
+        <div class="mu-crumb">Thiết kế <span class="s">›</span> <strong>Pipeline: Duyệt (read-only)</strong></div>
+        <div class="mu-bar">
+          <span style="font-size:12px;color:#6b7280">5 cột: Chờ duyệt / Đã duyệt / Trả lại / Hủy / Archive</span>
+        </div>
+        <div class="mu-kanban" style="grid-template-columns:repeat(5,1fr)">
+          <div class="mu-kcol">
+            <h5><span>Chờ duyệt</span><span class="c">3</span></h5>
+            <div class="mu-kc"><h6>Design #D001</h6><div class="m"><b>SKU:</b> MUG-CR-F11<br><b>Shop:</b> JaHandmadeArt</div></div>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Đã duyệt</span><span class="c">12</span></h5>
+            <div class="mu-kc"><h6>Design #D002</h6><div class="m"><b>SKU:</b> DMT-TX-R30X18<br><b>Duyệt lúc:</b> 08:00<br><b>Duyệt bởi:</b> PD Team</div></div>
+            <div class="mu-kc"><h6>Design #D003</h6><div class="m"><b>SKU:</b> APR-LN-AM<br><b>Ready to print</b></div></div>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Trả lại</span><span class="c">1</span></h5>
+            <div class="mu-kc"><h6>Design #D004</h6><div class="m"><b>SKU:</b> MUG-BL-S<br><b>Lý do:</b> Lỗi màu<br><b>Trả lại PD</b></div></div>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Hủy</span><span class="c">0</span></h5>
+          </div>
+          <div class="mu-kcol">
+            <h5><span>Archive</span><span class="c">8</span></h5>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Anh Long xem kanban thiết kế để biết nào là "đã duyệt" → sẵn sàng in. Cột "Đã duyệt" là những đơn Anh có thể pick. Nếu thiết kế ở "Chờ duyệt" hoặc "Trả lại", Anh chưa được in—đó là công việc của PD. Read-only: Anh không thể chuyển trạng thái thiết kế.</div>
+    </div>
+  </div>
+
+  <!-- Section C: Quyền hạn riêng (KHÔNG có) -->
+  <div class="section">
+    <h3><span class="num">C</span>Quyền hạn riêng — Anh Long KHÔNG có</h3>
+    <ul class="deflist">
+      <li><b>Duyệt thiết kế</b>Đó là công việc của PD; Anh chỉ xem trạng thái để pick đơn</li>
+      <li><b>Edit giá bán</b>BA Lead lock giá; Anh chỉ xem</li>
+      <li><b>Edit địa chỉ khách</b>BA Lead duyệt trước; Anh không sửa được</li>
+      <li><b>Push lên Etsy / Gearment</b>BA Shipping hoặc BA Lead làm; Anh không thấy nút</li>
+      <li><b>Tạo đơn mới</b>Marketing hoặc webhook Etsy; Anh không tạo được</li>
+      <li><b>Duyệt địa chỉ thay đổi</b>BA Lead + khách xác nhận; Anh không approve</li>
+    </ul>
+  </div>
+
+  <!-- Section D: Quyền hạn riêng (CÓ) -->
+  <div class="section">
+    <h3><span class="num">D</span>Quyền hạn riêng — Anh Long CÓ</h3>
+    <ul class="deflist">
+      <li><b>Chuyển trạng thái pipeline</b>17 trạng thái qua các bước in → QC → đóng gói → ship</li>
+      <li><b>Tạo task in lại</b>Ghi lý do, gắn vào đơn cha, thợ in nhận task trong chatter</li>
+      <li><b>Ghi note chatter</b>Liên hệ Anh Long ↔ BA Lead / QC / Marketing qua timeline đơn</li>
+      <li><b>Xem file thiết kế</b>Tải từ Google Drive hoặc attachment để biết in như thế nào</li>
+      <li><b>Import mã vận đơn</b>Upload file csv/xlsx; hệ thống tự nhận diện hãng</li>
+      <li><b>Lập EOD report</b>Confirm KPI tự động từ transitions, ghi ghi chú nếu có</li>
+    </ul>
+  </div>
+
+  <!-- Section E: Luồng và vai trò liên quan -->
+  <div class="section">
+    <h3><span class="num">E</span>Luồng & vai trò liên quan</h3>
+    <div class="xlinks">
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng 3A</b>MTO: 17 trạng thái sản xuất VN mà Anh Long chạy qua mỗi ngày</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Luồng 3B</b>Dropship Gearment: tự động, không cần Anh can thiệp</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — duyệt thiết kế, chốt trạng thái, hỗ trợ Anh khi vấn đề</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>Marketing — quản lý shop Etsy, tạo đơn hàng</a>
+      <a href="role-5-pd.html"><b>Vai trò</b>Thiết kế (PD) — duyệt file thiết kế, lưu kho</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Quy trình 3b</b>Giao qua xưởng in đối tác — nhập mã vận đơn, đẩy tracking về Etsy</a>
+    </div>
+  </div>
+
+  <footer>Cẩm nang vận hành Hatafa Ops · Hình minh hoạ thể hiện ý tưởng bố cục, không phải đặc tả chi tiết từng điểm ảnh · 2026-06-27.</footer>
+</div>
+
+</body>
+</html>

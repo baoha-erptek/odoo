@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quy trình 4 — Chăm sóc sau bán — Hatafa Ops</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;
+    --bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;
+    --ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}
+  /* top brand bar (cross-page nav) */
+  .appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}
+  .appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}
+  .appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  /* hero */
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}
+  header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  header.hero .hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  /* layout */
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}
+  h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}
+  p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  /* section block (numbered like v1: A/B/C…) */
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .goal{background:#faf7fb;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0}.goal b{color:var(--brand-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .note{background:#eaf1fd;border-left:4px solid var(--info);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .tip{background:#edf8f2;border-left:4px solid var(--ok);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .warnbox{background:#fdeceb;border-left:4px solid var(--bad);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  /* ===== SWIMLANE (role x milestone) ===== */
+  .swim{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;margin:12px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9!important;font-weight:600;color:var(--brand-d);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .swim-row-lbl{background:#faf8fb!important;color:var(--muted);font-weight:600;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.act{background:#f0fbf5!important}.swim-cell.wait{background:#fffbeb!important;color:#a16207}
+  .swim-cell.dim{color:#c3bdcb}
+  /* ===== STEP LIST (detailed, with role + system note) ===== */
+  .steps{list-style:none;margin:8px 0;padding:0}
+  .steps>li{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid #f1eef3}
+  .steps>li:last-child{border-bottom:none}
+  .steps>li .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:var(--brand);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li .body{flex:1}
+  .steps>li .who{font-size:11.5px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .steps>li .title{font-weight:700;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .steps>li .desc{color:#555;font-size:13.7px;line-height:1.6}
+  .steps>li .sys{margin-top:7px;background:#faf8fb;border-left:3px solid var(--brand);padding:8px 12px;font-size:12.7px;color:#4b5563;border-radius:0 6px 6px 0}
+  .steps>li .sys b{color:#1f2937}
+  /* ordered counter variant (no role) */
+  ol.nsteps{counter-reset:s;list-style:none;margin:14px 0;padding:0}
+  ol.nsteps>li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px 14px 56px;margin:10px 0}
+  ol.nsteps>li::before{content:counter(s);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ol.nsteps>li b{color:var(--brand-d)}
+  /* ===== TABLES ===== */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:last-child td{border-bottom:none}
+  /* status badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-ok{background:#e6f6ee;color:var(--ok)}.b-warn{background:#fdf3dd;color:var(--warn)}
+  .b-info{background:#eaf1fd;color:var(--info)}.b-bad{background:#fdeceb;color:var(--bad)}.b-brand{background:#eee9f7;color:var(--brand-d)}
+  /* ===== FULL-CHROME SCREEN MOCKUP (mu-*) ===== */
+  .mu-wrap{background:#f1edf2;border:1px solid var(--line);border-radius:12px;padding:20px 18px 16px;margin:16px 0}
+  .mu-wrap>.mu-h{color:#1f2937;font-size:16px;font-weight:700;margin:0 0 4px}
+  .mu-wrap>.mu-lede{color:var(--muted);font-size:13.3px;margin-bottom:14px;max-width:820px}
+  .mu-screen{background:#fff;border:1px solid #d8d2dd;border-radius:6px;margin-bottom:18px;overflow:hidden;font:13px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937;box-shadow:0 6px 18px rgba(87,58,80,.08)}
+  .mu-screen:last-child{margin-bottom:0}
+  .mu-ttl{padding:9px 16px;font-size:12.5px;color:var(--muted);background:#faf8fb;border-bottom:1px solid var(--line)}.mu-ttl strong{color:#1f2937}
+  .mu-chrome{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--brand);color:#fff;font-size:13px}
+  .mu-chrome .mu-app{font-weight:700;margin-right:6px}
+  .mu-chrome .mu-tab{color:rgba(255,255,255,.82);padding:3px 8px;border-radius:6px;font-size:12.5px}
+  .mu-chrome .mu-tab.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+  .mu-chrome .mu-sp{flex:1}.mu-chrome .mu-user{color:rgba(255,255,255,.8);font-size:12px}
+  /* role-aware left sidebar inside chrome */
+  .mu-body{display:flex;min-height:60px}
+  .mu-sb{background:var(--brand-d);color:#fff;width:178px;flex-shrink:0;padding:8px 0;font-size:12.5px}
+  .mu-sb .g{padding:7px 14px 2px;opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .mu-sb .i{padding:5px 14px}.mu-sb .i.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent);padding-left:11px}
+  .mu-main{flex:1;min-width:0}
+  .mu-crumb{padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);font-size:12.5px;color:#4b5563}.mu-crumb .s{color:#b6aebf;padding:0 6px}.mu-crumb strong{color:#1f2937}
+  .mu-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);background:#faf8fb;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d3ccd9;background:#fff;color:#374151;border-radius:5px;font-weight:600}
+  .mu-btn.pri{border-color:var(--brand);background:var(--brand);color:#fff}
+  .mu-btn.link{border:none;background:transparent;color:var(--brand);padding:5px 6px}
+  /* KPI band */
+  .mu-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:14px}
+  @media(max-width:760px){.mu-kpis{grid-template-columns:repeat(2,1fr)}}
+  .mu-kpi{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#faf8fb}
+  .mu-kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+  .mu-kpi .n{font-size:23px;font-weight:800;color:var(--brand-d);line-height:1.1}
+  .mu-kpi.alert{background:#fdeceb;border-color:#f3c7c2}.mu-kpi.alert .n{color:var(--bad)}
+  .mu-kpi.good .n{color:var(--ok)}
+  /* filter chips */
+  .mu-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 12px}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 12px;background:#fff;color:var(--muted)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  /* data list */
+  .mu-list{width:100%;border-collapse:collapse;font-size:12.7px;margin:0;border:none;border-radius:0}
+  .mu-list thead th{background:#faf8fb;padding:8px 12px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .mu-list tbody td{padding:9px 12px;border-bottom:1px solid #f1eef3;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--brand);font-weight:600;font-size:12px}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+  .mu-pill.ok{background:#dcfce7;color:#15803d}.mu-pill.warn{background:#fef3c7;color:#b45309}
+  .mu-pill.bad{background:#fee2e2;color:#b91c1c}.mu-pill.neu{background:#f1eef3;color:#4b5563}
+  .mu-pill.info{background:#dbeafe;color:#1d4ed8}.mu-pill.brand{background:#eee9f7;color:var(--brand-d)}
+  /* tabs inside a form */
+  .mu-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;background:#fff}
+  .mu-tab2{padding:9px 14px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab2.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+  /* form fields */
+  .mu-form{padding:16px 18px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}@media(max-width:760px){.mu-grid2{grid-template-columns:1fr}}
+  .mu-fld{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f0f5}
+  .mu-fld .k{color:var(--muted);font-size:12px}.mu-fld .v{color:#1f2937;font-size:13px}
+  .mu-fld .v.amt{font-variant-numeric:tabular-nums;font-weight:700}
+  /* kanban board */
+  .mu-kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;background:#f3f0f4;overflow-x:auto}
+  .mu-kcol{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:150px}
+  .mu-kcol h5{margin:2px 4px 8px;font-size:11.5px;color:var(--brand-d);display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.3px}
+  .mu-kcol h5 .c{background:#faf5f9;border:1px solid var(--line);border-radius:20px;padding:0 8px;font-weight:700}
+  .mu-kc{background:#faf8fb;border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:8px}
+  .mu-kc.late{border-left:3px solid var(--bad);background:#fdf6f5}
+  .mu-kc h6{margin:0 0 4px;font-size:12.5px;color:var(--brand-d);font-weight:700}
+  .mu-kc .m{font-size:11.3px;color:var(--muted);line-height:1.55}
+  /* modal */
+  .mu-modal-ov{padding:24px;background:rgba(31,19,32,.55);display:flex;justify-content:center}
+  .mu-modal{background:#fff;border-radius:7px;max-width:540px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.2);overflow:hidden}
+  .mu-modal .h{padding:12px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+  .mu-modal .h.warn{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .mu-modal .h.brandh{background:#faf5f9;color:var(--brand-d)}
+  .mu-modal .b{padding:16px 18px}
+  .mu-modal .banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:5px;font-size:12.5px;margin:10px 0;border-left:3px solid #ca8a04}
+  .mu-modal .f{padding:12px 18px;border-top:1px solid var(--line);background:#faf8fb;display:flex;justify-content:flex-end;gap:8px}
+  .mu-cap{padding:10px 16px;font-size:12.3px;color:var(--muted);background:#faf8fb;border-top:1px solid var(--line);line-height:1.55}.mu-cap b{color:#1f2937}
+  /* ===== permissions / kpi-list ===== */
+  .deflist{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0;padding:0}
+  .deflist li{background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:#374151}
+  .deflist li b{color:var(--brand-d);display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+  /* ===== cross-link grid ===== */
+  .xlinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:10px 0}
+  .xlinks a{display:block;background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;text-decoration:none;color:inherit;font-size:13px;transition:.14s}
+  .xlinks a:hover{border-color:var(--brand-l);box-shadow:0 4px 12px rgba(87,58,80,.08)}
+  .xlinks a b{display:block;color:var(--brand);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  /* ===== index link cards ===== */
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:16px 0}
+  .lcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:.14s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .lcard:hover{border-color:var(--brand-l);box-shadow:0 6px 18px rgba(87,58,80,.10);transform:translateY(-2px)}
+  .lcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--brand-l);font-weight:700;margin-bottom:6px}
+  .lcard .t{font-weight:700;color:var(--brand-d);font-size:15px;margin-bottom:4px}
+  .lcard .d{font-size:13px;color:var(--muted)}
+  /* footer */
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· Cẩm nang vận hành</span></div>
+  <nav>
+    <a href="index.html">Tổng quan</a>
+    <a href="etsy-quy-trinh.html">Quy trình Etsy</a>
+    <a href="flow-1-tao-san-pham.html">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html" class="active">Hậu mãi</a>
+    <a href="index.html#roles">Vai trò</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Quy trình 4</div>
+  <h1>Chăm sóc sau bán</h1>
+  <div class="sub">Bốn luồng hậu mãi sau khi đơn giao đến khách: ghi chú khách tự vào nhật ký bên đơn, yêu cầu đổi địa chỉ với khoá ô bảo vệ, in lại do lỗi sản phẩm, và hoàn tiền qua phiếu duyệt BA Lead.</div>
+  <div class="pills">
+    <span class="hpill">Ghi chú khách</span>
+    <span class="hpill">Đổi địa chỉ</span>
+    <span class="hpill">In lại</span>
+    <span class="hpill">Hoàn tiền</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="section">
+    <h3><span class="num">A</span>Ai làm gì — sơ đồ vai trò</h3>
+    <p>Bốn luồng hậu mãi liên kết Khách Etsy, BA Marketing, BA Lead, và Hệ thống Odoo. Bảng dưới đọc từ trái qua phải: mỗi cột là một vai trò, mỗi hàng là một mốc chính trong luồng.</p>
+    <div class="swim" style="grid-template-columns:110px repeat(4,1fr)">
+      <div class="swim-head"></div>
+      <div class="swim-head">Khách Etsy</div>
+      <div class="swim-head">BA Marketing</div>
+      <div class="swim-head">BA Lead</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+
+      <div class="swim-row-lbl">1. Ghi chú khách</div>
+      <div class="swim-cell act">Ghi chú tự do vào nhật ký bên đơn</div>
+      <div class="swim-cell wait">Đọc nhật ký, trả lời</div>
+      <div class="swim-cell dim">—</div>
+      <div class="swim-cell act">Chatter chuẩn (mail.thread)</div>
+
+      <div class="swim-row-lbl">2. Đổi địa chỉ</div>
+      <div class="swim-cell act">Yêu cầu sửa địa chỉ qua ghi chú</div>
+      <div class="swim-cell act">Bấm wizard, điền mới</div>
+      <div class="swim-cell act">Duyệt (FR-017 gate)</div>
+      <div class="swim-cell act">Khoá ô, áp địa chỉ</div>
+
+      <div class="swim-row-lbl">3. In lại</div>
+      <div class="swim-cell dim">—</div>
+      <div class="swim-cell dim">—</div>
+      <div class="swim-cell act">Chuyển pipeline → In lại</div>
+      <div class="swim-cell act">Tạo lại lệnh sản xuất</div>
+
+      <div class="swim-row-lbl">4. Hoàn tiền</div>
+      <div class="swim-cell act">Yêu cầu qua ghi chú</div>
+      <div class="swim-cell wait">Tạo phiếu hoàn tiền</div>
+      <div class="swim-cell act">Duyệt phiếu</div>
+      <div class="swim-cell act">Ghi log, push Etsy</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Các bước chi tiết (10 bước)</h3>
+    <ul class="steps">
+      <li>
+        <div class="n">1</div>
+        <div class="body">
+          <div class="who">Khách Etsy</div>
+          <div class="title">Ghi chú vào nhật ký bên đơn hàng</div>
+          <div class="desc">Khách hỏi tình trạng, báo lỗi sản phẩm, hoặc yêu cầu đổi địa chỉ bằng cách ghi chú trong vùng nhật ký bên cạnh thông tin đơn hàng.</div>
+          <div class="sys"><b>Chatter:</b> Ghi chú khách được hiển thị trực tiếp trong nhật ký trao đổi của đơn hàng.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">2</div>
+        <div class="body">
+          <div class="who">BA Marketing</div>
+          <div class="title">Đọc ghi chú từ khách + trả lời</div>
+          <div class="desc">Mở đơn hàng → tab Nhật ký → đọc ghi chú khách mới nhất. Nếu là câu hỏi, trả lời qua chatter. Nếu là yêu cầu đổi địa chỉ hoặc lỗi sản phẩm → chuyển bước tiếp theo.</div>
+          <div class="sys"><b>Hiển thị:</b> Nhật ký là cột bên cạnh form đơn, danh sách ghi chú + trả lời theo thời gian.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">3</div>
+        <div class="body">
+          <div class="who">BA Marketing</div>
+          <div class="title">Nếu khách yêu cầu đổi địa chỉ — bấm wizard</div>
+          <div class="desc">Nếu ghi chú là yêu cầu sửa địa chỉ → bấm nút <b>"Yêu cầu đổi địa chỉ"</b> ở form đơn. Wizard hiển thị địa chỉ hiện tại, cho sửa từng trường. Điền địa chỉ mới + lý do (copy từ ghi chú khách).</div>
+          <div class="sys"><b>Sau lưu:</b> Các ô địa chỉ trên form đơn bị <b>khoá</b> — BA Marketing không sửa trực tiếp được. Hệ thống tạo bản ghi yêu cầu chờ duyệt BA Lead.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">4</div>
+        <div class="body">
+          <div class="who">BA Lead</div>
+          <div class="title">Duyệt yêu cầu đổi địa chỉ</div>
+          <div class="desc">Menu Vận hành → Yêu cầu đổi địa chỉ. Mở yêu cầu mới → kiểm tra đơn còn ở giai đoạn cho phép (FR-017 gate: chỉ pre-production ≤ "Chờ in"). Bấm <b>"Duyệt"</b> để áp mới, hoặc <b>"Từ chối"</b> nếu đơn đã quá muộn.</div>
+          <div class="sys"><b>FR-017 gate:</b> Nếu đơn đã "Đang in" hay sau, nút Duyệt bị vô hiệu + cảnh báo. Chỉ pre-production mới cho đổi.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">5</div>
+        <div class="body">
+          <div class="who">Hệ thống</div>
+          <div class="title">Áp địa chỉ mới + mở khoá</div>
+          <div class="desc">Nếu BA Lead duyệt → các ô địa chỉ được mở khoá + cập nhật giá trị mới. Nhật ký tự ghi: "BA Lead duyệt yêu cầu đổi địa chỉ — áp mới."</div>
+          <div class="sys"><b>Nhật ký:</b> Ghi log tự động với người duyệt, ngày giờ, hành động.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">6</div>
+        <div class="body">
+          <div class="who">BA Lead</div>
+          <div class="title">Nếu khách báo lỗi sản phẩm — chuyển In lại</div>
+          <div class="desc">Từ ghi chú là lỗi (in mờ, rách, sai màu, ...) → bấm <b>"Chuyển sang In lại"</b> ở tab Pipeline. Wizard hỏi lý do (ghi chi tiết từ ghi chú khách).</div>
+          <div class="sys"><b>Sau lưu:</b> Pipeline reset về "Chờ in" (hoặc "Chờ duyệt thiết kế"). Nhật ký ghi transition với timestamp.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">7</div>
+        <div class="body">
+          <div class="who">Sản xuất</div>
+          <div class="title">Tạo phiếu sản xuất mới</div>
+          <div class="desc">Nhận thông báo đơn chuyển sang "In lại" → tạo lệnh sản xuất mới cho đơn gốc. Tệp thiết kế đã duyệt được tự động dùng lại, không phải thiết kế lại.</div>
+          <div class="sys"><b>File:</b> Design Files giữ nguyên từ sản xuất lần 1 — truy xuất từ lịch sử approval của đơn gốc.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">8</div>
+        <div class="body">
+          <div class="who">BA Shipping</div>
+          <div class="title">Nhập tracking sau khi in xong</div>
+          <div class="desc">Sau sản xuất in xong → nhập tracking mới qua wizard. Nếu MTO → tracking GKE. Nếu Dropship → hệ thống tạo phiếu Gearment mới, tracking về từ webhook.</div>
+          <div class="sys"><b>Lịch sử:</b> Hệ thống lưu cả tracking gốc lẫn tracking in lại → người dùng thấy 2 tracking cùng lúc trên đơn gốc.</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">9</div>
+        <div class="body">
+          <div class="who">Hệ thống · nền</div>
+          <div class="title">Push tracking thứ hai lên Etsy</div>
+          <div class="desc">Khi tracking mới được nhập → hệ thống tự gọi API Etsy để post tracking thứ hai. Etsy hiển thị 2 tracking trên cùng 1 receipt.</div>
+          <div class="sys"><b>Audit:</b> Log ghi mỗi lần push (thời gian, tracking code, shop, status từ Etsy).</div>
+        </div>
+      </li>
+
+      <li>
+        <div class="n">10</div>
+        <div class="body">
+          <div class="who">BA Marketing · hoàn tiền</div>
+          <div class="title">Xử lý hoàn tiền (hôm nay thủ công)</div>
+          <div class="desc"><b>Hôm nay:</b> BA Marketing mở Etsy Shop Manager → tìm receipt → refund thủ công → ghi note vào nhật ký Odoo: "Refunded $X.XX qua Etsy ngày YYYY-MM-DD".<br><b>Kế hoạch:</b> Mô hình Phiếu hoàn tiền sẽ quản lý workflow (nháp → duyệt → hoàn). BA Lead duyệt → API push Etsy tự động.</div>
+          <div class="sys"><b>Hôm nay:</b> Thủ công qua Etsy site. <b>Kế hoạch:</b> Phiếu hoàn tiền chưa code — workflow: tạo → duyệt → push Etsy → ghi log.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="mu-wrap">
+      <div class="mu-h">Màn hình trong quy trình</div>
+      <div class="mu-lede">Bốn màn hình mô phỏng: chatter ghi chú khách, wizard duyệt đổi địa chỉ, pipeline in lại, phiếu hoàn tiền.</div>
+
+      <div class="mu-screen">
+        <div class="mu-ttl">Màn hình 1 · <strong>Nhật ký bên đơn hàng — Ghi chú khách</strong></div>
+        <div class="mu-chrome">
+          <span class="mu-app">Hatafa Ops</span>
+          <span class="mu-tab on">Đơn hàng</span>
+          <span class="mu-sp"></span>
+          <span class="mu-user">marketing@hatafa</span>
+        </div>
+        <div class="mu-crumb">Đơn hàng <span class="s">›</span> <strong>#S03341 · Coffee Mug Linen</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 220px;gap:14px;padding:16px 18px;background:#f9fafb;border-bottom:1px solid var(--line)">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:3px">Trạng thái</div>
+            <div style="font-size:13px;color:var(--ink);font-weight:600">Hoàn tất · Giao 2026-06-01</div>
+          </div>
+          <div style="border-left:1px solid var(--line);padding-left:14px">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:3px">Khách</div>
+            <div style="font-size:13px;color:var(--ink);font-weight:600">Sarah Miller</div>
+          </div>
+        </div>
+        <div style="padding:16px 18px;background:#fff;display:grid;grid-template-columns:1fr 260px;gap:16px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">Nhật ký bên (3 ghi chú)</div>
+            <div style="margin-bottom:14px;padding:12px;background:#f0fbf5;border-left:3px solid var(--ok);border-radius:0 6px 6px 0">
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">Sarah Miller · 2 giờ trước</div>
+              <div style="font-size:13px;color:var(--ink);margin-bottom:4px">Hi, love the mug! But I need to change my address. Just moved to new apartment.</div>
+              <span class="mu-pill neu">ghi chú khách</span>
+            </div>
+            <div style="margin-bottom:14px;padding:12px;background:#fef9c3;border-left:3px solid var(--warn);border-radius:0 6px 6px 0">
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">BA Marketing · 1 giờ trước</div>
+              <div style="font-size:13px;color:var(--ink);margin-bottom:4px">Hi Sarah! No problem. I'll create an address change request right away. Hear back in 2 hours.</div>
+              <span class="mu-pill info">replied</span>
+            </div>
+            <div style="padding:12px;background:#eaf1fd;border-left:3px solid var(--info);border-radius:0 6px 6px 0">
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">BA Marketing · 45 phút trước</div>
+              <div style="font-size:13px;color:var(--ink)">📋 Created address change request</div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--bg)">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:8px">Tổng giá</div>
+            <div style="font-size:15px;color:var(--ink);font-weight:700;margin-bottom:12px">$25.50</div>
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:4px">Shop</div>
+            <div style="font-size:12px;color:var(--ink);margin-bottom:14px">JaHandmadeArt</div>
+            <button class="mu-btn" style="width:100%;margin-bottom:6px">Reply</button>
+            <button class="mu-btn" style="width:100%">Yêu cầu đổi địa chỉ</button>
+          </div>
+        </div>
+        <div class="mu-cap"><b>Nhật ký bên</b> hiển thị cột bên phải, ghi chú khách + trả lời BA. Cột bên trái là nội dung chính, cột phải là tóm tắt + nút hành động nhanh.</div>
+      </div>
+
+      <div class="mu-screen">
+        <div class="mu-ttl">Màn hình 2 · <strong>Wizard duyệt đổi địa chỉ — BA Lead approval</strong></div>
+        <div class="mu-chrome">
+          <span class="mu-app">Hatafa Ops</span>
+          <span class="mu-tab on">Yêu cầu đổi địa chỉ</span>
+          <span class="mu-sp"></span>
+          <span class="mu-user">ba.lead@hatafa</span>
+        </div>
+        <div class="mu-modal-ov">
+          <div class="mu-modal">
+            <div class="mu-modal h">Duyệt yêu cầu đổi địa chỉ · #AC-001</div>
+            <div class="mu-modal b">
+              <div class="mu-modal banner">Lưu ý: Đơn #S03341 ở "Chờ duyệt thiết kế" — vẫn có thể đổi. Nếu "Đang in" trở đi sẽ FR-017 lock.</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0">
+                <div>
+                  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:4px">Đơn gốc</div>
+                  <div style="font-size:13px;color:var(--ink);font-weight:600">#S03341</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:4px">Yêu cầu từ</div>
+                  <div style="font-size:13px;color:var(--ink);font-weight:600">BA Marketing · 1 giờ</div>
+                </div>
+              </div>
+              <div style="margin:14px 0">
+                <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:6px">Địa chỉ hiện tại</div>
+                <div style="font-size:13px;color:var(--ink);background:#fafafa;padding:10px;border-radius:6px;border:1px solid var(--line)">Sarah Miller<br>123 Main St, Apt 4B<br>Milwaukee, WI 53202<br>USA</div>
+              </div>
+              <div style="margin:14px 0">
+                <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:6px">Địa chỉ mới</div>
+                <div style="font-size:13px;color:var(--ink);background:#fef9c3;padding:10px;border-radius:6px;border:1px solid #ca8a04">Sarah Miller<br>456 Oak Ave, Suite 12C<br>Milwaukee, WI 53205<br>USA</div>
+              </div>
+              <div style="margin:14px 0">
+                <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:6px">Lý do</div>
+                <div style="font-size:13px;color:var(--ink)">Khách vừa chuyển nhà</div>
+              </div>
+            </div>
+            <div class="mu-modal f">
+              <button class="mu-btn">Từ chối</button>
+              <button class="mu-btn pri">Duyệt</button>
+            </div>
+          </div>
+        </div>
+        <div class="mu-cap">BA Lead mở yêu cầu. Nếu đơn pre-production, nút <b>Duyệt</b> sáng. Nếu "Đang in", bị vô hiệu. Sau duyệt, hệ thống áp địa chỉ mới + ghi nhật ký.</div>
+      </div>
+
+      <div class="mu-screen">
+        <div class="mu-ttl">Màn hình 3 · <strong>Pipeline tab — Chuyển sang In lại</strong></div>
+        <div class="mu-chrome">
+          <span class="mu-app">Hatafa Ops</span>
+          <span class="mu-tab">Tổng quan</span>
+          <span class="mu-tab on">Pipeline</span>
+          <span class="mu-sp"></span>
+          <span class="mu-user">ba.lead@hatafa</span>
+        </div>
+        <div class="mu-bar">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px">Trạng thái hiện tại</div>
+            <div style="font-size:13px;color:var(--ink);font-weight:600">Hoàn tất</div>
+          </div>
+          <button class="mu-btn" style="background:#fef9c3;color:#854d0e;border-color:#ca8a04">Chuyển sang In lại</button>
+        </div>
+        <div style="padding:16px 18px;background:#fff">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-bottom:10px">Pipeline states</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <div style="padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;color:var(--muted)">Chờ duyệt</div>
+            <div style="color:var(--muted)">›</div>
+            <div style="padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;color:var(--muted)">Chờ in</div>
+            <div style="color:var(--muted)">›</div>
+            <div style="padding:6px 12px;border:1px solid var(--brand);background:#faf5f9;border-radius:999px;font-size:11.5px;color:var(--brand);font-weight:600">Đang in</div>
+            <div style="color:var(--muted)">›</div>
+            <div style="padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;color:var(--muted)">Hoàn tất</div>
+          </div>
+        </div>
+        <div style="padding:14px 18px;background:#f9fafb;border-top:1px solid var(--line);font-size:12px;color:var(--muted)">
+          <b>Tệp thiết kế:</b> design-coffee-mug-v1.pdf — đã duyệt 2026-05-28, giữ nguyên
+        </div>
+        <div class="mu-cap">BA Lead bấm <b>"Chuyển sang In lại"</b> → pipeline reset. Design Files tái sử dụng. Nhật ký ghi transition với timestamp + người.</div>
+      </div>
+
+      <div class="mu-screen">
+        <div class="mu-ttl">Màn hình 4 · <strong>Phiếu hoàn tiền — Workflow duyệt (thiết kế)</strong></div>
+        <div class="mu-chrome">
+          <span class="mu-app">Hatafa Ops</span>
+          <span class="mu-tab on">Phiếu hoàn tiền</span>
+          <span class="mu-sp"></span>
+          <span class="mu-user">marketing@hatafa</span>
+        </div>
+        <div class="mu-crumb">Phiếu hoàn tiền <span class="s">›</span> <strong>#RF-002 · Nháp</strong></div>
+        <div class="mu-form">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:12px">Phiếu hoàn tiền</div>
+          <div class="mu-grid2">
+            <div class="mu-fld">
+              <div class="mu-fld k">Đơn hàng</div>
+              <div class="mu-fld v">#S03341 · Sarah Miller</div>
+            </div>
+            <div class="mu-fld">
+              <div class="mu-fld k">Trạng thái</div>
+              <div class="mu-fld v"><span class="mu-pill neu">Nháp</span></div>
+            </div>
+            <div class="mu-fld">
+              <div class="mu-fld k">Số tiền</div>
+              <div class="mu-fld v amt">$25.50</div>
+            </div>
+            <div class="mu-fld">
+              <div class="mu-fld k">Lý do</div>
+              <div class="mu-fld v">Sản phẩm lỗi — in mờ</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+            <button class="mu-btn">Hủy</button>
+            <button class="mu-btn pri">Gửi duyệt</button>
+          </div>
+        </div>
+        <div class="mu-cap">Hôm nay hoàn tiền là thủ công Etsy site. Kế hoạch: <b>Phiếu hoàn tiền</b> quản lý workflow (nháp → duyệt → Etsy tự động). Ghi note vào nhật ký bên đơn.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Việc thường gặp</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Tình huống</th>
+          <th>Cách xử lý</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Khách ghi chú muốn đổi địa chỉ</b></td>
+          <td>BA Marketing bấm "Yêu cầu đổi địa chỉ" → điền mới → BA Lead duyệt. Nếu đơn đã in, FR-017 lock — giải thích khách qua ghi chú đơn đã giao bưu tá, không đổi được.</td>
+        </tr>
+        <tr>
+          <td><b>Khách báo sản phẩm lỗi (in mờ, rách, ...)</b></td>
+          <td>Trưởng nhóm chuyển đơn sang "In lại" kèm lý do. Sản xuất tạo lệnh sản xuất mới và dùng lại tệp thiết kế cũ. Nhân viên giao vận nhập mã vận đơn mới. Etsy ghi nhận mã vận đơn mới cho đơn.</td>
+        </tr>
+        <tr>
+          <td><b>Khách yêu cầu hoàn tiền (lỗi sản phẩm)</b></td>
+          <td>Hôm nay: BA Marketing refund thủ công Etsy Shop Manager + ghi note Odoo. Kế hoạch: Phiếu hoàn tiền, BA Lead duyệt → API Etsy tự động.</td>
+        </tr>
+        <tr>
+          <td><b>Ghi chú khách quá lâu chưa ai đọc</b></td>
+          <td>Nhật ký có timestamp → dễ thấy chờ bao lâu. BA Marketing kiểm tra hàng ngày. Có thể cài alert khi có ghi chú mới khách.</td>
+        </tr>
+        <tr>
+          <td><b>Yêu cầu đổi bị từ chối (post-production)</b></td>
+          <td>BA Lead bấm "Từ chối" → log ghi + mở khoá ô. BA Marketing ghi note giải thích khách: "Đơn in nhãn, không đổi được — liên hệ nếu cần."</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Luồng & vai trò liên quan</h3>
+    <div class="xlinks">
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Trước</b>Luồng 2 — Khi listing có người mua, đơn về Odoo</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Liên quan</b>Luồng 3A — Giao nội bộ — in lại dùng cơ chế tương tự</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Liên quan</b>Luồng 3B — Dropship — tạo phiếu in lại Gearment</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò 1</b>Trưởng nhóm vận hành — duyệt đổi địa chỉ, in lại, hoàn tiền</a>
+      <a href="role-2-marketing.html"><b>Vai trò 2</b>Marketing — đăng bán, quản lý listing</a>
+    </div>
+  </div>
+
+  <footer>Cẩm nang vận hành Hatafa Ops · Hình minh hoạ thể hiện ý tưởng bố cục, không phải đặc tả chi tiết từng điểm ảnh · 2026-06-27</footer>
+
+</div>
+
+</body>
+</html>

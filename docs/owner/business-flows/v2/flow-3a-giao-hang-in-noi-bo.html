@@ -1,0 +1,328 @@
+<!DOCTYPE html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quy trình 3a — Giao hàng in nội bộ (MTO) — Hatafa Ops</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;
+    --bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;
+    --ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}
+  /* top brand bar (cross-page nav) */
+  .appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}
+  .appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}
+  .appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  /* hero */
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}
+  header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  header.hero .hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  /* layout */
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}
+  h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}
+  p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  /* section block (numbered like v1: A/B/C…) */
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .goal{background:#faf7fb;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0}.goal b{color:var(--brand-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .note{background:#eaf1fd;border-left:4px solid var(--info);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .tip{background:#edf8f2;border-left:4px solid var(--ok);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .warnbox{background:#fdeceb;border-left:4px solid var(--bad);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  /* ===== SWIMLANE (role x milestone) ===== */
+  .swim{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;margin:12px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9!important;font-weight:600;color:var(--brand-d);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .swim-row-lbl{background:#faf8fb!important;color:var(--muted);font-weight:600;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.act{background:#f0fbf5!important}.swim-cell.wait{background:#fffbeb!important;color:#a16207}
+  .swim-cell.dim{color:#c3bdcb}
+  /* ===== STEP LIST (detailed, with role + system note) ===== */
+  .steps{list-style:none;margin:8px 0;padding:0}
+  .steps>li{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid #f1eef3}
+  .steps>li:last-child{border-bottom:none}
+  .steps>li .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:var(--brand);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li .body{flex:1}
+  .steps>li .who{font-size:11.5px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .steps>li .title{font-weight:700;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .steps>li .desc{color:#555;font-size:13.7px;line-height:1.6}
+  .steps>li .sys{margin-top:7px;background:#faf8fb;border-left:3px solid var(--brand);padding:8px 12px;font-size:12.7px;color:#4b5563;border-radius:0 6px 6px 0}
+  .steps>li .sys b{color:#1f2937}
+  /* ordered counter variant (no role) */
+  ol.nsteps{counter-reset:s;list-style:none;margin:14px 0;padding:0}
+  ol.nsteps>li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px 14px 56px;margin:10px 0}
+  ol.nsteps>li::before{content:counter(s);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ol.nsteps>li b{color:var(--brand-d)}
+  /* ===== TABLES ===== */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:last-child td{border-bottom:none}
+  /* status badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-ok{background:#e6f6ee;color:var(--ok)}.b-warn{background:#fdf3dd;color:var(--warn)}
+  .b-info{background:#eaf1fd;color:var(--info)}.b-bad{background:#fdeceb;color:var(--bad)}.b-brand{background:#eee9f7;color:var(--brand-d)}
+  /* ===== FULL-CHROME SCREEN MOCKUP (mu-*) ===== */
+  .mu-wrap{background:#f1edf2;border:1px solid var(--line);border-radius:12px;padding:20px 18px 16px;margin:16px 0}
+  .mu-wrap>.mu-h{color:#1f2937;font-size:16px;font-weight:700;margin:0 0 4px}
+  .mu-wrap>.mu-lede{color:var(--muted);font-size:13.3px;margin-bottom:14px;max-width:820px}
+  .mu-screen{background:#fff;border:1px solid #d8d2dd;border-radius:6px;margin-bottom:18px;overflow:hidden;font:13px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937;box-shadow:0 6px 18px rgba(87,58,80,.08)}
+  .mu-screen:last-child{margin-bottom:0}
+  .mu-ttl{padding:9px 16px;font-size:12.5px;color:var(--muted);background:#faf8fb;border-bottom:1px solid var(--line)}.mu-ttl strong{color:#1f2937}
+  .mu-chrome{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--brand);color:#fff;font-size:13px}
+  .mu-chrome .mu-app{font-weight:700;margin-right:6px}
+  .mu-chrome .mu-tab{color:rgba(255,255,255,.82);padding:3px 8px;border-radius:6px;font-size:12.5px}
+  .mu-chrome .mu-tab.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+  .mu-chrome .mu-sp{flex:1}.mu-chrome .mu-user{color:rgba(255,255,255,.8);font-size:12px}
+  /* role-aware left sidebar inside chrome */
+  .mu-body{display:flex;min-height:60px}
+  .mu-sb{background:var(--brand-d);color:#fff;width:178px;flex-shrink:0;padding:8px 0;font-size:12.5px}
+  .mu-sb .g{padding:7px 14px 2px;opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .mu-sb .i{padding:5px 14px}.mu-sb .i.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent);padding-left:11px}
+  .mu-main{flex:1;min-width:0}
+  .mu-crumb{padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);font-size:12.5px;color:#4b5563}.mu-crumb .s{color:#b6aebf;padding:0 6px}.mu-crumb strong{color:#1f2937}
+  .mu-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);background:#faf8fb;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d3ccd9;background:#fff;color:#374151;border-radius:5px;font-weight:600}
+  .mu-btn.pri{border-color:var(--brand);background:var(--brand);color:#fff}
+  .mu-btn.link{border:none;background:transparent;color:var(--brand);padding:5px 6px}
+  /* KPI band */
+  .mu-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:14px}
+  @media(max-width:760px){.mu-kpis{grid-template-columns:repeat(2,1fr)}}
+  .mu-kpi{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#faf8fb}
+  .mu-kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+  .mu-kpi .n{font-size:23px;font-weight:800;color:var(--brand-d);line-height:1.1}
+  .mu-kpi.alert{background:#fdeceb;border-color:#f3c7c2}.mu-kpi.alert .n{color:var(--bad)}
+  .mu-kpi.good .n{color:var(--ok)}
+  /* filter chips */
+  .mu-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 12px}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 12px;background:#fff;color:var(--muted)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  /* data list */
+  .mu-list{width:100%;border-collapse:collapse;font-size:12.7px;margin:0;border:none;border-radius:0}
+  .mu-list thead th{background:#faf8fb;padding:8px 12px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .mu-list tbody td{padding:9px 12px;border-bottom:1px solid #f1eef3;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--brand);font-weight:600;font-size:12px}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+  .mu-pill.ok{background:#dcfce7;color:#15803d}.mu-pill.warn{background:#fef3c7;color:#b45309}
+  .mu-pill.bad{background:#fee2e2;color:#b91c1c}.mu-pill.neu{background:#f1eef3;color:#4b5563}
+  .mu-pill.info{background:#dbeafe;color:#1d4ed8}.mu-pill.brand{background:#eee9f7;color:var(--brand-d)}
+  /* tabs inside a form */
+  .mu-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;background:#fff}
+  .mu-tab2{padding:9px 14px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab2.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+  /* form fields */
+  .mu-form{padding:16px 18px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}@media(max-width:760px){.mu-grid2{grid-template-columns:1fr}}
+  .mu-fld{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f0f5}
+  .mu-fld .k{color:var(--muted);font-size:12px}.mu-fld .v{color:#1f2937;font-size:13px}
+  .mu-fld .v.amt{font-variant-numeric:tabular-nums;font-weight:700}
+  /* kanban board */
+  .mu-kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;background:#f3f0f4;overflow-x:auto}
+  .mu-kcol{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:150px}
+  .mu-kcol h5{margin:2px 4px 8px;font-size:11.5px;color:var(--brand-d);display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.3px}
+  .mu-kcol h5 .c{background:#faf5f9;border:1px solid var(--line);border-radius:20px;padding:0 8px;font-weight:700}
+  .mu-kc{background:#faf8fb;border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:8px}
+  .mu-kc.late{border-left:3px solid var(--bad);background:#fdf6f5}
+  .mu-kc h6{margin:0 0 4px;font-size:12.5px;color:var(--brand-d);font-weight:700}
+  .mu-kc .m{font-size:11.3px;color:var(--muted);line-height:1.55}
+  /* modal */
+  .mu-modal-ov{padding:24px;background:rgba(31,19,32,.55);display:flex;justify-content:center}
+  .mu-modal{background:#fff;border-radius:7px;max-width:540px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.2);overflow:hidden}
+  .mu-modal .h{padding:12px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+  .mu-modal .h.warn{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .mu-modal .h.brandh{background:#faf5f9;color:var(--brand-d)}
+  .mu-modal .b{padding:16px 18px}
+  .mu-modal .banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:5px;font-size:12.5px;margin:10px 0;border-left:3px solid #ca8a04}
+  .mu-modal .f{padding:12px 18px;border-top:1px solid var(--line);background:#faf8fb;display:flex;justify-content:flex-end;gap:8px}
+  .mu-cap{padding:10px 16px;font-size:12.3px;color:var(--muted);background:#faf8fb;border-top:1px solid var(--line);line-height:1.55}.mu-cap b{color:#1f2937}
+  /* ===== permissions / kpi-list ===== */
+  .deflist{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0;padding:0}
+  .deflist li{background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:#374151}
+  .deflist li b{color:var(--brand-d);display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+  /* ===== cross-link grid ===== */
+  .xlinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:10px 0}
+  .xlinks a{display:block;background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;text-decoration:none;color:inherit;font-size:13px;transition:.14s}
+  .xlinks a:hover{border-color:var(--brand-l);box-shadow:0 4px 12px rgba(87,58,80,.08)}
+  .xlinks a b{display:block;color:var(--brand);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  /* ===== index link cards ===== */
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:16px 0}
+  .lcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:.14s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .lcard:hover{border-color:var(--brand-l);box-shadow:0 6px 18px rgba(87,58,80,.10);transform:translateY(-2px)}
+  .lcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--brand-l);font-weight:700;margin-bottom:6px}
+  .lcard .t{font-weight:700;color:var(--brand-d);font-size:15px;margin-bottom:4px}
+  .lcard .d{font-size:13px;color:var(--muted)}
+  /* footer */
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+</style></head><body>
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· Cẩm nang vận hành</span></div>
+  <nav>
+    <a href="index.html">Tổng quan</a>
+    <a href="etsy-quy-trinh.html">Quy trình Etsy</a>
+    <a href="flow-1-tao-san-pham.html">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html" class="active">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html">Hậu mãi</a>
+    <a href="index.html#roles">Vai trò</a>
+  </nav>
+</div>
+<header class="hero">
+  <div class="eyebrow">Quy trình 3a</div>
+  <h1>Giao hàng in nội bộ (MTO)</h1>
+  <div class="sub">Sản phẩm in tại xưởng nội bộ theo thiết kế khách yêu cầu, sau đó vận chuyển qua USPS, UniUni hoặc YunExpress. Vai trò BA Lead, Thiết kế, Sản xuất, QC/Đóng gói, Shipping tham gia theo giai đoạn. Mỗi trạng thái thay đổi được ghi lại, không ai có thể xóa hoặc sửa lịch sử.</div>
+  <div class="pills">
+    <span class="hpill">Dành cho: BA Lead, Thiết kế, Sản xuất, QC, Shipping</span>
+    <span class="hpill">Trạng thái: 17 giai đoạn</span>
+    <span class="hpill">Đặc điểm: Thiết kế + QC + Tracking</span>
+  </div>
+</header>
+<div class="wrap">
+<div class="section">
+  <h3><span class="num">A</span> Sơ đồ vai trò — Ai làm gì</h3>
+  <p style="margin-bottom:14px;color:var(--muted);font-size:14px">Cột = Vai trò; Hàng = Giai đoạn; Ô = Hoạt động của vai trò tại giai đoạn đó.</p>
+  <div class="swim" style="grid-template-columns:130px repeat(5,1fr)">
+    <div class="swim-head">Giai đoạn</div>
+    <div class="swim-head">BA Lead</div>
+    <div class="swim-head">Thiết kế (PD)</div>
+    <div class="swim-head">Sản xuất</div>
+    <div class="swim-head">QC/Đóng gói</div>
+    <div class="swim-head">Hệ thống & Vận chuyển</div>
+    <div class="swim-row-lbl">Đơn vào</div>
+    <div class="swim-cell act">Nhận & kiểm tra</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-row-lbl">Thiết kế</div>
+    <div class="swim-cell act">Duyệt file</div>
+    <div class="swim-cell act">Upload design</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-row-lbl">Sản xuất</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell act">In / Khắc</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-row-lbl">QC</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell act">Kiểm chất lượng</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-row-lbl">Đóng gói</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell act">Chuẩn bị bưu kiện</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-row-lbl">Tracking</div>
+    <div class="swim-cell wait">Nhập mã</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell act">In nhãn, đẩy Etsy</div>
+    <div class="swim-row-lbl">Vận chuyển</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell dim">—</div>
+    <div class="swim-cell act">Theo dõi, cập nhật</div>
+  </div>
+</div>
+<div class="section">
+  <h3><span class="num">B</span> Các bước chi tiết (17 bước)</h3>
+  <ul class="steps">
+    <li><div class="n">1</div><div class="body"><div class="who">BA LEAD</div><div class="title">Đơn vào pipeline</div><div class="desc">Đơn Etsy vừa đồng bộ từ API hoặc nhập thủ công. BA kiểm tra thông tin khách hàng, địa chỉ gửi hàng, và số lượng sản phẩm.</div></div></li>
+    <li><div class="n">2</div><div class="body"><div class="who">BA LEAD</div><div class="title">Xác nhận đơn & kiểm tra yêu cầu</div><div class="desc">BA xác nhận sale order nếu thông tin khách đúng. Ghi chú yêu cầu đặc biệt của khách (ví dụ: cá nhân hoá tên, yêu cầu bao gói đặc biệt).</div></div></li>
+    <li><div class="n">3</div><div class="body"><div class="who">THIẾT KẾ (PD)</div><div class="title">Upload file thiết kế</div><div class="desc">Đội thiết kế upload file in (mặt trước, mặt sau, ảnh tham chiếu) vào đơn. Định dạng: PDF, PNG hoặc AI (nén RAR/ZIP).</div></div></li>
+    <li><div class="n">4</div><div class="body"><div class="who">BA LEAD</div><div class="title">Chờ duyệt thiết kế</div><div class="desc">BA (hoặc khách, nếu yêu cầu) duyệt file thiết kế. Nếu OK → chuyển "Đã duyệt". Nếu lỗi → thông báo Thiết kế sửa lại (qua chatter).</div></div></li>
+    <li><div class="n">5</div><div class="body"><div class="who">BA LEAD</div><div class="title">Đã duyệt thiết kế</div><div class="desc">File thiết kế được phê duyệt, sẵn sàng in. Hệ thống chuyển đơn sang chặng sản xuất để xưởng nhà bắt đầu in.</div></div></li>
+    <li><div class="n">6</div><div class="body"><div class="who">SẢN XUẤT</div><div class="title">In / Khắc sản phẩm</div><div class="desc">Xưởng in (hoặc khắc) thực hiện in theo file thiết kế đã duyệt. Mỗi sản phẩm được ghi lại SKU + số lượng.</div></div></li>
+    <li><div class="n">7</div><div class="body"><div class="who">QC TEAM</div><div class="title">Kiểm chất lượng sản phẩm</div><div class="desc">Đội QC kiểm tra sản phẩm in: kích thước, độ sáng, không bị smear, không xước hoặc bẩn. Dùng QC checklist để tích từng điểm. Nếu OK → ghi nhận qua. Nếu lỗi → chuyển "In lại".</div></div></li>
+    <li><div class="n">8</div><div class="body"><div class="who">QC & SHIPPING</div><div class="title">Đóng gói bưu kiện</div><div class="desc">Chuẩn bị bưu kiện: dán nhãn nội bộ (SKU, tên sản phẩm), kiểm tra hộp (không bị lỏng, không bị nước), cân nặng, đo chiều dài × rộng × cao. Lưu trữ tại khu vực chờ.</div></div></li>
+    <li><div class="n">9</div><div class="body"><div class="who">SHIPPING</div><div class="title">Chờ mã vận đơn & hãng vận chuyển</div><div class="desc">Bưu kiện đã đóng, chờ BA nhập mã vận đơn (tracking number) từ hãng vận chuyển (USPS, UniUni, YunExpress) và tên hãng.</div></div></li>
+    <li><div class="n">10</div><div class="body"><div class="who">SHIPPING</div><div class="title">In nhãn vận chuyển</div><div class="desc">Hệ thống phát sinh nhãn vận chuyển từ tracking number. Dán nhãn lên bưu kiện, kiểm tra rõ ràng (không bị rách, không bị ướt).</div></div></li>
+    <li><div class="n">11</div><div class="body"><div class="who">SHIPPING</div><div class="title">Bàn giao cho hãng vận chuyển</div><div class="desc">Đối tác vận chuyển (USPS, UniUni, v.v.) nhận bưu kiện. Hệ thống cập nhật trạng thái tự động khi API phản hồi.</div></div></li>
+    <li><div class="n">12</div><div class="body"><div class="who">HỆ THỐNG & CARRIER</div><div class="title">Bưu kiện đang vận chuyển</div><div class="desc">Bưu kiện trên đường. Khách có thể theo dõi tracking link trên Etsy hoặc website hãng vận chuyển.</div></div></li>
+    <li><div class="n">13</div><div class="body"><div class="who">HỆ THỐNG & CARRIER</div><div class="title">Khách đã nhận hàng (Delivered)</div><div class="desc">Hãng vận chuyển báo Delivered. Hệ thống nhận webhook từ carrier và tự động cập nhật trạng thái đơn.</div></div></li>
+    <li><div class="n">14</div><div class="body"><div class="who">BA LEAD</div><div class="title">Có vấn đề / Hậu mãi</div><div class="desc">Khách báo lỗi, sai size, hư hỏng, hoặc yêu cầu đặc biệt. BA ghi lý do trong chatter và chuyển sang quy trình hậu mãi (hoàn tiền / thay thế / in lại).</div></div></li>
+    <li><div class="n">15</div><div class="body"><div class="who">BA LEAD / SUPPORT</div><div class="title">Xử lý hậu mãi</div><div class="desc">Tùy yêu cầu khách: hoàn tiền (duyệt qua lead), thay thế (in lại), hoặc hỗ trợ khác. Ghi lại chi tiết xử lý trong chatter.</div></div></li>
+    <li><div class="n">16</div><div class="body"><div class="who">SẢN XUẤT</div><div class="title">In lại (nếu cần)</div><div class="desc">Nếu phát hiện lỗi sản xuất hoặc khách yêu cầu thay thế, Sản xuất in lại sản phẩm theo file gốc. QC kiểm tra lại, sau đó giao hàng mới.</div></div></li>
+    <li><div class="n">17</div><div class="body"><div class="who">BA LEAD</div><div class="title">Đơn hoàn tất</div><div class="desc">Đơn kết thúc: khách nhận hàng, không vấn đề; hoặc hậu mãi đã xử lý xong. Đóng đơn, lưu lại lịch sử cho báo cáo.</div></div></li>
+  </ul>
+</div>
+<div class="section">
+  <h3><span class="num">C</span> Màn hình trong quy trình</h3>
+  <div class="mu-wrap">
+    <h3 class="mu-h">Giao diện & Luồng công việc</h3>
+    <p class="mu-lede">Bốn màn hình minh hoạ chính: Kanban Pipeline (kéo-thả), Duyệt Thiết kế, Nhập Tracking, và Form Đơn với trạng thái.</p>
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 1 · <strong>Kanban Pipeline — Kéo thả trạng thái</strong></div>
+      <div class="mu-chrome"><span class="mu-app">Hatafa Ops</span> <span class="mu-tab">Đơn hàng</span> <span class="mu-sp"></span> <span class="mu-user">BA Lead</span></div>
+      <div style="padding:14px;background:#fff;min-height:240px"><div style="font-size:12px;color:#6b6675;margin-bottom:10px">Kéo thả thẻ để cập nhật trạng thái. Mỗi thay đổi được ghi lại với người dùng, thời gian, và lý do.</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;font-size:12px"><div style="border:1px solid #e7e2e9;border-radius:8px;padding:8px;background:#f9fafb"><div style="font-weight:600;color:#573a50;margin-bottom:8px">Mới nhận <span style="float:right;background:#faf5f9;padding:0 6px;border-radius:12px">2</span></div><div style="background:#fff;border:1px solid #e7e2e9;border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-weight:600;color:#573a50">Order S03341</div><div style="font-size:11px;color:#6b6675;margin-top:3px">Jane Smith · Mug 5pcs</div></div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:8px;background:#f9fafb"><div style="font-weight:600;color:#573a50;margin-bottom:8px">Thiết kế <span style="float:right;background:#faf5f9;padding:0 6px;border-radius:12px">1</span></div><div style="background:#fff;border:1px solid #fef3c7;border-radius:6px;padding:8px;border-left:3px solid #fef3c7"><div style="font-weight:600;color:#573a50">Order S03343</div><div style="font-size:11px;color:#a16207;margin-top:3px">Chờ duyệt >2 ngày</div></div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:8px;background:#f9fafb"><div style="font-weight:600;color:#573a50;margin-bottom:8px">Sản xuất <span style="float:right;background:#faf5f9;padding:0 6px;border-radius:12px">3</span></div><div style="background:#f0fbf5;border-radius:6px;padding:8px;font-size:11px">3 đơn đang in...</div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:8px;background:#f9fafb"><div style="font-weight:600;color:#573a50;margin-bottom:8px">QC <span style="float:right;background:#faf5f9;padding:0 6px;border-radius:12px">2</span></div><div style="background:#f0fbf5;border-radius:6px;padding:8px;font-size:11px">2 đơn đang QC...</div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:8px;background:#f9fafb"><div style="font-weight:600;color:#573a50;margin-bottom:8px">Đã gửi <span style="float:right;background:#faf5f9;padding:0 6px;border-radius:12px">8</span></div></div></div></div>
+      <div class="mu-cap"><b>Kanban board</b> giúp xem nhanh số lượng đơn ở mỗi giai đoạn. Kéo thả thẻ để cập nhật trạng thái.</div>
+    </div>
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 2 · <strong>Duyệt Thiết kế — 3 cột</strong></div>
+      <div class="mu-chrome"><span class="mu-app">Hatafa Ops</span> <span class="mu-tab">Thiết kế</span> <span class="mu-sp"></span> <span class="mu-user">BA + PD</span></div>
+      <div style="padding:14px;background:#fff;min-height:150px"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:12px"><div style="border:1px solid #e7e2e9;border-radius:8px;padding:10px;background:#fef9c3"><div style="font-weight:600;color:#854d0e;margin-bottom:8px">Chờ duyệt (2)</div><div style="background:#fff;border-left:3px solid #fef3c7;border-radius:6px;padding:8px;margin-bottom:6px"><div style="font-size:11px;color:#6b6675">SKU: TSH-M</div><div style="font-weight:600;margin-top:2px">Front Design.pdf</div></div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:10px;background:#dcfce7"><div style="font-weight:600;color:#16a34a;margin-bottom:8px">Đã duyệt (1)</div><div style="background:#fff;border-left:3px solid #dcfce7;border-radius:6px;padding:8px"><div style="font-size:11px;color:#6b6675">SKU: HAT-OS</div><div style="font-weight:600;margin-top:2px">Hat Embroidery.pdf</div></div></div><div style="border:1px solid #e7e2e9;border-radius:8px;padding:10px;background:#fee2e2"><div style="font-weight:600;color:#b91c1c;margin-bottom:8px">Trả lại (0)</div><div style="color:#9ca3af">Không có</div></div></div></div>
+      <div class="mu-cap"><b>Design Approval board</b> — BA hoặc PD phê duyệt hay trả lại file thiết kế.</div>
+    </div>
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 3 · <strong>Nhập Mã Vận đơn</strong></div>
+      <div class="mu-chrome"><span class="mu-app">Hatafa Ops</span> <span class="mu-tab">Shipping</span> <span class="mu-sp"></span> <span class="mu-user">BA Shipping</span></div>
+      <div style="padding:14px;background:#fff"><table style="width:100%;font-size:12px;border-collapse:collapse"><thead style="background:#faf8fb"><tr><th style="padding:8px;border-bottom:1px solid #e7e2e9;text-align:left;color:#573a50;font-weight:600">Đơn hàng</th><th style="padding:8px;border-bottom:1px solid #e7e2e9;text-align:left;color:#573a50;font-weight:600">Mã vận đơn</th><th style="padding:8px;border-bottom:1px solid #e7e2e9;text-align:left;color:#573a50;font-weight:600">Hãng</th><th style="padding:8px;border-bottom:1px solid #e7e2e9;text-align:left;color:#573a50;font-weight:600">Trạng thái</th></tr></thead><tbody><tr style="border-bottom:1px solid #f1eef3"><td style="padding:9px 8px;color:#714B67;font-weight:600">S03341</td><td style="padding:9px 8px;font-family:monospace;color:#714B67;font-weight:600">1Z999AA10123456784</td><td style="padding:9px 8px"><span style="background:#dcfce7;padding:2px 8px;border-radius:12px;font-size:11px">USPS</span></td><td style="padding:9px 8px"><span style="background:#dbeafe;padding:2px 8px;border-radius:12px;font-size:11px">In nhãn ✓</span></td></tr><tr style="border-bottom:1px solid #f1eef3"><td style="padding:9px 8px;color:#714B67;font-weight:600">S03342</td><td style="padding:9px 8px;font-family:monospace;color:#714B67;font-weight:600">UNI-2024-0567890</td><td style="padding:9px 8px"><span style="background:#dcfce7;padding:2px 8px;border-radius:12px;font-size:11px">UniUni</span></td><td style="padding:9px 8px"><span style="background:#eee9f7;padding:2px 8px;border-radius:12px;font-size:11px">Đã gửi Etsy</span></td></tr></tbody></table></div>
+      <div class="mu-cap"><b>Bảng Tracking</b> — Shipping nhập mã vận đơn và chọn hãng vận chuyển.</div>
+    </div>
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 4 · <strong>Form Đơn — Tab Pipeline</strong></div>
+      <div class="mu-chrome"><span class="mu-app">Hatafa Ops</span> <span class="mu-tab">Đơn hàng</span> <span class="mu-sp"></span> <span class="mu-user">BA Lead</span></div>
+      <div style="padding:14px;background:#fff"><div style="border-bottom:1px solid #e7e2e9;margin-bottom:14px"><div style="padding:9px 0;color:#714B67;border-bottom:2px solid #714B67;font-weight:700">Thông tin</div></div><div style="margin-bottom:12px"><span style="color:#6b6675;font-weight:600;font-size:12px">Trạng thái pipeline</span><div style="display:flex;gap:8px;margin-top:6px"><select style="padding:6px 8px;border:1px solid #e7e2e9;border-radius:5px;font-size:12px"><option>Mới nhận</option><option>Sản xuất</option><option selected>QC/Đóng gói</option></select><button style="padding:6px 12px;background:#714B67;color:#fff;border:none;border-radius:5px;font-weight:600;font-size:12px">Lưu</button></div></div><div style="border-top:1px solid #e7e2e9;padding-top:12px"><div style="color:#6b6675;font-weight:600;margin-bottom:8px;font-size:12px">Lịch sử thay đổi</div><div style="background:#faf8fb;border-left:3px solid #714B67;padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:6px;font-size:11px"><b>2026-06-27 14:30</b> · BA Lead Nguyễn Anh: "Thiết kế" → "Sản xuất"</div><div style="background:#faf8fb;border-left:3px solid #714B67;padding:8px 12px;border-radius:0 6px 6px 0;font-size:11px"><b>2026-06-26 09:15</b> · PD Thiên Hương duyệt thiết kế</div></div></div>
+      <div class="mu-cap"><b>Form Đơn</b> — BA chọn trạng thái mới, bấm Lưu. Lịch sử tự động ghi lại ai, khi nào, trạng thái cũ → mới.</div>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <h3><span class="num">D</span> Ghi lại lịch sử — Tính toàn vẹn</h3>
+  <p>Mỗi khi trạng thái pipeline thay đổi, hệ thống ghi lại: <b>Ai</b> (tên người dùng), <b>Khi nào</b> (ngày giờ UTC+7), <b>Trạng thái cũ → Mới</b> (ví dụ: "Thiết kế" → "Sản xuất"), và <b>Lý do (tuỳ chọn)</b> (ghi chú từ BA).</p>
+  <p style="color:#555;font-size:13.7px">Lịch sử không thể xóa hoặc sửa — mục đích là giúp BA, Lead, và kiểm toán xem được ai đã làm gì và khi nào. Rất quan trọng để giải quyết tranh chấp với khách hoặc theo dõi hiệu suất đội.</p>
+  <div class="note"><b>Lưu ý:</b> Nếu phát hiện thay đổi nhầm, không xóa được — phải tạo bản ghi mới ("Revert") để khôi phục.</div>
+</div>
+<div class="section">
+  <h3><span class="num">E</span> Tiêu chí thành công</h3>
+  <ul class="deflist">
+    <li><b>Thời gian xử lý</b><br>Trung bình 10–12 ngày từ "Mới nhận" → "Đã gửi". SLA: ≤14 ngày cho 95% đơn MTO.</li>
+    <li><b>Tỉ lệ QC pass</b><br>≥98% đơn qua QC lần đầu mà không tìm lỗi. Mục tiêu: giảm "In lại" <1%.</li>
+    <li><b>Tracking push thành công</b><br>100% đơn được đẩy tracking lên Etsy. Không để tắc ở "Chờ nhãn" >3 ngày.</li>
+    <li><b>Giao hàng đúng hạn</b><br>≥95% khách nhận hàng theo cam kết. Theo dõi webhook từ hãng vận chuyển.</li>
+    <li><b>Khách hàng hài lòng</b><br>Tỉ lệ "Có vấn đề / Hậu mãi" <4% toàn bộ đơn MTO.</li>
+  </ul>
+</div>
+<div class="section">
+  <h3><span class="num">F</span> Luồng & vai trò liên quan</h3>
+  <div class="xlinks">
+    <a href="flow-1-tao-san-pham.html"><b>Luồng 1</b> Tạo & đăng sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html"><b>Luồng 2</b> Nhận đơn hàng từ Etsy</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Luồng 3b</b> Giao hàng Dropship</a>
+    <a href="flow-4-hau-mai.html"><b>Luồng 4</b> Hậu mãi & xử lý tranh chấp</a>
+    <a href="role-1-ba-lead.html"><b>Vai trò</b> BA Lead</a>
+    <a href="role-3-san-xuat.html"><b>Vai trò</b> Sản xuất</a>
+    <a href="role-5-pd.html"><b>Vai trò</b> Thiết kế (PD)</a>
+  </div>
+</div>
+<footer>Cẩm nang vận hành Hatafa Ops · Hình minh hoạ thể hiện ý tưởng bố cục, không phải đặc tả chi tiết từng điểm ảnh · 2026-06-27.</footer>
+</div></body></html>

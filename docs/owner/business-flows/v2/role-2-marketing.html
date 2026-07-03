@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vai trò 2 · Marketing — Hatafa Ops</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;
+    --bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;
+    --ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}
+  /* top brand bar (cross-page nav) */
+  .appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}
+  .appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}
+  .appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  /* hero */
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}
+  header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  header.hero .hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  /* layout */
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}
+  h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}
+  p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  /* section block (numbered like v1: A/B/C…) */
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .goal{background:#faf7fb;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0}.goal b{color:var(--brand-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .note{background:#eaf1fd;border-left:4px solid var(--info);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .tip{background:#edf8f2;border-left:4px solid var(--ok);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .warnbox{background:#fdeceb;border-left:4px solid var(--bad);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  /* ===== SWIMLANE (role x milestone) ===== */
+  .swim{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;margin:12px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9!important;font-weight:600;color:var(--brand-d);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .swim-row-lbl{background:#faf8fb!important;color:var(--muted);font-weight:600;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.act{background:#f0fbf5!important}.swim-cell.wait{background:#fffbeb!important;color:#a16207}
+  .swim-cell.dim{color:#c3bdcb}
+  /* ===== STEP LIST (detailed, with role + system note) ===== */
+  .steps{list-style:none;margin:8px 0;padding:0}
+  .steps>li{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid #f1eef3}
+  .steps>li:last-child{border-bottom:none}
+  .steps>li .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:var(--brand);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li .body{flex:1}
+  .steps>li .who{font-size:11.5px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .steps>li .title{font-weight:700;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .steps>li .desc{color:#555;font-size:13.7px;line-height:1.6}
+  .steps>li .sys{margin-top:7px;background:#faf8fb;border-left:3px solid var(--brand);padding:8px 12px;font-size:12.7px;color:#4b5563;border-radius:0 6px 6px 0}
+  .steps>li .sys b{color:#1f2937}
+  /* ordered counter variant (no role) */
+  ol.nsteps{counter-reset:s;list-style:none;margin:14px 0;padding:0}
+  ol.nsteps>li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px 14px 56px;margin:10px 0}
+  ol.nsteps>li::before{content:counter(s);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ol.nsteps>li b{color:var(--brand-d)}
+  /* ===== TABLES ===== */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:last-child td{border-bottom:none}
+  /* status badges */
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-ok{background:#e6f6ee;color:var(--ok)}.b-warn{background:#fdf3dd;color:var(--warn)}
+  .b-info{background:#eaf1fd;color:var(--info)}.b-bad{background:#fdeceb;color:var(--bad)}.b-brand{background:#eee9f7;color:var(--brand-d)}
+  /* ===== FULL-CHROME SCREEN MOCKUP (mu-*) ===== */
+  .mu-wrap{background:#f1edf2;border:1px solid var(--line);border-radius:12px;padding:20px 18px 16px;margin:16px 0}
+  .mu-wrap>.mu-h{color:#1f2937;font-size:16px;font-weight:700;margin:0 0 4px}
+  .mu-wrap>.mu-lede{color:var(--muted);font-size:13.3px;margin-bottom:14px;max-width:820px}
+  .mu-screen{background:#fff;border:1px solid #d8d2dd;border-radius:6px;margin-bottom:18px;overflow:hidden;font:13px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937;box-shadow:0 6px 18px rgba(87,58,80,.08)}
+  .mu-screen:last-child{margin-bottom:0}
+  .mu-ttl{padding:9px 16px;font-size:12.5px;color:var(--muted);background:#faf8fb;border-bottom:1px solid var(--line)}.mu-ttl strong{color:#1f2937}
+  .mu-chrome{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--brand);color:#fff;font-size:13px}
+  .mu-chrome .mu-app{font-weight:700;margin-right:6px}
+  .mu-chrome .mu-tab{color:rgba(255,255,255,.82);padding:3px 8px;border-radius:6px;font-size:12.5px}
+  .mu-chrome .mu-tab.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+  .mu-chrome .mu-sp{flex:1}.mu-chrome .mu-user{color:rgba(255,255,255,.8);font-size:12px}
+  /* role-aware left sidebar inside chrome */
+  .mu-body{display:flex;min-height:60px}
+  .mu-sb{background:var(--brand-d);color:#fff;width:178px;flex-shrink:0;padding:8px 0;font-size:12.5px}
+  .mu-sb .g{padding:7px 14px 2px;opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .mu-sb .i{padding:5px 14px}.mu-sb .i.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent);padding-left:11px}
+  .mu-main{flex:1;min-width:0}
+  .mu-crumb{padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);font-size:12.5px;color:#4b5563}.mu-crumb .s{color:#b6aebf;padding:0 6px}.mu-crumb strong{color:#1f2937}
+  .mu-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);background:#faf8fb;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d3ccd9;background:#fff;color:#374151;border-radius:5px;font-weight:600}
+  .mu-btn.pri{border-color:var(--brand);background:var(--brand);color:#fff}
+  .mu-btn.link{border:none;background:transparent;color:var(--brand);padding:5px 6px}
+  /* KPI band */
+  .mu-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:14px}
+  @media(max-width:760px){.mu-kpis{grid-template-columns:repeat(2,1fr)}}
+  .mu-kpi{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#faf8fb}
+  .mu-kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+  .mu-kpi .n{font-size:23px;font-weight:800;color:var(--brand-d);line-height:1.1}
+  .mu-kpi.alert{background:#fdeceb;border-color:#f3c7c2}.mu-kpi.alert .n{color:var(--bad)}
+  .mu-kpi.good .n{color:var(--ok)}
+  /* filter chips */
+  .mu-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 12px}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 12px;background:#fff;color:var(--muted)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  /* data list */
+  .mu-list{width:100%;border-collapse:collapse;font-size:12.7px;margin:0;border:none;border-radius:0}
+  .mu-list thead th{background:#faf8fb;padding:8px 12px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .mu-list tbody td{padding:9px 12px;border-bottom:1px solid #f1eef3;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--brand);font-weight:600;font-size:12px}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+  .mu-pill.ok{background:#dcfce7;color:#15803d}.mu-pill.warn{background:#fef3c7;color:#b45309}
+  .mu-pill.bad{background:#fee2e2;color:#b91c1c}.mu-pill.neu{background:#f1eef3;color:#4b5563}
+  .mu-pill.info{background:#dbeafe;color:#1d4ed8}.mu-pill.brand{background:#eee9f7;color:var(--brand-d)}
+  /* tabs inside a form */
+  .mu-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto;background:#fff}
+  .mu-tab2{padding:9px 14px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab2.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+  /* form fields */
+  .mu-form{padding:16px 18px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px}@media(max-width:760px){.mu-grid2{grid-template-columns:1fr}}
+  .mu-fld{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f0f5}
+  .mu-fld .k{color:var(--muted);font-size:12px}.mu-fld .v{color:#1f2937;font-size:13px}
+  .mu-fld .v.amt{font-variant-numeric:tabular-nums;font-weight:700}
+  /* kanban board */
+  .mu-kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;background:#f3f0f4;overflow-x:auto}
+  .mu-kcol{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:150px}
+  .mu-kcol h5{margin:2px 4px 8px;font-size:11.5px;color:var(--brand-d);display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.3px}
+  .mu-kcol h5 .c{background:#faf5f9;border:1px solid var(--line);border-radius:20px;padding:0 8px;font-weight:700}
+  .mu-kc{background:#faf8fb;border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:8px}
+  .mu-kc.late{border-left:3px solid var(--bad);background:#fdf6f5}
+  .mu-kc h6{margin:0 0 4px;font-size:12.5px;color:var(--brand-d);font-weight:700}
+  .mu-kc .m{font-size:11.3px;color:var(--muted);line-height:1.55}
+  /* modal */
+  .mu-modal-ov{padding:24px;background:rgba(31,19,32,.55);display:flex;justify-content:center}
+  .mu-modal{background:#fff;border-radius:7px;max-width:540px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.2);overflow:hidden}
+  .mu-modal .h{padding:12px 18px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+  .mu-modal .h.warn{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .mu-modal .h.brandh{background:#faf5f9;color:var(--brand-d)}
+  .mu-modal .b{padding:16px 18px}
+  .mu-modal .banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:5px;font-size:12.5px;margin:10px 0;border-left:3px solid #ca8a04}
+  .mu-modal .f{padding:12px 18px;border-top:1px solid var(--line);background:#faf8fb;display:flex;justify-content:flex-end;gap:8px}
+  .mu-cap{padding:10px 16px;font-size:12.3px;color:var(--muted);background:#faf8fb;border-top:1px solid var(--line);line-height:1.55}.mu-cap b{color:#1f2937}
+  /* ===== permissions / kpi-list ===== */
+  .deflist{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0;padding:0}
+  .deflist li{background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:#374151}
+  .deflist li b{color:var(--brand-d);display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+  /* ===== cross-link grid ===== */
+  .xlinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:10px 0}
+  .xlinks a{display:block;background:#faf8fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;text-decoration:none;color:inherit;font-size:13px;transition:.14s}
+  .xlinks a:hover{border-color:var(--brand-l);box-shadow:0 4px 12px rgba(87,58,80,.08)}
+  .xlinks a b{display:block;color:var(--brand);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  /* ===== index link cards ===== */
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:16px 0}
+  .lcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:.14s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .lcard:hover{border-color:var(--brand-l);box-shadow:0 6px 18px rgba(87,58,80,.10);transform:translateY(-2px)}
+  .lcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--brand-l);font-weight:700;margin-bottom:6px}
+  .lcard .t{font-weight:700;color:var(--brand-d);font-size:15px;margin-bottom:4px}
+  .lcard .d{font-size:13px;color:var(--muted)}
+  /* footer */
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· Cẩm nang vận hành</span></div>
+  <nav>
+    <a href="index.html">Tổng quan</a>
+    <a href="etsy-quy-trinh.html">Quy trình Etsy</a>
+    <a href="flow-1-tao-san-pham.html">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html">Hậu mãi</a>
+    <a href="index.html#roles" class="active">Vai trò</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Vai trò 2</div>
+  <h1>Marketing</h1>
+  <div class="sub">Quản lý listing, xây dựng thương hiệu, theo dõi sức khoẻ sản phẩm trên Etsy — từng shop riêng biệt hoặc nhiều shop cùng lúc.</div>
+  <div class="pills">
+    <span class="hpill">Quản lý nhiều cửa hàng</span>
+    <span class="hpill">Đăng & chỉnh sửa listing</span>
+    <span class="hpill">Theo dõi đồng bộ hóa</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh</h3>
+    <p>Anh Minh, Marketing Lead 28 tuổi, quản lý một nhóm 5 shop Etsy chính của Hatafa: JaHandmadeArt, MyArtCafe, PodiumDesign, CreativeStudio, và VintageVibes. Hàng ngày, anh phải đảm bảo tất cả sản phẩm trên các shop có nội dung Title + Description chuẩn, ảnh sắc nét, tags hợp lý, và không bị lỗi đồng bộ từ Etsy. Khi BA Lead thêm sản phẩm mới, anh cùng BA soạn nội dung tiếng Anh hấp dẫn. Anh cũng giám sát trạng thái listing trên từng kênh — sản phẩm nào vẫn ở Draft (nháp), nào đã Published (live), và nào bị Error (lỗi) để báo cho BA tìm cách fix.</p>
+    <p>Marketing không phải là người tạo sản phẩm (BA Lead làm). Không phải duyệt thiết kế (PD và BA Lead làm). Không phải monitor sản xuất (Sản xuất làm). Nhưng Marketing là người trực tiếp chịu trách nhiệm về chất lượng nội dung listing, hình ảnh, giá tiền, và tags — những thứ khách hàng nhìn thấy trước tiên trên Etsy. Anh Minh cũng quản lý mặc định thương hiệu cấp cửa hàng: tiêu đề shop, mô tả shop, logo mặc định — để mỗi shop có bộ nhận diện riêng nhưng nhất quán với DNA của Hatafa.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Một ngày trong hệ thống</h3>
+    <ul class="steps">
+      <li>
+        <div class="n">1</div>
+        <div class="body">
+          <div class="who">Marketing · 08:30 · 15 phút</div>
+          <div class="title">Rà soát kanban Trạng thái kênh: nhìn listing lỗi hôm qua có Resume được không</div>
+          <div class="desc">Anh Minh mở dashboard Trạng thái theo kênh (Etsy), xem ba cột: Nháp (Draft), Đã đăng (Published), Lỗi (Error). Nếu có card nào chuyển từ Lỗi sang Đã đăng, tốt — báo cáo BA rằng issue đã fix. Nếu vẫn lỗi, anh click vào card, xem tiêu đề lỗi (vd "400 personalization", "400 weight"), ghi vào note để báo BA sau.</div>
+          <div class="sys"><b>Hệ thống:</b> Kanban Trạng thái kênh là view chính Marketing dùng mỗi sáng. Nhóm theo trạng thái đồng bộ. Lỗi được ghi lại từ Etsy API response. Marketing xem (read-only), không sửa.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">2</div>
+        <div class="body">
+          <div class="who">Marketing · 08:45 · 25 phút</div>
+          <div class="title">Soạn nội dung Title + Description listing mới cùng BA Lead</div>
+          <div class="desc">BA Lead lấy 3 sản phẩm chuẩn bị publish hôm nay. Anh Minh soạn nội dung tiếng Anh hấp dẫn cho mỗi cái: Title (vd "Custom Coffee Mug 11oz — Hand-Painted Ceramic"), Description (vd "Each mug is handcrafted by our artisans..."). Anh gõ vào form Sản phẩm tab Mô tả. Nếu BA muốn A/B test (vd test 2 Title khác lạ), anh soạn cả 2 bộ rồi BA tạo 2 product_template riêng với SKU giống nhau nhưng nội dung khác.</div>
+          <div class="sys"><b>Hệ thống:</b> Form Sản phẩm có tab Mô tả lưu Title + Description. Chưa có tính năng A/B test built-in — ba duyệt hướng dẫn rồi Marketing soạn theo quy cách. Khi publish, nội dung được gửi lên Etsy createListing API.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">3</div>
+        <div class="body">
+          <div class="who">Marketing · 09:10 · 20 phút</div>
+          <div class="title">Cập nhật mặc định thương hiệu cấp cửa hàng (Shop Brand Defaults)</div>
+          <div class="desc">Anh Minh check xem JaHandmadeArt shop có nên cập nhật tiêu đề shop ("Handmade Ceramic & Coffee Lovers Paradise"), mô tả shop ngắn, hoặc ảnh banner mặc định không. Nếu có, anh vào form Quản lý cửa hàng tab Thương hiệu, sửa các field. Hệ thống sẽ dùng những mặc định này khi tạo sản phẩm mới nếu sản phẩm chưa set cái nào riêng.</div>
+          <div class="sys"><b>Hệ thống:</b> Mặc định thương hiệu cấp cửa hàng (shop-level defaults): tiêu đề shop, mô tả, ảnh banner, từ khoá tìm kiếm. Được quản lý riêng cho từng shop. Khi BA tạo sản phẩm mới, hệ thống inherits từ shop defaults nếu chưa set tại product level.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">4</div>
+        <div class="body">
+          <div class="who">Marketing · 09:30 · 15 phút</div>
+          <div class="title">Xem tổng quan 5 shop: count Draft/Published/Error tính cộp lại</div>
+          <div class="desc">Anh Minh xem tổng dashboard: 5 shop cùng lúc, tổng bao nhiêu sản phẩm Draft (chờ publish), bao nhiêu Published (live), bao nhiêu Error (vướng). Nếu shop nào lỗi quá nhiều (vd 5+ sản phẩm), anh flag để tranh phỏng BA cân nhắc công ty có cần point người khác để fix hay không.</div>
+          <div class="sys"><b>Hệ thống:</b> Dashboard Marketing tổng hợp: 5 shop, mỗi shop 1 card hiển thị count Draft/Published/Error. Cho phép filter theo shop hoặc xem tất cả. Click vào shop để drill down vào kanban chi tiết shop đó.</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">5</div>
+        <div class="body">
+          <div class="who">Marketing · 09:45 · 30 phút</div>
+          <div class="title">A/B test tags: chuẩn bị 2-3 bộ tags cho nhóm sản phẩm tương tự</div>
+          <div class="desc">Anh Minh chọn 5 sản phẩm mug tương tự. Soạn bộ tags Set A (vd "coffee, mug, gift, ceramic, handmade") và Set B (vd "coffee-lover, custom-mug, office, tea, personalized"). Gõ từng bộ vào tab Tags của form Sản phẩm. Hệ thống kiểm tra: max 13 tags, mỗi tag max 20 ký tự. Gửi BA link form để duyệt trước khi publish draft.</div>
+          <div class="sys"><b>Hệ thống:</b> Form Sản phẩm tab Tags: input 13 tags max, mỗi tag ≤20 ký tự. Validation real-time. Khi publish, tags được gửi vào Etsy createListing API. Chưa có tính năng A/B test tag (chỉ là quy cách làm: tạo 2 variant sản phẩm giống nhau, khác tags).</div>
+        </div>
+      </li>
+      <li>
+        <div class="n">6</div>
+        <div class="body">
+          <div class="who">Marketing · 10:15 · 20 phút</div>
+          <div class="title">Review listing error → detail → báo BA Lead cần fix</div>
+          <div class="desc">Anh Minh mở kanban, bấm vào card trong cột Error. Form mở → tab Channels → xem "Lỗi đồng bộ gần nhất". Nếu lỗi là "400 personalization not allowed", anh xoá personalization field. Nếu "400 weight/dimensions", anh báo BA: "Mug này vượt 1kg, Etsy bắt buộc khai phí nặng hơn". BA sửa, bấm Resume Publish. Anh xem kết quả: nếu thành công, card chuyển Published; nếu vẫn error, lỗi update mới.</div>
+          <div class="sys"><b>Hệ thống:</b> Nhật ký Etsy ghi tất cả lỗi từ API response. Marketing click vào card Error → xem chi tiết → sửa hoặc báo BA. Resume Publish button cho phép publish lại sau khi fix.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="mu-wrap">
+    <h3 class="mu-h">Màn hình của Marketing</h3>
+    <div class="mu-lede">Bốn giao diện chính mà Marketing sử dụng hàng ngày: kanban trạng thái listing, form soạn nội dung, mặc định thương hiệu cấp shop, và chi tiết lỗi Etsy.</div>
+
+    <!-- Mockup 1: Channel Status Kanban -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 1 · <strong>Kanban Trạng thái kênh — 3 cột Nháp / Đã đăng / Lỗi</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Bán hàng</span>
+        <span class="mu-tab">Sản phẩm</span>
+        <span class="mu-tab on">Trạng thái theo kênh</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">marketing@hatafa</span>
+      </div>
+      <div class="mu-body">
+        <div class="mu-main">
+          <div class="mu-crumb">Sản phẩm <span class="s">›</span> <strong>Trạng thái kênh: Etsy</strong></div>
+          <div class="mu-bar">
+            <button class="mu-btn">Lọc: Etsy</button>
+            <button class="mu-btn">Nhóm theo Trạng thái</button>
+            <span style="flex:1"></span>
+            <span style="font-size:12px;color:#4b5563">142 sản phẩm · 28 Nháp · 108 Đã đăng · 6 Lỗi</span>
+          </div>
+          <div class="mu-kanban" style="grid-template-columns:repeat(3,1fr)">
+            <div class="mu-kcol">
+              <h5><span>Nháp</span><span class="c">28</span></h5>
+              <div class="mu-kc">
+                <h6>Custom Coffee Mug 11oz</h6>
+                <div class="mu-kc .m"><span class="mono">MUG-CR-F11</span><br>Giá: 14.50 USD<br>Sắp: publish test tags</div>
+              </div>
+              <div class="mu-kc" style="margin-top:8px">
+                <h6>Apron Linen Medium</h6>
+                <div class="mu-kc .m"><span class="mono">APR-LN-AM</span><br>Giá: 28.00 USD<br>Tuổi: 2 ngày</div>
+              </div>
+            </div>
+            <div class="mu-kcol">
+              <h5><span>Đã đăng</span><span class="c">108</span></h5>
+              <div class="mu-kc">
+                <h6>Ring Dish Square</h6>
+                <div class="mu-kc .m"><span class="mono">RDS-CE-SQ</span><br>Listing ID: 277432…<br>Bán: 23 đơn / 30d</div>
+              </div>
+              <div class="mu-kc" style="margin-top:8px">
+                <h6>Doormat Welcome</h6>
+                <div class="mu-kc .m"><span class="mono">DMT-TX-R30</span><br>Listing ID: 310441…<br>Bán: 8 đơn / 30d</div>
+              </div>
+            </div>
+            <div class="mu-kcol">
+              <h5><span>Lỗi</span><span class="c">6</span></h5>
+              <div class="mu-kc late">
+                <h6>Mug Personalised Name</h6>
+                <div class="mu-kc .m"><span class="mono">MUG-CR-F11-BK</span><br>Lỗi: 400 personalization<br>Tuổi: 1 giờ</div>
+              </div>
+              <div class="mu-kc late" style="margin-top:8px">
+                <h6>Apron XL Heavy</h6>
+                <div class="mu-kc .m"><span class="mono">APR-LN-AXL</span><br>Lỗi: 400 weight/dims<br>Tuổi: 6 giờ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Marketing mở dashboard này mỗi sáng. Cột Lỗi là priority. Click vào card lỗi → form mở → tab Channels → xem chi tiết lỗi → báo BA Lead fix hoặc tự sửa nếu là điều kiện dễ.</div>
+    </div>
+
+    <!-- Mockup 2: Product Form with Tabs -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 2 · <strong>Form Sản phẩm / Listing — tab Mô tả, Tags, Channels</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Bán hàng</span>
+        <span class="mu-tab on">Sản phẩm</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">marketing@hatafa</span>
+      </div>
+      <div class="mu-body">
+        <div class="mu-main">
+          <div class="mu-crumb">Sản phẩm <span class="s">›</span> <strong>Custom Coffee Mug 11oz (MUG-CR-F11)</strong></div>
+          <div class="mu-bar">
+            <button class="mu-btn">Lưu nháp</button>
+            <button class="mu-btn pri">Đăng bán Etsy</button>
+          </div>
+          <div class="mu-tabs">
+            <div class="mu-tab2">Thông tin chung</div>
+            <div class="mu-tab2 on">Mô tả</div>
+            <div class="mu-tab2">Tags</div>
+            <div class="mu-tab2">Channels</div>
+          </div>
+          <div class="mu-form">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px">Tiêu đề listing Etsy (English)</div>
+            <div class="mu-grid2">
+              <div class="mu-fld">
+                <span class="k">Title</span>
+                <span class="mu-fld .v">Custom Coffee Mug 11oz — Hand-Painted Ceramic</span>
+              </div>
+              <div class="mu-fld">
+                <span class="k">Giá (USD)</span>
+                <span class="mu-fld .v.amt">14.50</span>
+              </div>
+            </div>
+            <div style="font-size:12.5px;color:#6b7280;margin-bottom:12px;margin-top:16px">Description (tối thiểu 160 ký tự)</div>
+            <div style="padding:12px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;min-height:80px;color:#1f2937;font-size:13px;line-height:1.6">Each mug is hand-painted by our artisans using eco-friendly ceramic. Perfect for coffee lovers, tea drinkers, or as a personalized gift. Dishwasher safe, microwave safe. Made in Vietnam...</div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Form Sản phẩm có nhiều tab. Marketing chỉnh Mô tả (Title + Description), Tags, và xem tab Channels để nhìn lỗi Etsy. Nút "Đăng bán Etsy" ở trên cùng cho phép publish draft.</div>
+    </div>
+
+    <!-- Mockup 3: Shop Brand Defaults -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 3 · <strong>Mặc định thương hiệu cấp cửa hàng — Shop JaHandmadeArt</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Bán hàng</span>
+        <span class="mu-tab on">Cửa hàng</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">marketing@hatafa</span>
+      </div>
+      <div class="mu-body">
+        <div class="mu-main">
+          <div class="mu-crumb">Cửa hàng <span class="s">›</span> <strong>JaHandmadeArt · Quản lý thương hiệu</strong></div>
+          <div class="mu-bar">
+            <button class="mu-btn">Hủy</button>
+            <button class="mu-btn pri">Lưu</button>
+          </div>
+          <div class="mu-form">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px">Mặc định thương hiệu cấp cửa hàng</div>
+            <div class="mu-grid2">
+              <div class="mu-fld">
+                <span class="k">Tên cửa hàng</span>
+                <span class="mu-fld .v">JaHandmadeArt — Handmade Ceramic & Gifts</span>
+              </div>
+              <div class="mu-fld">
+                <span class="k">Slug URL</span>
+                <span class="mu-fld .v">jahandmadeart</span>
+              </div>
+              <div class="mu-fld" style="grid-column:1/-1">
+                <span class="k">Mô tả shop (ghi trên Etsy)</span>
+                <span class="mu-fld .v">Welcome to JaHandmadeArt. We craft handmade ceramic mugs, bowls, and gifts with love. Each piece is unique, made by local artisans in Vietnam...</span>
+              </div>
+              <div class="mu-fld" style="grid-column:1/-1">
+                <span class="k">Ảnh banner mặc định</span>
+                <span class="mu-fld .v">[Banner image 1200×300] JaHandmadeArt-banner.jpg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Marketing cập nhật mặc định thương hiệu cấp shop. Khi tạo sản phẩm mới, nếu chưa set tiêu đề shop hoặc ảnh banner riêng, hệ thống sẽ dùng mặc định này.</div>
+    </div>
+
+    <!-- Mockup 4: Etsy Error Detail -->
+    <div class="mu-screen">
+      <div class="mu-ttl">Màn hình 4 · <strong>Chi tiết lỗi Etsy — Mug Personalised Name</strong></div>
+      <div class="mu-chrome">
+        <span class="mu-app">Bán hàng</span>
+        <span class="mu-tab on">Sản phẩm</span>
+        <span class="mu-sp"></span>
+        <span class="mu-user">marketing@hatafa</span>
+      </div>
+      <div class="mu-body">
+        <div class="mu-main">
+          <div class="mu-crumb">Sản phẩm <span class="s">›</span> <strong>Mug Personalised Name</strong></div>
+          <div style="background:#fdeceb;border-bottom:3px solid #b91c1c;padding:12px 14px">
+            <div style="color:#b91c1c;font-weight:600;font-size:13px;margin-bottom:4px">Lỗi Etsy — vừa cập nhật</div>
+            <div style="color:#7f1d1d;font-size:12.5px">400 Bad Request — personalization properties not allowed for this category on Etsy (Drinkware). Vui lòng xoá personalization hoặc thay đổi category.</div>
+          </div>
+          <div style="padding:16px 14px;border-bottom:1px solid #e5e7eb">
+            <div style="font-size:12px;color:#6b7280;font-weight:600;margin-bottom:8px;text-transform:uppercase">Nhật ký lỗi</div>
+            <table style="width:100%;font-size:12px">
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:6px 0;color:#6b7280">2026-06-27 10:15:32</td>
+                <td style="padding:6px 0;color:#1f2937">Publish attempt 3</td>
+                <td style="padding:6px 0"><span class="mu-pill bad">400 personalization</span></td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;color:#6b7280">2026-06-27 10:10:15</td>
+                <td style="padding:6px 0;color:#1f2937">Publish attempt 2</td>
+                <td style="padding:6px 0"><span class="mu-pill bad">400 personalization</span></td>
+              </tr>
+            </table>
+          </div>
+          <div class="mu-bar" style="border-top:1px solid #e5e7eb">
+            <button class="mu-btn">Chỉnh sửa sản phẩm</button>
+            <button class="mu-btn pri">Resume Publish</button>
+          </div>
+        </div>
+      </div>
+      <div class="mu-cap">Khi listing bị lỗi, Marketing hoặc BA xem chi tiết → chỉnh sửa form → bấm Resume Publish để thử lại. Nhật ký lỗi ghi tất cả attempts + error message từ Etsy.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Quyền hạn riêng</h3>
+    <ul class="deflist">
+      <li><b>Tạo & Đăng Listing</b>Soạn Title, Description, Tags, ảnh, giá; đăng listing mới lên Etsy từ draft</li>
+      <li><b>Chỉnh sửa Nội dung</b>Sửa Title, Description, Tags, ảnh trên listing đã published</li>
+      <li><b>Quản lý Mặc định Thương hiệu</b>Cập nhật tiêu đề shop, mô tả shop, ảnh banner, từ khoá mặc định cấp cửa hàng</li>
+      <li><b>Theo dõi Đồng bộ Hóa</b>Xem trạng thái listing trên từng kênh (Draft/Published/Error); xem chi tiết lỗi</li>
+      <li><b>A/B Test Tags & Content</b>Chuẩn bị 2 bộ Tags hoặc nội dung khác lạ để test trên 2 variant sản phẩm</li>
+      <li><b>Monitor Nhiều Shop</b>Xem dashboard tổng hợp 5 shop; drill down vào shop từng cái</li>
+      <li><b>Không có</b>Tạo sản phẩm mới (BA Lead làm); duyệt thiết kế (PD + BA làm); xoá sản phẩm (Admin)</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Luồng & vai trò liên quan</h3>
+    <div class="xlinks">
+      <a href="flow-1-tao-san-pham.html"><b>Liên quan</b>Luồng 1 — Tạo sản phẩm POD và đăng lên Etsy</a>
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Liên quan</b>Luồng 2 — Khi listing có người mua, đơn về Odoo</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — duyệt thiết kế, quản lý sản phẩm, fix lỗi</a>
+      <a href="role-5-pd.html"><b>Vai trò</b>Thiết kế sản phẩm (PD) — duyệt thiết kế, lưu file</a>
+    </div>
+  </div>
+
+  <footer>Cẩm nang vận hành Hatafa Ops · Hình minh hoạ thể hiện ý tưởng bố cục, không phải đặc tả chi tiết từng điểm ảnh · 2026-06-27.</footer>
+</div>
+
+</body>
+</html>
