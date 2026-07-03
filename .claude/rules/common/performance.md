@@ -2,20 +2,46 @@
 
 ## Model Selection Strategy
 
-**Haiku 4.5** (90% of Sonnet capability, 3x cost savings):
+**Haiku** (fast, cheapest — mechanical work):
 - Lightweight agents with frequent invocation
-- Pair programming and code generation
+- Deterministic transforms, scaffolding, mockups
 - Worker agents in multi-agent systems
 
-**Sonnet 4.6** (Best coding model):
-- Main development work
-- Orchestrating multi-agent workflows
-- Complex coding tasks
+**Sonnet** (best coding model — the default working tier):
+- Code review, testing, refactoring, documentation
+- Structured execution against a plan
+- Most day-to-day coding tasks
 
-**Opus 4.5** (Deepest reasoning):
+**Opus** (deepest reasoning — reserve it):
 - Complex architectural decisions
-- Maximum reasoning requirements
+- Multi-file planning and design
 - Research and analysis tasks
+
+> Cost note: running every agent on Opus is the single biggest source of
+> per-session overspend (observed ~2.4x cost/session vs a tiered mix). Default
+> agents to Sonnet; escalate to Opus only for planning/architecture.
+
+## Agent Model Assignments
+
+Binding table — the source of truth for each agent's tier. The advisory hook
+`.claude/scripts/check-agent-model-tier.sh` (PreToolUse on Task) warns when an
+agent's frontmatter `model:` drifts from this table. Keep the model column to a
+bare `opus` / `sonnet` / `haiku` matching the agent `.md` frontmatter.
+
+| Agent | Model | Rationale |
+|-------|-------|-----------|
+| `planner` | opus | Multi-step implementation planning, dependency reasoning |
+| `architect` | opus | System design, inheritance decisions, ADRs |
+| `product-owner` | sonnet | Requirement/spec review, acceptance-criteria + standard-Odoo triage |
+| `code-reviewer` | sonnet | Structured review against known patterns |
+| `security-reviewer` | sonnet | ACL/record-rule/sudo audit against checklist |
+| `tdd-guide` | sonnet | Test scaffolding and RED/GREEN execution |
+| `e2e-runner` | sonnet | Browser/HttpCase test authoring and runs |
+| `refactor-cleaner` | sonnet | Dead-code detection and safe removal |
+| `doc-updater` | sonnet | Doc/codemap sync from source |
+| `python-reviewer` | sonnet | PEP 8 / idiom / type review |
+| `ascii-ui-mockup-generator` | haiku | Mechanical ASCII mockup generation |
+| `odoo-build-error-resolver` | haiku | Pattern-matched install/upgrade error triage |
 
 ## Context Window Management
 

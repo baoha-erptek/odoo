@@ -7,7 +7,7 @@ model: opus
 
 # Odoo Module Architect
 
-You are an expert Odoo 15 module architect specializing in system design decisions, module structure, and inheritance patterns.
+You are an expert Odoo 19 module architect specializing in system design decisions, module structure, and inheritance patterns.
 
 ## Your Role
 
@@ -112,7 +112,7 @@ class ExtendedPartner(models.Model):
 # __manifest__.py
 {
     'name': 'Module Name',
-    'version': '15.0.1.0.0',
+    'version': '19.0.1.0.0',
     'category': 'Category',
     'summary': 'Brief description',
     'description': """

@@ -1,0 +1,172 @@
+# Approach Matrix: Ticket Type -> Resolution Approach (ESTY)
+# Maps each ticket type to skills, testing, and steps.
+# Implementation always routes through /plan (planner) then /tdd (tdd-guide) —
+# esty does not use Devin/opencode routing or hr_project fresh-env templating.
+# Skills referenced are esty-available: odoo-19-developer, tdd-workflow, e2e,
+# security-review, odoo-db-ops, run-uat.
+
+approaches:
+  gui-only:
+    skills:
+      required: [odoo-19-developer]
+      optional: [e2e]
+    remote_investigation: false
+    fresh_environment:
+      needed: false
+    testing:
+      phase_1_db: false
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Read the ticket and examine screenshots/attachments"
+      - "Identify the affected view XML and JS/OWL components"
+      - "Check view inheritance chain (XPath)"
+      - "Write E2E test (or arch test) to capture current (broken) behavior"
+      - "Fix the view/JS/CSS code"
+      - "Verify E2E test passes"
+      - "Test in browser at http://localhost:8169 (restart container after -u --stop-after-init)"
+    plan_sections: [view, test]
+    estimated_complexity: simple
+
+  backend-only:
+    skills:
+      required: [odoo-19-developer, tdd-workflow]
+      optional: [odoo-db-ops]
+    remote_investigation: true
+    fresh_environment:
+      needed: conditional  # If modifying compute fields or constraints
+      condition: "Needed when: modifying compute/constraint, risk of data corruption, or need isolated ORM tests"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: false
+    approach_sequence:
+      - "Fetch JIRA data and analyze the error/behavior"
+      - "Query staging/local DB to understand current data state"
+      - "Identify affected model(s) and method(s)"
+      - "Write Phase 1 DB verification test"
+      - "Write Phase 2 ORM unit test (failing)"
+      - "Implement the fix"
+      - "Run test tags: odoo -d namco_odoo19 --test-tags /<module> --stop-after-init"
+    plan_sections: [planning, model, test]
+    estimated_complexity: medium
+
+  full-stack:
+    skills:
+      required: [odoo-19-developer, tdd-workflow, e2e]
+      optional: [security-review, odoo-db-ops]
+    remote_investigation: true
+    fresh_environment:
+      needed: conditional
+      condition: "Needed when: new models/fields, security changes, or cross-module dependencies"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Fetch JIRA data and analyze requirements"
+      - "Standard-Odoo-First check for any proposed new field/model"
+      - "Query staging/local DB for data context"
+      - "Plan architecture: models, views, security"
+      - "Write Phase 1 + Phase 2 tests (failing)"
+      - "Implement model changes"
+      - "Implement view changes"
+      - "Add security (ACLs, record rules)"
+      - "Run all tests"
+      - "E2E validation in browser (restart container first)"
+    plan_sections: [planning, model, security, view, test]
+    estimated_complexity: complex
+
+  data-fix:
+    skills:
+      required: [odoo-db-ops]
+      optional: []
+    remote_investigation: true
+    fresh_environment:
+      needed: false  # Data fixes work directly on target DB
+    testing:
+      phase_1_db: true
+      phase_2_orm: false
+      e2e: false
+    approach_sequence:
+      - "Fetch JIRA data to understand the data problem"
+      - "Query target DB to assess scope of data issue"
+      - "Write diagnostic SQL to identify affected records"
+      - "Write fix SQL/ORM with safety checks (BEGIN/ROLLBACK)"
+      - "Test fix on local DB (namco_odoo19) first"
+      - "Apply fix to target environment (human sign-off required)"
+      - "Verify with Phase 1 DB check"
+    plan_sections: [planning, logic]
+    estimated_complexity: medium
+    note: "Live-data mutation needs human BEGIN/ROLLBACK sign-off — never auto-implement."
+
+  investigation:
+    skills:
+      required: [odoo-db-ops]
+      optional: [e2e, tdd-workflow]
+    remote_investigation: true
+    fresh_environment:
+      needed: false
+    testing:
+      phase_1_db: true
+      phase_2_orm: conditional  # After root cause found
+      e2e: conditional  # If GUI-related
+    approach_sequence:
+      - "Fetch JIRA data and gather all context"
+      - "Create investigation notes in the task directory"
+      - "Query staging/local DB to understand data state"
+      - "Analyze code paths related to reported symptoms"
+      - "Form hypotheses and test each"
+      - "Document root cause"
+      - "Re-classify ticket (may become backend-only, gui-only, etc.)"
+      - "Apply the approach for the reclassified type"
+    plan_sections: [planning]
+    estimated_complexity: medium
+    note: "Investigation tickets get reclassified after root cause is found."
+
+  performance:
+    skills:
+      required: [odoo-db-ops, odoo-19-developer, tdd-workflow]
+      optional: [e2e]
+    remote_investigation: true
+    fresh_environment:
+      needed: true  # Isolate benchmarking from shared data
+      condition: "Always needed: isolate performance testing from shared/live data"
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: true
+    approach_sequence:
+      - "Fetch JIRA data and identify performance symptoms"
+      - "Query DB for data volume context"
+      - "Profile the slow operation (SQL EXPLAIN, Python profiling)"
+      - "Identify bottleneck (N+1, missing index, heavy compute)"
+      - "Write benchmark test (before)"
+      - "Implement optimization"
+      - "Run benchmark test (after) - verify improvement"
+      - "E2E test for UI responsiveness if applicable"
+    plan_sections: [planning, model, test]
+    estimated_complexity: complex
+
+  configuration:
+    skills:
+      required: [odoo-19-developer, security-review]
+      optional: [odoo-db-ops]
+    remote_investigation: true
+    fresh_environment:
+      needed: false
+    testing:
+      phase_1_db: true
+      phase_2_orm: true
+      e2e: conditional  # If involves user-facing permission changes
+    approach_sequence:
+      - "Fetch JIRA data to understand permission/config issue"
+      - "Query DB to check current ACL/rule state"
+      - "Review ir.model.access.csv and ir.rule records"
+      - "Identify missing/incorrect security definitions"
+      - "Write Phase 2 test for permission behavior"
+      - "Implement security fix"
+      - "Run tests"
+      - "If user-facing, add E2E test"
+    plan_sections: [security, test]
+    estimated_complexity: medium

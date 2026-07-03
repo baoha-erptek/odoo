@@ -2,7 +2,7 @@
 name: odoo-build-error-resolver
 description: Resolves Odoo module install/upgrade errors including ImportError, XML ParseError, ACL missing, and manifest dependency issues. Use PROACTIVELY when module update fails.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: haiku
 ---
 
 # Odoo Build Error Resolver

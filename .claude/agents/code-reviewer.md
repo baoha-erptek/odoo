@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Python/Odoo code quality and security reviewer. Use PROACTIVELY when reviewing PRs, checking for ORM anti-patterns, security issues, and Odoo best practices. Detects N+1 queries, missing _description, raw SQL, and _logger.info misuse.
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 ---
 
 # Odoo Code Reviewer

@@ -302,13 +302,30 @@ bugfix/short-description
 
 ## Hook Configuration
 
-`.claude/hooks.json` -- 3 lifecycle events:
+Hooks are wired natively in `.claude/settings.json` (`hooks` + `statusLine` keys); the
+scripts live in `.claude/scripts/`. Run `.claude/scripts/ci/validate-hooks.sh` after any
+change to confirm every wired path exists and is executable.
 
-| Event | Hook | Purpose |
-|-------|------|---------|
+| Event | Script | Purpose |
+|-------|--------|---------|
+| **SessionStart** | `session-start.sh` | Report branch + active master-plan slice (tracker `006-master-plan-tracking.md`) |
 | **PostToolUse** (Edit/Write) | `post-edit-python-check.sh` | Python syntax/debug check on edited files |
+| **PreToolUse** (Bash) | `pre-bash-push-reminder.sh` | Git push review reminder |
+| **PreToolUse** (Task) | `check-agent-model-tier.sh` | Warn (non-blocking) if a spawned agent's model drifts from the tier table |
+| **PreToolUse** (Skill) | `hooks/check-gstack.sh` | Block skill use if gstack is not installed globally |
 | **Stop** | `check-debug-statements.sh` | Scan modified `.py` for `print()` / `_logger.info` |
-| **PreToolUse** (Bash) | Inline | Git push review reminder |
+| **SessionEnd** | `record-token-spend.sh`, `session-end.sh` | Attribute token spend to the active slice; save a session summary |
+| **statusLine** | `context-bar.sh` | Model, branch, sync status, context bar |
+
+### Efficiency & model tiers
+- **Cost/efficiency:** `.claude/METRICS.md` defines the metric set; run
+  `python3 .claude/scripts/session-cost.py --by slice` to self-measure.
+- **Model tiers:** the binding table in `.claude/rules/common/performance.md` is the
+  source of truth (Opus = planner/architect only; Sonnet = default; Haiku = mechanical).
+- **Optional integrations** (JIRA task-bootstrap, Confluence/JIRA owner-docs sync,
+  pipeline gates, feature ledger) live disabled under `.claude/optional/` — see
+  `.claude/optional/README.md`. Note: the owner-docs Confluence/JIRA scripts run **live**
+  from `.claude/scripts/` in this project (see Git hooks below), not from `optional/`.
 
 ### Git hooks (`.githooks/`)
 
