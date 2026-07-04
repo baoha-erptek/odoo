@@ -1,8 +1,178 @@
 # Spec 015: Project Completion — Prioritized Execution Order & Exit Criteria
 
-**Date**: 2026-07-03  
+**Date**: 2026-07-03 (alignment update 2026-07-04)  
 **Status**: Draft for Owner Review  
 **Scope**: 51 non-done items grouped into P1/P2/P3 buckets with sequential dispatch order and machine-checkable exit criteria
+
+---
+
+## ⚠ 2026-07-04 Alignment Update — READ FIRST
+
+The code-verification audit (spec.md → "2026-07-04 Alignment Update") re-verified every item against `main`. Consequences for THIS file:
+
+**OBSOLETE task blocks (feature already shipped in code — do NOT dispatch as written):**
+- **P1.1** P-HUB-SPEC, P-PUB-CLIENT — specs 009/010/011 authored; client write methods live in `etsy_integration/services/etsy_api_client.py` (NOT the planned `multichannel_hub_catalog` module, which was never created)
+- **P1.3** P-HUB-PROD-MODEL, P-HUB-WIZARD, P-HUB-SKU-DRIFT — models + SKU wizards live in `multichannel_hub_core`
+- **P1.4** P-PUB-DRAFT/IMAGES/INVENTORY/PUBLISH — `etsy_listing_publisher.py` + `etsy_publish_wizard.py`; P-PUB-E2E superseded by MF-E2E-1
+- **P1.5** P-HUB-XLS-PARSE/INGEST/CRON + P-HUB-IMAGES — catalog import models/wizard/cron live in `multichannel_hub_core`
+- **P2.1 partial** P1-01b, P1-02c, T058 — shipped
+- **P2.2** P2-01-* through P2-04-SYNC-HEALTH — tracking import stack shipped in `multichannel_hub_fulfillment`
+
+These blocks stay below as historical planning record. **Dispatch instead from the MF-E2E + AUD blocks (next section).** The dependency graph and timeline at the end of this file are likewise superseded (implementation weeks already happened).
+
+---
+
+## Main-Flow E2E Gate — Dispatch Blocks (2026-07-04)
+
+**Dispatch order**: MF-E2E-0 → MF-E2E-4 → MF-E2E-2 → MF-E2E-3a → MF-E2E-1 → (MF-E2E-3b when E2 keys arrive). T073 closes when all pass. Rationale: cheapest unblock first (config), then flows with zero blockers, then the large publish-loop flow; 3b is externally blocked.
+
+---
+
+### MF-E2E-0 — Runner §5 Config Fix (staging)
+
+**Owner**: Ops/Dev  
+**Estimated Duration**: 0.5 day  
+**Dependencies**: None  
+**Blocking**: full 12/12 runner baseline for all other gate items
+
+**Scope**: Set `multichannel_hub.design_file_default_gdrive_folder_id` ICP on staging (`esty_odoo19` DB); re-run `scripts/e2e_demo_drop_ship_ordertest2.py`.
+
+**Exit Criteria**:
+- [ ] Runner reports 12/12 sections PASS on staging
+- [ ] Result archived under `docs/engineering/uats/`
+
+---
+
+### MF-E2E-4 — Flow-4 Hậu Mãi E2E
+
+**Owner**: Dev (e2e-runner agent)  
+**Estimated Duration**: 3–4 days  
+**Dependencies**: MF-E2E-0  
+**Blocking**: T073
+
+**Scope**:
+- Runner sections: address-change request → approve → applied; reprint path (second MO + second tracking push); `etsy.order.ticket` draft → BA-Lead approve → mark refunded (chatter audit asserted)
+- Playwright spec: new `uat_flow4_hau_mai.spec.ts` reusing address-change page-object; screenshots per step for owner evidence
+
+**Exit Criteria**:
+- [ ] Runner sections PASS on staging
+- [ ] Playwright spec green (2 consecutive runs)
+- [ ] BA sign-off note in `docs/engineering/uats/`
+
+---
+
+### MF-E2E-2 — Flow-2 Nhận Đơn Hàng E2E
+
+**Owner**: Dev (e2e-runner agent)  
+**Estimated Duration**: 3–4 days  
+**Dependencies**: MF-E2E-0; P1-11 for production-shop assertions (staging portion can run before cutover)  
+**Blocking**: T073, P2-07, P2-08
+
+**Scope**:
+- Runner: API receipt sync → sale.order + partner dedupe + pipeline classification; duplicate receipt idempotency; manual email-fallback switch (admin toggles `active_source` → email cron parses fixture email → order created; toggle back)
+- Playwright: extend `uat_huong_dan_don_hang_etsy.spec.ts` with fallback-switch walk
+
+**Exit Criteria**:
+- [ ] Runner sections PASS (API path + fallback path)
+- [ ] Playwright green (2 consecutive runs)
+- [ ] Sync-health rows written for both paths
+
+---
+
+### MF-E2E-3a — Flow-3a In Nội Bộ E2E
+
+**Owner**: Dev (e2e-runner agent)  
+**Estimated Duration**: 4–5 days  
+**Dependencies**: MF-E2E-0; ENV-FIX-MRP (owner MRP routes on staging)  
+**Blocking**: T073
+
+**Scope**:
+- Runner: Route A order → design approve → MO auto-created → complete MO → Delivery Order (stock.picking) validated → GKE tracking Excel dropped in GDrive inbox → poller imports (≤15 min) → carrier detected → Etsy tracking push flag set
+- Playwright: extend `uat_huong_dan_giao_hang.spec.ts` for picking + tracking screens
+
+**Exit Criteria**:
+- [ ] Runner sections PASS end-to-end
+- [ ] Playwright green (2 consecutive runs)
+- [ ] `etsy_tracking_pushed_at` set; tracking visible on unified Operations Dashboard
+
+---
+
+### MF-E2E-1 — Flow-1 Tạo Sản Phẩm → Publish E2E (absorbs P-PUB-E2E)
+
+**Owner**: Dev (e2e-runner agent)  
+**Estimated Duration**: 5–7 days  
+**Dependencies**: MF-E2E-0  
+**Blocking**: T073, P1-DESIGN-AUTO-ARCHIVE
+
+**Scope**:
+- Runner: product create → category → SKU auto-derive (MUG → MUG-CR → MUG-CR-F11) → variants → publish draft (`create_draft` → `upload_images` → `push_inventory`) → verify draft on Etsy via GET → `action_run_publish` → active → inventory-only re-push → drift check (listing drift reporter)
+- Playwright: reuse `uat_huong_dan_tao_san_pham.spec.ts` + `uat_real_apron_publish.spec.ts`; add activate + re-push steps
+- Decide + document whether a scheduled SKU-drift job is needed (P-HUB-SKU-DRIFT residue) — ADR note if dropped
+
+**Exit Criteria**:
+- [ ] Runner sections PASS against staging shop (JaHandmadeArt sandbox listing)
+- [ ] Playwright green (2 consecutive runs)
+- [ ] All 13 `shipped*` publish/hub/XLS items flip to `done` in spec.md
+- [ ] Listing cleanup: test listings deleted from Etsy after run
+
+---
+
+### MF-E2E-3b — Flow-3b Gearment Dropship E2E (BLOCKED: E2)
+
+**Owner**: Dev (e2e-runner agent)  
+**Estimated Duration**: 3–4 days once E2 keys arrive  
+**Dependencies**: MF-E2E-0, **E2 Gearment sandbox keys (owner)**, P0-18b2  
+**Blocking**: T073
+
+**Scope**:
+- Runner: Route B order → quote wizard (`/draft` → price) → dropship PO confirm → `action_push_to_gearment` → simulated/live webhook (`/gearment/webhook`, HMAC-signed) → tracking recorded → Etsy push
+- Playwright: `gearment_quote_wizard` page-object walk
+
+**Exit Criteria**:
+- [ ] Runner sections PASS with sandbox round-trip (or documented mock fallback if Gearment offers no sandbox)
+- [ ] Webhook HMAC verified live (closes P0-18b2)
+- [ ] Playwright green (2 consecutive runs)
+
+---
+
+## AUD Items — Dispatch Blocks (2026-07-04)
+
+### AUD-01 — Email-Fallback Auto-Switch State Machine (P2)
+
+**Owner**: Dev  
+**Estimated Duration**: 3–4 days  
+**Dependencies**: MF-E2E-2 (manual path proven first)
+
+**Scope**: Implement ADR-008a transitions on `etsy.shop`: N consecutive API failures → `active_source='email'` + change-log reason `auto-failover` + BA activity; M consecutive successful recovery probes → back to `api` + reason `recovery-probe`. Fields + log reasons already exist (`etsy_shop.py` L255/L261; `etsy_shop_source_change_log.py`).
+
+**Exit Criteria**:
+- [ ] Two-Phase tests (DB + ORM) for both transitions + hysteresis
+- [ ] Owner flow-2 doc updated (auto-switch becomes real — revert 2026-07-04 wording)
+- [ ] SRS-ETSY-03 flips Partial → Shipped
+
+### AUD-02 — Route C Hold-Queue Operator Screen (P2)
+
+**Owner**: Dev  
+**Estimated Duration**: 3–4 days  
+**Dependencies**: none
+
+**Scope**: Filtered list/kanban of orders whose SKU family route = 'tbd'; operator action to assign Route A/B (writes pipeline + logs transition). Standard-Odoo-first: prefer saved filter + server action on existing dashboard before any new model.
+
+**Exit Criteria**:
+- [ ] Screen reachable from Operations menu; action gated to ops group
+- [ ] Two-Phase tests; TO-BE diagram GAP2 annotation removed
+
+### AUD-03 — Refund Push to Etsy API (P3)
+
+**Scope**: On `etsy.order.ticket` approve, POST refund via Etsy API; keep manual path as fallback. **Check Etsy v3 refund endpoint availability first** — if API does not expose seller refunds, close as won't-do with ADR note.
+
+### AUD-04 — Sync-Health Alerting Escalation (P3)
+
+**Scope**: Consecutive-failure counter + threshold (3 warn / 5 unhealthy) on sync-health record(); mail.activity to ops on threshold; include token-refresh-failure activity. Restores intent of SRS-OPS-04 original design.
+
+### AUD-05 — Real Material BoMs (P4, owner-action)
+
+**Scope**: Owner supplies định mức nguyên liệu per family; replace phantom 1:1 BOMs; unblocks P5-01 forecasts.
 
 ---
 

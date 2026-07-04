@@ -1,6 +1,6 @@
 # Spec 015: Project Completion Consolidation
 
-**Date**: 2026-07-03  
+**Date**: 2026-07-03 (alignment update 2026-07-04)  
 **Status**: Draft for Owner Review  
 **Purpose**: Final closure spec consolidating all non-shipped work across Master Plan 006 (specs 001–014)
 
@@ -10,14 +10,16 @@ Open remainders of specs 001–014 are consolidated here. Those specs remain **a
 
 ## What Remains
 
-**Master Plan 006 is 82.7% complete** (153 done of 185 tracked items):
+**2026-07-04 alignment update**: a code-verification audit found 23 backlog items already shipped on `main` (entire publish pipeline, product hub, catalog Excel sync, tracking import). Phase 3 is ~85% code-complete, not 1%. The production gate is now the **Main-Flow E2E Gate** (MF-E2E-0..4 in spec.md): prove all 5 owner flows end-to-end (python runner + Playwright + BA sign-off, T073 umbrella). Five new audit items (AUD-01..05) cover doc-promised features that never existed.
+
+**Master Plan 006 baseline (2026-07-03)** — 82.7% complete (153/185):
 - **Phase 0–2**: Mostly done (inbound pipeline + staging E2E validated)
-- **Phase 3**: ~1% done (central product hub + Etsy outbound publish — the longest remaining path)
+- **Phase 3**: ~85% code-complete (was misreported ~1%); E2E verification outstanding
 - **Phase 4–5**: Partial (Gearment complete; returns/inventory deferred)
 
 ## Three Priority Buckets
 
-1. **P1 (Production Cutover)**: Etsy pilot flip + email→API rebind + Phase 3 foundation
+1. **P1 (Production Cutover)**: Main-Flow E2E Gate (MF-E2E-0..4) + Etsy pilot flip + email→API rebind
 2. **P2 (Hardening)**: Shop cutovers + i18n completion + design polish
 3. **P3 (Polish & Reporting)**: Returns/refunds, pricing audit, Amazon/website channels
 

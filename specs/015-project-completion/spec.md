@@ -1,8 +1,8 @@
 # Spec 015: Project Completion — Consolidated Backlog
 
-**Date**: 2026-07-03  
+**Date**: 2026-07-03 (alignment update 2026-07-04)  
 **Status**: Draft for Owner Review  
-**Source of Truth**: Master Plan 006 tracking (`.claude/plans/006-master-plan-tracking.md`) + specs 001–014 analysis
+**Source of Truth**: Master Plan 006 tracking (`.claude/plans/006-master-plan-tracking.md`) + specs 001–014 analysis + **2026-07-04 code-verification audit** (docs commits `8b105ba`..`2d873c2`)
 
 ---
 
@@ -37,14 +37,48 @@
 
 ---
 
-## Consolidated Backlog: 60 Non-Done Items
+## 2026-07-04 Alignment Update (post drift audit)
+
+The 2026-07-04 docs-vs-code audit (docs commits `8b105ba`, `b142dee`, `eb1429f`, `2d873c2`) verified every backlog claim against `main`. Two systematic corrections:
+
+1. **23 backlog items were already shipped in code** but carried `todo`/`doing` states copied from the stale tracker. They are re-marked **`shipped*`** in the tables below (state footnote: *code-verified 2026-07-04; each flips to `done` only when its covering MF-E2E gate item passes on staging*). Biggest impact: the entire Etsy publish pipeline (P-PUB-CLIENT/DRAFT/IMAGES/INVENTORY/PUBLISH), product hub models + SKU wizards, Excel catalog sync (parse/ingest/cron/images), and the whole Spec 004a tracking-import stack. Phase 3 is NOT 1% done — its implementation slices are code-complete and lack only E2E verification.
+2. **9 doc-promised features never existed in code** — corrected in docs; the ones worth building enter this backlog as `AUD-01`–`AUD-05` (below), plus scope corrections on T024/T036/T038/P1-07.
+
+### Reprioritized goal — Main-Flow E2E Gate (MF-E2E)
+
+**The production gate is now: all 5 owner flows (docs/owner/business-flows/v2/) complete and E2E-proven.** Each gate item = (a) extend the sectioned python runner (pattern: `scripts/e2e_demo_drop_ship_ordertest2.py`, currently 11/12 PASS) + (b) one Playwright UAT spec (`tests/e2e/`, reusing existing page-objects/specs) + (c) staging pass + BA sign-off. **T073 is the umbrella exit criterion** — it closes when all five gate items pass.
+
+| ID | Flow (owner doc) | State | Blocker | Size | Scope + reuse |
+|---|---|---|---|---|---|
+| **MF-E2E-1** | flow-1 Tạo sản phẩm → publish draft → active | **todo** | none (publish code shipped) | L | Product create + SKU auto-derive + publish draft/images/inventory/activate + drift re-push. Reuse `uat_huong_dan_tao_san_pham.spec.ts`, `uat_real_apron_publish.spec.ts`. **Absorbs P-PUB-E2E.** Includes verifying whether a scheduled SKU-drift job is still needed (P-HUB-SKU-DRIFT residue). |
+| **MF-E2E-2** | flow-2 Nhận đơn hàng Etsy | **todo** | P1-11 (pilot cutover) | M | API sync → order + partner + dedupe → manual email-fallback switch path. Reuse runner §1–3 + `uat_huong_dan_don_hang_etsy.spec.ts`. |
+| **MF-E2E-3a** | flow-3a Giao hàng in nội bộ | **todo** | ENV-FIX-MRP (owner) | M | Route A: MO → complete → Delivery Order (stock.picking) → tracking import (GKE/GDrive poller) → Etsy tracking push. Reuse runner §6/7/9 + `uat_huong_dan_giao_hang.spec.ts`. |
+| **MF-E2E-3b** | flow-3b Giao hàng Gearment dropship | **blocked** | **E2 keys** | M | Quote wizard → dropship PO confirm → `action_push_to_gearment` → webhook tracking → Etsy push. Reuse runner §4/8 + `gearment_quote_wizard` page-object. Sandbox round-trip needs E2. |
+| **MF-E2E-4** | flow-4 Hậu mãi | **todo** | none | M | Address-change approve → apply; reprint (new MO + second tracking push); `etsy.order.ticket` draft → approve → refunded. Reuse runner §3/10 + address-change page-object. |
+| **MF-E2E-0** | Runner §5 config fix | **todo** | none | S | Set `multichannel_hub.design_file_default_gdrive_folder_id` ICP on staging → drop-ship runner 12/12. Pure config, do first. |
+
+### New items from audit (AUD-01…AUD-05)
+
+Docs promised these; code never had them. Corrected docs now say "not implemented"; items below decide their fate. Origin for all: 2026-07-04 drift audit.
+
+| ID | Title | State | Priority | Size | Notes (code anchors verified) |
+|---|---|---|---|---|---|
+| **AUD-01** | Email-fallback auto-switch state machine (ADR-008a) | **todo** | **P2** | M | `etsy.shop.health_check_consecutive_failures` / `recovery_probe_consecutive_successes` fields (etsy_shop.py L255/L261) and `etsy.shop.source.change.log` reasons `auto-failover`/`recovery-probe` already exist — only the transition logic is missing; today the switch is a manual admin toggle (C-ESY-002). Flow-2 resilience. |
+| **AUD-02** | Route C hold-queue operator screen | **todo** | **P2** | M | `mhc.sku.family.default_route='tbd'` exists (sku_family.py); no screen/kanban for reclassifying held orders — TO-BE diagram C01/C02 currently manual on the order. Flow-3 routing. |
+| **AUD-03** | Refund push to Etsy API | **todo** | P3 | M | `etsy.order.ticket` workflow shipped (draft→approve→refunded, BA-Lead gated); refund itself executed manually in Etsy Shop Manager. This item = API push on approve. Flow-4 future. |
+| **AUD-04** | Sync-health alerting escalation | **todo** | P3 | M | `multichannel.sync.health`/`etsy.sync.health` record checkpoints only — no consecutive-failure threshold, no mail.activity alert (SRS-OPS-04 fiction removed). Include token-refresh-failure activity (SRS-ETSY-02 leftover). |
+| **AUD-05** | Real material BoMs (replace 1:1 pass-through) | **todo** | P4 | L | `product_mto_bom_wizard.py:76-84` creates phantom 1:1 BOM; real định mức nguyên liệu needs owner-supplied data. `owner-action`. Prereq for P5-01 raw-material forecasts. |
+
+---
+
+## Consolidated Backlog (60 items as consolidated 2026-07-03 — states re-verified 2026-07-04, see Alignment Update)
 
 ### Legend
 
 - **ID**: Original slice/task ID from tracker or spec
 - **Title**: Feature/task description
 - **Origin**: Spec ID + P/US reference
-- **State**: `todo` (not started), `doing` (in progress), `blocked` (waiting on external)
+- **State**: `todo` (not started), `doing` (in progress), `blocked` (waiting on external), `shipped*` (code-verified 2026-07-04; flips to `done` when its MF-E2E gate item passes), `superseded` (absorbed by another item)
 - **Blocker**: External dependency or prerequisite
 - **Size**: S (≤1 day), M (2–5 days), L (1–2 weeks)
 - **Priority**: P1 (production cutover), P2 (hardening), P3 (polish/reporting), P4 (deferred)
@@ -66,24 +100,24 @@
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P-HUB-SPEC** | Central product hub architecture spec | Spec 009 | **doing** | None | M | Planner authoring; unblocks all 15 Phase 3 implementation slices |
+| **P-HUB-SPEC** | Central product hub architecture spec | Spec 009 | **shipped\*** | None | M | Specs 009/010/011 authored and implemented (spec 009 status banner is stale). |
 | **P1-11** | Pilot-shop cutover (JaHandmadeArt OAuth→API) | Spec 005 P0-15 | **todo** | E2 keys | S | Ready to execute; awaiting Gearment API sandbox keys (E2 dependency) + owner sign-off |
 | **P1-13** | Additional 2–4 shops cutover | Spec 005 P0-16 | **todo** | P1-11 | M | Depends on P1-11 pilot success |
 | **P2-07** | Gmail cron rebind (email→API cutover) | Spec 004a + 005 | **todo** | P1-11 | S | Phase 1 + 2 inter-phase exit criterion; rebind cron from 10-min email to API call; fallback email only |
 | **P2-08** | Remaining 15 shops cutover to `api_only` | Spec 005 | **todo** | P2-07 | M | Operational after P1-11 + P2-07; batch cutover of shops 2–19 |
-| **P-HUB-PROD-MODEL** | Product hub models (channels + status + template extensions) | Spec 009 P1-01 | **todo** | P-HUB-SPEC | M | Foundation; unblocks all publish slices. Models: `multichannel.sales.channel`, `product.channel.status`, `product.template` extensions |
-| **P-HUB-WIZARD** | SKU derivation wizard + UI | Spec 009 P1-02 | **todo** | P-HUB-PROD-MODEL | M | Operator tool for catalog hygiene; displays SKU precedence logic |
-| **P-HUB-SKU-DRIFT** | Drift detection model + job | Spec 009 P1-03 | **todo** | P-HUB-PROD-MODEL | M | Detects SKU collisions; flags for resolution via wizard |
-| **P-PUB-CLIENT** | EtsyApiClient write methods (post/put/patch/post_multipart) | Spec 011 P2-01 | **todo** | P-HUB-SPEC | M | Unblocks all 5 publish slices; wraps requests.Session with auth + retry logic |
-| **P-PUB-DRAFT** | Draft listing wizard (Etsy v3 flow) | Spec 011 P2-02 | **todo** | P-PUB-CLIENT | M | UI wizard: supply → draft upload → quote quote → result display |
-| **P-PUB-IMAGES** | Image upload + variant image assignment | Spec 011 P2-03 | **todo** | P-PUB-CLIENT | M | POST multipart to `/listings/{id}/images` + PUT variant images |
-| **P-PUB-INVENTORY** | Inventory writeback to Etsy | Spec 011 P2-04 | **todo** | P-HUB-SKU-DRIFT | M | Pushes stock levels to Etsy for each variant; respects `multichannel.listing.available_qty_override` |
-| **P-PUB-PUBLISH** | Publish state transition (draft→active) | Spec 011 P2-05 | **todo** | P-PUB-IMAGES | S | Final state machine transition; updates `multichannel.listing.publication_state` |
-| **P-PUB-E2E** | E2E runner for publish pipeline (Spec 011 US5) | Spec 011 P2-06 | **todo** | P-PUB-PUBLISH | L | Runs full inbound (Etsy email)→outbound (Etsy publish) loop; staging + production validation |
-| **P-HUB-XLS-PARSE** | Excel catalog parser (XLS→JSON) | Spec 010 P0-01 | **todo** | P-HUB-SPEC | M | Reads shop Excel export; extracts product + variant rows; validates schema |
-| **P-HUB-XLS-INGEST** | Excel catalog ingest (JSON→models) | Spec 010 P0-02 | **todo** | P-HUB-XLS-PARSE | M | Creates/updates `multichannel.listing` + variant records; idempotent via etsy_listing_id |
-| **P-HUB-XLS-CRON** | Scheduled catalog sync (daily) | Spec 010 P0-03 | **todo** | P-HUB-XLS-INGEST | S | `ir_cron_data.xml` entry; logs sync health to `multichannel.sync.health` |
-| **P-HUB-IMAGES** | Image download from Etsy (catalog sync) | Spec 010 P0-04 | **todo** | P-HUB-XLS-INGEST | M | Batch download listing images; store in `ir.attachment`; link to variant records |
+| **P-HUB-PROD-MODEL** | Product hub models (channels + status + template extensions) | Spec 009 P1-01 | **shipped\*** | — | M | Code: `multichannel_hub_core/models/multichannel_sales_channel.py`, `product_channel_status.py`, `product_template.py` (x_channel_applicability_ids) |
+| **P-HUB-WIZARD** | SKU derivation wizard + UI | Spec 009 P1-02 | **shipped\*** | — | M | Code: `wizards/product_sku_builder_wizard.py` + views; UAT 2026-05-26 (`docs/engineering/uats/`) |
+| **P-HUB-SKU-DRIFT** | Drift detection model + job | Spec 009 P1-03 | **shipped\*** | — | M | Code: `wizards/product_sku_canonicalise_wizard.py` (SKU drift canonicalisation) + `x_sku_v2_status` dirty-flag machinery. No separate scheduled drift job — verify need in MF-E2E-1. |
+| **P-PUB-CLIENT** | EtsyApiClient write methods (post/put/patch/post_multipart) | Spec 011 P2-01 | **shipped\*** | — | M | Code: `etsy_integration/services/etsy_api_client.py` (`post` L344, `put` L353, `patch` L362, `post_multipart` L371; 401-refresh + retry). Landed in etsy_integration, NOT the planned `multichannel_hub_catalog` module. |
+| **P-PUB-DRAFT** | Draft listing wizard (Etsy v3 flow) | Spec 011 P2-02 | **shipped\*** | — | M | Code: `etsy_integration/wizards/etsy_publish_wizard.py` (`action_run_publish_draft_only`) + `services/etsy_listing_publisher.py` (`create_draft`) |
+| **P-PUB-IMAGES** | Image upload + variant image assignment | Spec 011 P2-03 | **shipped\*** | — | M | Code: `etsy_listing_publisher.upload_images` + variant-image assignment (Spec 011 P-PUB-VARIANT-PROPERTIES) |
+| **P-PUB-INVENTORY** | Inventory writeback to Etsy | Spec 011 P2-04 | **shipped\*** | — | M | Code: `etsy_listing_publisher.push_inventory` + `services/etsy_inventory_pusher.py`; wizard `action_run_inventory_only` |
+| **P-PUB-PUBLISH** | Publish state transition (draft→active) | Spec 011 P2-05 | **shipped\*** | — | S | Code: `etsy_listing_publisher.publish` + wizard `action_run_publish` |
+| **P-PUB-E2E** | E2E runner for publish pipeline (Spec 011 US5) | Spec 011 P2-06 | **superseded** | — | L | Absorbed into **MF-E2E-1** (Main-Flow E2E Gate, below) |
+| **P-HUB-XLS-PARSE** | Excel catalog parser (XLS→JSON) | Spec 010 P0-01 | **shipped\*** | — | M | Code: `multichannel_hub_core/models/product_catalog_import_run.py` + `product_catalog_import_line.py` + `product_catalog_sheet_fingerprint.py` |
+| **P-HUB-XLS-INGEST** | Excel catalog ingest (JSON→models) | Spec 010 P0-02 | **shipped\*** | — | M | Code: `wizards/catalog_import_run_wizard.py` + import-run models |
+| **P-HUB-XLS-CRON** | Scheduled catalog sync (daily) | Spec 010 P0-03 | **shipped\*** | — | S | Code: `data/product_catalog_cron.xml` (`ir_cron_catalog_sync`, no-op until `multichannel_hub.catalog_cron_source_path` ICP set) |
+| **P-HUB-IMAGES** | Image download from Etsy (catalog sync) | Spec 010 P0-04 | **shipped\*** | — | M | Code: `multichannel_hub_core/models/multichannel_product_image.py` + `ir_cron_download_pending_etsy_images` (etsy_integration) |
 
 ---
 
@@ -93,9 +127,9 @@
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P1-07** | Vietnamese i18n completion | Spec 003 P3-03 | **todo** | None | M | Phase 1 exit criterion; translate all field labels, menu entries, status values, error messages |
-| **P1-01b** | Order-line dashboard refactor (model swap) | Spec 003 P1-01 | **doing** | P4-01-D | M | Swap from `sale.order` to `sale.order.line` granularity; enables bulk actions for P4-01-D |
-| **P1-02c** | Spec 003 US5 GDrive upload wizard | Spec 003 US5 | **todo** | P1-09 ✓ | M | GDrive upload wizard for design files; fields: `gdrive_file_id`, `gdrive_preview_url`, `gdrive_folder_id` + upload service via service account. P1-09 (GDrive auth scaffolding) completed; ready to implement. |
+| **P1-07** | Vietnamese i18n completion | Spec 003 P3-03 | **todo** | None | **L** | Phase 1 exit criterion. Audit 2026-07-04: **zero `i18n/*.po` files exist in any module** — earlier "50% translated" claims were wrong; effort = full extraction + translation, resized M→L. Some surfaces (design module state labels) ship Vietnamese-first hardcoded strings to convert. |
+| **P1-01b** | Order-line dashboard refactor (model swap) | Spec 003 P1-01 | **shipped\*** | — | M | Code: `views/operations_dashboard_views.xml` — model swapped to `sale.order.line` 2026-05-10; bulk Mark-Shipped server action live |
+| **P1-02c** | Spec 003 US5 GDrive upload wizard | Spec 003 US5 | **shipped\*** | — | M | Code: `multichannel_hub_core/models/design_file_upload_wizard.py` (url/small/gdrive storage modes) + `cron_design_file_gdrive_sync` promotion cron |
 | **P1-02d** | A4 batch print layout | Spec 003 P1-02 | **todo** | None | S | Design file batch print template; owner red-flag item |
 | **P1-DESIGN-AUTO-ARCHIVE** | Auto-archive design files after publish | Spec 003 P1-02 | **doing** | P-PUB-PUBLISH | M | State transition: archive after Etsy publish confirmation |
 | **P-DOCS-FLOW-VN** | Vietnamese operator flow docs | Spec 003 + 006 | **doing** | P-PUB-E2E | L | Can author in parallel; finalize post-E2E. Covers order ingest→fulfillment→shipment tracking workflow. |
@@ -103,18 +137,18 @@
 | **P3-LEAD-API-ROUTING** | Etsy messages → lead routing | Spec 007 | **todo** | P1-MSG-API-PULL | M | Off critical path; dependent on conversations_r re-submission |
 | **T067** | Reconciliation report (Spec 002 exit gate) | Spec 002 Phase 13 | **todo** | None | M | BA reconciliation CSV: Odoo `SUM(amount_total)` vs source Excel; required before staging deploy |
 | **T070** | Module install test (clean DB) | Spec 002 Phase 13 | **todo** | T067 | S | Verify all modules install cleanly on fresh Odoo instance |
-| **T073** | Staging E2E + BA sign-off (Spec 002) | Spec 002 Phase 13 | **todo** | T067 | M | Full end-to-end on staging; BA reconciliation approval gate |
+| **T073** | Staging E2E + BA sign-off (Spec 002) | Spec 002 Phase 13 | **todo** | T067 | M | Full end-to-end on staging; BA reconciliation approval gate. **2026-07-04: umbrella exit criterion of the Main-Flow E2E Gate — closes when MF-E2E-0..4 all pass.** |
 
 ### Spec 004a: Tracking Import (Phase 2, 6 items)
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P2-01-MODELS** | Tracking import models + views | Spec 004a | **todo** | None | M | `tracking.import.log`, `tracking.import.line`, `sale.order.fulfillment` extensions; carrier auto-detect regex |
-| **P2-01-WIZARD** | Tracking import wizard (GKE Excel upload) | Spec 004a | **todo** | P2-01-MODELS | M | UI wizard: upload Excel → parse → preview → confirm; carrier detection logic |
-| **P2-01-CARRIER** | Shipping carrier model + master data | Spec 004a | **todo** | None | S | `shipping.carrier` model (already in multichannel_hub_core); populate USPS/UniUni/YunExpress master data |
-| **P2-02-CARRIER-DETECT** | Carrier auto-detection (regex matching) | Spec 004a | **todo** | P2-01-WIZARD | M | Parse tracking number + prefix; match to carrier via `shipping.carrier.tracking_pattern_regex` |
-| **P2-03-GKE-SCHEMA** | GKE schema fingerprint validation | Spec 004a | **todo** | P2-01-WIZARD | S | Pre-flight check: Excel columns match known GKE schema; warn on mismatch |
-| **P2-04-SYNC-HEALTH** | Tracking sync health reporting | Spec 004a | **todo** | P2-01-CARRIER | S | Log import statistics to `multichannel.sync.health`; report match/unmatch counts |
+| **P2-01-MODELS** | Tracking import models + views | Spec 004a | **shipped\*** | — | M | Code: `multichannel_hub_fulfillment/models/tracking_import_log.py`, `tracking_import_line.py` |
+| **P2-01-WIZARD** | Tracking import wizard (GKE Excel upload) | Spec 004a | **shipped\*** | — | M | Code: `multichannel_hub_fulfillment/wizards/tracking_import_wizard.py` (incl. `action_approve_schema` FR-017 gate); plus GDrive inbox poller `logistics_partner._cron_poll_inbox` (P2-06) |
+| **P2-01-CARRIER** | Shipping carrier model + master data | Spec 004a | **shipped\*** | — | S | Code: `models/shipping_carrier.py` + `data/shipping_carrier_data.xml` (USPS/UniUni/YunExpress seeded) |
+| **P2-02-CARRIER-DETECT** | Carrier auto-detection (regex matching) | Spec 004a | **shipped\*** | — | M | Code: `shipping_carrier.tracking_prefix_regex` + safety constraint `_check_tracking_prefix_regex_safe` |
+| **P2-03-GKE-SCHEMA** | GKE schema fingerprint validation | Spec 004a | **shipped\*** | — | S | Code: schema-hash whitelist ICP `multichannel_hub_fulfillment.gke_schema_hashes` in `tracking_import_wizard.py` |
+| **P2-04-SYNC-HEALTH** | Tracking sync health reporting | Spec 004a | **shipped\*** | — | S | Code: `logistics_partner.py` records per-partner errors + gdrive_integration events to sync health |
 
 ### Spec 004b: Gearment Adapter Completion (4 items)
 
@@ -130,7 +164,7 @@
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
 | **T055** | Discount analytics (Spec 002 US7) | Spec 002 | **todo** | None | S | Pivot/graph views for discount code usage; deferred to W4+ (nice-to-have) |
-| **T058** | Image download cron registration (Spec 002 US8) | Spec 002 | **todo** | None | S | Register `ir_cron_data.xml` entry for batch image downloads (service exists); deferred to W4+ |
+| **T058** | Image download cron registration (Spec 002 US8) | Spec 002 | **shipped\*** | — | S | Code: `ir_cron_download_pending_etsy_images` (`etsy_integration/data/ir_cron_data.xml`, 30-min interval) |
 
 ---
 
@@ -140,10 +174,10 @@
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **T024** | 14-column Order Dashboard | Spec 003 Phase 3 | **todo** | P1-DESIGN-AUTO-ARCHIVE | S | Add design_status + address-change columns; deferred pending prerequisites |
+| **T024** | 14-column Order Dashboard | Spec 003 Phase 3 | **todo** | P1-DESIGN-AUTO-ARCHIVE | S | Add design_status + address-change columns. Audit 2026-07-04 addition: pivot view + kanban-by-tracking_state also never shipped (SRS-OPS-01/02 fiction) — fold into this polish scope if owner still wants them. |
 | **T030** | Perf test (17K rows <3s) | Spec 003 Phase 3 | **todo** | None | M | Load test Order Dashboard with 17K rows; verify <3s load time |
-| **T036** | Excel export (tracking) | Spec 003 Phase 4 | **todo** | P2-01-WIZARD | M | Tracking Dashboard → Excel with GKE import format; used by ops for manual adjustments |
-| **T038** | Bus.bus web-client subscription (Spec 003) | Spec 003 Phase 4 | **todo** | None | M | Real-time dashboard updates via WebSocket; deferred to web-client phase |
+| **T036** | Excel export (tracking) | Spec 003 Phase 4 | **todo** | — | M | Audit 2026-07-04: dedicated export wizards (SRS-OPS-09/10) never shipped; standard Odoo list export from the unified Operations Dashboard is the interim. This item = the dedicated wizard (GKE format + GDrive save). |
+| **T038** | Bus.bus web-client subscription (Spec 003) | Spec 003 Phase 4 | **todo** | None | M | Audit 2026-07-04: **no bus.bus code exists anywhere** (`_send_tracking_update_to_bus` was doc fiction); dashboard currently refreshes on cron cadence (5–15 min). This item = build broadcast + subscription from scratch, if still wanted. |
 | **T040–T044** | Warehouse zone mapping + stock move on transition | Spec 003 Phase 5 | **todo** | P-HUB-PROD-MODEL | M | Process Dashboard: map pipelines to warehouse zones; generate stock.move on "Đã sản xuất" transition (idempotent) |
 | **T052–T059** | Design-file URL validation + recovery | Spec 003 Phase 6 | **todo** | None | M | Unreachable-URL warning chip; background job to re-validate design file URLs weekly |
 
@@ -159,7 +193,7 @@
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
 | **T060–T064** | Shop-level record rules (Spec 002 US9) | Spec 002 Phase 11 | **todo** | None | M | Multi-user shop isolation via res.users.etsy_shop_ids + ACL; deferred to W4+ |
-| **T065–T066** | Design queue status tracking (Spec 002 US10) | Spec 002 Phase 12 | **todo** | None | S | Add etsy_design_status selection field to sale.order.line; deferred |
+| **T065–T066** | Design queue status tracking (Spec 002 US10) | Spec 002 Phase 12 | **shipped\*** | — | S | Code: `multichannel_hub_core/models/sale_order_line.py` — `design_status` rollup (T023) live on the line dashboard |
 
 ### Phase 5: Inventory & Future Channels (4 items)
 
@@ -192,33 +226,39 @@
 
 ## Consolidated Backlog Statistics
 
-### By State
+### By State (re-verified 2026-07-04)
 
-| State | Count | % |
+| State | Count | Notes |
 |---|---|---|
-| `todo` | 49 | 81.7% |
-| `doing` | 8 | 13.3% |
-| `blocked` | 3 | 5.0% |
-| **Total Non-Done** | **60** | **100%** |
+| `shipped*` | 23 | Code-verified shipped; await MF-E2E gate pass to flip `done` (13 in P1 publish/hub/XLS, 9 in P2 tracking/design, T065–T066) |
+| `superseded` | 1 | P-PUB-E2E → MF-E2E-1 |
+| `todo` | 27 | Genuinely not started |
+| `doing` | 6 | P0-02, P0-04, P0-20, P-BUG-ESTY-188, P-DOCS-FLOW-VN, ENV-FIX-MRP |
+| `blocked` | 3 | P0-18b2 + MF-E2E-3b (E2 keys); P1-MSG-API-PULL (E1 scope) |
+| **New (MF-E2E + AUD)** | **11** | 6 gate items + 5 audit items |
+| **Active backlog (todo+doing+blocked+new)** | **47** | |
 
 *Note: 8 "doing" items are actively in progress or partially complete (P0-02 owner-side partial; P0-04 ops-side partial; P0-20 skeleton done; P-BUG-ESTY-188 fix landed; P-HUB-SPEC planner authoring; P1-01b refactor blocked; P-DOCS-FLOW-VN documentation parallel; ENV-FIX-MRP owner-side). 3 "blocked" items await E2 (Gearment keys) or E1 re-submission (conversations_r). State convention: `todo (blocked-by: X)` used for logical blockers within-plan; `blocked` state used for external dependency blockers only.*
 
 ### By Priority
 
-| Priority | Count | Est. Duration | Critical Path? |
+| Priority | Active Count | Est. Duration | Critical Path? |
 |---|---|---|---|
-| **P1** (Production Cutover) | 18 | 8–10 weeks | YES — gates production release |
-| **P2** (Hardening) | 22 | 6–8 weeks | YES (parallel) — gates full E2E |
-| **P3** (Polish/Reporting) | 18 | 4–6 weeks | NO — post-E2E nice-to-haves |
+| **P1** (Production Cutover = Main-Flow E2E Gate) | 11 (MF-E2E-0..4 + P1-11, P1-13, P2-07, P2-08, T067, T073) | **3–5 weeks** (publish/hub/tracking code already shipped) | YES — gates production release |
+| **P2** (Hardening) | 14 (incl. AUD-01, AUD-02) | 4–6 weeks | Parallel |
+| **P3** (Polish/Reporting) | 18 (incl. AUD-03, AUD-04) | 4–6 weeks | NO — post-E2E |
+| **P4** (Deferred) | 4 (incl. AUD-05) | — | NO |
+
+> Duration collapsed from 8–10 weeks to 3–5: the audit showed Phase 3 publish + hub + catalog-sync + tracking-import code is already on `main`; remaining P1 work is E2E verification, cutovers, and reconciliation — not implementation.
 
 ### By Phase
 
 | Phase | Item Count | Completion % | Est. to 100% |
 |---|---|---|---|
 | P0 | 3 | 89% | 1 week (E2 keys) |
-| P1 | 10 | 78% | 3 weeks (P1-11 + P2-07 gate) |
-| P2 | 6 | 75% | 2 weeks (shop cutover) |
-| **P3 (NEW)** | 72 | 1% | 8–10 weeks (all 15 slices) |
+| P1 | 10 | 78% | 2–3 weeks (P1-11 + P2-07 gate) |
+| P2 | 6 | 95% (tracking-import stack shipped\*) | E2E verify only |
+| **P3** | 72 | **~85% code-complete** (was misreported 1% — implementation slices shipped between 2026-05 and 2026-07; E2E verification outstanding) | 2–3 weeks (MF-E2E-1) |
 | P4 | 2 | 75% | 2 weeks (returns + pricing) |
 | P5 | 4 | 0% | 4–6 weeks (parallel, low priority) |
 
@@ -261,6 +301,8 @@
 ## Traceability Appendix: Master Plan 006 Tracker → Spec 015
 
 Every non-done tracker item from `.claude/plans/006-master-plan-tracking.md` appears in this spec. The table below maps tracker IDs to spec backlog items.
+
+> **2026-07-04**: tracker states were stale for 23 items (marked `shipped*` above with code anchors); the tracker remains the historical record — this spec's Alignment Update is now the authoritative state. New IDs MF-E2E-0..4 and AUD-01..05 originate here (no tracker rows).
 
 ### Included Items (60 total)
 
