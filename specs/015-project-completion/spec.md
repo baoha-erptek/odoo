@@ -46,7 +46,7 @@ The 2026-07-04 docs-vs-code audit (docs commits `8b105ba`, `b142dee`, `eb1429f`,
 
 ### Reprioritized goal — Main-Flow E2E Gate (MF-E2E)
 
-**The production gate is now: all 5 owner flows (docs/owner/business-flows/v2/) complete and E2E-proven.** Each gate item = (a) extend the sectioned python runner (pattern: `scripts/e2e_demo_drop_ship_ordertest2.py`, currently 11/12 PASS) + (b) one Playwright UAT spec (`tests/e2e/`, reusing existing page-objects/specs) + (c) staging pass + BA sign-off. **T073 is the umbrella exit criterion** — it closes when all five gate items pass.
+**The production gate is now: all 5 owner flows (docs/owner/business-flows/v2/) complete and E2E-proven.** Owner-set dispatch order (2026-07-04): **MF-E2E-1 → MF-E2E-2 → MF-E2E-3a → (MF-E2E-3b when E2 keys arrive) → MF-E2E-4 last.** Each gate item = (a) extend the sectioned python runner (pattern: `scripts/e2e_demo_drop_ship_ordertest2.py`, currently 11/12 PASS) + (b) one Playwright UAT spec (`tests/e2e/`, reusing existing page-objects/specs) + (c) staging pass + BA sign-off. **T073 is the umbrella exit criterion** — it closes when all five gate items pass.
 
 | ID | Flow (owner doc) | State | Blocker | Size | Scope + reuse |
 |---|---|---|---|---|---|

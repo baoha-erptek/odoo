@@ -24,11 +24,11 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 ## Main-Flow E2E Gate — Dispatch Blocks (2026-07-04)
 
-**Dispatch order**: MF-E2E-0 → MF-E2E-4 → MF-E2E-2 → MF-E2E-3a → MF-E2E-1 → (MF-E2E-3b when E2 keys arrive). T073 closes when all pass. Rationale: cheapest unblock first (config), then flows with zero blockers, then the large publish-loop flow; 3b is externally blocked.
+**Dispatch order** (owner-revised 2026-07-04): ~~MF-E2E-0~~ (done, 12/12) → **MF-E2E-1 → MF-E2E-2 → MF-E2E-3a** → (MF-E2E-3b when E2 keys arrive) → **MF-E2E-4 last**. T073 closes when all pass. Owner call: main sell→ship loop (flows 1–3) proven before after-sales.
 
 ---
 
-### MF-E2E-0 — Runner §5 Config Fix (staging)
+### MF-E2E-0 — Runner §5 Config Fix (staging) — ✅ DONE 2026-07-04 (12/12; see findings.md)
 
 **Owner**: Ops/Dev  
 **Estimated Duration**: 0.5 day  
