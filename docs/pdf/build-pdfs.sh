@@ -46,28 +46,57 @@ build_set() {
       -e svg -b transparent \
       -p "$BUILD/puppeteer.json" -c "$BUILD/mermaid.json"
 
-  echo ">> [$name] inlining SVGs as data-URIs ..."
+  echo ">> [$name] inlining SVGs as data-URIs (wide diagrams -> landscape pages) ..."
   python3 - "$BUILD/$name.rendered.md" <<'PY'
 import base64, os, re, sys
 md_path = sys.argv[1]
 base = os.path.dirname(md_path)
 text = open(md_path, encoding="utf-8").read()
 
+# Diagrams wider than this (width/height) read too small in a portrait column,
+# so they go on their own landscape page (10in usable width vs 6.5in portrait).
+WIDE_ASPECT = 2.4
+
 # mmdc emits: ![diagram](name.rendered-1.svg)  (path relative to the output md)
 img_re = re.compile(r'!\[[^\]]*\]\(([^)]+\.svg)\)')
 
+def svg_aspect(svg_text):
+    m = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ([\d.]+)"', svg_text[:4000])
+    if m:
+        w, h = float(m.group(1)), float(m.group(2))
+        return (w / h) if h else 1.0
+    return 1.0
+
+n_wide = 0
 def repl(m):
+    global n_wide
     rel = m.group(1)
     svg_path = rel if os.path.isabs(rel) else os.path.join(base, rel)
-    with open(svg_path, "rb") as fh:
-        b64 = base64.b64encode(fh.read()).decode("ascii")
-    return ('<figure><img alt="diagram" '
-            'style="max-width:100%;max-height:8.7in;height:auto" '
+    svg = open(svg_path, encoding="utf-8").read()
+    b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    cls = ""
+    if svg_aspect(svg) >= WIDE_ASPECT:
+        cls = ' class="wide"'
+        n_wide += 1
+    return (f'<figure{cls}><img alt="diagram" '
             f'src="data:image/svg+xml;base64,{b64}"></figure>')
 
 new, n = img_re.subn(repl, text)
-open(md_path, "w", encoding="utf-8").write(new)
-print(f"   inlined {n} diagram(s)")
+
+# Named landscape page for wide figures. make-pdf runs Paged.js, which honors
+# named @page rules; its HTML sanitizer keeps <style> (only strips script/etc).
+# Keep this block quote-free so smartypants/entity-decoding can't mangle the CSS.
+style = (
+    "<style>\n"
+    "@page landscapeFig { size: letter landscape; margin: 0.5in; }\n"
+    "figure { margin: 12pt 0; }\n"
+    "figure img { display:block; max-width:100%; max-height:8.7in; height:auto; margin:0 auto; }\n"
+    "figure.wide { page: landscapeFig; break-before: page; }\n"
+    "figure.wide img { max-height:6.7in; }\n"
+    "</style>\n\n"
+)
+open(md_path, "w", encoding="utf-8").write(style + new)
+print(f"   inlined {n} diagram(s); {n_wide} routed to landscape pages")
 PY
 
   echo ">> [$name] generating PDF ..."
