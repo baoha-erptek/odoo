@@ -6,6 +6,14 @@
 > file remains the historical record of Master Plan 006 execution. Rebuilt project docs:
 > [docs/srs/](../../docs/srs/README.md) + [docs/sds/](../../docs/sds/README.md).
 
+> **2026-07-04 SESSION ADDENDUM** (states live in spec 015; recorded here for the historical trail):
+> MF-E2E gates **0/1/2/3a/3b all DONE ×2** on staging `esty_odoo19` (commits `1bfaecf`…`855b247`;
+> evidence `docs/engineering/uats/E2E_FLOW*_2026-07-04.md`). Also closed: **P0-02** (Gearment develop
+> keys verified live), **P0-18b2** (webhook HMAC verified live), **ENV-FIX-MRP** (routes verified).
+> 9 defects fixed (ei 19.0.3.18.0 / mhf 19.0.1.0.27 / mhc 19.0.1.0.76). Open vendor blocker:
+> Gearment `printing_options` validator (Defect-2026-05-10-05) — owner escalation. Next session:
+> `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` (P1-11 cutover → XLS verify → MF-E2E-4 when owner unblocks).
+
 **Created**: 2026-04-13
 **Source of truth**: [specs/006-master-plan/MASTER_PLAN.md](../../specs/006-master-plan/MASTER_PLAN.md) + [ADR-008](../../specs/006-master-plan/adrs/ADR-008-api-first-pivot.md)
 **Update cadence**: weekly (every Monday), or on phase-boundary events

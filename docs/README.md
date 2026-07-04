@@ -16,7 +16,7 @@ This repository's documentation is organized by audience and purpose. Start here
 - **System administrators** → [deployment/](./deployment/) (infrastructure, setup, runbooks)
 - **QA & testing** → [engineering/](./engineering/) (E2E tests, UAT procedures)
 - **Historical/archived docs** → [archive/](./archive/) (timestamped superseded docs, prior analyses)
-- **Next working session** → [NEXT_SESSION_PROMPT_MF_E2E_FLOWS.md](./NEXT_SESSION_PROMPT_MF_E2E_FLOWS.md) (Main-Flow E2E gate: MF-E2E-1 → 2 → 3a; flow-4 later)
+- **Next working session** → [NEXT_SESSION_PROMPT_CLOSEOUT.md](./NEXT_SESSION_PROMPT_CLOSEOUT.md) (P1-11 cutover → XLS verify → MF-E2E-4 when owner unblocks; gates 0–3b closed 2026-07-04)
 
 ---
 

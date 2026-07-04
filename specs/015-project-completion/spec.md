@@ -46,7 +46,7 @@ The 2026-07-04 docs-vs-code audit (docs commits `8b105ba`, `b142dee`, `eb1429f`,
 
 ### Reprioritized goal — Main-Flow E2E Gate (MF-E2E)
 
-**The production gate is now: all 5 owner flows (docs/owner/business-flows/v2/) complete and E2E-proven.** Owner-set dispatch order (2026-07-04): **MF-E2E-1 → MF-E2E-2 → MF-E2E-3a → (MF-E2E-3b when E2 keys arrive) → MF-E2E-4 last.** Each gate item = (a) extend the sectioned python runner (pattern: `scripts/e2e_demo_drop_ship_ordertest2.py`, currently 11/12 PASS) + (b) one Playwright UAT spec (`tests/e2e/`, reusing existing page-objects/specs) + (c) staging pass + BA sign-off. **T073 is the umbrella exit criterion** — it closes when all five gate items pass.
+**The production gate is now: all 5 owner flows (docs/owner/business-flows/v2/) complete and E2E-proven.** Owner-set dispatch order (2026-07-04): **MF-E2E-1 → MF-E2E-2 → MF-E2E-3a → (MF-E2E-3b when E2 keys arrive) → MF-E2E-4 last.** *Status 2026-07-04 EOD: 0/1/2/3a/3b **done** (see gate table); only **MF-E2E-4** remains (owner-held), plus the Gearment printing_options vendor escalation and P1-11 for live tracking-push confirmation.* Each gate item = (a) extend the sectioned python runner (pattern: `scripts/e2e_demo_drop_ship_ordertest2.py`, currently 11/12 PASS) + (b) one Playwright UAT spec (`tests/e2e/`, reusing existing page-objects/specs) + (c) staging pass + BA sign-off. **T073 is the umbrella exit criterion** — it closes when all five gate items pass.
 
 | ID | Flow (owner doc) | State | Blocker | Size | Scope + reuse |
 |---|---|---|---|---|---|
@@ -104,7 +104,7 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P0-02** | Owner obtains Gearment sandbox API credentials | Spec 004b + E2 | **doing** | E2 dep (partial) | S | Dashboard creds obtained 2026-04-27; API sandbox keys (GEARMENT_API_KEY, GEARMENT_API_SECRET, GEARMENT_WEBHOOK_HMAC_SECRET) still pending. Owner action: request from Gearment dashboard. Unblocks P1-11 round-trip verify + P0-18b2 webhook discovery. `owner-action` |
+| **P0-02** | Owner obtains Gearment sandbox API credentials | Spec 004b + E2 | **done** (2026-07-04 — keys in .env verified LIVE, 200 on catalog; develop account per owner) | E2 dep (partial) | S | Dashboard creds obtained 2026-04-27; API sandbox keys (GEARMENT_API_KEY, GEARMENT_API_SECRET, GEARMENT_WEBHOOK_HMAC_SECRET) still pending. Owner action: request from Gearment dashboard. Unblocks P1-11 round-trip verify + P0-18b2 webhook discovery. `owner-action` |
 | **P0-04** | Provision staging environment `129.150.63.207` | Spec 004a Phase 0 | **doing** | None | M | Demo deploy live 2026-05-01 on staging server (Oracle Cloud aarch64). Remaining ops TODO: nightly prod-restore cron + `web.base.url` ICP set to `https://odoo.hatafax.com`. Infrastructure task (Ops + Dev). |
 | **P0-20** | Module decomposition kickoff (ADR-003) | Spec 005 ADR-003 | **doing** | P0-11 | M | Skeleton landed 2026-04-27 (multichannel_hub_core empty module installed). P1-05 + P1-06 populate core with fulfillment + carrier models. Documentation task (P0-20-DOCS) deferred, tracked separately below. |
 | **P-BUG-ESTY-188** | Fix createListing 400 on Etsy API POST | Spec 011 + 005 | **doing** | E1 ✓ | S | Root cause: missing `readiness_state_id` on shop (never bootstrapped after field added in 19.0.2.15.0). Surgical mitigation landed 2026-06-05 (commit `297fc717b04`); migration bootstraps state IDs on next Etsy OAuth refresh. Defensive + monitoring. |
@@ -115,7 +115,7 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P-HUB-SPEC** | Central product hub architecture spec | Spec 009 | **shipped\*** | None | M | Specs 009/010/011 authored and implemented (spec 009 status banner is stale). |
+| **P-HUB-SPEC** | Central product hub architecture spec | Spec 009 | **done** (2026-07-04 — specs implemented; publish stack E2E-proven by MF-E2E-1) | None | M | Specs 009/010/011 authored and implemented (spec 009 status banner is stale). |
 | **P1-11** | Pilot-shop cutover (JaHandmadeArt OAuth→API) | Spec 005 P0-15 | **todo** | E2 keys | S | Ready to execute; awaiting Gearment API sandbox keys (E2 dependency) + owner sign-off |
 | **P1-13** | Additional 2–4 shops cutover | Spec 005 P0-16 | **todo** | P1-11 | M | Depends on P1-11 pilot success |
 | **P2-07** | Gmail cron rebind (email→API cutover) | Spec 004a + 005 | **todo** | P1-11 | S | Phase 1 + 2 inter-phase exit criterion; rebind cron from 10-min email to API call; fallback email only |
@@ -144,7 +144,7 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 |---|---|---|---|---|---|---|
 | **P1-07** | Vietnamese i18n completion | Spec 003 P3-03 | **todo** | None | **L** | Phase 1 exit criterion. Audit 2026-07-04: **zero `i18n/*.po` files exist in any module** — earlier "50% translated" claims were wrong; effort = full extraction + translation, resized M→L. Some surfaces (design module state labels) ship Vietnamese-first hardcoded strings to convert. |
 | **P1-01b** | Order-line dashboard refactor (model swap) | Spec 003 P1-01 | **shipped\*** (not exercised by MF-E2E-1 run 2026-07-04 — needs own verification) | — | M | Code: `views/operations_dashboard_views.xml` — model swapped to `sale.order.line` 2026-05-10; bulk Mark-Shipped server action live |
-| **P1-02c** | Spec 003 US5 GDrive upload wizard | Spec 003 US5 | **shipped\*** | — | M | Code: `multichannel_hub_core/models/design_file_upload_wizard.py` (url/small/gdrive storage modes) + `cron_design_file_gdrive_sync` promotion cron |
+| **P1-02c** | Spec 003 US5 GDrive upload wizard | Spec 003 US5 | **done** (2026-07-04, TC-MTO-002 upload wizard URL-mode green ×2) | — | M | Code: `multichannel_hub_core/models/design_file_upload_wizard.py` (url/small/gdrive storage modes) + `cron_design_file_gdrive_sync` promotion cron |
 | **P1-02d** | A4 batch print layout | Spec 003 P1-02 | **todo** | None | S | Design file batch print template; owner red-flag item |
 | **P1-DESIGN-AUTO-ARCHIVE** | Auto-archive design files after publish | Spec 003 P1-02 | **doing** | P-PUB-PUBLISH | M | State transition: archive after Etsy publish confirmation |
 | **P-DOCS-FLOW-VN** | Vietnamese operator flow docs | Spec 003 + 006 | **doing** | P-PUB-E2E | L | Can author in parallel; finalize post-E2E. Covers order ingest→fulfillment→shipment tracking workflow. |
@@ -158,21 +158,21 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P2-01-MODELS** | Tracking import models + views | Spec 004a | **shipped\*** | — | M | Code: `multichannel_hub_fulfillment/models/tracking_import_log.py`, `tracking_import_line.py` |
-| **P2-01-WIZARD** | Tracking import wizard (GKE Excel upload) | Spec 004a | **shipped\*** | — | M | Code: `multichannel_hub_fulfillment/wizards/tracking_import_wizard.py` (incl. `action_approve_schema` FR-017 gate); plus GDrive inbox poller `logistics_partner._cron_poll_inbox` (P2-06) |
-| **P2-01-CARRIER** | Shipping carrier model + master data | Spec 004a | **shipped\*** | — | S | Code: `models/shipping_carrier.py` + `data/shipping_carrier_data.xml` (USPS/UniUni/YunExpress seeded) |
-| **P2-02-CARRIER-DETECT** | Carrier auto-detection (regex matching) | Spec 004a | **shipped\*** | — | M | Code: `shipping_carrier.tracking_prefix_regex` + safety constraint `_check_tracking_prefix_regex_safe` |
-| **P2-03-GKE-SCHEMA** | GKE schema fingerprint validation | Spec 004a | **shipped\*** | — | S | Code: schema-hash whitelist ICP `multichannel_hub_fulfillment.gke_schema_hashes` in `tracking_import_wizard.py` |
-| **P2-04-SYNC-HEALTH** | Tracking sync health reporting | Spec 004a | **shipped\*** | — | S | Code: `logistics_partner.py` records per-partner errors + gdrive_integration events to sync health |
+| **P2-01-MODELS** | Tracking import models + views | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | M | Code: `multichannel_hub_fulfillment/models/tracking_import_log.py`, `tracking_import_line.py` |
+| **P2-01-WIZARD** | Tracking import wizard (GKE Excel upload) | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | M | Code: `multichannel_hub_fulfillment/wizards/tracking_import_wizard.py` (incl. `action_approve_schema` FR-017 gate); plus GDrive inbox poller `logistics_partner._cron_poll_inbox` (P2-06) |
+| **P2-01-CARRIER** | Shipping carrier model + master data | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | S | Code: `models/shipping_carrier.py` + `data/shipping_carrier_data.xml` (USPS/UniUni/YunExpress seeded) |
+| **P2-02-CARRIER-DETECT** | Carrier auto-detection (regex matching) | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | M | Code: `shipping_carrier.tracking_prefix_regex` + safety constraint `_check_tracking_prefix_regex_safe` |
+| **P2-03-GKE-SCHEMA** | GKE schema fingerprint validation | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | S | Code: schema-hash whitelist ICP `multichannel_hub_fulfillment.gke_schema_hashes` in `tracking_import_wizard.py` |
+| **P2-04-SYNC-HEALTH** | Tracking sync health reporting | Spec 004a | **done** (2026-07-04, MF-E2E-3a/0) | — | S | Code: `logistics_partner.py` records per-partner errors + gdrive_integration events to sync health |
 
 ### Spec 004b: Gearment Adapter Completion (4 items)
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P0-18b2** | Webhook signature discovery + live POST tests | Spec 004b P0-18b2 | **blocked** | E2 keys | M | ngrok tunnel; inspect inbound webhook HMAC header name + algorithm; test draft/confirm flow |
+| **P0-18b2** | Webhook signature discovery + live POST tests | Spec 004b P0-18b2 | **done** (2026-07-04 — HMAC verified live ×2: flow-3b runner §5 + TC-DROP-005) | — | M | ngrok tunnel; inspect inbound webhook HMAC header name + algorithm; test draft/confirm flow |
 | **P4-02** | Returns/refunds workflow | Spec 004c | **todo** | P4-01-D | L | Return reason selection → refund/replace action; credit note generation; replacement order creation |
 | **P4-03** | Pricing audit dashboard | Spec 004 Phase 4 | **todo** | None | M | Pivot/graph: cost comparison (Etsy list vs Odoo sale vs Gearment quote) per product/channel |
-| **ENV-FIX-MRP** | Owner MRP config (env task) | Spec 003 | **doing** | None | S | Owner-side: configure MRP routes for internal production; not code |
+| **ENV-FIX-MRP** | Owner MRP config (env task) | Spec 003 | **done** (2026-07-04 — GO-probe verified Manufacture+MTO routes live; MF-E2E-3a auto-MO proven) | None | S | Owner-side: configure MRP routes for internal production; not code |
 
 ### Spec 002 Data Issues (2 items)
 

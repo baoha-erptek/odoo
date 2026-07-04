@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-07-04 EOD** — MF-E2E-0/1/2/3a/3b all closed in the
+> 2026-07-04 session (commits `1bfaecf`…`855b247`). Use
+> `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` for the next session.
+
 # Next Session Prompt — Main-Flow E2E Gate: MF-E2E-1 → 2 → 3a
 
 **Created**: 2026-07-04 · **Owner directive**: flows 1–3 first, flow-4 later.
