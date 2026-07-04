@@ -375,6 +375,17 @@ test.describe('UAT Flow-3 Dropship — HUONG_DAN_GIAO_HANG_VN §9.Dropship', () 
     const orderRef = `${UAT_ORDER_REF_PREFIX}-DROP-001`;
     const orderId = await lookupUatOrderId(request, orderRef);
     test.skip(!orderId, `Fixture order ${orderRef} not seeded`);
+    // The Review Quote button is state-gated (outbound_state=='quoted'), and
+    // reaching 'quoted' live requires POST orders/draft — which the Gearment
+    // production validator rejects for every known printing_options shape
+    // (Defect-2026-05-10-05, re-confirmed 2026-07-04 with variant-level ids;
+    // sandbox host 530-dead). Simulated coverage of the quote state machine
+    // lives in scripts/e2e_flow3b_dropship.py §3/§4. Skip until Gearment
+    // support answers the validator question.
+    const gmeta = (await rpc(request, 'sale.order', 'read',
+      [[orderId], ['x_gearment_outbound_state']], {}))?.[0];
+    test.skip(gmeta?.x_gearment_outbound_state !== 'quoted',
+      `order not in 'quoted' state (live draft push vendor-blocked — Defect-2026-05-10-05)`);
     const { login, password } = loginShipping();
     await loginAs(page, login, password);
     const sof = new SaleOrderFormPage(page);
@@ -394,6 +405,17 @@ test.describe('UAT Flow-3 Dropship — HUONG_DAN_GIAO_HANG_VN §9.Dropship', () 
     const orderRef = `${UAT_ORDER_REF_PREFIX}-DROP-001`;
     const orderId = await lookupUatOrderId(request, orderRef);
     test.skip(!orderId, `Fixture order ${orderRef} not seeded`);
+    // The Review Quote button is state-gated (outbound_state=='quoted'), and
+    // reaching 'quoted' live requires POST orders/draft — which the Gearment
+    // production validator rejects for every known printing_options shape
+    // (Defect-2026-05-10-05, re-confirmed 2026-07-04 with variant-level ids;
+    // sandbox host 530-dead). Simulated coverage of the quote state machine
+    // lives in scripts/e2e_flow3b_dropship.py §3/§4. Skip until Gearment
+    // support answers the validator question.
+    const gmeta = (await rpc(request, 'sale.order', 'read',
+      [[orderId], ['x_gearment_outbound_state']], {}))?.[0];
+    test.skip(gmeta?.x_gearment_outbound_state !== 'quoted',
+      `order not in 'quoted' state (live draft push vendor-blocked — Defect-2026-05-10-05)`);
     const { login, password } = loginShipping();
     await loginAs(page, login, password);
     const sof = new SaleOrderFormPage(page);
@@ -442,11 +464,16 @@ test.describe('UAT Flow-3 Dropship — HUONG_DAN_GIAO_HANG_VN §9.Dropship', () 
     const nonce = Math.random().toString(36).slice(2, 14);
     const timestamp = String(Math.floor(Date.now() / 1000));
     const crypto = await import('crypto');
-    const bodyB64 = Buffer.from(body, 'utf8').toString('base64url');
+    // Server-side verify uses Python's base64.urlsafe_b64encode, which KEEPS
+    // '=' padding — Node's 'base64url' strips it and the signatures diverge
+    // (2026-07-04). Pad both the body segment and the digest.
+    const b64url = (buf: Buffer) => buf.toString('base64')
+      .replace(/\+/g, '-').replace(/\//g, '_');
+    const bodyB64 = b64url(Buffer.from(body, 'utf8'));
     const signingString = '/gearment/webhook' + nonce + timestamp + bodyB64;
-    const sig = crypto.createHmac('sha256', secret!)
+    const sig = b64url(crypto.createHmac('sha256', secret!)
       .update(Buffer.from(signingString, 'utf8'))
-      .digest('base64url');
+      .digest());
     const res = await request.post(`${CONFIG.BASE_URL}/gearment/webhook`, {
       data: body,
       headers: {
@@ -454,6 +481,9 @@ test.describe('UAT Flow-3 Dropship — HUONG_DAN_GIAO_HANG_VN §9.Dropship', () 
         'X-Connect-Signature': sig,
         'X-Connect-Nonce': nonce,
         'X-Connect-Timestamp': timestamp,
+        // Controller selects the secret by client key — omitting it 401s
+        // even with a valid signature (2026-07-04).
+        'X-Connect-Client-Key': process.env.GEARMENT_API_KEY || '',
       },
     });
     // 200 (accepted) or 202 (queued) is acceptable. 401/403 indicates HMAC drift.

@@ -116,3 +116,61 @@ class TestSchemaComputeUnderBinSize(TransactionCase):
         self.assertTrue(
             wiz_web.is_new_schema,
             'is_new_schema must stay truthful under bin_size reads')
+
+
+@tagged('post_install', '-at_install')
+class TestWebhookPushRunsUnderPublicEnv(TransactionCase):
+    """MF-E2E-3b: the webhook-triggered Etsy tracking push (ADR D-A PRIMARY
+    trigger) ran in the PUBLIC webhook env and died on the
+    sale.order.fulfillment ACL — every live webhook push soft-failed and
+    silently deferred to the 5-min cron (staging log 2026-07-04 15:50:24:
+    "not allowed to access 'Fulfillment lifecycle...'")."""
+
+    def test_tracking_webhook_push_persists_outcome_as_public(self):
+        from unittest import mock
+        shop = self.env['etsy.shop'].create({
+            'name': 'WH Shop', 'etsy_api_shop_id': '60752388',
+            'etsy_oauth_access_token': 'tok', 'etsy_oauth_refresh_token': 'ref',
+            'etsy_oauth_token_expires_at': '2099-12-31 00:00:00',
+        })
+        partner = self.env['res.partner'].create({'name': 'WH Buyer'})
+        product = self.env['product.product'].create({
+            'name': 'WH Product', 'list_price': 5.0})
+        order = self.env['sale.order'].create({
+            'partner_id': partner.id,
+            'etsy_order_id': 'WH-9001',
+            'etsy_shop_id': shop.id,
+            'order_line': [(0, 0, {'product_id': product.id,
+                                   'product_uom_qty': 1.0,
+                                   'price_unit': 5.0})],
+        })
+        self.env['sale.order.fulfillment'].create({
+            'order_id': order.id,
+        })
+        from odoo.addons.multichannel_hub_fulfillment.services import (
+            gearment_webhook_dispatcher as gwd,
+        )
+        public_user = self.env.ref('base.public_user')
+        public_env = self.env(user=public_user.id)
+        body = {
+            'order': {'reference': order.name, 'status': 'shipped'},
+            'tracking': {'company': 'USPS',
+                         'number': '9400111202555560007001',
+                         'url': 'https://example.invalid/t'},
+        }
+        with mock.patch(
+            'odoo.addons.etsy_integration.services.etsy_tracking_pusher.'
+            'EtsyApiClient'
+        ) as ClientCls:
+            client = mock.MagicMock()
+            client.push_tracking.return_value = (True, '', 200)
+            ClientCls.return_value = client
+            handled, summary = gwd.GearmentWebhookDispatcher(
+                public_env).dispatch('tracking_order_updated', body)
+        self.assertTrue(handled, summary)
+        order.invalidate_recordset()
+        self.assertEqual(
+            order.etsy_tracking_push_status, 'pushed',
+            'webhook-triggered push must persist its outcome even from the '
+            'public webhook env (was: AccessError soft-fail, status stayed '
+            "'none')")

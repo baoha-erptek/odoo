@@ -179,3 +179,42 @@ Env + test findings:
 10. Local dev DB carries stale `design_ready` pipeline-state rows →
     3 pre-existing `test_pipeline_state_db` failures (noupdate drift,
     NOT this gate; staging clean).
+
+## 2026-07-04 — .docs/tasks alignment + design_ready attribution correction
+
+- `.docs/tasks/` (8 active tickets, legacy excluded) was cross-referenced
+  nowhere in spec 015 — alignment table added to spec.md ("JIRA ticket
+  alignment"). ESTY-205..210 (all pushed) are flow-2 surface, covered by
+  MF-E2E-2 + their own ORM suites; ESTY-244 (design module split) → flow-3a;
+  ESTY-246 (PO Gearment quote) → folded into MF-E2E-3b scope.
+- CORRECTION to the MF-E2E-3a note above: the 3 local
+  `test_pipeline_state_db` failures ("stale design_ready rows") are residue
+  of the ESTY-244 WORK-IN-PROGRESS seeds on the local dev DB, not random
+  noupdate drift. Re-baseline those tests when ESTY-244 lands.
+- Gearment E2 keys in `.env` verified LIVE (200 on catalog) — MF-E2E-3b
+  unblocked without a simulator.
+
+## 2026-07-04 — MF-E2E-3b flow-3b Gearment gate (runner 8/8 ×2, Playwright ×2)
+
+- **E2 keys LIVE** (owner: develop account, actual tests blessed): 200 on
+  catalog. Production host in .env; sandbox host 530-dead.
+- **Vendor blocker re-confirmed**: orders/draft rejects every
+  printing_options shape (Defect-2026-05-10-05). 2 NEW capped probes with
+  variant-level ids (legacy_variant_id 20374 / location_id 1 from live
+  catalog) → identical opaque 400. STOP probing; escalate to Gearment
+  support (validator `has_front_back_or_whole_printing_option`).
+- **Real defect fixed** (mhf 19.0.1.0.27): webhook-triggered Etsy tracking
+  push (ADR D-A PRIMARY trigger) ran under the public webhook env → 
+  AccessError on sale.order.fulfillment → soft-fail on EVERY live webhook
+  since P1-12 landed; only the 5-min cron ever pushed. Dispatcher now runs
+  the pusher sudo (bounded; HMAC verified upstream). ORM test pins it.
+- Webhook HMAC verified LIVE twice (runner §5 + TC-DROP-005) → **P0-18b2
+  closes**. TC-DROP-005 needed Python-compatible PADDED base64url and the
+  X-Connect-Client-Key header (controller selects secret by client key).
+- Simulated draft/quote legs (documented mock fallback per the 3b exit
+  criteria): `_SimAdapter` patched at the module seam in odoo shell — HTTP
+  boundary only; builder + state machine real. Simulator enforces the
+  documented printing_options contract so it cannot mask the regression.
+- gearment.api.log rows are NOT written for verified webhooks (discovery
+  mode only) — provenance lives on fulfillment
+  `gearment_last_webhook_topic/at`.

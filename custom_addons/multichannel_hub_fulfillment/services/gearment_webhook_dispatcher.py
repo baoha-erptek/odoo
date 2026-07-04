@@ -266,7 +266,13 @@ class GearmentWebhookDispatcher:
             try:
                 from odoo.addons.etsy_integration.services.\
                     etsy_tracking_pusher import EtsyTrackingPusher
-                EtsyTrackingPusher(self.env).push(order)
+                # sudo: this runs in the PUBLIC webhook env (auth='public'),
+                # which has no ACL on sale.order.fulfillment — the push
+                # soft-failed on AccessError on EVERY live webhook and
+                # silently deferred to the 5-min cron (MF-E2E-3b
+                # 2026-07-04). The webhook is HMAC-verified upstream and
+                # the elevation is bounded to this single tracking push.
+                EtsyTrackingPusher(self.env(su=True)).push(order.sudo())
                 # D#8 — record the successful pushback for the detail form.
                 self._write_fulfillment(fulfillment, {
                     'etsy_tracking_pushed': True,

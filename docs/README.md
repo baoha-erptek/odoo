@@ -229,3 +229,10 @@ See `docs/ENVIRONMENT_VARIABLES.md` (in progress) for full inventory.
 **Status**: Active (consolidated from individual spec docs)  
 **Maintenance**: Per "Documentation Maintenance" section above  
 **Confluence Sync**: Owner docs only (via `.githooks/post-commit`)
+
+## Ticket workspaces
+
+Per-ticket working notes (briefs, progress trackers, review plans) live under
+`.docs/tasks/<ESTY-ID>/` (legacy: `.docs/tasks/_legacy_pre_2026-05-21/`).
+Cross-referenced against the MF-E2E gates in
+`specs/015-project-completion/spec.md` §"JIRA ticket alignment".

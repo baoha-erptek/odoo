@@ -124,17 +124,19 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 **Owner**: Dev (e2e-runner agent)  
 **Estimated Duration**: 3–4 days once E2 keys arrive  
-**Dependencies**: MF-E2E-0, **E2 Gearment sandbox keys (owner)**, P0-18b2  
+**Dependencies**: MF-E2E-0, **E2 Gearment sandbox keys (owner)** — *2026-07-04: keys in `.env` verified LIVE (200 on `GET api/v3/catalog`); E2 unblocked, no simulator needed* — P0-18b2  
+**Related ticket**: ESTY-246 (PO-level Gearment quote, IN PROCESS) — gate must also exercise the PO "Request Gearment Quote" path once it lands  
 **Blocking**: T073
 
 **Scope**:
 - Runner: Route B order → quote wizard (`/draft` → price) → dropship PO confirm → `action_push_to_gearment` → simulated/live webhook (`/gearment/webhook`, HMAC-signed) → tracking recorded → Etsy push
 - Playwright: `gearment_quote_wizard` page-object walk
 
-**Exit Criteria**:
-- [ ] Runner sections PASS with sandbox round-trip (or documented mock fallback if Gearment offers no sandbox)
-- [ ] Webhook HMAC verified live (closes P0-18b2)
-- [ ] Playwright green (2 consecutive runs)
+**Exit Criteria** (closed 2026-07-04 — `docs/engineering/uats/E2E_FLOW3B_DROPSHIP_2026-07-04.md`):
+- [X] Runner sections PASS — 8/8 ×2 with DOCUMENTED MOCK FALLBACK for draft/quote (sandbox host 530-dead; production validator vendor-blocked, Defect-2026-05-10-05 re-confirmed with variant-level ids)
+- [X] Webhook HMAC verified live (closes P0-18b2) — runner §5 + TC-DROP-005 both 200 with X-Connect-Signature
+- [X] Playwright green (2 consecutive runs) — 8 pass ×2 (TC-DROP-002/003 documented vendor-blocked skips)
+- Bonus fix: webhook-triggered Etsy push sudo (mhf 1.0.27) — the D-A primary trigger had never worked from a live webhook. OWNER ACTION: Gearment support escalation on the printing_options validator (blocks production dropship push).
 
 ---
 
