@@ -55,7 +55,7 @@ The 2026-07-04 docs-vs-code audit (docs commits `8b105ba`, `b142dee`, `eb1429f`,
 | **MF-E2E-3a** | flow-3a Giao hàng in nội bộ | **todo** | ENV-FIX-MRP (owner) | M | Route A: MO → complete → Delivery Order (stock.picking) → tracking import (GKE/GDrive poller) → Etsy tracking push. Reuse runner §6/7/9 + `uat_huong_dan_giao_hang.spec.ts`. |
 | **MF-E2E-3b** | flow-3b Giao hàng Gearment dropship | **blocked** | **E2 keys** | M | Quote wizard → dropship PO confirm → `action_push_to_gearment` → webhook tracking → Etsy push. Reuse runner §4/8 + `gearment_quote_wizard` page-object. Sandbox round-trip needs E2. |
 | **MF-E2E-4** | flow-4 Hậu mãi | **todo** | none | M | Address-change approve → apply; reprint (new MO + second tracking push); `etsy.order.ticket` draft → approve → refunded. Reuse runner §3/10 + address-change page-object. |
-| **MF-E2E-0** | Runner §5 config fix | **todo** | none | S | Set `multichannel_hub.design_file_default_gdrive_folder_id` ICP on staging → drop-ship runner 12/12. Pure config, do first. |
+| **MF-E2E-0** | Runner §5 config fix | **done** (2026-07-04) | — | S | Drop-ship runner **12/12 PASS** on staging `esty_odoo19` (`docs/engineering/uats/E2E_DEMO_DROP_SHIP_ORDERTEST2_2026-07-04.md`). Turned out to be provisioning, not just ICP: GDrive SA json + env var + google libs on staging container, ICP via ORM (raw SQL bypasses ormcache), 5 demo users seeded, nginx webhook header demo_esty→esty_odoo19, runner networkidle→selector waits. |
 
 ### New items from audit (AUD-01…AUD-05)
 

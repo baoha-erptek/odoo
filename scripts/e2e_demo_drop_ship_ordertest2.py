@@ -154,17 +154,30 @@ def login(page: Page, role: str, base: str, db: str) -> None:
     except Exception:
         pass
     page.goto(f"{base}/web/login?db={db}")
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
     page.wait_for_selector('input[name="login"]', state="visible", timeout=15_000)
     page.fill('input[name="login"]', user)
     page.fill('input[name="password"]', pw)
     page.click('button[type="submit"]')
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
+    _settle(page)
+
+
+def _settle(page: Page, selector: str = ".o_action_manager") -> None:
+    """Wait for the web client to render without relying on networkidle.
+
+    Staging runs workers=0 (no gevent websocket worker; nginx /websocket
+    upstream 8172 is dead), so the browser retries the websocket forever
+    and Playwright's 'networkidle' never fires. Wait for DOM + a concrete
+    selector instead. ponytail: selector wait, not networkidle.
+    """
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_selector(selector, state="visible", timeout=30_000)
 
 
 def logout(page: Page, base: str) -> None:
     page.goto(f"{base}/web/session/logout")
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
 
 def _authenticate(ctx: Context, role: str) -> int:
@@ -238,7 +251,7 @@ def section_0_preflight(ctx: Context, page: Page) -> StepResult:
 
     login(page, "manager", ctx.base_url, ctx.db)
     page.goto(f"{ctx.base_url}/odoo")
-    page.wait_for_load_state("networkidle")
+    _settle(page)
     shot = _shot(page, "drop_ship_00_landing")
     logout(page, ctx.base_url)
     return StepResult(
@@ -460,12 +473,12 @@ def section_2_dashboard(ctx: Context, page: Page) -> StepResult:
         return StepResult("2", False, "skipped — no order from §1")
     login(page, "salesman", ctx.base_url, ctx.db)
     page.goto(f"{ctx.base_url}/odoo/sales/{ctx.sale_order_id}")
-    page.wait_for_load_state("networkidle")
+    _settle(page, ".o_form_view")
     shot_form = _shot(page, "drop_ship_02_order_form")
     page.goto(
         f"{ctx.base_url}/odoo/action-multichannel_hub_core.action_operations_dashboard"
     )
-    page.wait_for_load_state("networkidle")
+    _settle(page, ".o_list_view")
     shot_list = _shot(page, "drop_ship_02_dashboard")
     logout(page, ctx.base_url)
     return StepResult(
