@@ -765,6 +765,19 @@ X-Connect-Client-Key: <GEARMENT_API_KEY>
 | **Active** | True |
 | **Purpose** | Refresh cached shipping profiles (used for listing creation) |
 
+#### 7.1.11 Currency Rate Refresh
+
+| Field | Value |
+|-------|-------|
+| **ID** | `ir_cron_etsy_refresh_currency_rates` |
+| **Name** | `Etsy: Refresh Shop Currency Rates` |
+| **File** | `custom_addons/etsy_integration/data/ir_cron_currency_rates.xml` |
+| **Model** | `etsy.shop` |
+| **Method** | `_cron_refresh_currency_rates()` |
+| **Interval** | 1 day (anchored 05:00 UTC) |
+| **Active** | True |
+| **Purpose** | Refresh shop currency rates (P-ENH-ESTY-195 / ADR-016). Provider plug-in deferred; manual default logs WARNING |
+
 ### 7.2 Multichannel Hub Core Crons
 
 **File:** `custom_addons/multichannel_hub_core/data/ir_cron_data.xml`
@@ -811,22 +824,49 @@ X-Connect-Client-Key: <GEARMENT_API_KEY>
 | **Killswitch** | ICP `multichannel_hub.design_gdrive_auto_sync_enabled` (default True) |
 | **No-Op Condition** | ICP `multichannel_hub.design_file_default_gdrive_folder_id` is not set |
 
-### 7.3 Gearment Crons
+#### 7.2.4 Catalog Excel Sync
 
-**File:** `custom_addons/multichannel_hub_fulfillment/data/ir_cron_gearment_api_log_retention.xml`
+| Field | Value |
+|-------|-------|
+| **ID** | `ir_cron_catalog_sync` |
+| **Name** | `Catalog Excel Sync (daily)` |
+| **File** | `custom_addons/multichannel_hub_core/data/product_catalog_cron.xml` |
+| **Model** | `product.catalog.import.run` |
+| **Method** | `_cron_run_catalog_sync()` |
+| **Interval** | 1 day |
+| **Active** | True |
+| **Purpose** | Daily catalog Excel sync (Spec 010 P-HUB-XLS-CRON) |
+| **No-Op Condition** | ICP `multichannel_hub.catalog_cron_source_path` is not set |
 
-#### 7.3.1 API Log Retention Sweep
+### 7.3 Fulfillment Crons (multichannel_hub_fulfillment)
+
+#### 7.3.1 Gearment API Log Retention Sweep
 
 | Field | Value |
 |-------|-------|
 | **ID** | `ir_cron_gearment_api_log_cleanup` |
 | **Name** | `Gearment API Log: cleanup old rows` |
+| **File** | `custom_addons/multichannel_hub_fulfillment/data/ir_cron_gearment_api_log_retention.xml` |
 | **Model** | `gearment.api.log` |
 | **Method** | `_cron_cleanup_old_logs()` |
 | **Interval** | 1 day |
 | **Active** | True |
 | **Purpose** | Delete webhook audit logs older than 30 days |
 | **User** | (not explicitly set in XML; default applies) |
+
+#### 7.3.2 Logistics GDrive Inbox Poller
+
+| Field | Value |
+|-------|-------|
+| **ID** | `cron_logistics_inbox_poller` |
+| **Name** | `Logistics: Poll GDrive inboxes` |
+| **File** | `custom_addons/multichannel_hub_fulfillment/data/logistics_partner_data.xml` |
+| **Model** | `logistics.partner` |
+| **Method** | `_cron_poll_inbox()` |
+| **Interval** | 15 minutes |
+| **Active** | True |
+| **Purpose** | Dispatcher cron iterating active logistics partners (P2-06, GKE tracking Excel drop); polls each partner's GDrive inbox folder for tracking files |
+| **No-Op Condition** | Partners with empty `gdrive_inbox_folder_id` are skipped |
 
 ### 7.4 Orphaned Crons (No ir.cron Record)
 

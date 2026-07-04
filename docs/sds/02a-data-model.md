@@ -61,6 +61,7 @@ erDiagram
 | Etsy Message Dedupe | `etsy.message.dedupe` | None | Transient; order-message dedup tracking |
 | Etsy Sync Health | `etsy.sync.health` | None | Sync status + error log per shop |
 | Etsy Address Change Request | `etsy.address.change.request` | `mail.thread`, `mail.activity.mixin` | Customer address override requests |
+| Etsy Order Ticket | `etsy.order.ticket` | `mail.thread`, `mail.activity.mixin` | After-sales tickets (return/refund/reship) per order: type, reason, refund amount, approve/reject workflow with chatter audit |
 | Etsy Shop Source Change Log | `etsy.shop.source.change.log` | None | Audit trail of sync_mode / active_source transitions |
 | Etsy Shop GDrive Extension | `etsy.shop` (extended) | `etsy.shop` | File upload token + GDrive folder ID per shop |
 
@@ -320,6 +321,7 @@ erDiagram
 | Order Pipeline Transition Log | `order.pipeline.transition.log` | None | Audit trail of state changes |
 | Pipeline Team | `pipeline.team` | `mail.thread`, `mail.activity.mixin` | Team responsible for a pipeline stage |
 | Logistics Partner | `logistics.partner` | `mail.thread` | Carrier/3PL configuration (USPS, GKE, etc.) |
+| Label Status Option | `label.status.option` | `mail.thread` | Master data for order label statuses (name, code, color, sequence, bucket); unique-name constraint |
 
 ### 3.3 Key Fields by Model
 

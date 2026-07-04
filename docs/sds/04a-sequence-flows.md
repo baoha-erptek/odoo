@@ -32,10 +32,9 @@ sequenceDiagram
     participant Creator as OrderCreator<br/>(service layer)
     participant SO as sale.order<br/>(model)
 
-    Cron->>Syncer: sync_all_shops()
+    Note over Cron: for each etsy.shop in<br/>(active, active_source='api')
+    Cron->>Syncer: sync_shop_orders(shop)
     activate Syncer
-    
-    Syncer->>Syncer: for each etsy.shop in (active, active_source='api')
     
     Syncer->>Client: build EtsyApiClient<br/>(etsy_oauth_access_token)
     activate Client
