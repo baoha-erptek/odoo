@@ -72,10 +72,11 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 - Runner: API receipt sync → sale.order + partner dedupe + pipeline classification; duplicate receipt idempotency; manual email-fallback switch (admin toggles `active_source` → email cron parses fixture email → order created; toggle back)
 - Playwright: extend `uat_huong_dan_don_hang_etsy.spec.ts` with fallback-switch walk
 
-**Exit Criteria**:
-- [ ] Runner sections PASS (API path + fallback path)
-- [ ] Playwright green (2 consecutive runs)
-- [ ] Sync-health rows written for both paths
+**Exit Criteria** (closed 2026-07-04 — `docs/engineering/uats/E2E_FLOW2_ORDERS_2026-07-04.md`):
+- [X] Runner sections PASS (API path + fallback path) — `scripts/e2e_flow2_orders.py` 7/7 ×2
+- [X] Playwright green (2 consecutive runs) — 7 pass ×2 incl. new TC-009 fallback walk (2 documented skips: TC-006 needs Etsy-typed seed; TC-008 fixture timing)
+- [X] Sync-health rows written for both paths — `etsy_api_receipts_sync` + `etsy_email_fetch` wired into the crons (19.0.3.17.0, 4 unit tests; they did NOT exist before this gate)
+- Production-shop assertions deferred to P1-11 per scope. Owner items: active_source UI-toggle vs doc mismatch; tracking-push retry loop (findings 2026-07-04, routed to 3a).
 
 ---
 

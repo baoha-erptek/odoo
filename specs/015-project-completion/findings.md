@@ -95,3 +95,42 @@ and P1-01b stayed `shipped*` — the flow-1 gate never touched the Excel catalog
 stack or the order-line dashboard; they need their own verification step
 (XLS: small dedicated runner or fold into a catalog-sync check; P1-01b: falls
 out of MF-E2E-2 dashboard walk).
+
+## 2026-07-04 — MF-E2E-2 flow-2 order receipt gate (runner 7/7 ×2, Playwright ×2)
+
+Runner `scripts/e2e_flow2_orders.py`. Product changes (etsy_integration
+**19.0.3.17.0**):
+
+1. **Sync-health rows were missing for BOTH ingest paths** — only the
+   import/migration wizards called `report_run`. Wired into
+   `_cron_sync_orders` (`etsy_api_receipts_sync`) and
+   `_cron_fetch_etsy_emails` (`etsy_email_fetch`, incl. the no-new-emails
+   early return + Gmail auth-failure error row). 4 unit tests.
+2. **`action_retry_parse` returned None** — the operator Retry button gave
+   zero UI feedback (TC-004's toast assertion was hollow and only ever
+   passed by accident). Now returns display_notification success/warning/info
+   per outcome.
+
+Environment/test findings:
+
+3. **Anchor fixture drift**: S00007 → renamed S03339 (state draft→sale,
+   amount re-priced 734914 VND→16.21 USD) — same receipt 3818231452;
+   re-frozen `real_order_reference.json`. Re-audit by `etsy_raw_source_id`,
+   not name.
+4. **Bare BA role groups have NO sale.order ACL** — uat_ba_user got
+   AccessError opening any SO. Production BA users are also salespeople; the
+   etsy shop-scope record rule presumes a sales read grant. seed_ba_user now
+   adds `sales_team.group_sale_salesman_all_leads` to BA User/Lead.
+5. **`active_source` is a READONLY badge in the shop form** (owner-gated
+   P-DS-3a) — the owner flow-2 doc's "admin toggles in UI" is currently a
+   backend write (C-ESY-002). TC-009 tests the real mechanism (RPC write +
+   badge reflects + audit rows). OWNER ITEM: align doc or add gated toggle.
+6. **Pre-flight guard rows log http_status=0 by design**
+   ("Shop has no etsy_api_shop_id; cannot push tracking") — TC-007 now
+   accepts status-or-error. SIDE FIND: the tracking-push cron retries
+   receipt 3703975562 / legacy shop id=1 every ~5 min forever — no retry
+   cap. Routed to MF-E2E-3a (tracking push scope).
+7. **Email-path partner dedupe**: the text-only fixture carries no
+   email/address (address extraction is HTML-only), so per-order partners
+   are the DESIGNED Tier-4 outcome. Partner dedupe is asserted on the API
+   path (§A: re-ingest maps to existing partners, count unchanged).

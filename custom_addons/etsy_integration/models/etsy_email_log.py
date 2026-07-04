@@ -1,6 +1,6 @@
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -84,10 +84,26 @@ class EtsyEmailLog(models.Model):
             'view_mode': 'form',
         }
 
+    def _retry_notification(self, message, kind):
+        """MF-E2E-2: operator feedback for the manual retry button — the
+        method used to return None, so the UI gave no signal at all."""
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Retry Parse'),
+                'message': message,
+                'type': kind,
+                'sticky': False,
+            },
+        }
+
     def action_retry_parse(self):
         self.ensure_one()
         if self.parse_status != 'failed':
-            return
+            return self._retry_notification(
+                _('Nothing to retry — this email is not in Failed state.'),
+                'info')
         self.retry_count += 1
         from ..services.email_parser import parse_etsy_email, RawEmail
         raw = RawEmail(
@@ -100,7 +116,8 @@ class EtsyEmailLog(models.Model):
         result = parse_etsy_email(raw)
         if hasattr(result, 'error'):
             self.error_message = result.error
-            return
+            return self._retry_notification(
+                _('Parse failed again: %s') % result.error, 'warning')
         from ..services.order_creator import OrderCreator
         creator = OrderCreator(self.env)
         order = creator.process_parse_result(result, self.id)
@@ -110,3 +127,7 @@ class EtsyEmailLog(models.Model):
                 'sale_order_id': order.id,
                 'error_message': False,
             })
+            return self._retry_notification(
+                _('Order %s created from this email.') % order.name, 'success')
+        return self._retry_notification(
+            _('Order already exists — email marked as duplicate.'), 'warning')

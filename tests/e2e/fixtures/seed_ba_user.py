@@ -28,18 +28,24 @@ from _xmlrpc_session import connect
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("seed_ba_user")
 
-# (env_var_key, login, display_name, group_xmlid). Order is significant: the
-# first entry is the legacy "BA User" line consumed by Flow-1 globalSetup;
+# (env_var_key, login, display_name, [group_xmlids]). Order is significant:
+# the first entry is the legacy "BA User" line consumed by Flow-1 globalSetup;
 # other entries are emitted as `<env>_PASSWORD=<value>` for Flow-2/3.
-ROLES: list[tuple[str, str, str, str]] = [
+# BA User/Lead ALSO carry Sales "All Documents": production BA people are
+# salespeople too — the bare role group has no sale.order ACL, and the
+# etsy shop-scope record rule presumes a sales read grant exists
+# (TC-006 AccessError, 2026-07-04).
+ROLES: list[tuple[str, str, str, list[str]]] = [
     ("BA_USER", "uat_ba_user@hatafax.demo", "UAT BA User (auto-seeded)",
-     "multichannel_hub_core.group_ba_user"),
+     ["multichannel_hub_core.group_ba_user",
+      "sales_team.group_sale_salesman_all_leads"]),
     ("BA_LEAD", "uat_ba_lead@hatafax.demo", "UAT BA Lead (auto-seeded)",
-     "multichannel_hub_core.group_ba_lead"),
+     ["multichannel_hub_core.group_ba_lead",
+      "sales_team.group_sale_salesman_all_leads"]),
     ("BA_SHIPPING", "uat_ba_shipping@hatafax.demo", "UAT BA Shipping (auto-seeded)",
-     "multichannel_hub_fulfillment.group_ba_shipping"),
+     ["multichannel_hub_fulfillment.group_ba_shipping"]),
     ("BA_SHIPPING_MGR", "uat_ba_shipping_mgr@hatafax.demo", "UAT BA Shipping Mgr (auto-seeded)",
-     "multichannel_hub_fulfillment.group_ba_manager"),
+     ["multichannel_hub_fulfillment.group_ba_manager"]),
 ]
 
 
@@ -62,7 +68,7 @@ def _resolve_group_id(s, xmlid: str) -> int | None:
     return rows[0]["res_id"]
 
 
-def _upsert_user(s, login: str, name: str, group_id: int) -> tuple[int, str]:
+def _upsert_user(s, login: str, name: str, group_ids: list[int]) -> tuple[int, str]:
     """Create or reuse the named user. Returns (uid, password)."""
     existing = s.call(
         "res.users",
@@ -79,10 +85,10 @@ def _upsert_user(s, login: str, name: str, group_id: int) -> tuple[int, str]:
             [[uid], {
                 "password": pwd,
                 "active": True,
-                "group_ids": [(4, group_id)],
+                "group_ids": [(4, gid) for gid in group_ids],
             }],
         )
-        log.info("reused user uid=%s login=%s group=%s", uid, login, group_id)
+        log.info("reused user uid=%s login=%s groups=%s", uid, login, group_ids)
         return uid, pwd
     try:
         uid = s.call(
@@ -92,7 +98,7 @@ def _upsert_user(s, login: str, name: str, group_id: int) -> tuple[int, str]:
                 "login": login,
                 "name": name,
                 "password": pwd,
-                "group_ids": [(6, 0, [group_id])],
+                "group_ids": [(6, 0, group_ids)],
             }],
         )
     except Exception as e:
@@ -109,9 +115,9 @@ def _upsert_user(s, login: str, name: str, group_id: int) -> tuple[int, str]:
         s.call(
             "res.users",
             "write",
-            [[uid], {"password": pwd, "active": True, "group_ids": [(4, group_id)]}],
+            [[uid], {"password": pwd, "active": True, "group_ids": [(4, gid) for gid in group_ids]}],
         )
-    log.info("created user uid=%s login=%s group=%s", uid, login, group_id)
+    log.info("created user uid=%s login=%s groups=%s", uid, login, group_ids)
     return uid, pwd
 
 
@@ -123,13 +129,19 @@ def main() -> int:
 
     s = connect(base_url=args.base_url, db=args.db)
 
-    for env_key, login, name, xmlid in ROLES:
-        group_id = _resolve_group_id(s, xmlid)
-        if group_id is None:
-            log.warning("group %s not found — skipping %s (module not installed?)",
-                        xmlid, login)
+    for env_key, login, name, xmlids in ROLES:
+        group_ids = []
+        for xmlid in xmlids:
+            group_id = _resolve_group_id(s, xmlid)
+            if group_id is None:
+                log.warning("group %s not found — skipping for %s "
+                            "(module not installed?)", xmlid, login)
+                continue
+            group_ids.append(group_id)
+        if not group_ids:
+            log.warning("no resolvable groups for %s — skipping", login)
             continue
-        uid, pwd = _upsert_user(s, login, name, group_id)
+        uid, pwd = _upsert_user(s, login, name, group_ids)
         print(f"{env_key}_PASSWORD={pwd}")
     return 0
 

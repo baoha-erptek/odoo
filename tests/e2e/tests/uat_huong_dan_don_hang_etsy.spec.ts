@@ -241,9 +241,15 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
     await loginAs(page, UAT_ROLE_LOGINS.BA_USER, CONFIG.BA_USER_PASSWORD);
     const so = new SaleOrderFormPage(page);
     await so.openById(orderId!);
+    // The tab + button are gated by `is_etsy_order` — UAT-2026-05-31-ADDR-001
+    // isn't an Etsy order, so the Etsy tab may not render AT ALL. Probe the
+    // tab before openTab (which throws on absence) and bail with the
+    // documented skip rather than a locator timeout (2026-07-04 MF-E2E-2).
+    const etsyTab = page.locator('.o_notebook .nav-link', { hasText: /Etsy/ }).first();
+    if ((await etsyTab.count()) === 0) {
+      test.skip(true, `Order ${orderRef} is not is_etsy_order — TC-006 needs an Etsy-typed seed (open follow-up: extend seed_uat_orders to mark is_etsy_order=True)`);
+    }
     await so.openTab(/Etsy/);
-    // The button is gated by `is_etsy_order` — UAT-2026-05-31-ADDR-001 isn't an
-    // Etsy order. Bail with a documented skip rather than UI 404.
     if ((await so.requestAddressChangeButton.count()) === 0) {
       test.skip(true, `Order ${orderRef} is not is_etsy_order — TC-006 needs an Etsy-typed seed (open follow-up: extend seed_uat_orders to mark is_etsy_order=True)`);
     }
@@ -273,11 +279,15 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
   test('TC-007 — Etsy API Log ghi đúng (read-only)', async ({ request }) => {
     const rows = await rpc(request, 'etsy.api.log', 'search_read',
       [[]],
-      { fields: ['id', 'http_status', 'endpoint'], order: 'create_date desc', limit: 50 });
+      { fields: ['id', 'http_status', 'endpoint', 'error_message'], order: 'create_date desc', limit: 50 });
     expect(rows?.length, 'etsy.api.log has rows (cron has run at least once)').toBeGreaterThan(0);
-    // Every row should have a status code (success or failure detail).
+    // Every row carries either an HTTP status (the call was sent) or an
+    // error_message (pre-flight guard rows log http_status=0 by design —
+    // e.g. "Shop has no etsy_api_shop_id; cannot push tracking",
+    // observed 2026-07-04).
     for (const r of rows) {
-      expect(r.http_status, `etsy.api.log id=${r.id} has non-empty http_status`).toBeTruthy();
+      expect(Boolean(r.http_status) || Boolean(r.error_message),
+        `etsy.api.log id=${r.id} has http_status or error_message`).toBeTruthy();
     }
   });
 
@@ -298,5 +308,49 @@ test.describe('UAT — HUONG_DAN_DON_HANG_ETSY_VN §10 (Flow-2)', () => {
     const after = await rpc(request, 'etsy.email.log', 'search_count',
       [[['gmail_message_id', '=', EMAIL_DEDUP_GMAIL_ID]]]);
     expect(after, 'cron pass did not create a duplicate log row').toBe(before);
+  });
+
+  test('TC-009 — Fallback thủ công: đổi Nguồn đơn hàng api → email → api (MF-E2E-2)', async ({ page, request }) => {
+    // Manual fallback walk from the owner flow-2 doc. NOTE: the form renders
+    // active_source as a READONLY badge (widget="badge", owner-gated P-DS-3a
+    // design 2026-06-07) — there is deliberately no UI edit path; the switch
+    // is a backend/admin write (C-ESY-002) until AUD-01 lands. So the toggle
+    // here goes through RPC (the real mechanism) and the UI assertion is
+    // that the badge REFLECTS each switch + both switches are audit-logged.
+    const shopId = (await rpc(request, 'etsy.shop', 'search',
+      [[['name', '=', SHOP_NAME]]]))?.[0];
+    expect(shopId, `shop ${SHOP_NAME} present`).toBeTruthy();
+
+    const badge = page.locator('[name="active_source"]').first();
+    const logCountBefore = await rpc(request, 'etsy.shop.source.change.log',
+      'search_count', [[['shop_id', '=', shopId]]]);
+
+    await loginAsAdmin(page);
+    const shop = new EtsyShopFormPage(page);
+    await shop.openByName(SHOP_NAME);
+    await expect(badge, 'precondition: badge shows API source').toContainText(/api/i);
+
+    try {
+      await rpc(request, 'etsy.shop', 'write', [[shopId], { active_source: 'email' }]);
+      await page.reload();
+      await badge.waitFor({ state: 'visible', timeout: 15000 });
+      await expect(badge, 'badge reflects the switch to email').toContainText(/email/i);
+
+      const latest = (await rpc(request, 'etsy.shop.source.change.log', 'search_read',
+        [[['shop_id', '=', shopId]]],
+        { fields: ['from_source', 'to_source', 'reason'], order: 'id desc', limit: 1 }))?.[0];
+      expect(latest?.to_source, 'audit log row records the switch to email').toBe('email');
+      expect(latest?.reason).toBe('manual');
+    } finally {
+      // restore even if assertions above failed — staging must stay on api
+      await rpc(request, 'etsy.shop', 'write', [[shopId], { active_source: 'api' }]);
+    }
+    await page.reload();
+    await badge.waitFor({ state: 'visible', timeout: 15000 });
+    await expect(badge, 'badge restored to api').toContainText(/api/i);
+
+    const logCountAfter = await rpc(request, 'etsy.shop.source.change.log',
+      'search_count', [[['shop_id', '=', shopId]]]);
+    expect(logCountAfter, 'both switches audit-logged').toBe(logCountBefore + 2);
   });
 });

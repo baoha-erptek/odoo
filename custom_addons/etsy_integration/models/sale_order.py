@@ -363,14 +363,25 @@ class SaleOrder(models.Model):
                 'Go to Settings > Etsy Integration to set them up.')
             return
 
+        # MF-E2E-2: observability checkpoint for the email ingest path
+        # (spec 015 exit criterion — one health row per ingest path).
+        Health = self.env['etsy.sync.health']
+
         gmail = GmailClient(client_id, client_secret, refresh_token)
         if not gmail.authenticate():
             _logger.error('Etsy Integration: Gmail authentication failed.')
+            Health.report_run(
+                'etsy_email_fetch', row_count=0, error_count=1,
+                error_message='Gmail authentication failed', state='error',
+            )
             return
 
         raw_emails = gmail.fetch_labeled_emails(label)
         if not raw_emails:
             _logger.info('Etsy Integration: No new emails found.')
+            Health.report_run(
+                'etsy_email_fetch', row_count=0, error_count=0, state='ok',
+            )
             return
 
         _logger.info('Etsy Integration: Processing %d emails.', len(raw_emails))
@@ -465,6 +476,14 @@ class SaleOrder(models.Model):
         _logger.info(
             'Etsy Integration: Cycle complete. %d/%d emails processed.',
             len(processed_ids), len(raw_emails))
+
+        failed = len(raw_emails) - len(processed_ids)
+        Health.report_run(
+            'etsy_email_fetch',
+            row_count=len(processed_ids),
+            error_count=failed,
+            state='error' if failed else 'ok',
+        )
 
         self.env['etsy.email.log']._check_parse_failures()
 

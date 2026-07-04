@@ -713,17 +713,29 @@ class EtsyShop(models.Model):
             return
 
         syncer = EtsyOrderSyncer(self.env)
+        rows = 0
+        errors = 0
         for shop in shops:
             try:
-                syncer.sync_shop_orders(shop)
+                res = syncer.sync_shop_orders(shop) or {}
+                rows += res.get('ingested', 0) + res.get('audited', 0)
             except Exception:
                 # Per-shop isolation: one shop's failure must not stop
                 # others. The syncer logs internally; log here too with
                 # shop context for cron-level diagnostics.
+                errors += 1
                 _logger.exception(
                     'Etsy API sync failed for shop %s (id=%s)',
                     shop.name, shop.id,
                 )
+        # MF-E2E-2: observability checkpoint for the API ingest path
+        # (spec 015 exit criterion — one health row per ingest path).
+        self.env['etsy.sync.health'].report_run(
+            'etsy_api_receipts_sync',
+            row_count=rows,
+            error_count=errors,
+            state='error' if errors else 'ok',
+        )
 
     @api.model
     def _cron_sync_taxonomy(self):
