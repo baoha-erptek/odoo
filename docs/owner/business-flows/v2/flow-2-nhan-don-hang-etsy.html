@@ -320,8 +320,8 @@
         <div class="n">8</div>
         <div class="body">
           <div class="who">Hệ thống Odoo · dự phòng</div>
-          <div class="title">Khi API hỏng 3 lần liền: chuyển sang email dự phòng</div>
-          <div class="desc">Nếu Cron API gặp lỗi 3 lần liên tiếp (ví dụ: token hết, quá giới hạn tốc độ, Etsy tạm down) → hệ thống tự chuyển sang chế độ "Email Fallback": Cron đọc email thay vì API, 10 phút một lần. BA được cảnh báo để authorize lại hoặc kiểm tra kết nối. Sau khi sửa → bấm "Test Connection" để quay lại API.</div>
+          <div class="title">Khi API gặp sự cố: chuyển thủ công sang email dự phòng</div>
+          <div class="desc">Nếu Cron API liên tục gặp lỗi (ví dụ: token hết, quá giới hạn tốc độ, Etsy tạm down), lỗi được ghi vào nhật ký và BA cần kiểm tra. Việc chuyển sang chế độ "Email Fallback" là <b>thao tác thủ công của Quản trị viên</b> (đổi nguồn nhận đơn của Shop sang Email — hệ thống không tự chuyển). Khi ở chế độ email, Cron đọc email 10 phút một lần. Sau khi khắc phục → Quản trị viên chuyển lại về API và bấm "Test Connection" để kiểm tra.</div>
           <div class="sys"><b>Lý do hai đường:</b> Email chậm hơn API (có thể trễ vài phút) và định dạng email khó dự đoán → cần parser mạnh. Nhưng nó chạy dưới dạng dự phòng để shop không bị mất đơn khi API tạm down.</div>
         </div>
       </li>
@@ -501,12 +501,12 @@
             </table>
           </div>
         </div>
-        <div class="mu-cap">Mỗi cuộc gọi Cron được ghi: thời điểm, HTTP status, số đơn lấy, thời gian response. <b>200</b> = thành công; <b>429</b> = quá tốc độ (hệ thống tự retry); <b>500</b> = Etsy down (trigger email dự phòng nếu 3 lần liền). BA dùng để kiểm tra tính ổn định API.</div>
+        <div class="mu-cap">Mỗi cuộc gọi Cron được ghi: thời điểm, HTTP status, số đơn lấy, thời gian response. <b>200</b> = thành công; <b>429</b> = quá tốc độ (hệ thống tự retry); <b>500</b> = Etsy down (nếu lỗi kéo dài, Quản trị viên cân nhắc chuyển thủ công sang email dự phòng). BA dùng để kiểm tra tính ổn định API.</div>
       </div>
 
       <!-- MOCKUP 4: Email Fallback Log -->
       <div class="mu-screen">
-        <div class="mu-ttl">Màn hình 4 · <strong>Nhật ký email (dự phòng) — khi API hỏng 3 lần liền</strong></div>
+        <div class="mu-ttl">Màn hình 4 · <strong>Nhật ký email (dự phòng) — khi Shop được chuyển sang chế độ email</strong></div>
         <div class="mu-chrome">
           <span class="mu-app">Etsy</span><span class="mu-tab">Email › Nhật ký</span>
           <span class="mu-sp"></span><span class="mu-user">ba.lead@hatafa</span>

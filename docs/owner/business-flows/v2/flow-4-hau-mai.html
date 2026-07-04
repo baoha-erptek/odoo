@@ -332,8 +332,8 @@
         <div class="n">10</div>
         <div class="body">
           <div class="who">BA Marketing · hoàn tiền</div>
-          <div class="title">Xử lý hoàn tiền (hôm nay thủ công)</div>
-          <div class="desc"><b>Hôm nay:</b> BA Marketing mở Etsy Shop Manager → tìm receipt → refund thủ công → ghi note vào nhật ký Odoo: "Refunded $X.XX qua Etsy ngày YYYY-MM-DD".<br><b>Kế hoạch:</b> Mô hình Phiếu hoàn tiền sẽ quản lý workflow (nháp → duyệt → hoàn). BA Lead duyệt → API push Etsy tự động.</div>
+          <div class="title">Xử lý hoàn tiền (Phiếu hậu mãi trong Odoo; hoàn tiền thao tác trên Etsy)</div>
+          <div class="desc"><b>Trong Odoo:</b> tạo <b>Phiếu hậu mãi</b> trên đơn (loại: hoàn tiền / in lại / trả hàng, kèm số tiền và lý do). Chỉ BA Lead được duyệt hoặc từ chối; mọi bước đều ghi lại lịch sử. <br><b>Thao tác hoàn tiền:</b> sau khi phiếu được duyệt, BA Marketing mở Etsy Shop Manager → tìm receipt → refund thủ công trên Etsy → quay lại phiếu bấm "Đã hoàn tiền". Việc đẩy refund tự động qua API là hạng mục tương lai.</div>
           <div class="sys"><b>Hôm nay:</b> Thủ công qua Etsy site. <b>Kế hoạch:</b> Phiếu hoàn tiền chưa code — workflow: tạo → duyệt → push Etsy → ghi log.</div>
         </div>
       </li>
