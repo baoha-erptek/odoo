@@ -834,6 +834,19 @@ class EtsyListingPublisher:
         ]
         varying = [line for line in pub_lines if len(line.value_ids) > 1]
         fixed = [line for line in pub_lines if len(line.value_ids) == 1]
+        # MF-E2E-1 (2026-07-04): single-value variant-creating axes that are
+        # NOT published as Etsy properties (e.g. Material — materials[]-only)
+        # still appear in every materialized product.product's value set.
+        # Without them in combo_ids, _variant_for_combo's subset check never
+        # matches and per-variant default_code is silently ignored (staging
+        # published MUG-11OZ instead of MUG-CR-F11).
+        nonpub_fixed_ids = {
+            line.value_ids[0].id
+            for line in t.attribute_line_ids
+            if line.value_ids and len(line.value_ids) == 1
+            and line.attribute_id.create_variant != 'no_variant'
+            and not line.attribute_id.x_publish_as_property
+        }
         if len(varying) > self.ETSY_MAX_VARIATIONS:
             raise ValueError(
                 "Etsy allows at most %d variation properties, but %r has %d "
@@ -866,6 +879,7 @@ class EtsyListingPublisher:
                         props.append(pv)
                 combo_ids = {v.id for v in combo}
                 combo_ids.update(line.value_ids[0].id for line in fixed)
+                combo_ids.update(nonpub_fixed_ids)
                 variant = self._variant_for_combo(t, combo_ids)
                 if variant and variant.default_code:
                     sku = variant.default_code
@@ -1258,9 +1272,21 @@ class EtsyListingPublisher:
     def publish(self, listing_id, shop):
         if not listing_id:
             raise ValueError("publish requires a non-empty listing_id")
+        # MF-E2E-1 (2026-07-04): Etsy updateListing lives at the SHOP-SCOPED
+        # path /shops/{shop_id}/listings/{listing_id} — the bare
+        # listings/{id} path 404s (same defect family as the upload_images
+        # 404 fixed in 19.0.2.27.0). Body is x-www-form-urlencoded per the
+        # OAS, hence data= not json=.
+        api_shop_id = shop.sudo().etsy_api_shop_id
+        if not api_shop_id:
+            raise ValueError(
+                "Etsy shop %r missing etsy_api_shop_id; cannot publish."
+                % shop.name
+            )
         client = EtsyApiClient(shop)
         return client.patch(
-            "listings/%s" % listing_id, json={'state': 'active'},
+            "shops/%s/listings/%s" % (api_shop_id, listing_id),
+            data={'state': 'active'},
         )
 
     # ------------------------------------------------------------------

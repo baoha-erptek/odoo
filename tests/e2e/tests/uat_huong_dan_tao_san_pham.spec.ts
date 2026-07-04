@@ -29,7 +29,11 @@ const NAME = 'UAT-TAOSP';
 const LIVE_PRICE = Number(process.env.E2E_LISTING_PRICE || 250000);
 
 function uniq(stem: string): string {
-  return `${stem}-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+  // Lowercase on purpose: Etsy's createListing title validator rejects
+  // titles where >3 hyphen/space-separated tokens start with 2 sequential
+  // capitals ("all_caps" 400, seen 2026-07-04). NAME's "UAT-TAOSP" already
+  // contributes 2 caps tokens; the uniq suffix must not add more.
+  return `${stem}-${Date.now().toString(36).slice(-5)}`.toLowerCase();
 }
 
 /** JSON-RPC helper: authenticate (admin) and call a model method. */
@@ -55,7 +59,11 @@ async function channelStatus(
   request: import('@playwright/test').APIRequestContext,
   defaultCode: string,
 ): Promise<{ state: string; external_ref: string | false } | null> {
-  const tids = await rpc(request, 'product.template', 'search', [[['default_code', '=', defaultCode]]]);
+  // Newest-first: attribute-less Mug TCs (TC-002/TC-007) auto-derive the
+  // same category-level SKU 'MUG', so an unordered search resolves an older
+  // sibling whose channel.status has no external_ref (2026-07-04 MF-E2E-1).
+  const tids = await rpc(request, 'product.template', 'search',
+    [[['default_code', '=', defaultCode]]], { order: 'id desc', limit: 1 });
   if (!tids?.length) return null;
   const rows = await rpc(request, 'product.channel.status', 'search_read',
     [[['product_tmpl_id', '=', tids[0]]]], { fields: ['state', 'external_ref'], limit: 1 });

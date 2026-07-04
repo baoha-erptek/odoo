@@ -268,6 +268,48 @@ class TestPushInventoryPerVariant(_IterTestBase):
             'Size is the only varying axis → sku_on_property has one entry',
         )
 
+    def test_variant_default_code_wins_with_nonpublishable_material_axis(self):
+        """MF-E2E-1 staging repro (2026-07-04): a variant-creating axis that
+        is NOT published as an Etsy property (Material — materials[]-only)
+        must not break the variant↔combo match. Pre-fix, combo_value_ids
+        carried only publishable-axis values, so ``vids.issubset(combo)``
+        never matched and per-variant default_code was silently ignored
+        (Etsy received synthesized MUG-11OZ instead of MUG-CR-F11).
+        """
+        shop = self._make_shop(api_id='60752339')
+        material = self.Attribute.create({
+            'name': 'Iter3 Material',
+            'create_variant': 'always',
+            'x_publish_as_property': False,
+        })
+        mat_val = self.AttributeValue.create({
+            'name': 'Ceramic + Chrome', 'attribute_id': material.id,
+        })
+        size_attr, size_values = self._make_size_axis(value_names=('11 oz', '15 oz'))
+        tmpl = self.Template.create({
+            'name': 'Iter3 Mug Material Axis',
+            'list_price': 12.0,
+            'attribute_line_ids': [
+                (0, 0, {'attribute_id': material.id,
+                        'value_ids': [(6, 0, [mat_val.id])]}),
+                (0, 0, {'attribute_id': size_attr.id,
+                        'value_ids': [(6, 0, [v.id for v in size_values])]}),
+            ],
+        })
+        self.assertEqual(len(tmpl.product_variant_ids), 2)
+        for variant in tmpl.product_variant_ids:
+            names = variant.product_template_attribute_value_ids.mapped(
+                'product_attribute_value_id.name')
+            variant.default_code = (
+                'MUG-CR-F11' if '11 oz' in names else 'MUG-CR-F15')
+        payload = self._push(tmpl, shop, listing_id='LST-ITER3MAT')
+        skus = sorted(p['sku'] for p in payload['products'])
+        self.assertEqual(
+            skus, ['MUG-CR-F11', 'MUG-CR-F15'],
+            'variant default_code must win even when a non-publishable '
+            'variant-creating axis (Material) exists; got %r' % skus,
+        )
+
     def test_synthetic_sku_when_variant_default_code_empty(self):
         """When variant.default_code is empty, synthesize <base>-<slug>."""
         shop = self._make_shop(api_id='60752336')

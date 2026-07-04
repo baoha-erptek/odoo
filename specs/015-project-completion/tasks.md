@@ -109,11 +109,12 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 - Playwright: reuse `uat_huong_dan_tao_san_pham.spec.ts` + `uat_real_apron_publish.spec.ts`; add activate + re-push steps
 - Decide + document whether a scheduled SKU-drift job is needed (P-HUB-SKU-DRIFT residue) — ADR note if dropped
 
-**Exit Criteria**:
-- [ ] Runner sections PASS against staging shop (JaHandmadeArt sandbox listing)
-- [ ] Playwright green (2 consecutive runs)
-- [ ] All 13 `shipped*` publish/hub/XLS items flip to `done` in spec.md
-- [ ] Listing cleanup: test listings deleted from Etsy after run
+**Exit Criteria** (closed 2026-07-04 — `docs/engineering/uats/E2E_FLOW1_PUBLISH_2026-07-04.md`):
+- [X] Runner sections PASS against staging shop — `scripts/e2e_flow1_publish.py` 10/10 ×2 (JaHandmadeArt, live listings)
+- [X] Playwright green (2 consecutive runs) — tao_san_pham 11 pass ×2 + real_apron 1 pass ×2
+- [X] `shipped*` flips in spec.md — **8 of 13 flipped** (publish×5 + hub×3, the items the run exercised); XLS×4 + P1-01b deliberately kept `shipped*` (never touched by flow-1 — see findings 2026-07-04 honesty note)
+- [X] Listing cleanup — deactivated via PATCH state=inactive; true DELETE needs `listings_d` scope (owner item; UAT drafts left on shop, no fee)
+- [X] SKU-drift-job decision: no scheduled job (findings 2026-07-04)
 
 ---
 

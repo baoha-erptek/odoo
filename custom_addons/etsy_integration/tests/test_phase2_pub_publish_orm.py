@@ -99,7 +99,8 @@ class TestPubPublishORM(TransactionCase):
         with patch(
             'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
         ) as ClientCls:
-            ClientCls.return_value = self._mock_client()
+            client = self._mock_client()
+            ClientCls.return_value = client
             result = publisher.run(tmpl, shop)
         self.assertEqual(result.get('listing_id'), 12345)
         status = self.Status.search([
@@ -108,6 +109,10 @@ class TestPubPublishORM(TransactionCase):
         ])
         self.assertEqual(status.state, 'published')
         self.assertEqual(status.external_ref, '12345')
+        # MF-E2E-1: activation PATCH must hit the SHOP-SCOPED updateListing
+        # path — the bare listings/{id} path 404s on the live API.
+        patch_paths = [c[0][0] for c in client.patch.call_args_list]
+        self.assertIn('shops/55555555/listings/12345', patch_paths)
 
     def test_orchestrator_skips_create_draft_when_external_ref_set(self):
         """Resume: status row exists with external_ref → skip create_draft."""
