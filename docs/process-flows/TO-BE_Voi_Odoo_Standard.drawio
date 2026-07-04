@@ -73,8 +73,13 @@
         </mxCell>
 
         <!-- S05: BA lam file thiet ke (L5, C5) -->
-        <mxCell id="S05" value="Làm file thiết kế,&#xa;đính kèm vào Đơn hàng&#xa;trong Odoo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L5">
+        <mxCell id="S05" value="Làm file thiết kế,&#xa;đính kèm vào Phiếu thiết kế&#xa;của Đơn hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L5">
           <mxGeometry x="780" y="45" width="170" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- S05b: design.order lifecycle note -->
+        <mxCell id="S05b" value="⚡ Phiếu thiết kế tự tạo theo đơn.&#xa;Trạng thái: Chờ file → Gửi proof&#xa;→ Duyệt / Cần chỉnh lại" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" vertex="1" parent="L5">
+          <mxGeometry x="780" y="128" width="170" height="46" as="geometry" />
         </mxCell>
 
         <!-- S06: MP duyet file thiet ke (L4, C6) -->
@@ -105,13 +110,13 @@
         <!-- ==================== ROUTE B: Gearment POD ==================== -->
 
         <!-- B01: He thong tu gui yeu cau san xuat (L3, C7) - auto -->
-        <mxCell id="B01" value="⚡ Tự tạo Yêu cầu&#xa;mua hàng gửi Gearment&#xa;(Purchase Order)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="L3">
+        <mxCell id="B01" value="⚡ Tự tạo Đơn mua hàng&#xa;(Purchase Order) gửi Gearment&#xa;— tuyến Dropship chuẩn Odoo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="L3">
           <mxGeometry x="1420" y="35" width="185" height="75" as="geometry" />
         </mxCell>
 
         <!-- B01 improvement -->
-        <mxCell id="IB1" value="✓ Không cần copy/paste thủ công" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="L3">
-          <mxGeometry x="1420" y="118" width="185" height="26" as="geometry" />
+        <mxCell id="IB1" value="✓ PO tự sinh khi xác nhận đơn&#xa;(kèm báo giá) — không copy/paste" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="L3">
+          <mxGeometry x="1420" y="114" width="185" height="34" as="geometry" />
         </mxCell>
 
         <!-- B02: Gearment nhan don (L8, C8) -->
@@ -171,9 +176,19 @@
           <mxGeometry x="1850" y="108" width="170" height="24" as="geometry" />
         </mxCell>
 
-        <!-- A05: Hang chuyen khu giao hang (L3, C10) - auto -->
-        <mxCell id="A05" value="⚡ Hàng chuyển tự động&#xa;vào khu giao hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="L6">
+        <!-- GAP1: BoM 1:1 pass-through note (Kho lane) -->
+        <mxCell id="GAP1" value="⚠ Hiện tại BoM là 1:1 thành phẩm&#xa;— chưa có định mức nguyên liệu&#xa;chi tiết" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;" vertex="1" parent="L7">
+          <mxGeometry x="1640" y="35" width="175" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- A05: Phieu xuat kho + khu giao hang (L6, C10) - auto -->
+        <mxCell id="A05" value="⚡ Tự tạo Phiếu xuất kho&#xa;(Delivery Order), hàng chuyển&#xa;vào khu giao hàng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="L6">
           <mxGeometry x="2060" y="35" width="185" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- IA5: tracking on picking note (Kho lane) -->
+        <mxCell id="IA5" value="✓ Tracking lưu trên Phiếu xuất kho&#xa;trong Odoo" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="L7">
+          <mxGeometry x="2060" y="35" width="185" height="34" as="geometry" />
         </mxCell>
 
         <!-- A06: BA mua nhan ship trong Odoo (L5, C10) -->
@@ -196,6 +211,11 @@
         <!-- C02: Operator chon duong (L4, x=1640) -->
         <mxCell id="C02" value="Operator xem xét,&#xa;chọn Route A hoặc B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="L4">
           <mxGeometry x="1640" y="110" width="175" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- GAP2: Route C manual note -->
+        <mxCell id="GAP2" value="⚠ 'Hàng chờ' hiện xử lý thủ công&#xa;trên đơn — chưa có màn hình&#xa;xếp loại riêng" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;" vertex="1" parent="L4">
+          <mxGeometry x="1860" y="112" width="180" height="50" as="geometry" />
         </mxCell>
 
         <!-- ==================== MERGE + FINAL ==================== -->
@@ -264,8 +284,13 @@
         </mxCell>
 
         <!-- D01 → C01 (Route C - chua xac dinh) -->
-        <mxCell id="E09" value="Route C&#xa;(Chưa xác định)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="D01" target="C01">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="E09" value="Route C&#xa;(Chưa xác định)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;verticalAlign=top;" edge="1" parent="1" source="D01" target="C01">
+          <mxGeometry x="-0.4" relative="1" as="geometry">
+            <mxPoint as="offset" x="-30" y="55" />
+            <Array as="points">
+              <mxPoint x="1340" y="590" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
         <!-- C01 → C02 (hang cho → operator chon) -->
