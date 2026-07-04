@@ -290,7 +290,7 @@ X-Connect-Signature-Nonce: <random_uuid>
 ### Grant Flow
 
 ```mermaid
-sequence Actor Participant
+sequenceDiagram
     actor User
     participant Odoo as Odoo Web
     participant Etsy as Etsy OAuth
@@ -301,11 +301,11 @@ sequence Actor Participant
     Etsy->>User: "Grant app access?" prompt
     User->>Etsy: Accept
     Etsy->>Odoo: Redirect to /oauth/callback?code=...&state=...
-    Odoo->>Odoo: Verify state matches session; extract code_verifier from session
+    Odoo->>Odoo: Verify state matches session, extract code_verifier from session
     Odoo->>Etsy: POST /oauth/token {code, code_verifier, client_id, client_secret}
     Etsy->>Odoo: {"access_token": "...", "expires_in": 3600}
     Odoo->>Etsy: GET /users/me (with access_token) → {"user_id": 123, "shops": [...]}
-    Odoo->>Odoo: Create etsy.shop record; link to res.users; encrypt access_token in DB
+    Odoo->>Odoo: Create etsy.shop record, link to res.users, encrypt access_token in DB
     Odoo->>User: Success
 ```
 

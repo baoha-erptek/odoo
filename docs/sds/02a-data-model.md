@@ -41,7 +41,9 @@ erDiagram
     ETSY_ORDER_TICKET }o--|| ETSY_SHOP : "etsy_shop_id"
     ETSY_ORDER_TICKET }o--|| SALE_ORDER : "sale_order_id"
 
-    ETSY_MESSAGE_DEDUPE : "Transient; dedup tracking"
+    ETSY_MESSAGE_DEDUPE {
+        string note "Transient; dedup tracking"
+    }
 ```
 
 ### 1.2 Model Reference Table
@@ -183,7 +185,9 @@ erDiagram
     MULTICHANNEL_ENQUIRY_ETSY ||--o{ MULTICHANNEL_ENQUIRY_LINE_ETSY : "inquiry_id"
     MULTICHANNEL_ENQUIRY_ETSY }o--|| ETSY_SHOP : "etsy_shop_id"
 
-    MULTICHANNEL_SALES_CHANNEL : "Channel master (etsy, website, etc.)"
+    MULTICHANNEL_SALES_CHANNEL {
+        string note "Channel master (etsy, website, etc.)"
+    }
 ```
 
 ### 2.2 Model Reference Table
@@ -285,12 +289,16 @@ erDiagram
     PURCHASE_ORDER ||--o{ PURCHASE_ORDER_LINE : "order_id"
     PURCHASE_ORDER }o--|| RES_PARTNER : "partner_id"
 
-    GEARMENT_API_LOG : "Request/response audit"
+    GEARMENT_API_LOG {
+        string note "Request/response audit"
+    }
 
     TRACKING_IMPORT_LOG ||--o{ TRACKING_IMPORT_LINE : "log_id"
     TRACKING_IMPORT_LINE }o--|| STOCK_PICKING : "picking_id"
 
-    LOGISTICS_PARTNER : "Carrier/3PL config"
+    LOGISTICS_PARTNER {
+        string note "Carrier/3PL config"
+    }
 ```
 
 ### 3.2 Model Reference Table

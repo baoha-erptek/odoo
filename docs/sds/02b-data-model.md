@@ -125,9 +125,13 @@ erDiagram
     PRODUCT_CATALOG_IMPORT_RUN ||--o{ PRODUCT_CATALOG_IMPORT_LINE : "run_id"
     PRODUCT_CATALOG_IMPORT_RUN }o--|| RES_USERS : "created_by_user_id"
 
-    PRODUCT_CATALOG_SHEET_FINGERPRINT : "Dedup for repeating imports"
+    PRODUCT_CATALOG_SHEET_FINGERPRINT {
+        string note "Dedup for repeating imports"
+    }
 
-    PRODUCT_MTO_BOM_WIZARD : "Transient; BOM generator"
+    PRODUCT_MTO_BOM_WIZARD {
+        string note "Transient; BOM generator"
+    }
 ```
 
 ### 6.2 Model Reference Table

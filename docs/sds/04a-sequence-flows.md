@@ -93,7 +93,7 @@ sequenceDiagram
     
     Adapter->>Etsy: GET /shops/{id}/receipts<br/>?offset=100 (page 2)
     alt next_offset missing or null
-        return (pagination done)
+        Note over Adapter: pagination done, stop looping
     else next_offset present
         Etsy-->>Adapter: 200 OK {results: [...], next_offset: 200}
         Note over Adapter: loop repeats<br/>until no more pages
@@ -165,7 +165,7 @@ sequenceDiagram
     alt Gmail 401 (token revoked)
         Gmail-->>GmailClient: 401 Unauthorized
         GmailClient->>GmailClient: log ERROR<br/>(user must re-auth)
-        return
+        Note over GmailClient: stop - re-auth required
     end
     
     Gmail-->>GmailClient: 200 OK<br/>{messages: [{id: msg_id, ...}, ...]}<br/>(max 50 per page)
