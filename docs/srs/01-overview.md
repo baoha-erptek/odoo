@@ -41,9 +41,9 @@ Consolidate fragmented Etsy order management, design workflow, and fulfillment o
 | `group_etsy_shop_manager` | Etsy shop OAuth, config, order view | etsy_integration | etsy.shop, sale.order | CREATE, WRITE (shop level), READ (orders by shop_id) |
 | `group_multichannel_ops_lead` | Ops dashboard, order approvals, sync health | multichannel_hub_core | sale.order, sale.order.fulfillment, multichannel.sync.health | WRITE (approval, state transitions), READ (all) |
 | `group_vn_production_lead` | Design file routing, production state | multichannel_hub_core | design.file, design.file.route, order.pipeline.state | CREATE (routes), WRITE (design approval, state), READ (all) |
-| `group_gearment_dropship` | Gearment API access, quote/PO, tracking | multichannel_hub_fulfillment | gearment.po, gearment.quote, sale.order.fulfillment | READ/WRITE (quote + PO), READ (tracking) |
+| `group_gearment_dropship` | Gearment API access, quote/PO, tracking | multichannel_hub_fulfillment | purchase.order (dropship PO + quote fields), sale.order.fulfillment | READ/WRITE (quote + PO), READ (tracking) |
 | `group_product_lead` | Product hub, catalog sync, listing override, publish | multichannel_hub_core | multichannel.listing, product.product, product_template_attribute_value | WRITE (listing override, publish), CREATE (catalog via import) |
-| `group_multichannel_syncer` | Automated syncs (cron-triggered) | multichannel_hub_core, etsy_integration | multichannel.sync.health, etsy.email.log, multichannel.api.log | WRITE (health flag, log entry), READ (all) |
+| `group_multichannel_syncer` | Automated syncs (cron-triggered) | multichannel_hub_core, etsy_integration | multichannel.sync.health, etsy.email.log, etsy.api.log, gearment.api.log | WRITE (health flag, log entry), READ (all) |
 | `group_analytics_reader` | Dashboard-only read access | multichannel_hub_core | sale.order, sale.order.fulfillment (computed fields only) | READ (all dashboards, no CREATE/WRITE) |
 
 ---
@@ -121,7 +121,7 @@ All order routing follows one of three pipelines defined in `order.pipeline` and
 
 **Key Actors:** Gearment Operator (quote accept), Operations Manager (approval), GKE Logistics (tracking push).
 
-**Data Models:** `gearment.quote`, `gearment.po`, `sale.order.fulfillment` (tracking).
+**Data Models:** `purchase.order` (dropship PO with Gearment quote fields), `sale.order.fulfillment` (tracking).
 
 ---
 

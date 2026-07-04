@@ -55,7 +55,7 @@ This section covers:
 | **Rationale** | Design files are central to VN production workflow; approval gate prevents wrong designs reaching production. |
 | **Origin Spec(s)** | Spec 009 (design workflow), Spec 004 P1-02 (design file model) |
 | **Implementing Module + Model** | `multichannel_hub_core` / `design.file` (fields: order_id FK, line_id FK, name, binary, approval_status, created_at, approved_by, approved_at, gdrive_link, gdrive_file_id) |
-| **Status** | **Shipped** — Model instantiated (models/design_file.py, 85 lines). Form view with file upload widget, approval button (views/design_file_form.xml). Binary field caps at 10 MB (field constraint line 35). Approval logic (button action_approve_design, line 62). Tests: test_design_file_upload.py (upload, size limit, approval). Staging verified (design team uploaded 47 design files for pilot shop orders, 40 approved in <2h). |
+| **Status** | **Shipped** — Model instantiated (`models/design_file.py`). Form view with file upload widget, approval button (views/design_file_form.xml). Binary field caps at 10 MB (field constraint line 35). Approval logic (button action_approve_design, line 62). Tests: test_design_file_upload.py (upload, size limit, approval). Staging verified (design team uploaded 47 design files for pilot shop orders, 40 approved in <2h). |
 
 ---
 
@@ -87,11 +87,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | For orders routed to Gearment dropship pipeline, Operations Manager shall request a quote via action button. System shall POST to Gearment API `/quote` with order details (shop_product_id, quantity, price, shipping address). Gearment returns quote ID and estimated cost. Store quote in `gearment.quote` and create a linked `purchase.order` for approval. |
+| **Statement** | For orders routed to Gearment dropship pipeline, Operations Manager shall request a quote via action button. System calls the Gearment quote API with order details and binds the returned cost onto the dropship `purchase.order` (created by the standard dropship procurement route). The quote breakdown is stored as an audit trail on the PO itself. |
 | **Rationale** | Gearment quote is mandatory gate before commitment; PO provides audit trail and cost lock. |
-| **Origin Spec(s)** | Spec 010 (Gearment dropship workflow), Spec 004 P-DROP (phase 1 pilot) |
-| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `gearment.quote` (fields: sale_order_id FK, gearment_quote_id, quantity, estimated_cost, estimated_processing_days, received_at); `purchase.order` (linked via gearment_quote_id) |
-| **Status** | **Shipped** — Quote model and PO linkage (models/gearment_quote.py, 95 lines). Quote request action (button action_request_gearment_quote, line 42). Gearment API client integration (services/gearment_api_client.py line 180, request_quote method). Tests: test_gearment_quote.py (quote request, cost capture, PO creation). Staging pilot with JaHandmadeArt shop (4 test quotes, all successful). **Note:** Real Gearment credentials require owner sign-off (E2 external dependency). |
+| **Origin Spec(s)** | Spec 010 (Gearment dropship workflow), Spec 004 P-DROP (phase 1 pilot), ESTY-246 |
+| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `purchase.order` extension (`models/purchase_order.py`: `action_request_gearment_quote`, `x_gearment_quote_breakdown_json` audit field, `is_gearment_dropship_po`); `sale.order` side: `action_get_gearment_quote` + quote wizard (`models/sale_order.py`); adapter `services/gearment_adapter.py` (`get_quote`) |
+| **Status** | **Shipped (on purchase.order, no separate quote model)** — Quote request lives on the dropship PO (`action_request_gearment_quote`, FR-017 method-top gate) and on the sale order (`action_get_gearment_quote` / quote wizard); Gearment cost binds to the PO with the per-source-order breakdown persisted in `x_gearment_quote_breakdown_json`. There is **no** standalone `gearment.quote` model — earlier drafts' design was folded into the PO. Tests: `test_esty_246_phase1_db.py`, `test_p4_01b_bulk_push_all_orm.py`, gearment adapter tests. **Note:** Real Gearment credentials require owner sign-off (E2 external dependency). |
 
 ---
 
@@ -102,8 +102,8 @@ This section covers:
 | **Statement** | After Ops Manager approves purchase.order, system shall POST to Gearment API `/order` to place the order (transition from quote to production). Gearment returns order ID and tracking info. System updates order.pipeline.state to "Order Placed", records gearment_order_id, and sends confirmation email to Ops. |
 | **Rationale** | API order placement ensures Gearment production pipeline starts; confirmation prevents double-orders and provides audit trail. |
 | **Origin Spec(s)** | Spec 010 (Gearment dropship workflow), ESTY-246 (Gearment quote + PO, Phase 1 shipped) |
-| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `gearment.quote` (field: gearment_order_id after placement); `sale.order.fulfillment` (field: gearment_order_id indexed) |
-| **Status** | **Shipped** — PO approval trigger (models/purchase_order.py override, action_confirm → _place_gearment_order method). API call to Gearment (services/gearment_api_client.py line 210, place_order method). State transition to "Order Placed" (sale_order.py line 395, _write_pipeline_state call). Confirmation email template (mail_template_gearment_order_confirmation.xml). Tests: test_gearment_po_placement.py (PO confirm, API call, state update, email). Staging verified (ESTY-246 feature branch merged 2026-07-03; 1 test order placed successfully). |
+| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `purchase.order` (`button_confirm` override → per-source-order `sale.order.action_push_to_gearment()`); adapter `services/gearment_adapter.py` (`push_order`); `sale.order.fulfillment` (Gearment order/tracking fields) |
+| **Status** | **Shipped** — Confirming the dropship PO (`button_confirm` override, `models/purchase_order.py`) pushes each linked sale order to Gearment via `action_push_to_gearment()` → adapter `push_order()`; failures post an audit message on the PO instead of blocking confirmation. Pipeline state transitions via the standard pipeline write path. **No confirmation email template exists** (earlier-draft claim). Tests: `test_p4_01_c_state_machine_db.py`, `test_p4_01b_bulk_push_all_orm.py`, adapter tests. ESTY-246 merged 2026-07-03. |
 
 ---
 
@@ -147,11 +147,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Once tracking_number is set on sale.order.fulfillment, system shall push to Etsy API within 1 hour via `/receipts/{etsy_order_id}/shipments`. Retry failed pushes every 2 hours for 48 hours. Log in multichannel.api.log. Mark sale.order.fulfillment.etsy_tracking_pushed_at timestamp on success. |
+| **Statement** | Once tracking_number is set on sale.order.fulfillment, system shall push to Etsy API via `/receipts/{receipt_id}/tracking` (5-minute push cron). Log in `etsy.api.log`. Mark `etsy_tracking_pushed` / `etsy_tracking_pushed_at` on `sale.order.fulfillment` and push status on `sale.order` on success. |
 | **Rationale** | Etsy buyers expect tracking visibility; automatic push reduces manual sync and improves customer satisfaction. |
 | **Origin Spec(s)** | Spec 001 US8, Spec 003 P1-03 (tracking dashboard) |
-| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `multichannel.api.log` (fields: api_type='etsy_tracking', order_id FK, request_body, response_body, status, created_at); `etsy_integration` service |
-| **Status** | **Shipped** — See SRS-ETSY-12 for full details. Tracking push service (specs/005/services/etsy_shipment_syncer.py line 180). Cron job (ir_cron_data.xml line 65). API log (models/multichannel_api_log.py). Tests: test_etsy_tracking_push.py. Staging verified (5 test orders tracked, all pushed to Etsy within 30 min). |
+| **Implementing Module + Model** | `etsy_integration` / service `services/etsy_tracking_pusher.py` (`EtsyTrackingPusher.push`); flags `sale.order.fulfillment.etsy_tracking_pushed(_at)` (`multichannel_hub_fulfillment`), `sale.order.etsy_tracking_push_status/_at` (`etsy_integration`); logs in `etsy.api.log` |
+| **Status** | **Shipped** — See SRS-ETSY-12 for full details. Tracking push service `etsy_integration/services/etsy_tracking_pusher.py`; push cron in `etsy_integration/data/ir_cron_data.xml` (5-minute interval); calls logged to `etsy.api.log`. |
 
 ---
 
@@ -159,11 +159,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Gearment POD system sends webhook notifications when order status changes (e.g., "order_confirmed", "processing", "ready_to_ship", "shipped"). System shall validate webhook signature (HMAC-SHA256), parse JSON, and update sale.order.fulfillment.tracking_state and gearment_order_status. Log in multichannel.api.log. |
+| **Statement** | Gearment POD system sends webhook notifications when order status changes (e.g., "order_confirmed", "processing", "ready_to_ship", "shipped"). System shall validate webhook signature (HMAC-SHA256, `X-Connect-Signature`), parse JSON, and update fulfillment tracking state. Log in `gearment.api.log`. |
 | **Rationale** | Real-time tracking updates enable instant dashboard sync; webhook is more efficient than polling. |
 | **Origin Spec(s)** | Spec 010 (Gearment dropship workflow), reference: `reference_gearment_webhook_signature.md` (HMAC scheme documented) |
-| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `gearment.webhook` controller (POST route `/api/gearment/webhook`); webhook log (multichannel.api.log with type='gearment_webhook') |
-| **Status** | **Shipped** — Webhook controller (controllers/gearment_webhook.py, 120 lines). HMAC validation (line 35, _validate_signature method). Event router (line 55, _route_event method). State update logic (line 85). Webhook log (models/multichannel_api_log.py). Tests: test_gearment_webhook.py (signature validation, all event types, idempotency). Staging verified (manual webhook POST test, signature validated, state updated). **Note:** Webhook URL is `/odoo/api/gearment/webhook` (configure in Gearment dashboard). |
+| **Implementing Module + Model** | `multichannel_hub_fulfillment` / `GearmentWebhookController` (`controllers/gearment_webhook.py`, POST route `/gearment/webhook`); webhook dispatcher service; audit logs in `gearment.api.log` |
+| **Status** | **Shipped** — Webhook controller (`controllers/gearment_webhook.py`) with HMAC-SHA256 verification and event routing via the dispatcher service; every request audit-logged to `gearment.api.log` (retention cron `ir_cron_gearment_api_log_retention.xml`). Tests: `test_webhook_discovery_db.py`/`_orm.py`, `test_webhook_dispatcher_db.py`/`_orm.py`. **Note:** Webhook URL is `/gearment/webhook` (configure in Gearment dashboard). |
 
 ---
 
@@ -186,8 +186,8 @@ This section covers:
 | **Statement** | Operations Dashboard shall display all active orders grouped by pipeline stage (VN internal queue, Gearment processing, shipped/delivered). Dashboard updates in real-time via bus.bus channel when order state or tracking changes. List view shows order summary (order_id, customer, pipeline stage, design status, tracking number, due date). Filters by shop, date range, carrier, state. Export to Excel. |
 | **Rationale** | Unified ops dashboard provides single pane of glass for all fulfillment activity; real-time updates enable quick reaction to bottlenecks. |
 | **Origin Spec(s)** | Spec 003 (tracking dashboard), Spec 004 P1-01 (order dashboard), CEO directive (unified dashboard 2026-05-03) |
-| **Implementing Module + Model** | `multichannel_hub_core` / computed field `stuck_route_badge` on `sale.order` (alerts if any line pending >2h); view: `order_dashboard.xml` (pivot + list); bus broadcast on state change (line 430 in sale_order.py) |
-| **Status** | **Shipped** — Dashboard view (views/order_dashboard.xml, 180 lines). Pivot by stage (group_by="x_pipeline_state_id/name"). List view with decorations (line 95, `<decoration red="is_overdue_approval">`). Filters (shop, date, carrier, state). Export button (line 140, server_action_export_orders). Bus update on write (sale_order.py line 430). Tests: test_dashboard_realtime_update.py (bus broadcast, pivot accuracy, filters, export). Staging verified (dashboard opened, 47 orders displayed, 5 test state transitions broadcast immediately). |
+| **Implementing Module + Model** | `multichannel_hub_core` / computed fields `stuck_route_badge`, `is_overdue_approval` on `sale.order`; view `operations_dashboard_views.xml` (unified list + search) |
+| **Status** | **Shipped (list-view shape, no real-time bus)** — Unified dashboard (`views/operations_dashboard_views.xml`, see SRS-OPS-03): list view with decorations (red = `is_overdue_approval`, orange = `stuck_route_badge`), saved filters, standard list export. Updates land on cron cadence (order sync / tracking import, 5–15 min), **not** via bus.bus — no bus broadcast exists on state change. Tests: `test_operations_dashboard_db.py`/`_orm.py`, `test_order_dashboard.py`. |
 
 ---
 
@@ -223,7 +223,7 @@ This section covers:
 | **Rationale** | Overdue approval flag alerts Ops to SLA breaches. |
 | **Origin Spec(s)** | Spec 003 (tracking dashboard), Spec 004 P1-01 (order dashboard SLA) |
 | **Implementing Module + Model** | `multichannel_hub_core` / `sale.order` (computed stored field is_overdue_approval; daily cron refresh) |
-| **Status** | **Shipped** — Computed field (models/sale_order.py line 358, _compute_is_overdue_approval method). Daily cron (line 510, _cron_recompute_overdue_approval method). Dashboard decoration (views/order_dashboard.xml line 95, `<decoration red="is_overdue_approval">`). Tests: test_overdue_approval_detection.py (activity deadline logic, cron update). Staging verified (no overdue approvals in pilot data; logic validated). |
+| **Status** | **Shipped** — Computed field `is_overdue_approval` with cron refresh `_cron_recompute_overdue_approval` (`models/sale_order.py`; cron seeded in `data/ir_cron_data.xml`). Red decoration on the unified Operations Dashboard list view (`views/operations_dashboard_views.xml`). |
 
 ---
 
@@ -248,12 +248,12 @@ This section covers:
 | SRS-ORD-03 | Design File Upload | Shipped | multichannel_hub_core | design.file | Spec 009 |
 | SRS-ORD-04 | Design File Routing | Shipped | multichannel_hub_core | design.file.route | Spec 009, Spec 004 |
 | SRS-ORD-05 | Design Auto-Archive | Planned | multichannel_hub_core | design.file | P1-02d (2026-07-15) |
-| SRS-ORD-06 | Gearment Quote | Shipped | multichannel_hub_fulfillment | gearment.quote | Spec 010, ESTY-246 |
-| SRS-ORD-07 | Gearment PO Placement | Shipped | multichannel_hub_fulfillment | gearment.quote | Spec 010, ESTY-246 |
+| SRS-ORD-06 | Gearment Quote | Shipped | multichannel_hub_fulfillment | purchase.order (quote fields) | Spec 010, ESTY-246 |
+| SRS-ORD-07 | Gearment PO Placement | Shipped | multichannel_hub_fulfillment | purchase.order | Spec 010, ESTY-246 |
 | SRS-ORD-08 | MTO Queue & State | Shipped | multichannel_hub_core | sale.order, order.pipeline.state | Spec 008, Spec 004 |
 | SRS-ORD-09 | Picking & Fulfillment | Shipped | multichannel_hub_core | sale.order.fulfillment | Spec 003, Spec 004 |
 | SRS-ORD-10 | GKE Tracking Import | Shipped | multichannel_hub_fulfillment | multichannel.sync.health | Spec 003, Spec 002 |
-| SRS-ORD-11 | Etsy Tracking Push | Shipped | etsy_integration | multichannel.api.log | Spec 001, Spec 003 |
+| SRS-ORD-11 | Etsy Tracking Push | Shipped | etsy_integration | etsy.api.log | Spec 001, Spec 003 |
 | SRS-ORD-12 | Gearment Webhook | Shipped | multichannel_hub_fulfillment | gearment.webhook | Spec 010 |
 | SRS-ORD-13 | Address Change Approval | Shipped | etsy_integration | sale.order.fulfillment | Spec 001, Spec 004 |
 | SRS-ORD-14 | Fulfillment Dashboard | Shipped | multichannel_hub_core | sale.order (computed fields) | Spec 003, Spec 004 |

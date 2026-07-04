@@ -24,11 +24,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | All products are listed in a unified product hub (product.product model, extended with multichannel metadata). Each product stores: is_vn_production_eligible, is_gearment_eligible, is_hybrid_eligible (Boolean flags). These flags drive fulfillment pipeline routing (SRS-ORD-01). Product hub form displays channel applicability matrix and suggests routing. |
+| **Statement** | All products are listed in a unified product hub (product.template extended with multichannel metadata). Channel eligibility is stored as `x_channel_applicability_ids` (M2M to sales channels); fulfillment routing is driven by the product's SKU family (`mhc.sku.family.default_route`: in_house / gearment / tbd) rather than per-product Boolean flags. Product form displays channel applicability and the derived route. |
 | **Rationale** | Centralized channel assignment ensures consistent fulfillment routing. Hub is single source of truth for product-to-pipeline mapping. |
 | **Origin Spec(s)** | Spec 004 P-HUB (product hub MVP), Spec 011 (catalog Phase 3) |
-| **Implementing Module + Model** | `multichannel_hub_core` / `product.product` (extended fields: is_vn_production_eligible, is_gearment_eligible, is_hybrid_eligible Booleans; channel_routing_hint computed field) |
-| **Status** | **Shipped** — Extended fields on product.product (models/product_product.py line 42, P-HUB-PROD-MODEL slice complete). Hub form view (views/product_hub_form.xml, 95 lines). Routing hint computed (line 68, _compute_channel_routing_hint method). Tests: test_product_channel_applicability.py (all flag combos, routing hint). Staging verified (47 pilot shop products, applicability flags correctly set; routing matches expectations). |
+| **Implementing Module + Model** | `multichannel_hub_core` / `product.template` (field `x_channel_applicability_ids` M2M — `models/product_template.py`); `mhc.sku.family` (`models/sku_family.py`, field `default_route`) |
+| **Status** | **Shipped (M2M shape, not Boolean flags)** — `x_channel_applicability_ids` M2M on product.template drives channel status seeding (e.g. 'Etsy - Draft' on assignment); routing derives from the category's SKU family `default_route`. The per-product Boolean flags from earlier drafts (`is_vn_production_eligible`, `is_gearment_eligible`, `is_hybrid_eligible`) were never implemented — the M2M + family-route design supersedes them (ADR-010 hybrid routing). Views: `multichannel_hub_core/views/product_template_views.xml`. |
 
 ---
 
@@ -36,11 +36,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Product SKU is auto-derived from: base_sku (from Excel import) + variant attributes (color, size, etc.) + fulfillment pipeline suffix. Example: `BASE-COLOR-SIZE-PIPE`. System shall generate SKU on product create + after attribute changes. Derivation rules are defined in `sku.derivation.rule` model (configurable per product category). |
+| **Statement** | Product SKU is auto-derived from the product category's SKU family plus variant attribute codes. Example: `MUG-CR-F11` (family, then per-attribute codes). Derivation is incremental: selecting a category yields the family prefix; adding attributes extends it (MUG → MUG-CR → MUG-CR-F11). A manually edited SKU is preserved (dirty-flag); legacy products are never auto-updated. Grammar rules come from `mhc.sku.family` (category-level master data), evaluated by the `sku_grammar_v2` service. |
 | **Rationale** | Unified SKU grammar enables Gearment integration (shop_product_id match) and inventory tracking across pipelines. Auto-derivation eliminates manual SKU entry. |
-| **Origin Spec(s)** | Spec 004 P-HUB-SKU-AUTODERIVE (7-pattern inventory), Spec 010 (Gearment SKU mapping) |
-| **Implementing Module + Model** | `multichannel_hub_core` / `product.product` (field: default_code aka SKU, computed from `_compute_sku_from_variants`); `sku.derivation.rule` (master data, category-level rules) |
-| **Status** | **Shipped** — SKU auto-derivation logic (models/product_product.py line 92, _compute_sku_from_variants method, 95 lines). Derivation rule model (models/sku_derivation_rule.py, 65 lines). Seed data (data/sku_derivation_rules_seed.xml, 7 patterns documented in feedback_sku_autoderive_patterns.md). Tests: test_sku_autoderivation.py (all 7 patterns, attribute change triggers, idempotency). Staging verified (47 products, all SKUs auto-derived correctly; Gearment shop_product_id matching works). |
+| **Origin Spec(s)** | Spec 004 / Spec 009 P-HUB-SKU-AUTODERIVE (7-pattern inventory), Spec 010 (Gearment SKU mapping) |
+| **Implementing Module + Model** | `multichannel_hub_core` / `product.template` (`_onchange_auto_fill_default_code` — `models/product_template.py`) + `product.product` (`_onchange_auto_fill_variant_code`); `mhc.sku.family` (`models/sku_family.py`); grammar service `services/sku_grammar_v2.py` |
+| **Status** | **Shipped (onchange shape, not computed field)** — SKU derivation runs as `@api.onchange('categ_id', 'attribute_line_ids')` on product.template and the variant-level equivalent on product.product, delegating to `sku_grammar_v2.evaluate()` with the category's family chain. Dirty-flag preservation, legacy skip (`x_sku_v2_status='ba_approved_legacy'`), incremental re-derivation. There is **no** `sku.derivation.rule` model — `mhc.sku.family` fills that role. Patterns documented in memory `feedback_sku_autoderive_patterns.md`. |
 
 ---
 
@@ -96,10 +96,10 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Product manager clicks "Publish to Etsy" button on multichannel.listing (state=draft). System POSTs to Etsy API `POST /listings` with: title, description, SKU, taxonomy_id (from SRS-ETSY-09), shipping_profile_id, return_policy_id, price, images (from product gallery, channel=etsy), and personalization fields. Etsy returns listing_id. System updates multichannel.listing.listing_id, sets state=active, and logs in multichannel.api.log. |
+| **Statement** | Product manager clicks "Publish to Etsy" button on multichannel.listing (state=draft). System POSTs to Etsy API `POST /listings` with: title, description, SKU, taxonomy_id (from SRS-ETSY-09), shipping_profile_id, return_policy_id, price, images (from product gallery, channel=etsy), and personalization fields. Etsy returns listing_id. System updates multichannel.listing.listing_id, sets state=active, and logs in etsy.api.log. |
 | **Rationale** | Odoo becomes canonical product source for Etsy. Automated publish eliminates manual Etsy dashboard data entry. |
 | **Origin Spec(s)** | Spec 011 (Odoo→Etsy publish, Phase 3 core), ADR-014 (Phase 3 priority 2026-05-23) |
-| **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_publish_to_etsy); `etsy_integration` / `etsy.shop` (default_taxonomy_id, default_shipping_profile_id, etc. from SRS-ETSY-09); `multichannel_hub_fulfillment` / `multichannel.api.log` (log publish event) |
+| **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_publish_to_etsy); `etsy_integration` / `etsy.shop` (default_taxonomy_id, default_shipping_profile_id, etc. from SRS-ETSY-09); `etsy_integration` / `etsy.api.log` (log publish event) |
 | **Status** | **Planned** — Spec 011 slice P3-LIST-03 (Publish new listing), target 2026-07-25. Model fields defined; API endpoint documented. Service layer drafted (services/etsy_listing_publisher.py sketch, 200-line outline). Requires SRS-ETSY-09 completion (taxonomy/shipping/return picker UI). **CRITICAL PATH:** Phase 3 is 16-slice epic; publish is core blocker. Tracker: `.claude/plans/006-master-plan-tracking.md` (Phase 3 = 1% complete as of 2026-07-03). |
 
 ---
@@ -108,7 +108,7 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | After publication, product manager can edit listing fields (title, description, price, SKU, images). System detects changes (by comparing cached vs. current). On save, PATCH to Etsy API `/listings/{listing_id}` with only changed fields. Update is logged in multichannel.api.log. State remains `active`. |
+| **Statement** | After publication, product manager can edit listing fields (title, description, price, SKU, images). System detects changes (by comparing cached vs. current). On save, PATCH to Etsy API `/listings/{listing_id}` with only changed fields. Update is logged in etsy.api.log. State remains `active`. |
 | **Rationale** | Incremental updates reduce API bandwidth; change detection avoids unnecessary API calls. |
 | **Origin Spec(s)** | Spec 011 (listing publish), Spec 004 P3-LIST (Phase 3) |
 | **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_update_etsy_listing); change-detection logic via `@api.depends` or manual field comparison |
@@ -120,7 +120,7 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Product manager can unpublish listing. System DELETEs via Etsy API `/listings/{listing_id}` or sets listing to inactive (per Etsy API semantics). multichannel.listing.state transitions to `inactive` or `archived`. Log in multichannel.api.log. Etsy inventory is removed. |
+| **Statement** | Product manager can unpublish listing. System DELETEs via Etsy API `/listings/{listing_id}` or sets listing to inactive (per Etsy API semantics). multichannel.listing.state transitions to `inactive` or `archived`. Log in etsy.api.log. Etsy inventory is removed. |
 | **Rationale** | Clean removal of obsolete listings from Etsy; prevents orphan listings. |
 | **Origin Spec(s)** | Spec 011 (listing lifecycle), Spec 004 P3-LIST |
 | **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_unpublish_from_etsy); state → `inactive` |
@@ -132,7 +132,7 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Opposite of SRS-CAT-07/08: every 4 hours, system fetches active Etsy listings (SRS-ETSY-13) and syncs to multichannel.listing records. If etsy_listing_id matches, update title/description/price/inventory from Etsy. If new Etsy listing, create multichannel.listing record with state=active (read-only mirror). Log in multichannel.api.log. |
+| **Statement** | Opposite of SRS-CAT-07/08: every 4 hours, system fetches active Etsy listings (SRS-ETSY-13) and syncs to multichannel.listing records. If etsy_listing_id matches, update title/description/price/inventory from Etsy. If new Etsy listing, create multichannel.listing record with state=active (read-only mirror). Log in etsy.api.log. |
 | **Rationale** | Inbound sync enables tracking Etsy changes (e.g., manual shop edits); read-only mirror prevents accidental overwrites of Odoo source-of-truth. |
 | **Origin Spec(s)** | Spec 011 (listing sync), Spec 004 P3-LIST |
 | **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (cron job `_cron_sync_etsy_listings()`, every 4 hours); read-only flag on synced records |
@@ -156,10 +156,10 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | After fulfillment, stock levels in Odoo warehouse decrease (via standard picking/delivery flow). System shall periodically (every 2 hours) sync inventory quantity to Etsy API `/inventory` endpoint, per SKU. Updates only active listings. Handles backorder/low-stock thresholds (configurable per category). Log in multichannel.api.log. |
+| **Statement** | After fulfillment, stock levels in Odoo warehouse decrease (via standard picking/delivery flow). System shall periodically (every 2 hours) sync inventory quantity to Etsy API `/inventory` endpoint, per SKU. Updates only active listings. Handles backorder/low-stock thresholds (configurable per category). Log in etsy.api.log. |
 | **Rationale** | Real-time inventory sync prevents oversell and Etsy showing out-of-stock items. Low-stock alerts enable rapid reorder. |
 | **Origin Spec(s)** | Spec 004 P-HUB (inventory sync Phase 4), Spec 012 (inventory Phase 4) |
-| **Implementing Module + Model** | `multichannel_hub_core` / cron job `_cron_sync_inventory_to_etsy()` (every 2 hours); `multichannel.api.log` (inventory sync events) |
+| **Implementing Module + Model** | `multichannel_hub_core` / cron job `_cron_sync_inventory_to_etsy()` (every 2 hours); `etsy.api.log` (inventory sync events) |
 | **Status** | **Planned** — Phase 4 slice (inventory sync, low priority). Cron job scheduled (ir_cron_data.xml, commented, awaiting P4 dispatch). Tracker: `.claude/plans/006-master-plan-tracking.md` (Phase 4 = 75% complete; inventory = 0% within Phase 4). Target 2026-08-15. |
 
 ---
@@ -179,7 +179,7 @@ This section covers:
 | SRS-CAT-09 | Listing Unpublish/Archive | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-05 (2026-08-01) |
 | SRS-CAT-10 | Listing Sync (Inbound from Etsy) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-02b (2026-08-05) |
 | SRS-CAT-11 | Multi-Currency Pricing | Planned | multichannel_hub_core | multichannel.listing | Phase 3 (2026-08-10) |
-| SRS-CAT-12 | Inventory Sync to Etsy | Planned | multichannel_hub_core | multichannel.api.log | Phase 4 (2026-08-15) |
+| SRS-CAT-12 | Inventory Sync to Etsy | Planned | multichannel_hub_core | etsy.api.log | Phase 4 (2026-08-15) |
 
 ---
 

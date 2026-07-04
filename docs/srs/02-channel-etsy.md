@@ -28,7 +28,7 @@ This section covers:
 | **Rationale** | Multi-shop architecture allows same Odoo instance to manage multiple seller accounts with isolated order streams. |
 | **Origin Spec(s)** | Spec 001 US3, Spec 005 P0-15 (OAuth PKCE flow) |
 | **Implementing Module + Model** | `etsy_integration` / `etsy.shop` (fields: name, active, user_id, etsy_api_shop_id, etsy_oauth_access_token, etsy_oauth_refresh_token, etsy_oauth_token_expires_at) |
-| **Status** | **Shipped** — Model instantiated; OAuth form view with "Test Connection" button (models/etsy_shop.py line 36, views/etsy_shop_form.xml); test_connection() method calls gmail_client + Etsy API (specs/005/codex/etsy_api_client.py line 82). |
+| **Status** | **Shipped** — Model instantiated; OAuth form view with "Test Connection" button (`views/etsy_shop_views.xml`); `action_test_connection()` on `etsy.shop` (`models/etsy_shop.py`) exercises the configured source (API client / gmail client). |
 
 ---
 
@@ -39,8 +39,8 @@ This section covers:
 | **Statement** | System shall automatically refresh expired Etsy access tokens using the stored refresh token and update `etsy_oauth_token_expires_at`. Failed refresh attempts shall be logged and trigger a mail.activity warning to the shop owner. |
 | **Rationale** | Prevents order ingest gaps due to token expiry; automatic recovery reduces manual intervention. |
 | **Origin Spec(s)** | Spec 005 P0-15 (OAuth PKCE); Spec 004 P-HEALTH (sync health monitoring) |
-| **Implementing Module + Model** | `etsy_integration` / `etsy.shop` + `gmail_client` service |
-| **Status** | **Partial** — Token refresh logic unimplemented. No refresh_token_if_needed method found in services/gmail_client.py; no _cron_refresh_etsy_tokens() cron job in data/ir_cron_data.xml. Feature spec requirement but code implementation missing. Blocker: ESTY-token-refresh (token expiry will break API after 60 min). |
+| **Implementing Module + Model** | `etsy_integration` / `services/etsy_api_client.py` (401-triggered + proactive refresh) + `services/etsy_oauth.py` (`refresh_access_token`) |
+| **Status** | **Shipped (in the API client, not a cron)** — `EtsyApiClient` refreshes reactively on 401 (refresh via `etsy_oauth.refresh_access_token`, persist new tokens on `etsy.shop` with `sudo()`, retry once) and proactively when `etsy_oauth_token_expires_at` is within 60 seconds of expiry. There is no separate refresh cron — refresh happens inline per request, which covers the 60-min token lifetime. **Not implemented:** mail.activity warning to the shop owner on failed refresh (refresh failure raises and surfaces via sync health / API log instead). |
 
 ---
 
@@ -52,7 +52,7 @@ This section covers:
 | **Rationale** | API outages or scope limitations do not block order visibility; email remains legal mandatory backup. |
 | **Origin Spec(s)** | ADR-008a (email-as-mandatory-backup); Spec 001 US1 (email parser) |
 | **Implementing Module + Model** | `etsy_integration` / `etsy.shop` (fields: active_source, sync_mode, health_check_consecutive_failures, recovery_probe_consecutive_successes) |
-| **Status** | **Partial** — Data model fields (active_source, health_check_consecutive_failures, recovery_probe_consecutive_successes) exist but state machine logic unimplemented. No _maybe_failover_to_email method found in models/etsy_shop.py line 210. Email parser (services/email_parser.py) parses 34 fields. Failover state transitions missing. Tests: test_etsy_order_sync.py requires implementation. |
+| **Status** | **Partial** — Data model fields (active_source, health_check_consecutive_failures, recovery_probe_consecutive_successes) exist but state machine logic unimplemented. No failover state-machine method exists in models/etsy_shop.py (the `etsy.shop.source.change.log` model already defines 'auto-failover'/'recovery-probe' reasons for when it lands). Email parser (services/email_parser.py) parses 34 fields. Failover state transitions missing. Tests: test_etsy_order_sync.py requires implementation. |
 
 ---
 
@@ -60,11 +60,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | System shall fetch new Etsy receipts from `GET /shops/{shop_id}/receipts` every 10 minutes (configurable). For each new receipt, create a sale.order record with etsy_order_id, etsy_transaction_id, line items, customer, pricing, and shipping metadata. Duplicates (by etsy_transaction_id) shall be skipped. |
+| **Statement** | System shall fetch new Etsy receipts from `GET /shops/{shop_id}/receipts` every 5 minutes (configurable). For each new receipt, create a sale.order record with etsy_order_id, etsy_transaction_id, line items, customer, pricing, and shipping metadata. Duplicates (by etsy_transaction_id) shall be skipped. |
 | **Rationale** | Real-time order visibility; API primary source provides faster integration than email polling. |
 | **Origin Spec(s)** | Spec 005 P0-15 (API-first pivot), Spec 001 US1 (order ingest), ADR-008 (email-vs-API trade-off) |
 | **Implementing Module + Model** | `etsy_integration` / `sale.order` (fields: etsy_order_id, etsy_transaction_id, etsy_shop_id, etsy_shipping_cost, personalization_text, gift_message) |
-| **Status** | **Shipped** — Order syncer (specs/005/services/etsy_order_syncer.py line 1) fetches receipts and creates sale.order via order_creator.create_order_from_etsy_receipt (Phase 1 P0-16b, complete). Cron: ir_cron_data.xml line 18 (10-min interval). Tests: test_etsy_order_sync.py (all scenarios: new, duplicate, partial, error). Staging verified with 47 pilot shop orders. |
+| **Status** | **Shipped** — Order syncer (`etsy_integration/services/etsy_order_syncer.py`, `sync_shop_orders(shop)`) fetches receipts and creates sale.order via the order-creator service; the cron `cron_etsy_order_sync` (`data/ir_cron_data.xml`, 5-minute interval) loops active API-source shops. Tests: order-sync suites under `etsy_integration/tests/`. Staging verified with pilot shop orders. |
 
 ---
 
@@ -76,7 +76,7 @@ This section covers:
 | **Rationale** | Historically worked before API; mandatory fallback if API unavailable; legacy email queue. |
 | **Origin Spec(s)** | Spec 001 US1, ADR-008a |
 | **Implementing Module + Model** | `etsy_integration` / `etsy.email.log` (fields: gmail_message_id, parse_status, error_msg, created_at, retry_count) |
-| **Status** | **Shipped** — Email parser (services/email_parser.py, 450 lines) extracts 34 fields via regex. Gmail client (services/gmail_client.py) fetches emails via API. Cron job (data/ir_cron_data.xml line 8). Tests: test_email_parser.py (all 34 fields, edge cases, encoding). Staging emails parsed successfully. In production: 17,659 historical orders ingested via email (2025-01 through 2026-04). |
+| **Status** | **Shipped** — Email parser (`services/email_parser.py`) extracts the full field set via regex. Gmail client (services/gmail_client.py) fetches emails via API. Cron job (data/ir_cron_data.xml line 8). Tests: test_email_parser.py (all 34 fields, edge cases, encoding). Staging emails parsed successfully. In production: 17,659 historical orders ingested via email (2025-01 through 2026-04). |
 
 ---
 
@@ -88,7 +88,7 @@ This section covers:
 | **Rationale** | Accurate customer database prevents duplicate accounts and enables CRM analytics. Duplicate detection aids with fraud/repeat-buyer metrics. |
 | **Origin Spec(s)** | Spec 001 US4, Spec 002 P2-03 |
 | **Implementing Module + Model** | `etsy_integration` / `res.partner` (extended with is_etsy_customer, etsy_buyer_name flags); `sale.order` (computed is_duplicate_buyer) |
-| **Status** | **Shipped** — Partner matching logic (services/order_creator.py line 156, find_or_create_partner method). Duplicate detection (sale_order.py line 340, _compute_is_duplicate_buyer). Tests: test_order_creation.py (all matching scenarios). Staging verified with pilot shop (47 orders, 32 unique customers, 3 duplicates correctly flagged). |
+| **Status** | **Shipped** — Partner matching logic (`services/order_creator.py`, `find_or_create_partner`). Duplicate detection (`multichannel_hub_core/models/sale_order.py`, `_compute_is_duplicate_buyer`, stored + cron-refreshed). Tests: test_order_creation.py (all matching scenarios). Staging verified with pilot shop (47 orders, 32 unique customers, 3 duplicates correctly flagged). |
 
 ---
 
@@ -100,7 +100,7 @@ This section covers:
 | **Rationale** | Builds product master data from Etsy listings; enables inventory and catalog management. |
 | **Origin Spec(s)** | Spec 001 US5, Spec 011 (product hub) |
 | **Implementing Module + Model** | `etsy_integration` / `product.product` (extended with etsy_image_url, is_etsy_product); `product_template_attribute_value` (color, size variants) |
-| **Status** | **Shipped** — Product matching (services/order_creator.py line 220, find_or_create_product method). Attribute value auto-creation via product_template_attribute_value model. Tests: test_order_creation.py (product matching, variant logic). Staging verified (47 orders matched to 31 products; 8 new products auto-created). |
+| **Status** | **Shipped** — Product matching (`services/order_creator.py`, `find_or_create_product`). Attribute value auto-creation via product_template_attribute_value model. Tests: test_order_creation.py (product matching, variant logic). Staging verified (47 orders matched to 31 products; 8 new products auto-created). |
 
 ---
 
@@ -148,7 +148,7 @@ This section covers:
 | **Rationale** | Etsy-specific metadata required for tracking push-back (SRS-ETSY-12) and design personalization (design workflow). |
 | **Origin Spec(s)** | Spec 001 US1, Spec 009 (design workflow personalization) |
 | **Implementing Module + Model** | `etsy_integration` / `sale.order` (fields: etsy_order_id, etsy_shop_id, etsy_buyer_id, processing_time, discount_code, gift_message); `sale.order.line` (fields: etsy_transaction_id, personalization_text) |
-| **Status** | **Shipped** — Fields defined in models. Email parser extracts all 34 fields (services/email_parser.py line 85). API syncer maps receipt JSON to order/line fields (specs/005/services/etsy_order_syncer.py line 145). Tests: test_order_creation.py (field preservation across email + API sources). Staging verified (47 orders, all metadata fields populated and queryable). |
+| **Status** | **Shipped** — Fields defined in models. Email parser extracts the field set (`services/email_parser.py`). API syncer maps receipt JSON to order/line fields (`etsy_integration/services/etsy_order_syncer.py` + `etsy_order_payload.py`). Tests: test_order_creation.py (field preservation across email + API sources). Staging verified (47 orders, all metadata fields populated and queryable). |
 
 ---
 
@@ -156,11 +156,11 @@ This section covers:
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Once an order is shipped (sale.order.fulfillment.tracking_number set), system shall push tracking number + carrier to Etsy API `/receipts/{receipt_id}/shipments` within 1 hour. Log push status in `multichannel.api.log`. Retry failed pushes every 2 hours for 48 hours. |
+| **Statement** | Once an order is shipped (sale.order.fulfillment.tracking_number set), system shall push tracking number + carrier to Etsy API `/receipts/{receipt_id}/shipments` within 1 hour. Log push status in `etsy.api.log`. Retry failed pushes every 2 hours for 48 hours. |
 | **Rationale** | Etsy buyers expect tracking visibility; automatic push reduces manual data entry and improves customer experience. |
 | **Origin Spec(s)** | Spec 001 US8, Spec 003 P1-03 (tracking dashboard) |
-| **Implementing Module + Model** | `etsy_integration` / `sale.order` (extended field: etsy_tracking_pushed_at); `multichannel_hub_fulfillment` / `multichannel.api.log` (log shipment push events) |
-| **Status** | **Shipped** — Tracking push logic (specs/005/services/etsy_shipment_syncer.py line 180, push_tracking_to_etsy method). Cron job `_cron_push_etsy_tracking()` (ir_cron_data.xml line 65, hourly). Retry logic with 48-hour cap. API log entry on success/failure. Tests: test_etsy_tracking_push.py (success, rate-limit retry, failed shop). Staging verified (5 pilot shop orders tracked; all tracking pushed successfully within 30 min). |
+| **Implementing Module + Model** | `etsy_integration` / `sale.order` (extended field: etsy_tracking_pushed_at); `etsy_integration` / `etsy.api.log` (log shipment push events) |
+| **Status** | **Shipped** — Tracking push service (`etsy_integration/services/etsy_tracking_pusher.py`, `EtsyTrackingPusher.push`). Cron `ir_cron_etsy_tracking_push` → `sale.order._cron_push_tracking()` (`data/ir_cron_data.xml`, 5-minute interval). Push status/timestamps on `sale.order` (`etsy_tracking_push_status/_at`) and `sale.order.fulfillment` (`etsy_tracking_pushed/_at`); calls logged to `etsy.api.log`. |
 
 ---
 
@@ -193,7 +193,7 @@ This section covers:
 | Req ID | Title | Status | Module | Model | Tracker Reference |
 |--------|-------|--------|--------|-------|-------------------|
 | SRS-ETSY-01 | Shop Config & OAuth | Shipped | etsy_integration | etsy.shop | Spec 001 US3 |
-| SRS-ETSY-02 | Token Refresh | Partial | etsy_integration | etsy.shop | Spec 005 P0-15 |
+| SRS-ETSY-02 | Token Refresh | Shipped | etsy_integration | etsy.shop + etsy_api_client | Spec 005 P0-15 |
 | SRS-ETSY-03 | Email Fallback (failover) | Partial | etsy_integration | etsy.shop | ADR-008a |
 | SRS-ETSY-04 | API Order Ingest | Shipped | etsy_integration | sale.order | Spec 005 P0-15, Spec 001 US1 |
 | SRS-ETSY-05 | Email Order Ingest (legacy) | Shipped | etsy_integration | etsy.email.log | Spec 001 US1 |
@@ -203,7 +203,7 @@ This section covers:
 | SRS-ETSY-09 | Taxonomy & Shipping Config | Partial | etsy_integration | etsy.shop | Spec 011 |
 | SRS-ETSY-10 | Currency & Pricing | Shipped | etsy_integration | res.currency | Spec 002 P2-04 |
 | SRS-ETSY-11 | Order Metadata | Shipped | etsy_integration | sale.order, sale.order.line | Spec 001 US1 |
-| SRS-ETSY-12 | Tracking Push-Back | Shipped | etsy_integration | multichannel.api.log | Spec 001 US8, Spec 003 |
+| SRS-ETSY-12 | Tracking Push-Back | Shipped | etsy_integration | etsy.api.log | Spec 001 US8, Spec 003 |
 | SRS-ETSY-13 | Listing Sync (Fetch) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-02 (2026-07-20) |
 | SRS-ETSY-14 | Listing Publish (Odoo→Etsy) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-03/04 (2026-07-25) |
 
