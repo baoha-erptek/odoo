@@ -51,6 +51,7 @@ access_product_catalog_sheet_fingerprint_system,product.catalog.sheet.fingerprin
 access_multichannel_sync_health_user,multichannel.sync.health user,model_multichannel_sync_health,base.group_user,1,0,0,0
 access_multichannel_sync_health_system,multichannel.sync.health system,model_multichannel_sync_health,base.group_system,1,1,1,1
 access_catalog_import_run_wizard_user,catalog.import.run.wizard user,model_catalog_import_run_wizard,base.group_user,1,1,1,1
+access_order_pipeline_transition_wizard_user,order.pipeline.transition.wizard user,model_order_pipeline_transition_wizard,base.group_user,1,1,1,1
 access_mhc_sku_family_user,mhc.sku.family user read,model_mhc_sku_family,base.group_user,1,0,0,0
 access_mhc_sku_family_ba_user,mhc.sku.family ba write,model_mhc_sku_family,multichannel_hub_core.group_ba_user,1,1,1,1
 access_mhc_sku_family_system,mhc.sku.family system,model_mhc_sku_family,base.group_system,1,1,1,1
@@ -58,3 +59,7 @@ access_product_sku_builder_wizard_user,product.sku.builder.wizard user,model_pro
 access_multichannel_product_image_user,multichannel.product.image user,model_multichannel_product_image,base.group_user,1,0,0,0
 access_multichannel_product_image_product_manager,multichannel.product.image product manager,model_multichannel_product_image,product.group_product_manager,1,1,1,1
 access_multichannel_product_image_system,multichannel.product.image system,model_multichannel_product_image,base.group_system,1,1,1,1
+access_multichannel_listing_marketing,multichannel.listing marketing rw,model_multichannel_listing,multichannel_hub_core.group_marketing_user,1,1,1,1
+access_multichannel_listing_ba_user_read,multichannel.listing ba user read,model_multichannel_listing,multichannel_hub_core.group_ba_user,1,0,0,0
+access_multichannel_listing_ba_lead_read,multichannel.listing ba lead read,model_multichannel_listing,multichannel_hub_core.group_ba_lead,1,0,0,0
+access_multichannel_listing_system,multichannel.listing system rw,model_multichannel_listing,base.group_system,1,1,1,1

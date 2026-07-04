@@ -150,7 +150,7 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
         cls.order = cls.env['sale.order'].create({'partner_id': cls.partner.id})
 
     def _create_attachment(self, name='design.jpg', datas=None):
-        """Factory: create ir.attachment with JPEG fixture."""
+        """Factory: create ir.attachment with JPEG fixture as current user."""
         if datas is None:
             datas = _JPEG_2X2
         return self.env['ir.attachment'].create({
@@ -174,6 +174,11 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
             'file_name': 'single_design',
             'attachment_ids': [(6, 0, [attachment.id])],
             # storage_mode NOT set → defaults to 'small'
+        })
+        # Link attachment to wizard for carve-out authorization
+        attachment.write({
+            'res_model': 'design.file.upload.wizard',
+            'res_id': wizard.id,
         })
 
         # Should succeed with production user
@@ -201,6 +206,11 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
             'storage_mode': 'small',
             'attachment_ids': [(6, 0, [att1.id, att2.id, att3.id])],
         })
+        # Link attachments to wizard for carve-out authorization
+        (att1 | att2 | att3).write({
+            'res_model': 'design.file.upload.wizard',
+            'res_id': wizard.id,
+        })
 
         wizard.with_user(self.prod_user).action_upload()
 
@@ -224,6 +234,11 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
             'file_name': 'preview_test',
             'storage_mode': 'small',
             'attachment_ids': [(6, 0, [att1.id, att2.id])],
+        })
+        # Link attachments to wizard for carve-out authorization
+        (att1 | att2).write({
+            'res_model': 'design.file.upload.wizard',
+            'res_id': wizard.id,
         })
 
         wizard.with_user(self.prod_user).action_upload()
@@ -282,6 +297,11 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
             'storage_mode': 'small',
             'attachment_ids': [(6, 0, [att1.id, att2.id, att3.id])],
         })
+        # Link attachments to wizard for carve-out authorization
+        (att1 | att2 | att3).write({
+            'res_model': 'design.file.upload.wizard',
+            'res_id': wizard.id,
+        })
 
         # Patch the gate method and count calls
         with patch.object(
@@ -315,6 +335,11 @@ class TestDesignFileUploadWizardMultiORM(TransactionCase):
             'file_name': 'atomic_test',
             'storage_mode': 'small',
             'attachment_ids': [(6, 0, [att_valid.id, att_oversized.id])],
+        })
+        # Link attachments to wizard for carve-out authorization
+        (att_valid | att_oversized).write({
+            'res_model': 'design.file.upload.wizard',
+            'res_id': wizard.id,
         })
 
         # action_upload should raise ValidationError on the oversized file

@@ -13,6 +13,7 @@
             <xpath expr="//group[@name='group_general']" position="after">
                 <group string="Etsy" name="etsy_product_group" invisible="not is_etsy_product">
                     <field name="etsy_image_url" widget="url"/>
+                    <field name="etsy_needs_product_review"/>
                     <field name="is_etsy_product" invisible="1"/>
                 </group>
             </xpath>
@@ -40,6 +41,20 @@
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='services']" position="after">
                 <filter name="filter_etsy_products" string="Etsy Products" domain="[('is_etsy_product', '=', True)]"/>
+                <filter name="filter_etsy_needs_product_review"
+                        string="Needs Etsy Review"
+                        domain="[('etsy_needs_product_review', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_template_tree_etsy_inherit" model="ir.ui.view">
+        <field name="name">product.template.list.etsy.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='default_code']" position="after">
+                <field name="etsy_needs_product_review" optional="hide"/>
             </xpath>
         </field>
     </record>

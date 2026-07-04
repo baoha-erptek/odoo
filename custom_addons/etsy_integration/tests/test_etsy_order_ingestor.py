@@ -134,7 +134,7 @@ class TestOrderCreatorProcessEtsyPayload(TransactionCase):
         self.assertEqual(line.price_unit, 100.00)
 
     def test_appends_shipping_line_when_shipping_total_positive(self):
-        payload = _build_payload(shipping_total=15.00)
+        payload = _build_payload(amount_total=115.00, shipping_total=15.00)
         order = self.creator.process_etsy_payload(payload, self.shop)
         # Shipping line uses the configured shipping product; identifies
         # it by price_unit since name varies by config.
@@ -144,7 +144,7 @@ class TestOrderCreatorProcessEtsyPayload(TransactionCase):
         self.assertTrue(shipping_lines)
 
     def test_skips_shipping_line_when_zero(self):
-        payload = _build_payload(shipping_total=0.0)
+        payload = _build_payload(amount_total=100.00, shipping_total=0.0)
         order = self.creator.process_etsy_payload(payload, self.shop)
         # All lines should be product lines, none for shipping.
         # Easier assertion: only one line (the single line_items entry).

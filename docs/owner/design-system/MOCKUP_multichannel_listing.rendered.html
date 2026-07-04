@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Mockup procedure — `multichannel.listing` form</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="mockup-procedure-multichannellisting-form">Mockup procedure — <code>multichannel.listing</code> form</h1>
+<blockquote>
+<p>Output of <code>odoo-functional-mockup</code> skill 2026-06-07. Drives Phase 2.5 XML edits.</p>
+</blockquote>
+<hr>
+<h2 id="step-1-baseline">Step 1 — Baseline</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>XML ID</strong></td>
+<td><code>multichannel_hub_core.view_multichannel_listing_form</code></td>
+</tr>
+<tr>
+<td><strong>File</strong></td>
+<td><code>custom_addons/multichannel_hub_core/views/multichannel_listing_views.xml:32</code></td>
+</tr>
+<tr>
+<td><strong>Edition</strong></td>
+<td>Custom (no Odoo CE equivalent; this is a new model from ADR-013 multichannel hub)</td>
+</tr>
+<tr>
+<td><strong>Shape</strong></td>
+<td><code>&lt;header&gt;</code> with state-conditional button + <code>widget="statusbar"</code> · <code>&lt;sheet&gt;</code> with alerts + image_1920 + title + External group + Scope group + 2 pages (Listing Basics, Video)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important — already curated.</strong> This form went through P-LIST-UX-FIXES (commit history shows R1/R2/R3 markers) which already:
+- Added "Open in Etsy Shop Manager" button gated on <code>state == 'published'</code>
+- Added workflow context callout + readonly indicator
+- Wrapped Scope group inside "Advanced settings" outer group</p>
+<p>Plus <code>etsy_integration/views/multichannel_listing_etsy_views.xml</code> adds 2 more pages:
+- "How It's Made" (etsy taxonomy / shipping profile / who_made / when_made / is_supply)
+- "Shipping &amp; Variations" (variant Etsy property mapping)</p>
+<p><strong>Total tabs after all inherits:</strong> Listing Basics · Video · How It's Made · Shipping &amp; Variations = 4 tabs.</p>
+<hr>
+<h2 id="step-2-taste-overlay">Step 2 — Taste overlay</h2>
+<p>Same direction as <code>product.template</code> (see <a href="./MOCKUP_product_template.md"><code>MOCKUP_product_template.md</code></a> §Step 2). DESIGN_VARIANCE=low, VISUAL_DENSITY=high, motion off. Purple #714B67 on statusbar active + active notebook tab + .mu-mono external_ref.</p>
+<hr>
+<h2 id="step-3-craft-check">Step 3 — Craft check</h2>
+<p>Same checklist as product.template. State coverage is <strong>already implemented</strong> via the P-LIST-UX-FIXES alerts (Draft → Ready → Published callout + Read-only banner). Empty state for video is handled with explanatory <code>&lt;p class="text-muted"&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Applied?</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>State coverage — empty (no draft)</td>
+<td>✓</td>
+<td>Alert "Publishing workflow" explains the lifecycle</td>
+</tr>
+<tr>
+<td>State coverage — read-only</td>
+<td>✓</td>
+<td>Yellow <code>alert alert-warning</code> shows when state != 'draft'</td>
+</tr>
+<tr>
+<td>State coverage — published / external_ref</td>
+<td>✓</td>
+<td>"Open in Etsy Shop Manager" button gated on <code>state == 'published' and external_ref</code></td>
+</tr>
+<tr>
+<td>a11y — keyboard nav</td>
+<td>✓</td>
+<td>Standard Odoo notebook tab order</td>
+</tr>
+<tr>
+<td>a11y — <code>&lt;label for&gt;</code></td>
+<td>✓</td>
+<td><code>&lt;label for="title"/&gt;</code> already present</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="step-4-diff-vs-mockup-screens-3-5-7-flow-1">Step 4 — Diff vs mockup screens 3, 5, 7 (Flow 1)</h2>
+<p>Mockup screen 3 ("Hậu trường — gói payload sắp gửi Etsy") covers the Channels tab on product.template form, NOT directly the multichannel.listing form. Skip — covered in the product.template mockup output.</p>
+<p>Mockup screen 5 ("Form multichannel.listing tab Shipping &amp; Variations") — directly applies.</p>
+<p>Mockup screen 7 ("Wizard Publish to Etsy") — wizard, not this form.</p>
+<h3 id="tier-1-always-visible-top-of-form">Tier 1 — Always visible (top of form)</h3>
+<p>The current curation is already strong. Tier 1 = what shows above the notebook:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Field</th>
+<th>Source</th>
+<th>Mockup shows?</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>image_1920</code></td>
+<td>mhc base</td>
+<td>✓</td>
+<td>Keep (already there as <code>oe_avatar</code>)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>title</code></td>
+<td>mhc base</td>
+<td>✓</td>
+<td>Keep + readonly when state != 'draft' (already done)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>external_ref</code> (Etsy listing_id)</td>
+<td>mhc base</td>
+<td>✓ "Etsy listing_id"</td>
+<td>Keep + <strong>add <code>class="mu-mono"</code></strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>last_synced_at</code></td>
+<td>mhc base</td>
+<td>✓ "Đã sync"</td>
+<td>Keep readonly</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>state</code> widget=statusbar</td>
+<td>mhc base</td>
+<td>✓ — Draft → Ready → Published</td>
+<td>Keep, <strong>add purple SCSS on active step</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td>"Open in Etsy Shop Manager" button</td>
+<td>mhc base</td>
+<td>✓</td>
+<td>Keep (already conditional on state)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-2-notebook-tabs-already-curated-reorder-for-narrative">Tier 2 — Notebook tabs (already curated; reorder for narrative)</h3>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Tab</th>
+<th>Source</th>
+<th>Tier 2 reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Listing Basics (description)</td>
+<td>mhc</td>
+<td>Marketing copy — first thing BA edits</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Shipping &amp; Variations</td>
+<td>etsy_integration</td>
+<td>Etsy taxonomy + shipping profile (Wave 2 Esty-189/191)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>How It's Made</td>
+<td>etsy_integration</td>
+<td>who_made / when_made / is_supply (Wave 2 Esty-193)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Video</td>
+<td>mhc</td>
+<td>Optional Etsy video upload (Wave 2 Esty-199)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Re-ordering needed?</strong> Currently order is: Listing Basics → Video → How It's Made → Shipping &amp; Variations. Mockup narrative flow suggests:
+- Listing Basics (description) → Shipping &amp; Variations (variant mapping) → How It's Made (Etsy required fields) → Video (optional).
+- <strong>Phase 2.5 action:</strong> Use xpath to move "Shipping &amp; Variations" between "Listing Basics" and "How It's Made"; move "Video" to last.</p>
+<h3 id="tier-3-hidden-behind-groupsbasegroup_no_one">Tier 3 — Hidden behind <code>groups="base.group_no_one"</code></h3>
+<p>Current form has "Advanced settings" outer group containing <code>product_tmpl_id</code>, <code>channel_id</code>, <code>shop_ref</code>, <code>sequence</code>. These are technical fields BA Lead doesn't edit (they're set at create-time).</p>
+<p><strong>Phase 2.5 action:</strong> Add <code>groups="base.group_no_one"</code> on the <code>&lt;group string="Advanced settings" name="scope_advanced"&gt;</code> group so it only shows in developer mode. Already 95 % curated via the visual grouping; adding <code>groups=</code> hides it cleanly from BA.</p>
+<hr>
+<h2 id="step-5-deliverables">Step 5 — Deliverables</h2>
+<h3 id="5a-ascii-mockup-post-backport">5.a — ASCII mockup (post-backport)</h3>
+<pre><code>┌───────────────────────────────────────────────────────────────────────────────┐
+│ Operations ▸ Listings ▸ Custom Coffee Mug 11oz · jahandmadeart       ba.lead │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ [ Open in Etsy Shop Manager ↗ ]    ⬛ Draft  ⬛ Ready  ●Published    ⋮ Actions │
+│ ───────────────────────────────────────────────────────────────────────────── │
+│ ⓘ Publishing workflow: Draft (edit) → Ready (BA approve) → Published (Etsy)  │
+│                                                                              │
+│  ╭───────╮   Custom Coffee Mug 11oz                                          │
+│  │ image │                                                                    │
+│  │       │   External Reference   [4517818413]   ⌧ mono                     │
+│  │       │   Last Synced At       2026-06-07 08:24                          │
+│  ╰───────╯                                                                    │
+│                                                                              │
+│  ─── Listing Basics ─── Shipping &amp; Variations ─── How It's Made ─── Video ── │
+│                                                                              │
+│  Description:                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Hand-thrown ceramic mug with chrome finish. Microwave safe.            │   │
+│  │ Each piece is unique due to handcrafted nature.                        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+Hidden (groups=&quot;base.group_no_one&quot;): Advanced settings group
+  (product_tmpl_id, channel_id, shop_ref, sequence) — set at create-time only
+</code></pre>
+<h3 id="5b-xml-pseudo-diff-phase-25">5.b — XML pseudo-diff (Phase 2.5)</h3>
+<pre><code class="language-xml">&lt;!-- custom_addons/multichannel_hub_core/views/multichannel_listing_views.xml --&gt;
+&lt;!-- ADD: groups= on Advanced settings + .mu-mono on external_ref --&gt;
+
+&lt;xpath expr=&quot;//group[@name='scope_advanced']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='external_ref']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;class&quot;&gt;mu-mono&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Re-order pages: Shipping &amp; Variations between Listing Basics and How It's Made,
+     Video last. Done by xpath inside etsy_integration extension since the
+     &quot;Shipping&quot; and &quot;How It's Made&quot; pages live there. --&gt;
+</code></pre>
+<pre><code class="language-xml">&lt;!-- custom_addons/etsy_integration/views/multichannel_listing_etsy_views.xml --&gt;
+&lt;!-- Re-order: keep current xpath but use `position=&quot;after&quot;` w/ the correct anchor --&gt;
+&lt;!-- Current:
+       &lt;xpath expr=&quot;//page[@name='marketing']&quot; position=&quot;after&quot;&gt;
+         &lt;page string=&quot;How It's Made&quot; name=&quot;etsy&quot;/&gt;
+         &lt;page string=&quot;Shipping &amp;amp; Variations&quot; name=&quot;shipping_variations&quot;/&gt;
+       &lt;/xpath&gt;
+     Desired final order: Listing Basics · Shipping &amp; Variations · How It's Made · Video
+     Solution: rewrite to insert Shipping &amp; Variations after Listing Basics first,
+     then re-anchor How It's Made after Shipping &amp; Variations.
+--&gt;
+
+&lt;xpath expr=&quot;//page[@name='marketing']&quot; position=&quot;after&quot;&gt;
+    &lt;page string=&quot;Shipping &amp;amp; Variations&quot; name=&quot;shipping_variations&quot;&gt;
+        &lt;!-- existing shipping_variations content --&gt;
+    &lt;/page&gt;
+    &lt;page string=&quot;How It's Made&quot; name=&quot;etsy&quot;&gt;
+        &lt;!-- existing how-its-made content --&gt;
+    &lt;/page&gt;
+&lt;/xpath&gt;
+
+&lt;!-- The mhc base form has 'video' page AFTER 'marketing'. With the above order
+     we need to MOVE 'video' to after 'etsy'. Do via xpath move: --&gt;
+&lt;xpath expr=&quot;//page[@name='video']&quot; position=&quot;move-to-end&quot;/&gt;
+&lt;!-- Odoo XML position attribute &quot;move-to-end&quot; doesn't exist by default — use
+     position=&quot;after&quot; combined with position=&quot;move&quot; pattern instead. --&gt;
+</code></pre>
+<p>⚠ <strong>Note on page reordering:</strong> Odoo's XML inheritance doesn't have a clean "move tab to end" primitive. We can either:
+1. <strong>Easy path</strong> (recommended): leave current order Listing Basics → Video → How It's Made → Shipping &amp; Variations. The user-experience cost is minor; saves XML refactor risk.
+2. <strong>Hard path</strong>: delete <code>&lt;page name="video"/&gt;</code> and re-add at end via <code>position="inside"</code>. Risk: any user customisation on the video page is lost.</p>
+<p><strong>Phase 2.5 decision:</strong> take the easy path; document re-order as Phase 3 (future) cleanup.</p>
+<h3 id="5c-diff-against-mockup-intentional-vs-fixable">5.c — Diff against mockup (intentional vs fixable)</h3>
+<table>
+<thead>
+<tr>
+<th>Mockup element</th>
+<th>Real Odoo after Phase 2.5</th>
+<th>Divergence type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Statusbar Draft → Ready → Published</td>
+<td>Same (<code>widget="statusbar"</code>) — add purple tint on active step</td>
+<td><strong>Match</strong> ✓</td>
+</tr>
+<tr>
+<td>External Reference + Last Synced At at top</td>
+<td>Same (currently in "External" group) — add <code>.mu-mono</code> to external_ref</td>
+<td><strong>Match</strong> ✓</td>
+</tr>
+<tr>
+<td>Image avatar + title at top</td>
+<td>Same (<code>oe_avatar</code> + <code>&lt;h1&gt;</code>)</td>
+<td><strong>Match</strong> ✓</td>
+</tr>
+<tr>
+<td>Workflow callout (purple info banner)</td>
+<td>Currently <code>alert alert-info</code> (blue) — could re-tint to purple via SCSS scope</td>
+<td><strong>Fixable</strong> — SCSS override on <code>.alert-info</code> within <code>.o_form_view[name="multichannel.listing"]</code></td>
+</tr>
+<tr>
+<td>Read-only warning when state != draft</td>
+<td>Currently <code>alert alert-warning</code> (yellow) — keep yellow per craft rules</td>
+<td><strong>Match</strong> ✓</td>
+</tr>
+<tr>
+<td>4 tabs reordered (Listing Basics · Shipping · How It's Made · Video)</td>
+<td>Easy-path: keep Listing Basics · Video · How It's Made · Shipping (current order)</td>
+<td><strong>Intentional defer</strong> to Phase 3</td>
+</tr>
+<tr>
+<td>Advanced settings hidden</td>
+<td>Hide via <code>groups="base.group_no_one"</code> (new in Phase 2.5)</td>
+<td><strong>Fixable</strong> ✓</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="summary-for-phase-25-implementation">Summary for Phase 2.5 implementation</h2>
+<p><strong>XML edit estimate:</strong> ~3 <code>&lt;xpath&gt;</code> blocks in <code>multichannel_hub_core/views/multichannel_listing_views.xml</code> (add <code>groups=</code> to scope_advanced, <code>.mu-mono</code> to external_ref, optional <code>.mu-mono</code> to listing_id columns in list view). ~6 lines added.</p>
+<p><strong>SCSS edit estimate:</strong> included in the product.template SCSS file (same <code>mu_tokens.scss</code>). Add <code>.o_form_view[name="multichannel.listing"] .alert-info { /* purple tint */ }</code> scoped override.</p>
+<p><strong>Expected effort:</strong> 0.5 dev day for multichannel.listing (form is already well-curated; we're just adding <code>groups=</code> + <code>class=</code> decorations). Combined with product.template = 1.5 dev days total form work. Plus SCSS (~0.5 day). <strong>Total Phase 2.5 estimate: 1.5–2 dev days</strong> — under the original 3–4 day estimate.</p></main></body></html>

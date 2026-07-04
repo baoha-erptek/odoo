@@ -82,4 +82,24 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="cron_etsy_taxonomy_sync" model="ir.cron">
+        <field name="name">Etsy: Taxonomy Cache Sync (P-LIST-CATEGORY)</field>
+        <field name="model_id" ref="model_etsy_shop"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_taxonomy()</field>
+        <field name="interval_number">7</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_etsy_shipping_profile_sync" model="ir.cron">
+        <field name="name">Etsy: Shipping Profile Cache Sync (P-LIST-SHIPPING)</field>
+        <field name="model_id" ref="model_etsy_shop"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_shipping_profiles()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>

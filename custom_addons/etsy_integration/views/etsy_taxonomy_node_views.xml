@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_taxonomy_node_list" model="ir.ui.view">
+        <field name="name">etsy.taxonomy.node.list</field>
+        <field name="model">etsy.taxonomy.node</field>
+        <field name="arch" type="xml">
+            <list string="Etsy Taxonomy">
+                <field name="etsy_id"/>
+                <field name="name"/>
+                <field name="level"/>
+                <field name="parent_id" optional="hide"/>
+                <field name="full_path"/>
+                <field name="last_synced_at" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_etsy_taxonomy_node_search" model="ir.ui.view">
+        <field name="name">etsy.taxonomy.node.search</field>
+        <field name="model">etsy.taxonomy.node</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="etsy_id"/>
+                <field name="full_path"/>
+                <filter string="Top level" name="level_root"
+                        domain="[('level', '=', 0)]"/>
+                <separator/>
+                <filter string="By Parent" name="grp_parent"
+                        context="{'group_by': 'parent_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_etsy_taxonomy_node" model="ir.actions.act_window">
+        <field name="name">Etsy Taxonomy</field>
+        <field name="res_model">etsy.taxonomy.node</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_etsy_taxonomy_node_search"/>
+    </record>
+
+    <menuitem id="menu_etsy_taxonomy_node"
+              name="Etsy Taxonomy"
+              parent="multichannel_hub_core.menu_operations_root"
+              action="action_etsy_taxonomy_node"
+              sequence="80"
+              groups="base.group_system"/>
+</odoo>

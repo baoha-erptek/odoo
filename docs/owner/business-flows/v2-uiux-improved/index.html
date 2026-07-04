@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hatafa Etsy ERP — Business Flows v2 (UI/UX cải tiến)</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--accent:#e8a13a;--bg:#f5f3f6;--card:#fff;
+    --ink:#23202a;--muted:#6b6675;--line:#e7e2e9;--ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:40px}
+  header.hero h1{margin:0 0 6px;font-size:27px}
+  header.hero .sub{opacity:.92;font-size:14px}
+  .wrap{max-width:1140px;margin:0 auto;padding:26px 40px 80px}
+  h2{margin:46px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:22px 0 8px;font-size:16px}
+  p{margin:8px 0}.lead{color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .flow{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;padding:18px 22px;margin:22px 0}
+  .flow .tagrow{font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  code{background:#f0ecf2;padding:1px 5px;border-radius:5px;font-size:12px;color:var(--brand-d)}
+  .chg{background:#edf8f2;border-left:4px solid var(--ok);padding:10px 14px;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px}
+  .keep{background:#f7f5f8;border-left:4px solid var(--muted);padding:10px 14px;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px}
+  figure{margin:14px 0}figure img{width:100%;border-radius:9px;border:1px solid var(--line);display:block}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .b-new{background:#e6f6ee;color:var(--ok)}.b-reuse{background:#eaf1fd;color:var(--info)}.b-keep{background:#eee9f7;color:#5a4b8a}
+  /* mockups */
+  .mock{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:12px 0;background:#fff;font-size:13px}
+  .topbar{background:var(--brand);color:#fff;padding:8px 14px;display:flex;gap:16px;align-items:center}
+  .topbar .logo{font-weight:700}.topbar a{color:#fff;opacity:.82;text-decoration:none}.topbar a.active{opacity:1;border-bottom:2px solid var(--accent);padding-bottom:6px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px}
+  @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpic{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf8fb}
+  .kpic .n{font-size:23px;font-weight:800;color:var(--brand-d)}.kpic .l{font-size:11px;color:var(--muted);text-transform:uppercase}
+  .kpic.alert{background:#fdeceb;border-color:#f3c7c2}.kpic.alert .n{color:var(--bad)}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 11px;background:#fff;color:var(--muted);margin-right:6px}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .mtbl{width:100%;border-collapse:collapse;font-size:12.5px}.mtbl th,.mtbl td{padding:7px 10px;border-bottom:1px solid var(--line)}
+  .mtbl th{background:#faf8fb;color:var(--brand-d);font-size:11px;text-transform:uppercase}
+  .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill.prod{background:#fdf3dd;color:var(--warn)}.pill.ship{background:#e6f6ee;color:var(--ok)}.pill.design{background:#eaf1fd;color:var(--info)}.pill.qc{background:#eee9f7;color:#5a4b8a}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;overflow-x:auto}
+  .kcol{background:#f3f0f4;border-radius:10px;padding:8px;min-width:140px}
+  .kcol h4{margin:2px 4px 8px;font-size:12px;color:var(--brand-d);display:flex;justify-content:space-between}
+  .kcard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px}
+  .kcard .o{font-weight:700;color:var(--brand-d)}.kcard .m{color:var(--muted);font-size:11px}
+  .sidebar-demo{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:12px 0}
+  .sb{background:var(--brand-d);color:#fff;width:188px;padding:10px 0;font-size:13px}
+  .sb .grp{padding:6px 16px;opacity:.6;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+  .sb .it{padding:5px 16px}.sb .it.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent)}
+  .sb-main{flex:1;padding:14px;background:#fff;color:var(--muted);font-size:13px}
+  .jira{font-size:12px;color:var(--info)}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:40px;padding-top:16px}
+  .nav{position:sticky;top:0;background:rgba(245,243,246,.95);backdrop-filter:blur(6px);padding:8px 0;font-size:13px;border-bottom:1px solid var(--line);z-index:5}
+  .nav a{color:var(--brand-d);text-decoration:none;margin-right:14px}.nav a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>Hatafa Etsy ERP — Business Flows <b>v2</b></h1>
+  <div class="sub">Phiên bản UI/UX cải tiến · 2026-06-27 · giữ nguyên toàn bộ chức năng đã cam kết (v1), nâng cấp cách trình bày &amp; điều hướng. <b>Không thay thế bản v1</b> trong <code>docs/owner/business-flows/</code>.</div>
+</header>
+<div class="wrap">
+  <div class="nav">
+    <a href="#intro">Tổng quan</a><a href="#nav">Điều hướng mới</a><a href="#f1">Flow 1</a><a href="#f2">Flow 2</a><a href="#f3a">Flow 3a</a><a href="#f3b">Flow 3b</a><a href="#f4">Flow 4</a><a href="#roles">Vai trò</a><a href="#reuse">Tái sử dụng</a>
+  </div>
+
+  <h2 id="intro">0 · Có gì khác so với v1?</h2>
+  <p class="lead">Bản v1 (các file <code>flow-*.html</code>) mô tả <b>chức năng</b> — và phần lớn đã chạy thật. Bản v2 này giữ nguyên chức năng đó, chỉ <b>thay đổi cách hiển thị</b> để đỡ rối và dễ tìm việc: thêm thẻ KPI tổng quan, bảng kanban cho pipeline, gộp hai app rời rạc thành một, và áp dụng thương hiệu tím <code>#714B67</code> đồng nhất bằng bộ <code>muk_web_*</code> sẵn có.</p>
+  <table>
+    <tr><th>Chủ đề</th><th>v1 (hiện tại)</th><th>v2 (đề xuất)</th></tr>
+    <tr><td>Màn hình điều hành</td><td>Bảng 25–34 cột, không có tổng quan</td><td><span class="badge b-new">mới</span> Dải KPI + bảng rút gọn 8–12 cột + bộ lọc lưu sẵn</td></tr>
+    <tr><td>Dòng chảy đơn hàng</td><td>17 trạng thái qua tab + wizard</td><td><span class="badge b-new">mới</span> Bảng kanban kéo-thả (vẫn ghi audit)</td></tr>
+    <tr><td>Điều hướng</td><td>Hai app tách rời (Etsy + Operations), trùng mục</td><td><span class="badge b-reuse">tái dùng</span> Một hub, sidebar theo vai trò</td></tr>
+    <tr><td>Thương hiệu</td><td>Tím chỉ ở tab form</td><td><span class="badge b-reuse">tái dùng</span> Tím toàn bộ qua <code>muk_web_colors</code></td></tr>
+    <tr><td>Vai trò RD / PD</td><td>Có tài liệu, chưa có nhóm quyền</td><td><span class="badge b-new">mới</span> Nhóm <code>group_rd</code>/<code>group_pd</code> + trang chủ riêng</td></tr>
+  </table>
+  <div class="card"><b>Trạng thái thực tế (đã kiểm chứng 2026-06-27):</b> bên dưới mỗi flow, ô <span class="keep" style="display:inline;padding:2px 8px">GIỮ NGUYÊN</span> là phần đã chạy, ô <span class="chg" style="display:inline;padding:2px 8px">CẢI TIẾN</span> là phần UI/UX mới. Mỗi cải tiến gắn mã Jira (đã tạo trong sprint <i>Deliver the Promise</i>).</div>
+
+  <h2 id="nav">1 · Điều hướng mới — một hub theo vai trò</h2>
+  <p>Gộp app <b>Etsy</b> và <b>Operations</b> thành một hub <b>Hatafa Ops</b> với sidebar trái (<code>muk_web_appsbar</code>). Bỏ trùng lặp "Design Queue"↔"Design Files", "Listing Variants"↔"Listings". <span class="jira">ESTY-216 (epic) · ESTY-231 sidebar · ESTY-232 gộp menu · ESTY-233 trang chủ vai trò</span></p>
+  <div class="sidebar-demo">
+    <div class="sb">
+      <div style="padding:6px 16px;font-weight:700">▦ Hatafa Ops</div>
+      <div class="grp">Hằng ngày</div><div class="it on">▣ Bảng điều hành</div><div class="it">◷ Pipeline đơn</div><div class="it">✎ Duyệt thiết kế</div>
+      <div class="grp">Bán</div><div class="it">⬚ Sản phẩm &amp; SKU</div><div class="it">⊞ Listing &amp; Publish</div><div class="it">◍ Trạng thái kênh</div>
+      <div class="grp">Giao</div><div class="it">⇲ Gearment</div><div class="it">⛟ Nhập tracking</div>
+      <div class="grp">Hậu mãi</div><div class="it">✉ After-Sales</div><div class="it">↩ Đổi địa chỉ</div>
+      <div class="grp">Giám sát</div><div class="it">⚇ Sync Health</div><div class="it">$ Kiểm soát giá</div>
+      <div class="grp">Cấu hình</div><div class="it">⚙ Shops · Logs · Carriers</div>
+    </div>
+    <div class="sb-main"><b>Trang chủ theo nhóm quyền:</b>
+      <table style="margin-top:8px">
+        <tr><th>Vai trò</th><th>Nhóm</th><th>Trang chủ</th></tr>
+        <tr><td>BA Lead</td><td><code>group_ba_lead</code></td><td>Bảng điều hành (tất cả shop)</td></tr>
+        <tr><td>BA / Order</td><td><code>group_ba_user</code></td><td>Pipeline đơn (shop của tôi)</td></tr>
+        <tr><td>Marketing</td><td><code>group_marketing_user</code></td><td>Listing &amp; Publish</td></tr>
+        <tr><td>Sản xuất</td><td><code>group_production_team</code></td><td>Pipeline (bảng kanban)</td></tr>
+        <tr><td>Shipping</td><td><code>group_ba_shipping</code></td><td>Gearment + Tracking</td></tr>
+        <tr><td>PD</td><td><code>group_pd</code> <span class="badge b-new">mới</span></td><td>Duyệt thiết kế</td></tr>
+        <tr><td>RD</td><td><code>group_rd</code> <span class="badge b-new">mới</span></td><td>Kiểm soát giá</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- FLOW 1 -->
+  <div class="flow" id="f1">
+    <div class="tagrow">Flow 1</div><h3>Tạo sản phẩm &amp; publish Etsy</h3>
+    <div class="keep"><b>GIỮ NGUYÊN:</b> Auto-SKU, nút "Publish to Etsy" (form sản phẩm + listing), SKU Drift, hiển thị lỗi Etsy trên form, kanban Trạng thái kênh (Draft/Error/Published), quy đổi giá VND→tiền shop, fallback 3 cấp.</div>
+    <div class="chg"><b>CẢI TIẾN:</b> Badge trạng thái listing rõ hơn; (v2 deferred) tab xem trước payload. <span class="jira">ESTY-241 badges</span></div>
+  </div>
+
+  <!-- FLOW 2 -->
+  <div class="flow" id="f2">
+    <div class="tagrow">Flow 2</div><h3>Tiếp nhận đơn hàng Etsy</h3>
+    <div class="keep"><b>GIỮ NGUYÊN:</b> Đồng bộ API (cron 5'), email fallback (cron 10'), API/Email Log, tab Etsy trên đơn, nút "Pull Etsy Orders", phân quyền shop theo người dùng.</div>
+    <div class="chg"><b>CẢI TIẾN — Bảng điều hành có KPI:</b> mở đầu bằng 4 thẻ tổng quan, bộ lọc lưu sẵn, bảng rút gọn 10 cột (giữ bản 34 cột dưới chip "Excel"); tự refresh ~60s. <span class="jira">ESTY-214 (epic) · ESTY-221 KPI · ESTY-222 rút gọn cột · ESTY-223 chip lọc · ESTY-224 auto-refresh</span></div>
+    <div class="mock">
+      <div class="topbar"><span class="logo">▦ Hatafa Ops</span><a class="active">Bảng điều hành</a><a>Pipeline</a><a>Thiết kế</a><a>Listing</a><a>Gearment</a></div>
+      <div class="kpis">
+        <div class="kpic"><div class="l">Đơn hôm nay</div><div class="n">42</div></div>
+        <div class="kpic"><div class="l">Chờ duyệt thiết kế</div><div class="n">7</div></div>
+        <div class="kpic alert"><div class="l">Kẹt pipeline &gt;48h</div><div class="n">5</div></div>
+        <div class="kpic alert"><div class="l">Đẩy tracking lỗi</div><div class="n">2</div></div>
+      </div>
+      <div style="padding:0 14px 12px"><span class="chip on">24h qua</span><span class="chip">Cần tôi xử lý</span><span class="chip">Chưa gán</span><span class="chip">Dropship</span><span class="chip">MTO</span><span class="chip">Excel (34 cột)</span></div>
+      <table class="mtbl">
+        <tr><th>Ngày</th><th>Shop</th><th>Đơn</th><th>Khách</th><th>SKU</th><th>SL</th><th>Trạng thái</th><th>BA</th><th>Nhãn</th></tr>
+        <tr><td>06-27 09:12</td><td>JaHandmade</td><td class="mono">S03341</td><td>S. Miller</td><td class="mono">MUG-CR-F11</td><td>2</td><td><span class="pill design">Chờ duyệt TK</span></td><td>Lan</td><td>US-od</td></tr>
+        <tr><td>06-27 08:40</td><td>JaHandmade</td><td class="mono">S03340</td><td>A. Chen</td><td class="mono">TEE-BK-L</td><td>1</td><td><span class="pill prod">Sản xuất</span></td><td>Huy</td><td>Urgent</td></tr>
+        <tr><td>06-27 07:55</td><td>CraftNest</td><td class="mono">S03338</td><td>J. Park</td><td class="mono">MUG-WT-F15</td><td>3</td><td><span class="pill qc">QC</span></td><td>Huy</td><td>Chờ duyệt</td></tr>
+      </table>
+    </div>
+    <figure><img src="../../../analysis/screenshots/verify-2026-06-27/ops-dashboard.png" alt="hiện tại"><figcaption>Hiện tại (v1): bảng phẳng 25 cột, không có KPI.</figcaption></figure>
+  </div>
+
+  <!-- FLOW 3a -->
+  <div class="flow" id="f3a">
+    <div class="tagrow">Flow 3a</div><h3>Giao hàng / In nội bộ (MTO)</h3>
+    <div class="keep"><b>GIỮ NGUYÊN:</b> Máy trạng thái pipeline 13 bước + audit, tab Pipeline + wizard chuyển trạng thái + trạng thái "In Lại", kanban Duyệt thiết kế, đẩy tracking lên Etsy, nhập tracking GKE + tự nhận diện hãng vận chuyển, bulk Mark-Shipped.</div>
+    <div class="chg"><b>CẢI TIẾN — Bảng kanban pipeline:</b> kéo-thả thẻ đơn giữa các cột; mỗi lần kéo vẫn đi qua <code>_write_pipeline_state()</code> nên giữ nguyên audit. <span class="jira">ESTY-215 (epic) · ESTY-225 kanban · ESTY-226 kéo-thả · ESTY-227 tô màu trễ hạn</span></div>
+    <div class="mock"><div class="kanban">
+      <div class="kcol"><h4><span>Mới nhận</span><span>8</span></h4><div class="kcard"><div class="o mono">S03341</div><div class="m">MUG-CR-F11 ×2 · US-od</div></div><div class="kcard"><div class="o mono">S03342</div><div class="m">TEE-WT-M ×1</div></div></div>
+      <div class="kcol"><h4><span>Chờ duyệt TK</span><span>7</span></h4><div class="kcard" style="border-left:3px solid var(--bad)"><div class="o mono">S03330</div><div class="m">trễ 26h</div></div></div>
+      <div class="kcol"><h4><span>Sản xuất</span><span>11</span></h4><div class="kcard"><div class="o mono">S03340</div><div class="m">TEE-BK-L · Urgent</div></div></div>
+      <div class="kcol"><h4><span>QC / Đóng gói</span><span>4</span></h4><div class="kcard"><div class="o mono">S03338</div><div class="m">MUG-WT-F15 ×3</div></div></div>
+      <div class="kcol"><h4><span>Đã gửi bưu vận</span><span>19</span></h4><div class="kcard"><div class="o mono">S03339</div><div class="m">tracking ✓</div></div></div>
+    </div></div>
+  </div>
+
+  <!-- FLOW 3b -->
+  <div class="flow" id="f3b">
+    <div class="tagrow">Flow 3b</div><h3>Giao hàng / Gearment dropship</h3>
+    <div class="keep"><b>GIỮ NGUYÊN:</b> Báo giá Gearment (/draft + /price) + duyệt giá có kiểm soát quyền, webhook (HMAC+nonce) + dispatcher, Gearment API Log + Webhook Log, màn Fulfillment Tracking Detail + các trường provenance.</div>
+    <div class="chg"><b>CẢI TIẾN — gọn &amp; rõ:</b> đổi tên tab "Gearment" → <b>Fulfillment</b>, nút → <b>"Request Gearment Quote"</b>; thêm khối người nhận/địa chỉ (chỉ đọc) trong wizard báo giá để xác nhận trước khi gửi. <span class="jira">ESTY-219 (epic) · ESTY-239 đổi tên · ESTY-240 khối địa chỉ</span></div>
+  </div>
+
+  <!-- FLOW 4 -->
+  <div class="flow" id="f4">
+    <div class="tagrow">Flow 4</div><h3>Hậu mãi</h3>
+    <div class="keep"><b>GIỮ NGUYÊN:</b> Tự đăng note khách lên chatter, quy trình đổi địa chỉ (duyệt/từ chối, khoá field, gate BA-lead), trạng thái "In Lại", ticket hoàn tiền <code>etsy.order.ticket</code>.</div>
+    <div class="chg"><b>CẢI TIẾN:</b> tự động hoá hoàn tiền (gọi API Etsy khi BA-lead duyệt — sau khi xác nhận scope); chatter dạng cột bên cạnh đơn (<code>muk_web_chatter</code>). <span class="jira">ESTY-218 (epic) · ESTY-237 spike scope · ESTY-238 gọi API hoàn tiền · ESTY-242 chatter bên</span></div>
+    <div class="keep" style="border-left-color:var(--bad)"><b>BỊ CHẶN:</b> hộp thư hội thoại khách (conversations) — Etsy chưa cấp scope <code>conversations_r</code>. <span class="jira">ESTY-243 (theo dõi, chưa làm)</span></div>
+  </div>
+
+  <h2 id="roles">2 · Vai trò &amp; báo cáo</h2>
+  <p>Bổ sung 2 nhóm còn thiếu và bảng điều khiển cho RD. <span class="jira">ESTY-217 (epic) · ESTY-234 group_rd/pd · ESTY-235 dashboard kiểm soát giá · ESTY-236 thẻ Sync-Health</span></p>
+  <div class="mock">
+    <div class="topbar"><span class="logo">▦ Hatafa Ops</span><a>Bảng điều hành</a><a class="active">Kiểm soát giá (RD)</a></div>
+    <div class="kpis">
+      <div class="kpic alert"><div class="l">Đơn giá &lt; ngưỡng</div><div class="n">3</div></div>
+      <div class="kpic alert"><div class="l">Phí ship bất thường</div><div class="n">4</div></div>
+      <div class="kpic"><div class="l">Đã rà soát hôm nay</div><div class="n">128</div></div>
+      <div class="kpic"><div class="l">Sync health</div><div class="n" style="color:var(--ok)">OK</div></div>
+    </div>
+  </div>
+
+  <h2 id="reuse">3 · Tái sử dụng (Standard-Odoo-First)</h2>
+  <p>Bộ <code>muk_web_*</code> (7 module, Odoo 19, LGPL-3, CE, không cần Enterprise) đã có sẵn trong <code>openeducat_erp19/custom_addons/</code>. Sao chép vào <code>odoo19_esty/custom_addons/</code> là đóng được phần lớn khoảng cách "giao diện" gần như không cần code mới. <span class="jira">ESTY-229 vendor bundle · ESTY-230 màu thương hiệu</span></p>
+  <table>
+    <tr><th>Nhu cầu</th><th>Cách làm</th><th>Module / việc</th></tr>
+    <tr><td>Thương hiệu tím toàn bộ</td><td><span class="badge b-reuse">tái dùng</span></td><td><code>muk_web_colors</code> + <code>muk_web_theme</code></td></tr>
+    <tr><td>Sidebar điều hướng</td><td><span class="badge b-reuse">tái dùng</span></td><td><code>muk_web_appsbar</code></td></tr>
+    <tr><td>Dashboard tự refresh</td><td><span class="badge b-reuse">tái dùng</span></td><td><code>muk_web_refresh</code></td></tr>
+    <tr><td>Chatter bên cạnh</td><td><span class="badge b-reuse">tái dùng</span></td><td><code>muk_web_chatter</code></td></tr>
+    <tr><td>Dải KPI dashboard</td><td><span class="badge b-new">làm mới</span></td><td>OWL/QWeb tile trên <code>read_group</code></td></tr>
+    <tr><td>Kanban pipeline</td><td><span class="badge b-new">làm mới</span></td><td>1 view <code>&lt;kanban&gt;</code></td></tr>
+    <tr><td>Dashboard kiểm soát giá RD</td><td><span class="badge b-new">làm mới</span></td><td>view list/graph + domain bất thường</td></tr>
+  </table>
+
+  <h2>4 · Thứ tự triển khai</h2>
+  <table>
+    <tr><th>Đợt</th><th>Nội dung</th><th>Jira</th><th>Ước lượng</th></tr>
+    <tr><td>1</td><td>Tái dùng chrome muk_web (màu + sidebar + refresh)</td><td>ESTY-216 / 229-233</td><td>1-2 ngày</td></tr>
+    <tr><td>2</td><td>Dải KPI + rút gọn cột dashboard</td><td>ESTY-214 / 221-224</td><td>2-3 ngày</td></tr>
+    <tr><td>3</td><td>Kanban pipeline</td><td>ESTY-215 / 225-227</td><td>2-3 ngày</td></tr>
+    <tr><td>2'</td><td>Sửa lỗi backfill (song song)</td><td>ESTY-228</td><td>0.5 ngày</td></tr>
+    <tr><td>5</td><td>Nhóm RD/PD + dashboard giá</td><td>ESTY-217 / 234-236</td><td>3-4 ngày</td></tr>
+    <tr><td>6</td><td>Hoàn thiện form + hoàn tiền tự động</td><td>ESTY-219, ESTY-218</td><td>3-5 ngày</td></tr>
+  </table>
+
+  <footer>
+    Bản v2 này là tài liệu MỚI, không sửa các file v1 trong <code>docs/owner/business-flows/</code>. Đồng bộ với <code>docs/analysis/uiux-improvement.html</code> (đề xuất UI/UX) và sprint Jira "Deliver the Promise" (ESTY-214…243). Mockups chỉ minh hoạ ý tưởng, không phải đặc tả pixel. 2026-06-27.
+  </footer>
+</div>
+</body>
+</html>

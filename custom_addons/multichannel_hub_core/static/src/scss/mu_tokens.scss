@@ -1,0 +1,107 @@
+/*
+ * Mu Design Tokens — selective backend overrides.
+ *
+ * Phase 2 MVP backport per docs/owner/design-system/MU_SYSTEM.md.
+ * Scope: multichannel_hub_core bundle (purple Hatafa brand tint on workflow
+ * states + active notebook tab + mono SKU class). All overrides are scoped
+ * to multichannel.* form views so accounting / HR / standard product views
+ * stay default Odoo.
+ *
+ * STANDARD-ODOO-FIRST: we do not introduce new components. Every selector
+ * targets a standard Odoo class produced by `widget="statusbar"` /
+ * `widget="badge"` / `<notebook>` / `<field/>`.
+ *
+ * Reference: docs/owner/design-system/mu-design-tokens.css (canonical source).
+ */
+
+/* Hatafa brand color (purple). Imported as a SCSS variable so future
+   overrides can derive (lighten/darken) from it. */
+$mu-brand: #714B67;
+$mu-brand-50: #faf5f9;
+$mu-brand-100: #f4e8f0;
+$mu-brand-200: #e4cee0;
+$mu-mono-bg: #faf5f9;
+
+/* ---------------------------------------------------------------
+ * 1. .mu-mono utility class
+ * Applied via class="mu-mono" on <field> elements that display
+ * codes (SKU, listing_id, taxonomy_id, external_ref). Renders as
+ * a small purple-tinted monospace badge.
+ *
+ * Standard Odoo equivalent: none — this is a legitimate extension
+ * (semantic styling for "this is an Odoo-generated identifier,
+ * not user-editable copy").
+ * --------------------------------------------------------------- */
+.mu-mono > .o_field_widget,
+.o_field_widget.mu-mono,
+span.mu-mono,
+.mu-mono {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: $mu-brand;
+    background: $mu-mono-bg;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* ---------------------------------------------------------------
+ * 2. Workflow statusbar — active step in purple
+ * Scoped to multichannel.* form views so the standard sale.order
+ * statusbar stays default Odoo (Draft → Sent → Sales Order
+ * stays blue).
+ *
+ * Standard Odoo: `widget="statusbar"` renders as
+ *   .o_form_statusbar .o_statusbar_status ... .btn-primary
+ * --------------------------------------------------------------- */
+.o_form_view[name="multichannel.listing"] .o_form_statusbar {
+    .o_statusbar_status .btn-primary,
+    .o_arrow_button_current {
+        color: #fff !important;
+        background-color: $mu-brand !important;
+        border-color: $mu-brand !important;
+    }
+    .o_statusbar_status .btn-secondary {
+        color: $mu-brand;
+        border-color: $mu-brand-200;
+    }
+}
+
+/* ---------------------------------------------------------------
+ * 3. Notebook tabs — active tab purple bottom border
+ * Scoped to multichannel.* form views.
+ *
+ * Standard Odoo: <notebook> renders Bootstrap nav-tabs:
+ *   .o_notebook .nav-tabs .nav-link.active
+ * --------------------------------------------------------------- */
+.o_form_view[name="multichannel.listing"],
+.o_form_view[name="product.template"],
+.o_form_view[name="etsy.shop"] {
+    .o_notebook .nav-link {
+        &.active {
+            color: $mu-brand !important;
+            border-color: $mu-brand-200 $mu-brand-200 $mu-brand !important;
+            border-bottom: 2px solid $mu-brand !important;
+            font-weight: 600;
+        }
+    }
+}
+
+/* ---------------------------------------------------------------
+ * 4. Workflow info alert — re-tint Bootstrap blue → purple
+ * Scoped to multichannel.listing form (where P-LIST-UX-FIXES R2
+ * dropped the workflow callout). Keeps standard alert-warning
+ * yellow for read-only banner (alert-info purple distinguishes
+ * "info about workflow" from "warning about state").
+ * --------------------------------------------------------------- */
+.o_form_view[name="multichannel.listing"] {
+    .alert.alert-info {
+        background-color: $mu-brand-50;
+        border-color: $mu-brand-200;
+        color: darken($mu-brand, 5%);
+    }
+    .alert.alert-info strong {
+        color: $mu-brand;
+    }
+}

@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Mu Design System — Hatafa UI Reference</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="mu-design-system-hatafa-ui-reference">Mu Design System — Hatafa UI Reference</h1>
+<blockquote>
+<p>Hệ thiết kế của Hatafa (mockup → real Odoo backport).
+Trích từ 5 mockup HTML trong <code>docs/owner/business-flows/</code> (designed 2026-06-03).
+Tokens canonical: <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</code></a>.</p>
+</blockquote>
+<p><strong>Phiên bản:</strong> 1.0 (2026-06-07) · <strong>Trạng thái:</strong> Reference (Phase 1 của Option 3 Hybrid)</p>
+<hr>
+<h2 id="tai-sao-co-file-nay">Tại sao có file này</h2>
+<p>Báo cáo <a href="../business-flows/COMPARISON_MOCKUP_VS_ACTUAL.md"><code>COMPARISON_MOCKUP_VS_ACTUAL.md</code></a> xác định:
+- Mockup dùng ngôn ngữ trực quan riêng (<code>.mu-*</code> classes, purple #714B67, pill badges, stage pipeline) — sạch + có hệ thống.
+- Real Odoo dùng default OWL — không có một dòng custom CSS nào.</p>
+<p>Mu Design System là tiếp cận <strong>archive trước, adopt sau</strong>:
+1. Lưu CSS gốc + docs về 10 patterns ở đây (Phase 1 — file này).
+2. Backport 3-4 patterns ROI cao nhất vào OWL components (Phase 2).
+3. Mở rộng full library khi resource cho phép (Phase 3).</p>
+<hr>
+<h2 id="color-palette">Color palette</h2>
+<h3 id="brand-purple">Brand (purple)</h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Hex</th>
+<th>Dùng cho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--mu-brand</code></td>
+<td><code>#714B67</code></td>
+<td>Headers, primary buttons, active tab/stage, mono SKU color</td>
+</tr>
+<tr>
+<td><code>--mu-brand-50</code></td>
+<td><code>#faf5f9</code></td>
+<td>Background mono SKU pill, active stage tint, info callout</td>
+</tr>
+<tr>
+<td><code>--mu-brand-100</code></td>
+<td><code>#f4e8f0</code></td>
+<td>Hover state cho info callout</td>
+</tr>
+<tr>
+<td><code>--mu-brand-200</code></td>
+<td><code>#e4cee0</code></td>
+<td>Border cho info callout (faint purple)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="neutrals-greys">Neutrals (greys)</h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Hex</th>
+<th>Dùng cho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--mu-ink</code></td>
+<td><code>#1a1a1a</code></td>
+<td>Body text default</td>
+</tr>
+<tr>
+<td><code>--mu-ink-strong</code></td>
+<td><code>#111827</code></td>
+<td>h2, h3 headings, form titles</td>
+</tr>
+<tr>
+<td><code>--mu-ink-soft</code></td>
+<td><code>#1f2937</code></td>
+<td>List rows, form field values</td>
+</tr>
+<tr>
+<td><code>--mu-muted</code></td>
+<td><code>#6b7280</code></td>
+<td>Field labels, captions, secondary text</td>
+</tr>
+<tr>
+<td><code>--mu-muted-strong</code></td>
+<td><code>#4b5563</code></td>
+<td>Breadcrumb text</td>
+</tr>
+<tr>
+<td><code>--mu-muted-soft</code></td>
+<td><code>#9ca3af</code></td>
+<td>Placeholders ("—", "không dùng")</td>
+</tr>
+<tr>
+<td><code>--mu-rule</code></td>
+<td><code>#e5e7eb</code></td>
+<td>Borders, section dividers</td>
+</tr>
+<tr>
+<td><code>--mu-rule-soft</code></td>
+<td><code>#f3f4f6</code></td>
+<td>Field-level dividers (in form rows)</td>
+</tr>
+<tr>
+<td><code>--mu-bg-page</code></td>
+<td><code>#fafafa</code></td>
+<td>Page background</td>
+</tr>
+<tr>
+<td><code>--mu-bg-surface</code></td>
+<td><code>#ffffff</code></td>
+<td>Cards, sections, modals</td>
+</tr>
+<tr>
+<td><code>--mu-bg-sunken</code></td>
+<td><code>#f9fafb</code></td>
+<td>Table headers, status bar</td>
+</tr>
+</tbody>
+</table>
+<h3 id="status-paired-bgfg">Status (paired bg/fg)</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Background</th>
+<th>Foreground</th>
+<th>Token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Success</td>
+<td><code>#dcfce7</code></td>
+<td><code>#15803d</code></td>
+<td><code>--mu-success-bg/fg</code></td>
+</tr>
+<tr>
+<td>Warning</td>
+<td><code>#fef3c7</code></td>
+<td><code>#b45309</code></td>
+<td><code>--mu-warn-bg/fg</code></td>
+</tr>
+<tr>
+<td>Danger</td>
+<td><code>#fee2e2</code></td>
+<td><code>#b91c1c</code></td>
+<td><code>--mu-danger-bg/fg</code></td>
+</tr>
+<tr>
+<td>Info</td>
+<td><code>#dbeafe</code></td>
+<td><code>#1d4ed8</code></td>
+<td><code>--mu-info-bg/fg</code></td>
+</tr>
+<tr>
+<td>Neutral</td>
+<td><code>#f3f4f6</code></td>
+<td><code>#4b5563</code></td>
+<td><code>--mu-neutral-bg/fg</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="typography-scale">Typography scale</h2>
+<table>
+<thead>
+<tr>
+<th>Size</th>
+<th>Px</th>
+<th>Token</th>
+<th>Dùng cho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2xs</td>
+<td>11</td>
+<td><code>--mu-size-xs</code></td>
+<td>Pill labels, smart-button counts, uppercase column headers</td>
+</tr>
+<tr>
+<td>xs</td>
+<td>12</td>
+<td><code>--mu-size-sm</code></td>
+<td>Field labels, captions, meta lines, table cells phụ</td>
+</tr>
+<tr>
+<td>sm</td>
+<td>13</td>
+<td><code>--mu-size-md</code></td>
+<td>Body, form field values, breadcrumb, status bar</td>
+</tr>
+<tr>
+<td>md</td>
+<td>14</td>
+<td><code>--mu-size-lg</code></td>
+<td>Modal header, đôi khi status indicators</td>
+</tr>
+<tr>
+<td>lg</td>
+<td>16</td>
+<td><code>--mu-size-xl</code></td>
+<td>Topbar heading</td>
+</tr>
+<tr>
+<td>xl</td>
+<td>18</td>
+<td><code>--mu-size-2xl</code></td>
+<td>Section h3 (numbered)</td>
+</tr>
+<tr>
+<td>2xl</td>
+<td>20</td>
+<td><code>--mu-size-3xl</code></td>
+<td>Form titles (mu-form-title)</td>
+</tr>
+<tr>
+<td>3xl</td>
+<td>26</td>
+<td><code>--mu-size-4xl</code></td>
+<td>Page hero h2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Font families:</strong>
+- Sans: system stack (San Francisco / Segoe UI / Roboto)
+- Mono: <code>"SF Mono", Menlo, Consolas, monospace</code> — dành cho SKU, listing_id, taxonomy_id</p>
+<p><strong>Weights:</strong> 400 regular · 500 medium · 600 semibold · 700 bold.</p>
+<hr>
+<h2 id="spacing-grid">Spacing grid</h2>
+<p>Base unit = 2 px multiples. Common tokens:
+| Token | Px | Dùng cho |
+|---|---|---|
+| <code>--mu-space-1</code> | 6 | Gap nhỏ trong stage pipe |
+| <code>--mu-space-2</code> | 8 | Button group gap, pill margin |
+| <code>--mu-space-3</code> | 10 | Banner padding |
+| <code>--mu-space-4</code> | 12 | List cell padding, modal head padding |
+| <code>--mu-space-5</code> | 14 | Chrome bar gap, modal body padding |
+| <code>--mu-space-6</code> | 18 | Form padding, modal body padding-x |
+| <code>--mu-space-7</code> | 22 | Mockup screen margin-bottom |
+| <code>--mu-space-8</code> | 28 | Page container padding-x |
+| <code>--mu-space-9</code> | 32 | Hero padding-x |</p>
+<p><strong>Radii:</strong> 3 (buttons) · 4 (cards) · 6 (modals) · 10 (sections) · 12 (page hero) · 999 (pills).</p>
+<hr>
+<h2 id="10-component-patterns">10 Component Patterns</h2>
+<h3 id="1-chrome-bar">1. Chrome bar</h3>
+<p>Top navigation bar simulating Odoo's app header.</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-chrome-bar&quot;&gt;
+  &lt;span class=&quot;mu-app&quot;&gt;Bán hàng&lt;/span&gt;
+  &lt;span class=&quot;mu-menu&quot;&gt;Sản phẩm › Sản phẩm&lt;/span&gt;
+  &lt;span class=&quot;mu-spacer&quot;&gt;&lt;/span&gt;
+  &lt;span class=&quot;mu-user&quot;&gt;ba.lead@hatafa&lt;/span&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>Background: <code>--mu-brand</code> (purple)</li>
+<li>Text: white + 85% opacity for menu/user</li>
+<li>Use as the top frame of every mockup screen</li>
+</ul>
+<h3 id="2-breadcrumb">2. Breadcrumb</h3>
+<p>Path navigation under chrome bar.</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-breadcrumb&quot;&gt;
+  Sản phẩm&lt;span class=&quot;mu-sep&quot;&gt;›&lt;/span&gt;
+  Custom Coffee Mug 11oz&lt;span class=&quot;mu-sep&quot;&gt;›&lt;/span&gt;
+  &lt;strong&gt;Channels&lt;/strong&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>White background, grey separators, ink-soft current page</li>
+<li>Always shows the user's location in app navigation</li>
+</ul>
+<h3 id="3-status-bar">3. Status bar</h3>
+<p>Action button row + state pipeline indicator.</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-statusbar&quot;&gt;
+  &lt;button class=&quot;mu-btn&quot;&gt;Discard&lt;/button&gt;
+  &lt;button class=&quot;mu-btn mu-btn-primary&quot;&gt;Save&lt;/button&gt;
+  &lt;button class=&quot;mu-btn&quot;&gt;Publish Draft Only&lt;/button&gt;
+  &lt;button class=&quot;mu-btn&quot;&gt;Publish to Etsy&lt;/button&gt;
+  &lt;div class=&quot;mu-stage-pipe&quot;&gt;
+    &lt;span class=&quot;mu-stage active&quot;&gt;Draft&lt;/span&gt;
+    &lt;span&gt;›&lt;/span&gt;
+    &lt;span class=&quot;mu-stage&quot;&gt;Published&lt;/span&gt;
+    &lt;span&gt;›&lt;/span&gt;
+    &lt;span class=&quot;mu-stage&quot;&gt;Archived&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>Background: subtle sunken grey</li>
+<li>Stage pipeline on the right shows current workflow state</li>
+<li>Active stage gets purple border + tint</li>
+</ul>
+<h3 id="4-form-layout-2-column-grid">4. Form layout (2-column grid)</h3>
+<p>Curated field grid (Tier 1 fields only — see <a href="../../FORM_CURATION_GUIDE.md">FORM_CURATION_GUIDE</a>).</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-form&quot;&gt;
+  &lt;div class=&quot;mu-form-title&quot;&gt;Custom Coffee Mug 11oz
+    &lt;span class=&quot;mu-pill mu-pill-warn&quot;&gt;UNSAVED&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;mu-grid2&quot;&gt;
+    &lt;div&gt;
+      &lt;div class=&quot;mu-field&quot;&gt;
+        &lt;div class=&quot;mu-field-label&quot;&gt;Tên sản phẩm&lt;/div&gt;
+        &lt;div class=&quot;mu-field-value&quot;&gt;Custom Coffee Mug 11oz&lt;/div&gt;
+      &lt;/div&gt;
+      ...
+    &lt;/div&gt;
+    &lt;div&gt;
+      &lt;div class=&quot;mu-field&quot;&gt;
+        &lt;div class=&quot;mu-field-label&quot;&gt;Mã SKU&lt;/div&gt;
+        &lt;div class=&quot;mu-field-value&quot;&gt;
+          &lt;span class=&quot;mu-mono&quot;&gt;MUG-CR-F11&lt;/span&gt;
+          &lt;span class=&quot;mu-pill mu-pill-success&quot;&gt;auto&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      ...
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>140 px label column + flexible value column</li>
+<li>18 px / 32 px gap (row/col)</li>
+<li>Each field row has bottom border in --mu-rule-soft</li>
+<li>Stacks to 1 column under 760 px</li>
+</ul>
+<h3 id="5-pill-badges">5. Pill badges</h3>
+<p>Status indicators in 4 colors.</p>
+<pre><code class="language-html">&lt;span class=&quot;mu-pill mu-pill-success&quot;&gt;Published&lt;/span&gt;
+&lt;span class=&quot;mu-pill mu-pill-warn&quot;&gt;UNSAVED&lt;/span&gt;
+&lt;span class=&quot;mu-pill mu-pill-danger&quot;&gt;Error&lt;/span&gt;
+&lt;span class=&quot;mu-pill mu-pill-neutral&quot;&gt;Draft&lt;/span&gt;
+</code></pre>
+<ul>
+<li>Always 11 px, semibold, 12 px corner radius</li>
+<li>Inline-block, fits naturally in titles, list cells, field values</li>
+<li>Use beside SKU mono token (<code>auto</code>, <code>BA-edited</code>)</li>
+</ul>
+<h3 id="6-mono-token">6. Mono token</h3>
+<p>SKU / listing_id / taxonomy_id values get the purple mono treatment.</p>
+<pre><code class="language-html">&lt;span class=&quot;mu-mono&quot;&gt;MUG-CR-F11&lt;/span&gt;
+&lt;span class=&quot;mu-mono&quot;&gt;2172&lt;/span&gt;
+</code></pre>
+<ul>
+<li>Font: SF Mono / Menlo</li>
+<li>Background: --mu-brand-50 (tinted purple)</li>
+<li>Color: --mu-brand (purple), semibold</li>
+<li>Use anywhere a code/id appears — signals "this is data Odoo generated, not user-editable"</li>
+</ul>
+<h3 id="7-tabs">7. Tabs</h3>
+<p>Horizontal tab bar (notebook style).</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-tabs&quot;&gt;
+  &lt;span class=&quot;mu-tab&quot;&gt;Mô tả&lt;/span&gt;
+  &lt;span class=&quot;mu-tab active&quot;&gt;Biến thể&lt;/span&gt;
+  &lt;span class=&quot;mu-tab&quot;&gt;Channels&lt;/span&gt;
+  &lt;span class=&quot;mu-tab&quot;&gt;Cá nhân hoá&lt;/span&gt;
+  &lt;span class=&quot;mu-tab&quot;&gt;Override Etsy&lt;/span&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>1 px bottom border across the row</li>
+<li>Active tab gets a 2 px purple bottom border + semibold purple text</li>
+<li>Inactive tabs: muted grey</li>
+<li>Horizontal scroll on overflow</li>
+</ul>
+<h3 id="8-list-table">8. List table</h3>
+<p>Curated list view (replaces Odoo <code>tree</code> view when used in mockups).</p>
+<pre><code class="language-html">&lt;table class=&quot;mu-list&quot;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Thuộc tính&lt;/th&gt;
+      &lt;th&gt;Giá trị&lt;/th&gt;
+      &lt;th&gt;Auto SKU segment&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Chất liệu&lt;/td&gt;
+      &lt;td&gt;Ceramic + Chrome&lt;/td&gt;
+      &lt;td class=&quot;mu-mono&quot;&gt;CR&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+</code></pre>
+<ul>
+<li>Header: uppercase, semibold, 11 px, letter-spacing 0.4 px, grey</li>
+<li>Body: 13 px, ink-soft, 1 px row dividers</li>
+<li>Last row has no bottom border</li>
+<li>Combine with <code>.mu-text-danger</code> for error highlights</li>
+</ul>
+<h3 id="9-kanban-cards">9. Kanban cards</h3>
+<p>Card-based grouping (replaces Odoo kanban view in mockups).</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-kanban&quot;&gt;
+  &lt;div class=&quot;mu-kb-card&quot;&gt;
+    &lt;h4&gt;Custom Coffee Mug 11oz&lt;/h4&gt;
+    &lt;div class=&quot;mu-kb-meta&quot;&gt;
+      SKU &lt;b&gt;MUG-CR-F11&lt;/b&gt;&lt;br&gt;
+      &lt;b&gt;$14.50&lt;/b&gt; · 11 sales&lt;br&gt;
+      Updated 2 days ago
+    &lt;/div&gt;
+  &lt;/div&gt;
+  ...
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>Responsive: minmax(220 px, 1 fr) — auto-fills available width</li>
+<li>Card: white surface, 1 px rule border, 4 px radius</li>
+<li>13 px card title (semibold) + 12 px meta lines</li>
+</ul>
+<h3 id="10-modal-danger-confirmation">10. Modal (danger / confirmation)</h3>
+<p>Error dialog used for Etsy 400 / 401 / validation errors.</p>
+<pre><code class="language-html">&lt;div class=&quot;mu-modal-overlay&quot;&gt;
+  &lt;div class=&quot;mu-modal&quot;&gt;
+    &lt;div class=&quot;mu-modal-head&quot;&gt;⚠ Etsy trả lỗi 400 — không thể publish&lt;/div&gt;
+    &lt;div class=&quot;mu-modal-body&quot;&gt;
+      &lt;p&gt;Bước thất bại: createListing&lt;/p&gt;
+      &lt;p&gt;Mã lỗi HTTP: 400&lt;/p&gt;
+      &lt;div class=&quot;mu-modal-banner&quot;&gt;
+        Đang chờ phản hồi chi tiết từ Etsy. Xem etsy_response_body
+        để có nội dung lỗi đầy đủ.
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;mu-modal-foot&quot;&gt;
+      &lt;button class=&quot;mu-btn&quot;&gt;Đóng&lt;/button&gt;
+      &lt;button class=&quot;mu-btn mu-btn-primary&quot;&gt;Mở etsy.api.log&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>Overlay: 60 % opacity purple-ink (<code>rgba(31,19,32,0.6)</code>)</li>
+<li>Head: danger tint background + danger fg + danger rule border</li>
+<li>Banner inside body: warning yellow with left border</li>
+<li>Foot: sunken grey background, button group right-aligned</li>
+</ul>
+<hr>
+<h2 id="bonus-pattern-standalone-warning-banner">Bonus pattern: standalone warning banner</h2>
+<pre><code class="language-html">&lt;div class=&quot;mu-banner&quot;&gt;
+  Cảnh báo: shop chưa cấu hình default taxonomy_id —
+  publish sẽ dùng giá trị product-level.
+&lt;/div&gt;
+</code></pre>
+<ul>
+<li>Warning yellow background + left border</li>
+<li>Use INSIDE form sections to flag missing config / soft errors that don't block</li>
+</ul>
+<hr>
+<h2 id="iconography">Iconography</h2>
+<p>Mockups dùng emoji + unicode arrows làm icons:
+- <code>›</code> separator (breadcrumb, stage pipe)
+- <code>☐</code> checkbox unchecked
+- <code>✓</code> / <code>✗</code> status
+- <code>⚠</code> warning header
+- <code>🛈</code> info header (optional)</p>
+<p>Backport plan dùng Font Awesome 5 (đã có sẵn trong Odoo 19):
+- <code>fa-circle</code> cho stage indicator
+- <code>fa-exclamation-triangle</code> cho warning
+- <code>fa-times-circle</code> cho error
+- <code>fa-check-circle</code> cho success</p>
+<hr>
+<h2 id="khi-backport-vao-owl-convention-revised-2026-06-07-per-ba-audit">Khi backport vào OWL — convention (revised 2026-06-07 per BA audit)</h2>
+<p><strong>⚠ Important — Standard-Odoo-First applied:</strong> Phase 2 = <strong>CSS overrides + view XML only</strong>.
+<strong>NO new OWL components.</strong> BA review identified that what we initially planned as
+<code>MuPill</code> / <code>MuStatusBar</code> are already shipped by Odoo 19 CE — we just need to style them.</p>
+<table>
+<thead>
+<tr>
+<th>Mockup pattern</th>
+<th>Standard Odoo equivalent</th>
+<th>Phase 2 action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chrome bar</td>
+<td><code>nav.o_main_navbar</code></td>
+<td>Skip — keep default</td>
+</tr>
+<tr>
+<td>Breadcrumb</td>
+<td><code>.o_breadcrumb</code> (auto-rendered)</td>
+<td>Skip — keep default</td>
+</tr>
+<tr>
+<td>Status bar (buttons + stage pipe)</td>
+<td><code>&lt;header&gt;</code> + <code>&lt;button class="oe_highlight"/&gt;</code> + <strong><code>&lt;field widget="statusbar"/&gt;</code></strong></td>
+<td>CSS override only — apply purple <code>.mu-stage</code> tint to <code>.o_statusbar_status .btn-primary</code> active state. NB: <code>widget="state_selection"</code> is for kanban single-state pills (red/orange/green dropdown), NOT linear pipelines — use <code>statusbar</code> for the mockup's Draft→Published→Archived. Standard usage: <code>addons/sale/views/sale_order_views.xml:379</code> <code>&lt;field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/&gt;</code></td>
+</tr>
+<tr>
+<td>Form grid</td>
+<td><code>&lt;group&gt;</code> + <code>&lt;group string=""/&gt;</code></td>
+<td>CSS override only — <code>.mu-grid2</code> class on outer <code>&lt;sheet&gt;</code> div</td>
+</tr>
+<tr>
+<td>Pill badge (4 colors)</td>
+<td><code>&lt;field widget="badge"/&gt;</code> (Selection field) + <code>decoration-success/warning/danger/info</code></td>
+<td><strong>No <code>MuPill</code> component.</strong> Use standard <code>widget="badge"</code>; add <code>.mu-pill-*</code> CSS overrides for tone tuning</td>
+</tr>
+<tr>
+<td>Stage pipeline (Draft → Published → Archived)</td>
+<td><code>&lt;field widget="statusbar"/&gt;</code> inside <code>&lt;header&gt;</code> (NOT state_selection)</td>
+<td><strong>No <code>MuStatusBar</code> component.</strong> Standard widget exists; add <code>.mu-stage</code> CSS overrides on <code>.o_statusbar_status</code></td>
+</tr>
+<tr>
+<td>Mono token (SKU / listing_id)</td>
+<td><code>&lt;field/&gt;</code> + <code>class="mu-mono"</code></td>
+<td>CSS-only refinement</td>
+</tr>
+<tr>
+<td>Tabs</td>
+<td><code>&lt;notebook&gt;</code> + <code>&lt;page&gt;</code> (Odoo standard arch)</td>
+<td><strong>No <code>MuTabs</code> component.</strong> Apply <code>.mu-tabs</code>/<code>.mu-tab.active</code> CSS to existing <code>.o_notebook .nav-tabs</code></td>
+</tr>
+<tr>
+<td>List table</td>
+<td><code>&lt;list&gt;</code> view (Odoo standard)</td>
+<td>CSS refinement on <code>.o_list_view</code></td>
+</tr>
+<tr>
+<td>Kanban cards</td>
+<td><code>&lt;kanban&gt;</code> view (Odoo standard)</td>
+<td>CSS refinement on <code>.o_kanban_record</code></td>
+</tr>
+<tr>
+<td>Modal (error 400)</td>
+<td><code>WarningDialog</code> / Odoo's standard modals</td>
+<td>CSS override on <code>.modal-header</code> for danger color</td>
+</tr>
+<tr>
+<td>Banner</td>
+<td><code>&lt;div class="alert alert-warning"/&gt;</code> (Bootstrap, ships with Odoo)</td>
+<td>CSS override only</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Revised Phase 2 MVP scope (CSS-only, no JS components):</strong>
+1. SCSS bundle override loading the design tokens. Target path (per <code>odoo-standard-first</code> validation 2026-06-07): <code>multichannel_hub_core/static/src/scss/mu_tokens.scss</code> (mhc scope per owner answer A3). Registered in manifest via <code>'web.assets_backend': [...]</code> (note: bundle name has no leading underscore — <code>web._assets_backend_helpers</code> is a different internal bundle).
+2. CSS overrides scoped to mhc/etsy modules:
+   - <code>.text-bg-*</code> (Bootstrap decoration colors used by <code>widget="badge"</code>) — purple-tint the success/info variants
+   - <code>.o_statusbar_status .btn-primary</code> (active stage in <code>widget="statusbar"</code>) — apply <code>.mu-stage.active</code> purple tint
+   - <code>.o_notebook .nav-link.active</code> — purple bottom border per mockup
+   - <code>.mu-mono</code> utility class — apply via <code>class="mu-mono"</code> on SKU/listing_id fields in view XML
+3. View XML changes on <code>product.template</code> + <code>multichannel.listing</code>:
+   - Tier 3 hiding: prefer <code>groups="base.group_no_one"</code> (developer-mode-only) over <code>groups="base.group_system"</code> for technical fields like Routes/MTO/produce_delay — system admins shouldn't have to wade through them either. Reserve <code>groups="base.group_system"</code> for fields only sys-admin should EDIT (e.g. credentials).
+   - Wrap key fields with <code>class="mu-mono"</code></p>
+<p><strong>Estimated effort:</strong> 3–4 dev days (vs prior 5-7 day estimate — dropped because no OWL components).</p>
+<hr>
+<h2 id="phase-1-deliverables-checklist">Phase 1 deliverables checklist</h2>
+<ul>
+<li>[x] <code>mu-design-tokens.css</code> — all 10 patterns extracted from mockups, organized into 15 sections.</li>
+<li>[x] <code>MU_SYSTEM.md</code> — this doc.</li>
+<li>[x] <code>FORM_CURATION_GUIDE.md</code> — Tier 1/2/3 rules (BA-confirmed all standard Odoo mechanisms).</li>
+<li>[x] BA audit (Standard-Odoo-First) — 5 reinventions identified, all addressed by revised backport table above.</li>
+</ul>
+<h2 id="phase-2-entry-criteria">Phase 2 entry-criteria</h2>
+<p><strong>A. BA confirmations needed (Telegram-actionable, before kickoff):</strong>
+1. Confirm Phase 2 scope = <strong>CSS + view XML only</strong>, no new OWL components (per BA audit + revised backport table above).
+2. Confirm targets = <code>product.template</code> + <code>multichannel.listing</code> MVP.
+3. Confirm purple branding = backend bundle CSS override (not standalone).</p>
+<p><strong>B. Owner Q1-Q5 from COMPARISON doc</strong> (less blocking now since BA audit clarified some):
+1. Q1 Mockup intent (ideal vs reference) — answer guides whether to refine more mockup styles into CSS later.
+2. Q2 Field section priority for hiding — needed for Tier 3 <code>groups=</code> decisions on <code>product.template</code>.
+3. Q3 Purple branding scope — needed for SCSS variable injection scope.
+4. Q4 mhc form split — design decision, low Phase 2 impact.
+5. Q5 Timeline urgency — affects sprint planning.</p>
+<h2 id="phase-2-skill-sequence-per-ba-inventory">Phase 2 skill sequence (per BA inventory)</h2>
+<ol>
+<li><strong>odoo-standard-first</strong> — Re-validate the revised plan before any code (~20 min).</li>
+<li><strong>odoo-functional-mockup</strong> — Walk the 2 target forms (product.template + multichannel.listing) through baseline → taste → craft → diff (~90 min).</li>
+<li><strong>od-design-craft + codebase-graph</strong> (parallel) — Craft validates token consistency; graph traces form inheritance to avoid view-conflict regressions (~75 min total).</li>
+<li><strong>taste-skill</strong> (optional, post-MVP) — Anti-slop final pass.</li>
+<li><strong>design-review</strong> (post-MVP) — Quality gate after code lands.</li>
+</ol>
+<p>Skills explicitly SKIPPED: frontend-design, design-consultation, design-shotgun, ascii-ui-mockup-generator, frontend-patterns, design-html (BA reasoning in tracker row P-DS-1-DESIGN-SYSTEM-DOCS).</p>
+<hr>
+<h2 id="reference-mockups">Reference mockups</h2>
+<p>Frozen design intent — these stay as-is for inspiration:</p>
+<ul>
+<li><a href="../business-flows/flow-1-tao-san-pham.html">Flow 1 — Tạo sản phẩm</a></li>
+<li><a href="../business-flows/flow-2-nhan-don-hang-etsy.html">Flow 2 — Tiếp nhận đơn Etsy</a></li>
+<li><a href="../business-flows/flow-3a-giao-hang-in-noi-bo.html">Flow 3a — Giao hàng nội bộ</a></li>
+<li><a href="../business-flows/flow-3b-giao-hang-gearment-dropship.html">Flow 3b — Gearment dropship</a></li>
+<li><a href="../business-flows/flow-4-hau-mai.html">Flow 4 — Hậu mãi</a></li>
+</ul>
+<p>Source CSS extraction is now at <a href="./mu-design-tokens.css"><code>mu-design-tokens.css</code></a> — single source of truth.</p></main></body></html>

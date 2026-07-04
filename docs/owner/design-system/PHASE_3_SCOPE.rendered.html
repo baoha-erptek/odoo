@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Phase 3 — Full library + per-form curation (queued for clean session)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="phase-3-full-library-per-form-curation-queued-for-clean-session">Phase 3 — Full library + per-form curation (queued for clean session)</h1>
+<blockquote>
+<p>Recorded 2026-06-07 per owner directive (Telegram msg after 747).
+Owner explicitly deferred this to a fresh session — do NOT dispatch from
+the current session.</p>
+</blockquote>
+<h2 id="recap-of-where-phase-1-phase-2-landed">Recap of where Phase 1 + Phase 2 landed</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Slice</th>
+<th>Status</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1</td>
+<td>P-DS-1-DESIGN-SYSTEM-DOCS</td>
+<td>done (commit <code>079fe0cb47c</code> + BA-fix <code>2d21cb34899</code>)</td>
+<td><code>mu-design-tokens.css</code> + <code>MU_SYSTEM.md</code> + <code>FORM_CURATION_GUIDE.md</code> + BA audit applied</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>P-DS-2-MVP-BACKPORT</td>
+<td>done (commit <code>a5ae4178eb2</code> + <code>874a5169f1d</code>)</td>
+<td>SCSS bundle scoped to mhc + view XML tier edits on <code>product.template</code> + <code>multichannel.listing</code> + mockup procedure docs</td>
+</tr>
+</tbody>
+</table>
+<h2 id="phase-3-deliverables-3-sub-slices">Phase 3 deliverables (3 sub-slices)</h2>
+<h3 id="p-ds-3a-per-form-curation-for-etsyshop">P-DS-3a — Per-form curation for <code>etsy.shop</code></h3>
+<p><strong>Why:</strong> Flow 2 narrative (Etsy ingestion) opens <code>etsy.shop</code> form for Recovery Probe + API status checks. Currently exposes ALL config + Publisher Defaults tab + Sync Health metrics + debug probe fields on one screen. BA Lead opens this when API issues arise — clutter hurts triage speed.</p>
+<p><strong>Scope:</strong>
+- Apply 3-tier model from <code>FORM_CURATION_GUIDE.md</code>:
+  - Tier 1: <code>name</code>, <code>etsy_api_shop_id</code>, <code>active_source</code>, <code>listing_currency_id</code>
+  - Tier 2 tabs: API Status (Recovery Probe + sync health summary), Publisher Defaults (already exists), Listing Configuration
+  - Tier 3 (<code>groups="base.group_no_one"</code>): internal probe metrics, debug correlation IDs, <code>auto_recovery</code> toggle, <code>active_source_changed_at</code> audit
+- Add <code>.mu-mono</code> class to <code>etsy_api_shop_id</code> + any displayed listing IDs
+- Apply purple statusbar tint (<code>active_source</code> is Selection — use <code>widget="badge"</code> with decoration-*)</p>
+<p><strong>Standard-Odoo-First check before dispatch:</strong>
+- All field hiding via <code>groups="base.group_no_one"</code> / <code>groups="base.group_system"</code> standard
+- All badge styling via <code>widget="badge"</code> + <code>decoration-success/warn/danger</code> standard</p>
+<p><strong>Effort:</strong> 0.5–1 dev day. Mockup procedure (<code>odoo-functional-mockup</code> skill) first to produce <code>MOCKUP_etsy_shop.md</code>, then implement.</p>
+<p><strong>Entry criteria:</strong>
+- Owner answers Q3 from COMPARISON doc (purple branding scope — already answered "mhc scope" but etsy.shop lives in <code>etsy_integration</code> not mhc; need to confirm: scope the SCSS to etsy.shop form via <code>name="etsy.shop"</code> selector inside the mhc bundle, OR add a small SCSS file to <code>etsy_integration/static/src/scss/</code>).
+- Confirm specific Tier 3 fields (some debug fields owner may want visible to sys admins, not just devs).</p>
+<h3 id="p-ds-3b-saleorder-stockpicking-audit">P-DS-3b — <code>sale.order</code> + <code>stock.picking</code> audit</h3>
+<p><strong>Why:</strong> <code>FORM_CURATION_GUIDE.md</code> §"Áp dụng cho hiện trạng" line 181 currently says "Standard Odoo (kept as-is) — No curation needed — Odoo's default Tier model adequate". BUT mockup Flow 2 + Flow 3a show curated views (only specific columns visible). Verify whether the AS-IS forms genuinely match owner's mental model OR whether subtle curation is warranted.</p>
+<p><strong>Scope:</strong>
+- Run <code>odoo-functional-mockup</code> procedure for both forms.
+- If audit confirms no curation needed → close P-DS-3b with a tracker note (1-line <code>done — no work needed</code>).
+- If audit surfaces a gap → produce <code>MOCKUP_sale_order.md</code> + <code>MOCKUP_stock_picking.md</code> and implement.</p>
+<p><strong>Effort:</strong> 0.5 dev day audit + variable implementation if gaps found.</p>
+<h3 id="p-ds-3c-full-owl-component-library-optional">P-DS-3c — Full OWL component library (optional)</h3>
+<p><strong>Why:</strong> Phase 2 deliberately avoided OWL components per Standard-Odoo-First (BA audit msg 738). The "full library" option from the COMPARISON doc remains genuinely deferred — only pursue if a future need surfaces (e.g. a custom widget that standard Odoo doesn't ship and CSS can't substitute).</p>
+<p><strong>Scope:</strong>
+- DO NOT pursue speculatively. Only dispatch if a specific UX gap is identified that standard Odoo widgets cannot fill.
+- If pursued: candidate components per the original (rejected) plan: <code>MuPill</code> (was rejected → use <code>widget="badge"</code>), <code>MuStatusBar</code> (was rejected → use <code>widget="statusbar"</code>), <code>MuBanner</code> (potentially useful as wrapper around Bootstrap <code>alert-info</code> for consistent styling).</p>
+<p><strong>Effort:</strong> Estimated 3-5 dev days if/when triggered. Not in current path.</p>
+<h2 id="total-phase-3-scope-estimate">Total Phase 3 scope estimate</h2>
+<table>
+<thead>
+<tr>
+<th>Slice</th>
+<th>Effort</th>
+<th>Block on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P-DS-3a etsy.shop curation</td>
+<td>0.5–1 day</td>
+<td>owner Q3 clarification + Tier 3 list confirmation</td>
+</tr>
+<tr>
+<td>P-DS-3b sale.order + stock.picking audit</td>
+<td>0.5 day audit + variable</td>
+<td>none</td>
+</tr>
+<tr>
+<td>P-DS-3c full OWL library</td>
+<td>deferred</td>
+<td>specific gap surfacing</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total committed work:</strong> 1–1.5 dev days for P-DS-3a + P-DS-3b. P-DS-3c remains optional.</p>
+<h2 id="how-to-pick-up-in-a-fresh-session">How to pick up in a fresh session</h2>
+<pre><code>/clear
+/dispatch-slice P-DS-3a
+</code></pre>
+<p>The dispatch-slice skill will:
+1. Read tracker row P-DS-3a (added 2026-06-07)
+2. Verify branch + tree clean
+3. Set up tasks per the scope above
+4. Spawn planner agent (sonnet) with this scope doc as input</p>
+<p>If the clean session prefers to scope all three at once, dispatch <code>P-DS-3a</code> first, then <code>P-DS-3b</code> after that ships, and skip <code>P-DS-3c</code> until a real need surfaces.</p>
+<h2 id="anti-patterns-to-avoid-in-phase-3">Anti-patterns to avoid in Phase 3</h2>
+<ul>
+<li><strong>Don't reinvent standard widgets.</strong> BA audit caught 5 reinventions in Phase 1; Phase 2.1 (<code>odoo-standard-first</code> skill) caught the statusbar/state_selection confusion. Run the skill BEFORE implementation.</li>
+<li><strong>Don't apply the brand-wide purple.</strong> Owner answer A3 was "mhc scope". If P-DS-3a needs to load CSS into <code>etsy_integration</code> views, do it via a small etsy_integration SCSS file, not by broadening the mhc bundle scope.</li>
+<li><strong>Don't curate <code>sale.order</code> aggressively</strong> without owner confirmation. P-DS-3b is an audit-first slice — confirm the gap exists before editing.</li>
+</ul></main></body></html>

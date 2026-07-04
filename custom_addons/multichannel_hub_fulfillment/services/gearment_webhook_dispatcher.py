@@ -154,6 +154,21 @@ class GearmentWebhookDispatcher:
             bypass_address_change_check=True,
         ).write(vals)
 
+    def _inbound_stamp(self, topic):
+        """D#8 — vals fragment recording which inbound webhook last touched
+        this fulfillment. Merged into each business handler's write so the
+        Fulfillment Tracking Detail form shows last-webhook provenance.
+        Neither field is in the fulfillment model's bus-trigger or address-
+        lock sets, so stamping carries no extra side effects.
+        """
+        return {
+            'gearment_last_webhook_at': fields.Datetime.now(),
+            # Bounded write — callers pass hardcoded topic literals, but cap
+            # the length defensively so no future caller can persist an
+            # unbounded value into this audit field via the public webhook.
+            'gearment_last_webhook_topic': (topic or '')[:64],
+        }
+
     # --------------------------------------------------------- handlers
     def _handle_order_completed(self, body):
         order, fulfillment, fail = self._find_order_and_fulfillment(body)
@@ -164,7 +179,8 @@ class GearmentWebhookDispatcher:
         number = (tracking.get('number') or '')[:120]
         url = (tracking.get('url') or '')[:255]
         vals = {'tracking_state': 'shipped',
-                'shipping_date': fields.Date.context_today(fulfillment)}
+                'shipping_date': fields.Date.context_today(fulfillment),
+                **self._inbound_stamp('order_completed')}
         if number:
             vals['tracking_number'] = number
         if url:
@@ -188,7 +204,8 @@ class GearmentWebhookDispatcher:
         block_reason = f"Gearment cancelled: {status}"[:240]
         self._write_fulfillment(
             fulfillment,
-            {'production_blocked': True, 'block_reason': block_reason},
+            {'production_blocked': True, 'block_reason': block_reason,
+             **self._inbound_stamp('order_cancelled')},
         )
         # Roll back pipeline state if currently in gearment_pod/confirmed.
         # Helper signature: _write_pipeline_state(state_record, note, change_type)
@@ -231,40 +248,44 @@ class GearmentWebhookDispatcher:
         carrier = (tracking.get('company') or '')[:120]
         number = (tracking.get('number') or '')[:120]
         url = (tracking.get('url') or '')[:255]
-        vals = {}
+        # Always stamp last-webhook provenance even when the payload carries
+        # no number/url (D#8); ship-state transitions still belong to other
+        # topics, so tracking_state is deliberately left untouched here.
+        vals = self._inbound_stamp('tracking_order_updated')
         if number:
             vals['tracking_number'] = number
         if url:
             vals['tracking_url'] = url
-        # Deliberately do NOT change tracking_state — this topic refreshes
-        # carrier/number/url; ship-state transitions belong to other topics
-        # (order_completed / explicit operator action).
-        if vals:
-            self._write_fulfillment(fulfillment, vals)
-            # P1-12 (ADR decision D-A): the Gearment webhook is the
-            # primary, low-latency trigger for the Etsy tracking pushback.
-            # Soft-fail — tracking is already persisted locally above and
-            # the webhook must still 200; the 5-min _cron_push_tracking
-            # sweep retries any push that fails here.
-            if number and order.etsy_order_id and order.etsy_shop_id:
-                try:
-                    from odoo.addons.etsy_integration.services.\
-                        etsy_tracking_pusher import EtsyTrackingPusher
-                    EtsyTrackingPusher(self.env).push(order)
-                except ValueError as exc:
-                    # Permanent auth/config failure (missing or revoked
-                    # OAuth token, refresh failed). ERROR so operator
-                    # alerting catches it — the cron sweep will keep
-                    # retrying but cannot self-heal a revoked token.
-                    _logger.error(
-                        "P1-12: Etsy tracking push permanent failure for "
-                        "%s (OAuth/config): %s", order.name, exc,
-                    )
-                except Exception as exc:  # noqa: BLE001 — soft-fail (transient)
-                    _logger.warning(
-                        "P1-12: Etsy tracking push soft-failed for %s: %s",
-                        order.name, exc,
-                    )
+        self._write_fulfillment(fulfillment, vals)
+        # P1-12 (ADR decision D-A): the Gearment webhook is the primary,
+        # low-latency trigger for the Etsy tracking pushback. Soft-fail —
+        # tracking is already persisted locally above and the webhook must
+        # still 200; the 5-min _cron_push_tracking sweep retries any push
+        # that fails here.
+        if number and order.etsy_order_id and order.etsy_shop_id:
+            try:
+                from odoo.addons.etsy_integration.services.\
+                    etsy_tracking_pusher import EtsyTrackingPusher
+                EtsyTrackingPusher(self.env).push(order)
+                # D#8 — record the successful pushback for the detail form.
+                self._write_fulfillment(fulfillment, {
+                    'etsy_tracking_pushed': True,
+                    'etsy_tracking_pushed_at': fields.Datetime.now(),
+                })
+            except ValueError as exc:
+                # Permanent auth/config failure (missing or revoked OAuth
+                # token, refresh failed). ERROR so operator alerting catches
+                # it — the cron sweep will keep retrying but cannot self-heal
+                # a revoked token.
+                _logger.error(
+                    "P1-12: Etsy tracking push permanent failure for "
+                    "%s (OAuth/config): %s", order.name, exc,
+                )
+            except Exception as exc:  # noqa: BLE001 — soft-fail (transient)
+                _logger.warning(
+                    "P1-12: Etsy tracking push soft-failed for %s: %s",
+                    order.name, exc,
+                )
         _logger.debug(
             "P0-18b2c: tracking_order_updated processed %s number=%s",
             order.name, number,
@@ -279,7 +300,8 @@ class GearmentWebhookDispatcher:
         block_reason = f"Gearment on hold: {status}"[:240]
         self._write_fulfillment(
             fulfillment,
-            {'production_blocked': True, 'block_reason': block_reason},
+            {'production_blocked': True, 'block_reason': block_reason,
+             **self._inbound_stamp('order_on_hold')},
         )
         self._post_chatter(order, _(
             "Gearment placed order on hold (status: %(s)s)."

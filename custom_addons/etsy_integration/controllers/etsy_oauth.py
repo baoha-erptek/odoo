@@ -42,7 +42,10 @@ _PENDING_PARAM_PREFIX = 'etsy.oauth.pending.'
 _REQUIRED_SCOPES = frozenset({
     'transactions_r', 'transactions_w',
     'listings_r', 'listings_w',
-    'shops_r', 'email_r',
+    # shops_w added P-LIST-SHIP-CREATE (ESTY-201) — shop-level writes
+    # (createShopShippingProfile etc.) 403 without it. Shops re-authorized
+    # after 2026-06-13 carry it; pre-existing tokens must re-auth.
+    'shops_r', 'shops_w', 'email_r',
 })
 # E1 approval explicitly excludes conversations_r. If Etsy ever returns
 # it (e.g. lingering pre-2026-05-12 grant), reject — proceeding would
@@ -298,5 +301,27 @@ class EtsyOAuthController(http.Controller):
                 fields.Datetime.now(), seconds=expires_in,
             ),
         })
+
+        # P1-11-SHOPID-BOOTSTRAP: discover and persist the real Etsy shop_id
+        # immediately. Tokens are already written above, so the client can
+        # authenticate. On failure we proceed (tokens are valid) and log a
+        # warning — the operator can re-Authorize or set the field manually.
+        # C-ESY-003 will block the active_source='api' flip if shop_id stays
+        # empty, so there is no silent operational risk.
+        if not shop.sudo().etsy_api_shop_id:
+            from ..services.etsy_api_client import EtsyApiClient
+            try:
+                api_shop_id = EtsyApiClient(shop).fetch_users_me_shop_id()
+            except Exception as exc:  # noqa: BLE001 — never break OAuth on discovery
+                _logger.warning(
+                    "Etsy shop_id bootstrap raised for shop %s (id=%s): %s",
+                    shop.name, shop.id, type(exc).__name__,
+                )
+                api_shop_id = None
+            if api_shop_id:
+                # sudo: etsy_api_shop_id carries groups='base.group_system';
+                # this is OAuth-callback completion (system-level event), the
+                # public auth='public' route has no logged-in user to write it.
+                shop.sudo().write({'etsy_api_shop_id': api_shop_id})
 
         return request.redirect('/odoo', local=True)

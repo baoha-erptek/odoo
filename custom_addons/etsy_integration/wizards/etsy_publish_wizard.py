@@ -53,6 +53,19 @@ class EtsyPublishWizard(models.TransientModel):
         listing_id = draft.get('listing_id')
         publisher.upload_images(self.product_tmpl_id, listing_id, self.shop_id)
         publisher.push_inventory(self.product_tmpl_id, listing_id, self.shop_id)
+        # Video parity with upload_images: a draft preview should include the
+        # listing's video too. Best-effort + non-fatal, mirroring run()
+        # (etsy_listing_publisher.py). No-op when the resolved listing intent
+        # carries no video_attachment_id. NOTE: push_personalization and
+        # push_variation_images remain intentionally skipped on the draft-only
+        # path (out of scope for P-LIST-VIDEO-DRAFT-PARITY).
+        try:
+            publisher.push_video(self.product_tmpl_id, listing_id, self.shop_id)
+        except Exception as exc:  # noqa: BLE001 — non-fatal, mirrors run()
+            _logger.warning(
+                "Draft-only publish: push_video failed for listing %s: %s; "
+                "continuing.", listing_id, exc,
+            )
         # Cast listing_id to str: Etsy listing ids overflow XML-RPC int32 limit
         # (max 2,147,483,647). Callers parse back to int as needed.
         return {

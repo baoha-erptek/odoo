@@ -220,7 +220,7 @@ class TestEtsyOAuthControllerFlow(HttpCase):
         )
 
         # Mock the token exchange response from Etsy. Include the
-        # four E1-approved scopes (P1-10 scope assertion) — without
+        # E1-approved scopes + shops_w (P1-10 scope assertion) — without
         # them the callback hard-fails the grant.
         token_response = {
             'access_token': 'test_access_token_abc123',
@@ -228,7 +228,7 @@ class TestEtsyOAuthControllerFlow(HttpCase):
             'expires_in': 3600,
             'token_type': 'bearer',
             'scope': 'transactions_r transactions_w listings_r '
-                     'listings_w shops_r email_r',
+                     'listings_w shops_r shops_w email_r',
         }
 
         with mock.patch(

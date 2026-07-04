@@ -14,6 +14,11 @@ access_etsy_address_change_request_ba_user,etsy.address.change.request.ba.user,m
 access_etsy_address_change_request_ba_lead,etsy.address.change.request.ba.lead,model_etsy_address_change_request,multichannel_hub_core.group_ba_lead,1,1,1,0
 access_etsy_address_change_request_manager,etsy.address.change.request.manager,model_etsy_address_change_request,sales_team.group_sale_manager,1,1,0,0
 access_etsy_address_change_request_system,etsy.address.change.request.system,model_etsy_address_change_request,base.group_system,1,1,1,1
+access_etsy_order_ticket_marketing,etsy.order.ticket.marketing,model_etsy_order_ticket,multichannel_hub_core.group_marketing_user,1,1,1,0
+access_etsy_order_ticket_ba_user,etsy.order.ticket.ba.user,model_etsy_order_ticket,multichannel_hub_core.group_ba_user,1,1,1,0
+access_etsy_order_ticket_ba_lead,etsy.order.ticket.ba.lead,model_etsy_order_ticket,multichannel_hub_core.group_ba_lead,1,1,1,0
+access_etsy_order_ticket_manager,etsy.order.ticket.manager,model_etsy_order_ticket,sales_team.group_sale_manager,1,1,0,0
+access_etsy_order_ticket_system,etsy.order.ticket.system,model_etsy_order_ticket,base.group_system,1,1,1,1
 access_etsy_message_dedupe_reader,etsy.message.dedupe reader,model_etsy_message_dedupe,etsy_integration.group_etsy_api_log_reader,1,0,0,0
 access_etsy_message_dedupe_system,etsy.message.dedupe system,model_etsy_message_dedupe,base.group_system,1,1,1,1
 access_etsy_shop_source_change_log_reader,etsy.shop.source.change.log.reader,model_etsy_shop_source_change_log,etsy_integration.group_etsy_api_log_reader,1,0,0,0
@@ -25,3 +30,15 @@ access_etsy_listing_product_user,etsy.listing.product.user,model_etsy_listing_pr
 access_etsy_listing_product_system,etsy.listing.product.system,model_etsy_listing_product,base.group_system,1,1,1,1
 access_etsy_listing_backfill_wizard_user,etsy.listing.backfill.wizard.user,model_etsy_listing_backfill_wizard,base.group_user,1,1,1,1
 access_etsy_publish_wizard_user,etsy.publish.wizard.user,model_etsy_publish_wizard,base.group_user,1,1,1,1
+access_etsy_taxonomy_node_user_read,etsy.taxonomy.node user read,model_etsy_taxonomy_node,base.group_user,1,0,0,0
+access_etsy_taxonomy_node_system,etsy.taxonomy.node system rw,model_etsy_taxonomy_node,base.group_system,1,1,1,1
+access_etsy_shipping_profile_user_read,etsy.shipping.profile user read,model_etsy_shipping_profile,base.group_user,1,0,0,0
+access_etsy_shipping_profile_system,etsy.shipping.profile system rw,model_etsy_shipping_profile,base.group_system,1,1,1,1
+access_etsy_ship_profile_create_wiz_ba,etsy.shipping.profile.create.wizard ba rw,model_etsy_shipping_profile_create_wizard,multichannel_hub_core.group_ba_user,1,1,1,1
+access_etsy_ship_profile_create_wiz_system,etsy.shipping.profile.create.wizard system,model_etsy_shipping_profile_create_wizard,base.group_system,1,1,1,1
+access_mhc_listing_attr_map_marketing,multichannel.listing.attribute.mapping marketing rw,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_marketing_user,1,1,1,1
+access_mhc_listing_attr_map_ba_user_read,multichannel.listing.attribute.mapping ba user read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_user,1,0,0,0
+access_mhc_listing_attr_map_ba_lead_read,multichannel.listing.attribute.mapping ba lead read,model_multichannel_listing_attribute_mapping,multichannel_hub_core.group_ba_lead,1,0,0,0
+access_mhc_listing_attr_map_system,multichannel.listing.attribute.mapping system,model_multichannel_listing_attribute_mapping,base.group_system,1,1,1,1
+access_etsy_shop_attr_map_user_read,etsy.shop.attribute.mapping user read,model_etsy_shop_attribute_mapping,base.group_user,1,0,0,0
+access_etsy_shop_attr_map_system,etsy.shop.attribute.mapping system,model_etsy_shop_attribute_mapping,base.group_system,1,1,1,1

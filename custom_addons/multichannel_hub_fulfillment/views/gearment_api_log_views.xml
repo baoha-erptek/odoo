@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!--
+    Phase D#2 (Flow 3b #3/#4) — surface the gearment.api.log model in the UI.
+    The model logs every outbound Gearment call AND every inbound webhook
+    (direction='inbound') but had ZERO views. This adds a read-only audit
+    list/form + search, plus a webhook-only action filtered to inbound rows.
+    No new model fields and no new ACL — reuses the existing read grant to
+    sales_team.group_sale_manager (security/ir.model.access.csv).
+  -->
+
+  <record id="view_gearment_api_log_search" model="ir.ui.view">
+    <field name="name">gearment.api.log.search</field>
+    <field name="model">gearment.api.log</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="sale_order_id"/>
+        <field name="endpoint"/>
+        <field name="topic_seen"/>
+        <field name="nonce_value"/>
+        <filter name="outbound" string="Outbound API"
+                domain="[('direction', '=', 'outbound')]"/>
+        <filter name="inbound" string="Inbound Webhook"
+                domain="[('direction', '=', 'inbound')]"/>
+        <separator/>
+        <filter name="errors" string="Errors"
+                domain="[('http_status', '&gt;=', 400)]"/>
+        <filter name="verify_failed" string="Signature Failed"
+                domain="[('direction', '=', 'inbound'), ('signature_verified', '=', False)]"/>
+        <separator/>
+        <filter name="group_direction" string="Direction"
+                context="{'group_by': 'direction'}"/>
+        <filter name="group_source" string="Source"
+                context="{'group_by': 'source'}"/>
+        <filter name="group_order" string="Order"
+                context="{'group_by': 'sale_order_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_gearment_api_log_list" model="ir.ui.view">
+    <field name="name">gearment.api.log.list</field>
+    <field name="model">gearment.api.log</field>
+    <field name="arch" type="xml">
+      <list string="Gearment API Log" create="false" edit="false" delete="false"
+            decoration-danger="http_status &gt;= 400"
+            decoration-warning="direction == 'inbound' and not signature_verified"
+            decoration-muted="http_status == 0">
+        <field name="request_started_at"/>
+        <field name="sale_order_id" optional="show"/>
+        <field name="direction" optional="show"/>
+        <field name="source"/>
+        <field name="endpoint"/>
+        <field name="http_status"/>
+        <field name="duration_ms" optional="hide"/>
+        <field name="topic_seen" optional="hide"/>
+        <field name="signature_verified" optional="hide"/>
+        <field name="error_message" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_gearment_api_log_form" model="ir.ui.view">
+    <field name="name">gearment.api.log.form</field>
+    <field name="model">gearment.api.log</field>
+    <field name="arch" type="xml">
+      <form string="Gearment API Log" create="false" edit="false">
+        <sheet>
+          <group>
+            <group string="Call">
+              <field name="request_started_at"/>
+              <field name="sale_order_id"/>
+              <field name="direction"/>
+              <field name="source"/>
+              <field name="endpoint"/>
+              <field name="http_status"/>
+              <field name="duration_ms"/>
+              <field name="rate_limit_remaining"/>
+            </group>
+            <group string="Webhook verification"
+                   invisible="direction != 'inbound'">
+              <field name="topic_seen"/>
+              <field name="nonce_value"/>
+              <field name="request_timestamp"/>
+              <field name="signature_header_seen"/>
+              <field name="signature_verified"/>
+              <field name="verify_failure_reason"/>
+              <field name="business_handled"/>
+              <field name="business_summary"/>
+            </group>
+          </group>
+          <group string="Payloads">
+            <field name="request_payload_summary"/>
+            <field name="response_summary"/>
+            <field name="error_message"/>
+            <field name="request_headers" groups="base.group_no_one"/>
+            <field name="request_body" groups="base.group_no_one"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_gearment_api_log" model="ir.actions.act_window">
+    <field name="name">Gearment API Log</field>
+    <field name="res_model">gearment.api.log</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_gearment_api_log_search"/>
+    <field name="context">{'search_default_outbound': 1}</field>
+  </record>
+
+  <record id="action_gearment_webhook_log" model="ir.actions.act_window">
+    <field name="name">Gearment Webhook Log</field>
+    <field name="res_model">gearment.api.log</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_gearment_api_log_search"/>
+    <field name="domain">[('direction', '=', 'inbound')]</field>
+    <field name="context">{'search_default_inbound': 1}</field>
+  </record>
+
+  <!-- Menus -->
+  <menuitem id="menu_gearment_root"
+            name="Gearment"
+            parent="multichannel_hub_core.menu_operations_root"
+            sequence="72"
+            groups="sales_team.group_sale_manager"/>
+
+  <menuitem id="menu_gearment_api_log"
+            name="API Log"
+            parent="menu_gearment_root"
+            action="action_gearment_api_log"
+            sequence="10"
+            groups="sales_team.group_sale_manager"/>
+
+  <menuitem id="menu_gearment_webhook_log"
+            name="Webhook Log"
+            parent="menu_gearment_root"
+            action="action_gearment_webhook_log"
+            sequence="20"
+            groups="sales_team.group_sale_manager"/>
+
+</odoo>

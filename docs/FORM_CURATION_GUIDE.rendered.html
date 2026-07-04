@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Form Curation Guide</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="form-curation-guide">Form Curation Guide</h1>
+<blockquote>
+<p>Governance rule cho mọi custom form/view trong project odoo19_esty.
+Sinh ra từ audit <a href="owner/business-flows/COMPARISON_MOCKUP_VS_ACTUAL.md"><code>COMPARISON_MOCKUP_VS_ACTUAL.md</code></a> (Phase 1 của Option 3 Hybrid).</p>
+</blockquote>
+<p><strong>Phiên bản:</strong> 1.0 (2026-06-07) · <strong>Trạng thái:</strong> MANDATORY for new custom views.</p>
+<hr>
+<h2 id="van-e-muon-giai-quyet">Vấn đề muốn giải quyết</h2>
+<p>Real Odoo forms hiện đang phơi bầy <strong>20–30+ fields</strong> mỗi screen (full ORM schema + Etsy-specific overrides). Mockup curate chỉ <strong>6–12 fields</strong> focus theo từng narrative scenario. Đây là nguồn gốc cảm giác "cluttered" — không phải styling, mà là field visibility.</p>
+<p>Guide này định nghĩa <strong>3-tier visibility model</strong> để mỗi form vẫn dùng default Odoo styling nhưng chỉ hiển thị các fields liên quan đến vai trò user + scenario.</p>
+<hr>
+<h2 id="3-tier-model">3-tier model</h2>
+<h3 id="tier-1-essential-always-visible">Tier 1 — Essential (always visible)</h3>
+<p><strong>Tiêu chí:</strong> field này là <strong>must-fill</strong> để hoàn thành use-case chính của form.</p>
+<p><strong>Vị trí trong form:</strong> General Information tab (đầu form), hoặc trong section đầu tiên không gập.</p>
+<p><strong>Ví dụ trên <code>product.template</code> từ Flow 1 narrative:</strong>
+- <code>name</code> — Tên sản phẩm
+- <code>categ_id</code> — Danh mục
+- <code>list_price</code> — Giá bán
+- <code>default_code</code> — Mã SKU (auto-generated)
+- <code>x_channel_applicability_ids</code> — Các kênh áp dụng
+- <code>image_1920</code> — Ảnh chính</p>
+<p><strong>Số lượng đề xuất:</strong> 6-10 fields tối đa per Tier 1 section. Nếu nhiều hơn → re-evaluate tier classification.</p>
+<h3 id="tier-2-secondary-in-tabs-accordions">Tier 2 — Secondary (in tabs / accordions)</h3>
+<p><strong>Tiêu chí:</strong> field cần thiết cho <strong>một số use-cases</strong> nhưng không phải core happy-path. Hoặc fields theo grouping logic (Inventory, Shipping, etc.).</p>
+<p><strong>Vị trí trong form:</strong> Notebook tabs sau General, hoặc collapsed accordion sections.</p>
+<p><strong>Ví dụ trên <code>product.template</code>:</strong>
+- <code>description_sale</code> (tab Sales)
+- <code>taxes_id</code> (tab Sales)
+- <code>route_ids</code> (tab Purchase + Inventory)
+- <code>responsible_id</code> (tab Inventory)
+- <code>x_etsy_tags</code> (tab Channels)
+- <code>x_personalization_*</code> (tab Personalization)</p>
+<p><strong>Số lượng đề xuất:</strong> 4-8 fields per tab.</p>
+<h3 id="tier-3-advanced-hidden-behind-groups-debug">Tier 3 — Advanced (hidden behind groups / debug)</h3>
+<p><strong>Tiêu chí:</strong> field chỉ admin/system user cần. Hoặc legacy/internal/debug fields không liên quan business workflow.</p>
+<p><strong>Vị trí trong form:</strong> <code>groups="base.group_system"</code> hoặc <code>invisible="True"</code> (cho debug fields), HOẶC moved into a separate "Technical" admin form.</p>
+<p><strong>Ví dụ trên <code>product.template</code>:</strong>
+- <code>barcode</code> (rarely used in dropship/POD context)
+- <code>volume</code>, <code>weight</code> (chỉ relevant cho POD physical — keep visible nếu module dùng nó)
+- <code>tracking</code> (lot/serial) — group_system
+- <code>produce_delay</code> (manufacturing) — group_system
+- <code>service_to_purchase</code> (purchase tightly coupled) — group_system
+- All <code>x_*_internal_*</code> fields — group_system or invisible</p>
+<p><strong>Số lượng:</strong> không giới hạn, nhưng phải có lý do rõ ràng để là Tier 3.</p>
+<hr>
+<h2 id="xml-pattern">XML pattern</h2>
+<h3 id="tier-1-default-visible">Tier 1: default visible</h3>
+<pre><code class="language-xml">&lt;group string=&quot;General Information&quot;&gt;
+  &lt;field name=&quot;name&quot;/&gt;
+  &lt;field name=&quot;categ_id&quot;/&gt;
+  &lt;field name=&quot;list_price&quot;/&gt;
+  &lt;field name=&quot;default_code&quot;/&gt;
+&lt;/group&gt;
+</code></pre>
+<h3 id="tier-2-in-a-notebook-tab">Tier 2: in a notebook tab</h3>
+<pre><code class="language-xml">&lt;notebook&gt;
+  &lt;page string=&quot;Sales&quot; name=&quot;sales&quot;&gt;
+    &lt;group&gt;
+      &lt;field name=&quot;description_sale&quot;/&gt;
+      &lt;field name=&quot;taxes_id&quot;/&gt;
+    &lt;/group&gt;
+  &lt;/page&gt;
+  &lt;page string=&quot;Channels&quot; name=&quot;channels&quot;&gt;
+    &lt;field name=&quot;x_channel_applicability_ids&quot;/&gt;
+    &lt;field name=&quot;x_etsy_tags&quot;/&gt;
+  &lt;/page&gt;
+&lt;/notebook&gt;
+</code></pre>
+<h3 id="tier-3-behind-group-invisible">Tier 3: behind group / invisible</h3>
+<pre><code class="language-xml">&lt;!-- Visible only to System administrators --&gt;
+&lt;group string=&quot;Advanced&quot; groups=&quot;base.group_system&quot;&gt;
+  &lt;field name=&quot;tracking&quot;/&gt;
+  &lt;field name=&quot;produce_delay&quot;/&gt;
+&lt;/group&gt;
+
+&lt;!-- Debug field — invisible by default --&gt;
+&lt;field name=&quot;x_internal_correlation_id&quot; invisible=&quot;1&quot;/&gt;
+
+&lt;!-- Hidden via Studio-style attribute (per-record visibility) --&gt;
+&lt;field name=&quot;x_legacy_sku&quot; invisible=&quot;context.get('hide_legacy')&quot;/&gt;
+</code></pre>
+<hr>
+<h2 id="mandatory-cho-moi-custom-fieldview-moi">Mandatory cho mọi custom field/view mới</h2>
+<p>Khi viết XML view mới (hoặc thêm field vào view sẵn có), tác giả PR PHẢI:</p>
+<ol>
+<li>
+<p><strong>Khai báo tier trong commit message:</strong>
+   <code>feat(P-EXAMPLE-SLICE): add x_etsy_priority field [Tier 2 — in Channels tab]</code></p>
+</li>
+<li>
+<p><strong>Comment trong XML:</strong>
+   ```xml
+   <!-- Tier 2 — Channels tab; show only when x_channel_applicability_ids includes Etsy --></p>
+</li>
+</ol>
+<p><field name="x_etsy_priority"
+          invisible="not x_channel_applicability_ids"/>
+   ```</p>
+<ol start="3">
+<li><strong>Cập nhật <code>docs/FORM_CURATION_GUIDE.md</code> examples</strong> nếu thêm pattern mới (PR review check).</li>
+</ol>
+<hr>
+<h2 id="audit-checklist-cho-existing-custom-views">Audit checklist cho existing custom views</h2>
+<p>Nếu refactor existing view, run qua checklist này:</p>
+<ul>
+<li>[ ] <strong>Đếm visible Tier 1 fields:</strong> nếu &gt; 10, đẩy thấp tier xuống.</li>
+<li>[ ] <strong>Operations/Logistics blocks:</strong> trên <code>product.template</code> có thực sự cần ở Tier 1 cho POD/dropship workflow không? Nếu không → group="base.group_system" hoặc đẩy vào tab Inventory.</li>
+<li>[ ] <strong>Description blocks:</strong> "Description for Receipts" + "Description for Delivery Orders" — nếu module dropship không in tài liệu nội bộ này, đẩy vào tab Sales hoặc invisible.</li>
+<li>[ ] <strong>Smart buttons:</strong> "Bill of Materials" / "Documents" / "Purchased" / "Sold Units" — chỉ smart button nào liên quan đến core workflow giữ ở header. Còn lại → invisible hoặc behind group.</li>
+<li>[ ] <strong>Notebook tabs:</strong> "Prices" / "Purchase" / "Inventory" / "Sales" trên <code>product.template</code> — nếu module chỉ dùng Etsy/Channels tab, ẩn các tab kia.</li>
+</ul>
+<hr>
+<h2 id="anti-patterns-can-tranh">Anti-patterns cần tránh</h2>
+<h3 id="add-field-fix-tier-later">❌ "Add field, fix tier later"</h3>
+<p>Thêm field mà không khai báo tier trong commit → field rơi vào Tier 1 default → cluttering tăng dần. <strong>PR reviewer reject.</strong></p>
+<h3 id="tier-1-vi-user-hoi-field-nay-1-lan">❌ "Tier 1 — vì user hỏi field này 1 lần"</h3>
+<p>Tier 1 dành cho field <strong>bắt buộc cho core workflow</strong>, không phải field "có thể hữu ích". Field "có thể hữu ích" = Tier 2.</p>
+<h3 id="tier-3-invisible">❌ "Tier 3 = invisible"</h3>
+<p>Tier 3 = behind group OR invisible với lý do rõ ràng. Nếu admin/system user vẫn cần edit → group; nếu KHÔNG AI cần edit thủ công → invisible OR xoá field.</p>
+<h3 id="custom-view-cho-moi-role">❌ "Custom view cho mỗi role"</h3>
+<p>Đừng tạo 3 form views (BA / BA Lead / Admin) cho cùng 1 model. Dùng <code>groups="..."</code> trên field/section thay vì duplicate view.</p>
+<hr>
+<h2 id="lien-ket">Liên kết</h2>
+<ul>
+<li><strong>Audit gốc:</strong> <a href="owner/business-flows/COMPARISON_MOCKUP_VS_ACTUAL.md">COMPARISON_MOCKUP_VS_ACTUAL.md</a> — nguồn gốc tại sao có guide này.</li>
+<li><strong>Design system:</strong> <a href="owner/design-system/MU_SYSTEM.md">MU_SYSTEM.md</a> — styling rules (phối hợp với curation rules ở đây).</li>
+<li><strong>Mockup references:</strong> <a href="owner/business-flows/"><code>docs/owner/business-flows/flow-*.html</code></a> — ví dụ cách curate fields theo narrative.</li>
+<li><strong>Standard-Odoo-First rule:</strong> trước khi thêm bất kỳ field nào, grep <code>addons/</code> xem standard có chưa. Xem CLAUDE.md §"Standard-Odoo-First (MANDATORY)".</li>
+</ul>
+<hr>
+<h2 id="ap-dung-cho-hien-trang">Áp dụng cho hiện trạng</h2>
+<p>Per audit recommendations, các target ưu tiên backport (Phase 2 entry):</p>
+<table>
+<thead>
+<tr>
+<th>Form</th>
+<th>Hiện trạng (Tier hỗn loạn)</th>
+<th>Sau curation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>product.template</code> (Flow 1)</td>
+<td>All Odoo standard + Etsy fields ở Tier 1 (~22 fields)</td>
+<td>Tier 1: 6 (name, categ, price, SKU, channels, image) + Tier 2 tabs (Channels/Personalization/Tags) + Tier 3 group_system (Manufacturing/Routes/Internal logistics)</td>
+</tr>
+<tr>
+<td><code>multichannel.listing</code> (Flow 1)</td>
+<td>All Etsy fields phẳng</td>
+<td>Tier 1: external_ref + state + image preview + title; Tier 2 tabs (Shipping &amp; Variations / Video / How It's Made / Override Etsy)</td>
+</tr>
+<tr>
+<td><code>etsy.shop</code> (Flow 2)</td>
+<td>All shop config + Publisher Defaults tab</td>
+<td>Tier 1: name, etsy_api_shop_id, active_source; Tier 2 tabs (API Status / Publisher Defaults / Sync Health); Tier 3 group_system (debug fields, internal probe metrics)</td>
+</tr>
+<tr>
+<td><code>sale.order</code> (Flow 2)</td>
+<td>Standard Odoo (kept as-is)</td>
+<td>No curation needed — Odoo's default Tier model adequate</td>
+</tr>
+<tr>
+<td><code>stock.picking</code> (Flow 3a)</td>
+<td>Standard Odoo (kept as-is)</td>
+<td>No curation needed</td>
+</tr>
+</tbody>
+</table>
+<p>Mỗi target = 1 PR slice riêng (e.g. <code>P-CURATION-PRODUCT-TEMPLATE</code>, <code>P-CURATION-MULTICHANNEL-LISTING</code>). Estimate: 0.5–1 day per slice.</p></main></body></html>

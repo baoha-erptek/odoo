@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- D#8 — Fulfillment Tracking Detail (Flow 3b mockup screen 5).
+       The first user-facing screen over sale.order.fulfillment: surfaces the
+       Gearment provenance + Etsy-pushback signal alongside the tracking fields
+       so an operator can diagnose a dropship shipment end-to-end. The model is
+       defined in core; the Gearment-specific fields it shows are added by this
+       module, so the view must live here (loads after core). -->
+
+  <record id="view_sale_order_fulfillment_detail_form" model="ir.ui.view">
+    <field name="name">sale.order.fulfillment.detail.form</field>
+    <field name="model">sale.order.fulfillment</field>
+    <field name="arch" type="xml">
+      <form string="Fulfillment Tracking Detail">
+        <header>
+          <field name="fulfillment_status" widget="statusbar"/>
+        </header>
+        <sheet>
+          <widget name="web_ribbon" title="Blocked" bg_color="text-bg-danger"
+                  invisible="not production_blocked"/>
+          <div class="oe_title">
+            <h1><field name="order_id" readonly="1" options="{'no_open': True}"/></h1>
+          </div>
+          <group>
+            <group string="Tracking">
+              <field name="tracking_state"/>
+              <field name="tracking_number" class="mu-mono"/>
+              <field name="tracking_url" widget="url"/>
+              <field name="shipping_carrier_id"/>
+              <field name="shipping_date"/>
+            </group>
+            <group string="Gearment">
+              <field name="gearment_order_ref" class="mu-mono"/>
+              <field name="gearment_last_webhook_at"/>
+              <field name="gearment_last_webhook_topic"/>
+              <field name="production_blocked"/>
+              <field name="block_reason" invisible="not production_blocked"/>
+            </group>
+          </group>
+          <group string="Etsy Tracking Pushback">
+            <field name="etsy_tracking_pushed"/>
+            <field name="etsy_tracking_pushed_at" invisible="not etsy_tracking_pushed"/>
+          </group>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_sale_order_fulfillment_detail_list" model="ir.ui.view">
+    <field name="name">sale.order.fulfillment.detail.list</field>
+    <field name="model">sale.order.fulfillment</field>
+    <field name="arch" type="xml">
+      <list string="Fulfillment Tracking">
+        <field name="order_id"/>
+        <field name="gearment_order_ref" class="mu-mono" optional="show"/>
+        <field name="tracking_state"/>
+        <field name="tracking_number" class="mu-mono" optional="show"/>
+        <field name="gearment_last_webhook_at" optional="show"/>
+        <field name="gearment_last_webhook_topic" optional="hide"/>
+        <field name="etsy_tracking_pushed" optional="show"/>
+        <field name="production_blocked" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_sale_order_fulfillment_detail_search" model="ir.ui.view">
+    <field name="name">sale.order.fulfillment.detail.search</field>
+    <field name="model">sale.order.fulfillment</field>
+    <field name="arch" type="xml">
+      <search string="Fulfillment Tracking">
+        <field name="order_id"/>
+        <field name="tracking_number"/>
+        <field name="gearment_order_ref"/>
+        <filter name="pushed_to_etsy" string="Pushed to Etsy"
+                domain="[('etsy_tracking_pushed', '=', True)]"/>
+        <filter name="blocked" string="Production Blocked"
+                domain="[('production_blocked', '=', True)]"/>
+        <separator/>
+        <filter name="group_state" string="Tracking State"
+                context="{'group_by': 'tracking_state'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_sale_order_fulfillment_detail" model="ir.actions.act_window">
+    <field name="name">Fulfillment Tracking</field>
+    <field name="res_model">sale.order.fulfillment</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_sale_order_fulfillment_detail_search"/>
+  </record>
+
+  <!-- Menu gated to sale managers (operator-facing shipment-diagnostics
+       view). This is intentionally MORE restrictive than the model ACL
+       (salesman r/w, production_team r) so frontline salesmen and the
+       webhook/cron integrations keep programmatic access while only
+       operators see this low-level detail screen. ACL — not the menu — is
+       the security boundary. -->
+  <menuitem id="menu_sale_order_fulfillment_detail"
+            name="Fulfillment Tracking"
+            parent="menu_gearment_root"
+            action="action_sale_order_fulfillment_detail"
+            sequence="30"
+            groups="sales_team.group_sale_manager"/>
+
+</odoo>

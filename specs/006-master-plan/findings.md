@@ -236,3 +236,328 @@ Sibling MOs on the same SO share the same `origin`, so `search([('origin', '=', 
 - If we ever need the inverse (SO → MOs) more efficiently, look at `sale.order.procurement_group_id.stock_move_ids.production_id` — that path *does* exist (MO has `move_dest_ids` reverse).
 
 **Implication for future slices**: any code documentation referring to `mrp.production.procurement_group_id` is wrong for Odoo 19. Update the planner default and any ADR that mentions it.
+
+---
+
+### P-UAT-AUTOMATION-2FLOWS — Phase A/B/C authoring (2026-05-31)
+
+**Authoring shipped in 4 commits on `feature/006-master-plan-coding`:**
+- `aee31f6de03` — 6 POMs (sale_order_form, design_files_kanban, gearment_quote_wizard, tracking_import_wizard, address_change_request_form, email_log)
+- `863add87ef9` — fixtures (extends seed_uat_data + seed_ba_user 4 roles + cleanup_uat_data), Gearment HMAC stub `gearment_webhook_post.py`, `preflight_check.py` wired into globalSetup, asset builder `build_uat_assets.py`, real-order anchor JSON
+- `3489926e65c` — Flow-2 spec (8 TCs) + Flow-3 spec (14 TCs)
+- `73e0417d9c0` — Phase 4 review fixes (1 CRITICAL + 3 HIGH)
+
+**Verify**: `npx playwright test --list` → 40 tests in 5 files, exit 0.
+
+**Phase D handoff (owner-gated)**:
+- Run preflight: `STAGING_ADMIN_PASSWORD=... python3 tests/e2e/fixtures/preflight_check.py`
+- Suite run: `cd tests/e2e && npm run test:don-hang-etsy && npm run test:giao-hang && npm run report`
+- Defects classify A/B/C per plan file Phase D; A → new `P-UAT-FIX-*` MP006 slice on a branch off `feature/006-master-plan-coding`, full 9-phase loop; B/C → land under this findings.md entry.
+
+**Known shape of expected-skips at runtime**:
+- TC-002 (Etsy Test Connection): hits live Etsy GET; cheap but counts.
+- TC-006 Address change: auto-skips if seeded ADDR-001 is not is_etsy_order. Follow-up to extend `seed_uat_orders` to mark Etsy-typed.
+- TC-DROP-002/003: auto-skip when `GEARMENT_API_KEY` missing (preflight catches).
+- TC-DROP-005 webhook: auto-skips when `GEARMENT_API_SECRET` missing.
+- TC-ETSY-PUSH-001/002: auto-skip when SO is not `is_etsy_order` (same follow-up as TC-006).
+
+**Mid-slice surprises captured**:
+1. `cleanup_uat_data.py` only had `action_cancel` semantics for draft SOs; ConfirmedOrders are deliberately left for owner review.
+2. `seed_ba_user.py` refactor changed `BA_USER_PASSWORD=` to the first of 4 lines — backward-compatible because globalSetup parses all `<ROLE>_PASSWORD=` lines now.
+3. Real S00007 anchor freezing went into `fixtures/real_order_reference.json` for spec-side reads + preflight verification. If owner advances S00007's pipeline manually, preflight will fail loudly with "x_pipeline_state_id.code drifted".
+4. `design_files_kanban._ensureGroupedByState()` heuristic is brittle (reviewer flagged MEDIUM); not fixed — kept as Phase D triage candidate per code-reviewer guidance.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D start: 3 preflight authoring bugs (2026-05-31)
+
+First Phase D run surfaced 3 classification-B (test-infra) bugs in `tests/e2e/fixtures/preflight_check.py`. All fixed in a single commit; no `custom_addons/` touched.
+
+| Bug | Symptom | Root cause | Fix |
+|---|---|---|---|
+| 1 | `PREFLIGHT FAIL: env: missing required keys ETSY_KEYSTRING, ETSY_SHARED_SECRET` | Authoring assumed Etsy creds lived in env. They actually live in `/opt/odoo/secrets/etsy_credentials.json` (encrypted), referenced via `ir.config_parameter['etsy.oauth.credentials_path']` + `['etsy.oauth.fernet_key']`. No code in `custom_addons/` reads those env vars. | Removed `ETSY_KEYSTRING`/`ETSY_SHARED_SECRET` from `REQUIRED_ENV_KEYS`; added new `_check_etsy_oauth_wiring()` that verifies both `ir.config_parameter` keys are populated. |
+| 2 | `cron: no active cron matches 'Etsy: Sync'` | `CRON_NAME_FRAGMENTS` used wrong substrings. Actual active crons on staging: `Etsy: API Receipts Sync`, `Etsy: Listing Metadata Sync`, `Etsy: Listing Variant Inventory Sync`, `Etsy: Push Tracking to Etsy`, `Etsy: Download Pending Product Images`, `Etsy: API Log Retention Sweep`, `Etsy: Message Dedupe Retention Sweep`. `Etsy: Fetch Order Emails` is INACTIVE (legacy per API-first pivot 2026-04-13). | Narrowed `CRON_NAME_FRAGMENTS` to `Etsy: API Receipts Sync` + `Etsy: Push Tracking` — the two crons the new specs actually depend on. Dropped `Etsy: Email` (legacy) and over-broad `Tracking` fragment. |
+| 3 | `shop-defaults: Invalid field 'token_expires_at' on 'etsy.shop'` | Field name authored from memory was wrong. Real column: `etsy_oauth_token_expires_at` (alongside `etsy_oauth_access_token`, `etsy_oauth_refresh_token`). | Renamed both the search_read fields list and the `.get()` site in `_check_shop_defaults`. |
+
+**Verification**: `python3 tests/e2e/fixtures/preflight_check.py` → exit 0, `PREFLIGHT OK — staging ready for UAT suite`.
+
+**Authoring-bug pattern worth remembering** — when writing a preflight check, the script's own field names / env keys / cron substrings must be cross-checked against actual staging state, not against the developer's mental model. Memory entry candidate for `feedback_odoo19_test_gotchas.md`: "preflight scripts that name-match runtime artifacts (cron names, ORM fields, ir.config_parameter keys, env vars) need a one-time live-staging dry-run before they're declared green — even if the spec authoring agent's plan looks self-consistent."
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D BLOCKER: Playwright auth path fails against staging (2026-05-31)
+
+After unblocking preflight, Phase D-2 (deploy) and Phase D-3 (seed) executed clean:
+- 3 modules rsynced + `odoo -u etsy_integration,multichannel_hub_core,multichannel_hub_fulfillment --stop-after-init` exit 0 + container restart
+- `npm run seed:ba-user` created 4 role users (uid 5, 28, 29, 30)
+- `npm run seed:uat-data` created 4 UAT orders (3311–3314) + email-log dedupe fixture
+
+**Phase D-4 (baseline Flow-1 spec) FAILED on a previously-passing suite**: 4 failed, 10 skipped, 1 passed. All 4 failures share the same root cause and are NOT defects in custom_addons — they are an auth-path regression in `fixtures/odoo-auth.ts` against the current staging build of Odoo 19.
+
+**Symptom**: every `loginAs*()` call ends at `expect(page.locator('nav.o_main_navbar, header.o_navbar').first()).toBeVisible()` timing out, screenshot shows the login form with "Wrong login/password" alert.
+
+**What was tried and ruled out**:
+
+| Hypothesis | Test | Result |
+|---|---|---|
+| `STAGING_BA_LEAD_PASSWORD` stale | curl POST /web/login with same .env values | succeeds — redirects to /odoo |
+| Same creds via Python urllib JSON-RPC `/web/session/authenticate` | direct request | uid=2 success |
+| Same creds via Python XML-RPC `common.authenticate` | preflight + seed scripts | uid=2 success (logged every run) |
+| Rate-limit / brute-force lockout | 3 rapid Python urllib auths | all 3 succeed |
+| `waitForURL` regex too permissive (matches /web/login) | narrowed to `/\/odoo(\/|$|\?|#)|\/web\/(?!login)/` | unchanged |
+| Form submission bypasses captcha hook (`data-captcha="login"`) | switched between `button[type="submit"].click()` and JS `form.submit()` | both fail; also `website_cf_turnstile` + `google_recaptcha` are `uninstalled` on staging — no captcha actually loaded |
+| Form hidden by `class="oe_login_form d-none"` until passkey-detect JS resolves | added `form.oe_login_form` waitFor visible | unchanged |
+| Password not actually filled (passkey JS clears the field) | value-length verify + refill on mismatch | refill did not change outcome |
+| Sidestep form entirely via `page.request.post('/web/session/authenticate')` | JSON-RPC body identical to working Python urllib | Odoo returns `odoo.exceptions.AccessDenied` |
+| Stale `session_id` cookie poisoning JSON-RPC | `page.context().clearCookies()` before authenticate | AccessDenied unchanged |
+
+**What we know for certain**:
+- Credentials are correct (every non-browser auth path accepts them).
+- Staging is reachable (preflight + module update + seed scripts all worked).
+- No captcha module is installed (`website_cf_turnstile` + `google_recaptcha` both `uninstalled`).
+- The failure is browser-context-specific: Python urllib with browser-mimicking UA also succeeds, so it is NOT a nginx UA-block.
+
+**Unknown root cause** (candidates):
+1. Odoo 19 added a browser-fingerprint check to `/web/session/authenticate` that headless Chromium fails silently (returns AccessDenied instead of a specific error).
+2. A nginx/Cloudflare rule in front of staging that fingerprints headless Chromium (sec-ch-ua: "HeadlessChrome") and either drops the body or rewrites the request.
+3. A residual Odoo session state from `globalSetup` (which spawns XML-RPC seed scripts) that interferes with browser-side auth — though `clearCookies()` did not help.
+
+**Phase D STOPPED here per playbook §"When the playbook breaks"**. Continuing to guess at fixes burns context without converging.
+
+**Recommended next-session steps** (any one suffices):
+- Run `tests/e2e` from the staging host itself (Option 2 from earlier dispatch question) — same-host browser to same-host Odoo eliminates nginx/Cloudflare fingerprint suspects.
+- Hand to `e2e-runner` agent with this findings entry + the trace.zip artifact to deep-dive.
+- Switch `loginAs` to use an out-of-band XML-RPC authentication: call `/xmlrpc/2/common.authenticate` from Node (or Python helper), then plant the resulting `session_id` cookie on the browser context via `page.context().addCookies()`. This is a known Odoo E2E pattern but needs the XML-RPC→session-cookie bridge wired.
+- Owner side: temporarily disable any WAF / rate-limit rule on `/web/login` + `/web/session/authenticate` on staging and re-run; if it passes, the suspect is confirmed.
+
+**Phase D-2/D-3 (deploy + seed) outputs are preserved on staging** so re-run cost is just D-4 onwards once the auth path is resolved.
+
+**Class-B fix attempts on `odoo-auth.ts` were reverted** to keep the file at HEAD-canonical (`560fb58ac22`); none of the attempted variants worked. The preflight fix from earlier (`a480f5b4420`) IS committed and stands on its own.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D actual root cause + resolution (2026-05-31, RETRACTS prior "auth-path BLOCKER")
+
+Earlier "Phase D BLOCKER" entry above misdiagnosed the auth failure as a Playwright-vs-Odoo race / passkey / captcha / WAF / browser-fingerprint issue. **All of that was a red herring.** Adding a `console.log(\`pwd_len=${password.length}\`)` to the auth path revealed the password Playwright sent was 16 chars, not the expected 5.
+
+**Real root cause**: `tests/e2e/fixtures/global-setup.ts:123` looped over every `<ROLE>_PASSWORD=<value>` line emitted by `seed_ba_user.py` and exported each as `process.env.STAGING_<ROLE>_PASSWORD`. For `BA_LEAD`, this clobbered the owner-provided `STAGING_BA_LEAD_PASSWORD` (which maps to the staging `admin` user with a 5-char password) with the auto-seeded 16-char password belonging to a different user (`uat_ba_lead@hatafax.demo`). `env.ts`'s static `BA_LEAD_PASSWORD` reads `process.env` first → got the wrong password → `loginAsBaLead()` sent (login="admin", password=<16-char>) → AccessDenied. Non-browser auth paths (curl/urllib/XML-RPC) read directly from `.env` without `env.ts` so they kept working — which is what made the trail confusing.
+
+**Fix**: skip `BA_LEAD` in the process.env write loop. Committed `0156a42273e`. The auto-seeded BA Lead password is still recoverable via the `BA_LEAD_AUTO_PASSWORD` getter (reads from `artifacts/_seed_state.json`).
+
+**Memory-worthy lesson**: when a Playwright spec presents as "Wrong login/password" against a known-good staging Odoo, the first instrumentation is `console.log(CONFIG.<role>_PASSWORD.length)` (no value — just length). It rules out env-var poisoning, getter conflicts, and quote-stripping mismatches in one line. Dom-side hypotheses (form-hide race, passkey JS, captcha hook) should be SECOND priority.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D final state (2026-05-31)
+
+After the globalSetup fix + the 4 spec/POM authoring-drift fixes (etsy.shop oauth field names, action_etsy_shop → action_etsy_shops XML ID, etsy.api.log field names in TC-003/TC-007), the suites converge to:
+
+| Suite | Pass | Fail | Skip | Notes |
+|---|---:|---:|---:|---|
+| Flow-1 baseline (`test:tao-san-pham`) | 5 | 0 | 10 | Skips are by design (TC-006 BA-User permission TC, TC-008..015 require live publish — `RUN_ETSY_PUBLISH=0`) |
+| Flow-2 (`test:don-hang-etsy`) | 2 | 1 | 5 | Pass: TC-001 Authorize + TC-002 Test Connection. Fail: TC-003 (Class B — `etsy.api.log` has 0 rows with non-null `http_status` on staging; cron-side, not spec-side; needs an in-window successful sync to converge). Skips: chain off TC-003 + email/dedupe TCs require pre-deploy email-log fixtures the seeder doesn't refresh per-run. |
+| Flow-3 (`test:giao-hang`) | 0 | 0 | 13 | All skip via `test.skip(!order)`: `globalTeardown` runs after every spec file and cancels (state=cancel, NOT delete — IDs 3311-3314 still exist on staging) all `UAT-2026-05-31-*` orders; the spec's seeded-order lookup filters `state in ('draft','sent','sale')` and finds nothing. Class B — teardown-vs-spec coordination, not a code defect. |
+
+**Total Phase D commits on `feature/006-master-plan-coding`**:
+- `a480f5b4420` — preflight ETSY_KEYSTRING env removal + cron names + token field name
+- `e5ce8515cca` — Phase D STOPPED documentation (now superseded but kept as the false-trail audit)
+- `0156a42273e` — globalSetup BA_LEAD env-poison fix (the real auth bug)
+- `63265e69b6c` — Flow-2 etsy.shop oauth field rename + etsy_shop_form action XML ID
+- `906ba23e9c5` — etsy.api.log field rename in TC-003 + TC-007 (via e2e-runner agent audit pass)
+
+**Remaining Class-B work to fully green Phase D** (not in this session's scope; document for next dispatch):
+1. **etsy.api.log seed for TC-003**: trigger `ir.cron.method_direct_trigger` for the Etsy API receipts cron in preflight or globalSetup so the spec sees at least one `http_status` in [200-299] row.
+2. **Flow-3 teardown coordination**: choose ONE of —
+   - (a) Skip cancel-on-teardown for `UAT-2026-05-31-*` orders; let them accumulate; cleanup is a manual owner step.
+   - (b) Move teardown out of `globalTeardown` into per-test afterEach with order-scoped cleanup.
+   - (c) Re-seed at the START of `test:giao-hang` (idempotent seed already supports this; need to either un-cancel existing or skip-when-cancelled and create fresh sale.orders with different client_order_ref).
+3. **Email-fixture refresh**: TC-004/TC-005/TC-008 chain off TC-003; some need a fresh `etsy.email.log` row that the dedup fixture doesn't supply. Seeder extension or per-test fixture wire-up.
+
+**Phase D classification recap** (per umbrella plan):
+- Class A (code defect in `custom_addons/`) → **NONE found**. Every Phase D failure traced to test infra (Class B) or seed gaps (Class C).
+- Class B (test infra): 5 fixed this session, 1 outstanding (TC-003 needs cron-trigger in globalSetup).
+- Class C (seed/fixture): 1 outstanding (Flow-3 teardown coordination + email-log fixture refresh).
+
+No `P-UAT-FIX-*` sub-slices were opened because no Class-A defects surfaced. The umbrella slice `P-UAT-AUTOMATION-2FLOWS` state stays `authoring_done` pending the 3 Class-B/C closures above; flipping to `done` requires Flow-2 + Flow-3 fully green or explicit owner sign-off that the residual skips are acceptable.
+
+### P-UAT-AUTOMATION-2FLOWS — Phase D residual triage attempt (2026-05-31) — Class A surfaced, escalating
+
+Owner-approved scope: address all 3 Class-B/C residuals, with option (c) for Flow-3 (re-seed-friendly cancelled-order revival rather than per-run refs).
+
+**Residuals #1 and #2 landed**:
+- **#1 cron-trigger plumbing**: new `tests/e2e/fixtures/trigger_crons.py` fires `Etsy: API Receipts Sync` cron via `ir.cron.method_direct_trigger` and reports the recent `etsy.api.log` row count. Wired into `globalSetup` after `seedUatData`. Best-effort; cron failures surface in the spec, not the harness.
+- **#2 cancelled-order revival**: `_ensure_uat_order` in `seed_uat_data.py` now calls `sale.order.action_draft` on any pre-existing row in `state='cancel'`. This keeps the documented `UAT-2026-05-31-*` refs (so cleanup and spec lookup constants stay stable) while making the seed survive re-runs after `globalTeardown` cancels.
+
+**Residual #3 blocked by a newly discovered Class A defect**: `etsy.api.log.http_status` is `fields.Integer` (default 0). The TC-003 spec asserts `http_status in [200,299] AND error_message empty`. Live staging diagnostic against `https://odoo.hatafax.com/esty_odoo19`:
+- Zero rows in the entire `etsy.api.log` table have `http_status > 0`.
+- Recent rows from the listing-pull cron (e.g. ids 5524-5533) all show `http_status=0`, `error_message=False`.
+- Only ONE producer in the codebase sets the field: `services/etsy_tracking_pusher.py:159`. Three other audit writers omit it: `models/etsy_listing.py:239` (`source='listing_pull'`), `models/etsy_listing_product.py:238` (likely `listing_pull` variant), `services/etsy_order_syncer.py:136` (`source='audit'`).
+- The field is documented as "NULL on connection failures or audit-mode rows" but spec, view, and existing Phase-1 DB tests all treat it as populated on success.
+
+This is a Class A defect: producer code mismatch with the asserted contract, not a test-infra issue. Per the umbrella plan handoff rule, Class A needs a new `P-UAT-FIX-*` MP006 slice with the full 9-phase loop, not an inline fix. **Proposed slice: `P-UAT-FIX-API-LOG-HTTP-STATUS`** — populate `http_status` in all 3 missing writers, add a Phase-1 DB constraint test asserting no `listing_pull`/`audit` row lands with NULL/0 http_status when `error_message` is empty, then re-run Flow-2 to confirm TC-003 + downstream chain (TC-004/005/008) converge.
+
+**Status update**:
+- Class A: **1 surfaced** (`etsy.api.log` http_status omission across 3 writers).
+- Class B: 6 fixed total (5 from prior entry + #2 cancelled-order revival here).
+- Class C: 1 outstanding (#1 cron-trigger plumbing landed but doesn't help until the Class A is closed — keeps the freshness signal intact for the future fix).
+- Tracker `state` stays `authoring_done`; cannot flip to `done` until `P-UAT-FIX-API-LOG-HTTP-STATUS` lands and Flow-2/3 re-runs green.
+
+**Commits this session**:
+- residuals #1 + #2 + this findings entry (single commit on `feature/006-master-plan-coding`).
+
+**Lesson worth remembering**: TC-003 was tagged Class B ("seed gap") in the prior session because the rows existed but were sparse. The actual sparsity was a producer bug — rows existed but the asserted field was never written. When a Phase-D residual says "spec needs more data of shape X", verify the producer code actually emits shape X before classifying as a seed gap.
+
+### P-UAT-FIX-API-LOG-HTTP-STATUS — Class A resolved (2026-06-01)
+
+**Landed** on `feature/006-master-plan-coding`. etsy_integration 19.0.2.31.0 → **19.0.2.32.0**. Closes Residual #3 of `P-UAT-AUTOMATION-2FLOWS` Phase D.
+
+**Fix shape**: new `EtsyApiClient.last_http_status` attribute, set inside `_request()` immediately after `_send_with_429_retry()` and also after the post-401-refresh retry. Captures both success (200) and HTTP-failure (4xx/5xx) cases before `raise_for_status()` raises; non-HTTP errors (parse, connection, RateLimitError exhaustion) leave the attribute at its previous value. Threaded into 2 of the 3 broken writers via a new `http_status=` kwarg (default 0) on `_write_audit`:
+
+- `etsy_listing._sync_shop_listings` reads `adapter._client.last_http_status` on both branches (success + exception caught at line 175) and passes to `_write_audit`.
+- `etsy_listing_product._sync_shop_variants` reads `adapter._client.last_http_status` on the success path (no error path here — exception bubbles to `_cron_sync_variants` which catches at the shop level and writes no row).
+- `etsy_order_syncer._audit_log` hardcodes `http_status=200` — the method is invoked only AFTER `adapter.fetch_new_orders` has yielded a payload, i.e. the upstream page fetch already returned 200. Plumbing the client through `_audit_log(shop, payload)` would have been broader scope for no diagnostic gain.
+
+Bonus help-text update: `etsy.api.log.http_status.help` previously said "NULL on connection failures or audit-mode rows" — the audit-mode half is now wrong (audit rows record 200 by design); updated per security-reviewer INFORMATIONAL note.
+
+**Tests** (`tests/test_p_uat_fix_api_log_http_status.py`, ~280 LOC, 5 tests):
+- `TestT1_ListingPullHttpStatus` × 2 (success + post-fetch-error path; both assert `http_status=200` from the captured client attribute).
+- `TestT2_VariantPullHttpStatus` × 1 (success path).
+- `TestT3_OrderSyncerAuditLogHttpStatus` × 1 (audit-mode payload yield).
+- `TestPhase1_HttpStatusInvariant` × 1 — Phase-1 DB-style regression. Exercises all 3 writers in one TransactionCase savepoint, then queries raw SQL: `source IN ('listing_pull','audit') AND (error_message IS NULL OR error_message = '') AND (http_status IS NULL OR http_status <= 0)` → must return `[]`.
+
+**Trap captured** for memory: `fields.Integer()` without `default=` writes **NULL** when the key is omitted from `.create()`. The ORM read coerces NULL→0 on field access (so `log.http_status == 0` for tests using `assertEqual`), but PG storage is NULL. The Phase-1 invariant query therefore had to use `IS NULL OR <= 0` to catch both. Initial test draft used `<= 0` only and passed spuriously — only `raise AssertionError(...DIAG all_rows: %r)` revealed the truth. See memory `feedback_odoo19_test_gotchas` for new entry.
+
+**RED → GREEN**:
+- RED: 5 expected failures (the 5 tests all assert `http_status` populated; producers wrote NULL).
+- GREEN: 5/5 pass.
+- Regression check: full `--test-tags /etsy_integration` shows 18 failed / 5 errored — identical to the **stashed-baseline** count (`git stash` → run → unstash → run again). All pre-existing, none caused by this slice. Documented for traceability; out of scope for this hotfix.
+
+**Reviews ran in parallel** (single message, two `Agent` calls per playbook §Phase 4):
+- code-reviewer: APPROVE; 0 CRITICAL / 0 HIGH; 1 MEDIUM (style — `last_http_status` → `_last_http_status` private-prefix). **Not applied** per simplicity-first; the attribute is functional public-looking but only ever read from sibling-module audit writers, and the underscore-bikeshed would just churn 4 call sites. Documented as deferred.
+- security-reviewer: APPROVE; 0 CRITICAL / 0 HIGH; 1 LOW (attribute exposure: HTTP status codes are non-sensitive operational metadata, not a privilege gateway) + 1 INFORMATIONAL (help-text drift on `etsy.api.log.http_status` — **applied inline** in this slice's commit).
+
+**Owner-gated remainder** (T6): Flow-2 TC-003 + downstream (TC-004/005/008) re-run on staging requires staging deploy of etsy_integration 19.0.2.32.0 + admin password + Etsy creds + Gearment HMAC secret per `P-UAT-AUTOMATION-2FLOWS` Phase D contract. Code work is done; convergence verification is the operator's next step via `npm run test:don-hang-etsy`.
+
+**Tracker status flip**: `P-UAT-AUTOMATION-2FLOWS` can flip from `authoring_done` → `done` once T6 lands green. This slice (`P-UAT-FIX-API-LOG-HTTP-STATUS`) is independently `done` for code; only the staging convergence verification is owner-gated.
+
+### P-DOCS-BUSINESS-FLOWS-AUDIT — 2026-06-03 (Phase 0, facts pinned BEFORE prose edits)
+
+**Subject**: 11 untracked HTML files in `docs/owner/business-flows/` (10 docs + 1 index), authored 2026-06-03 09:36–05:17 UTC by a prior session. No slice ID, no findings anchor, no git history. Owner asked us to audit before promoting to a tracked deliverable. This audit follows the `odoo-ba-consultant` agent suite (`odoo-standard-first` decision tree + `odoo-functional-mockup` 5-step procedure) and reconciles every claim against the actual built code in `custom_addons/` via the graphify graph rebuilt today (370 files / 6176 nodes / 8925 edges / 441 communities — manifest now spans `etsy_integration` + `multichannel_hub_core` + `multichannel_hub_fulfillment`; commits 2026-06-03T10:05 UTC, see `graphify-out/cost.json` run #2).
+
+**Doc-only slice contract** (per `feedback_doc_only_slice_spec_drift_first.md` + playbook §Phase 2 abbreviated):
+- Phase 2 RED: skipped (no failing tests; prose).
+- Phase 4 security-reviewer: skipped (no code change).
+- Phase 1 planner: `~/.claude/plans/check-for-odoo-ba-consultant-and-linear-gizmo.md` (approved 2026-06-03).
+- This facts-table commit lands ALONE on `feature/006-master-plan-coding` BEFORE any HTML edit. HTML corrections follow in subsequent commits, each citing back to this table.
+
+#### Audit matrix (11 docs × 4 verdict axes)
+
+Verdict legend per axis:
+- **POV**: ✅ end-user · ⚠ mixed · ❌ dev-jargon in prose
+- **Std-1st**: ✅ standard cited · ⚠ partial · ❌ custom presented as default with no standard-considered trace
+- **Mockup**: ✅ baseline XML ID cited · ⚠ implicit baseline · ❌ invented chrome, no baseline
+- **Reality**: ✅ matches built code · ⚠ partial-built / aspirational · ❌ not built
+
+| # | Doc | POV | Std-1st | Mockup | Reality | Notes |
+|---|---|---|---|---|---|---|
+| 1 | `index.html` | ✅ | n/a | n/a | ✅ | Pure nav index; only audit risk is dead links to docs in this set. |
+| 2 | `flow-1-tao-san-pham.html` | ❌ | ⚠ | ❌ | ✅ | Body prose leaks `etsy.api.log`, `product.channel.status`, `product.template`. Mockup #1 says "Form Sản phẩm chuẩn" but doesn't cite the `product.template.product_template_form_view` XML ID it inherits from. SKU v2.1 + Channels tab + Etsy publish wizard are all coded (communities #6, #18, #20). |
+| 3 | `flow-2-nhan-don-hang-etsy.html` | ❌ | ⚠ | ❌ | ⚠ | Body prose leaks `etsy.api.log`, `sale.order`, **`cron_sync_orders`** — wrong cron name (actual XML IDs: `etsy_integration.cron_etsy_order_sync` 5-min, `etsy_integration.ir_cron_etsy_fetch_emails`/`ir_cron_fetch_etsy_emails` 10-min — DUPLICATE ID across two XML files — orphan-cron-method audit needed separately). API log + email log fallback are coded (communities #21, #10, #15). |
+| 4 | `flow-3a-giao-hang-in-noi-bo.html` | ⚠ | ❌ | ❌ | ⚠ | **17-state pipeline presented as live; code reality is 5-stage compact**. `multichannel_hub_core/data/order_pipeline_state_seed.xml:22` comment: "5-stage compact; 17-stage detail"; `order_pipeline_seed.xml:11` says "full state machine lands in P1-PIPELINE-FULL". Section E ("Tự động hóa trạng thái sắp ra") admits manual transitions but body presents 17 stages as shipped. Mockup #4 "Production Scan View QR & Barcode" — **`grep -rEln "barcode" custom_addons/` returns 0 hits** — not built. Mockup #5 "QC Checklist" — no standard `quality_control` module evaluation. Standard-first never run on pipeline-vs-`stock.picking`/MRP routing decision. |
+| 5 | `flow-3b-giao-hang-gearment-dropship.html` | ❌ | ⚠ | ❌ | ✅ | Body prose leaks `etsy.api.log`, `sale.order`. Gearment adapter / payload / API client / webhook dispatcher / HMAC verification are coded (communities #0, #5, #11; file `gearment_webhook_dispatcher.py` confirmed). Lede claim "UAT 2026-05-28 confirm HMAC-SHA256" matches `reference_gearment_webhook_signature.md`. Mockups don't cite the inherited `sale.order.view_order_form` baseline. |
+| 6 | `flow-4-hau-mai.html` | ✅ | ❌ | ❌ | ❌ | Cleanest POV but factually shakiest. (a) Buyer-message ingestion: doc admits `conversations_r` scope not yet approved by Etsy — correct, matches `project_external_deps_2026_04_27.md` E1 status. (b) **Address-change wizard: `grep -rEln "address.*change.*wizard\|change.*address.*wizard\|doi.dia.chi" custom_addons/` returns 0 hits — NOT BUILT**. Standard-first never run vs `res.partner` + `sale.order.partner_shipping_id` write rules. (c) "In lại" reset to "Chờ in" depends on the 17-state pipeline being live (see doc #4 — not yet). (d) Refund: `etsy.order.ticket` named as a placeholder Story 4.8 — `grep` confirms no such model — correctly labeled "design phase" in the mockup caption. |
+| 7 | `role-1-ba-lead.html` | ⚠ | n/a | ❌ | ⚠ | Persona narrative is clean, but mockup #4 title literally says "etsy.api.log Filter HTTP=400" (model name surfaced in end-user mockup). Address Change Modal — same not-built issue as doc #6. Other 4 mockups (Operations Dashboard, Design Files Kanban, SKU Drift list, Day-end report) align with built code. |
+| 8 | `role-2-marketing.html` | ❌ | ❌ | ❌ | ⚠ | Body prose leaks `etsy.api.log`, `product.channel.status`, `sale.order`. Multi-shop message hub explicitly "trong thiết kế" — honest. "Dashboard Kiểm soát giá" also "trong thiết kế" — honest. Standard-first never run on Multi-shop = could be `mail.alias` + per-shop filter vs new model. |
+| 9 | `role-3-san-xuat.html` | ⚠ | ❌ | ❌ | ⚠ | "Story 3.6 sẽ cho phép scan" admits scan-to-advance is roadmap — honest. But the kanban screens depict pipeline transitions that depend on the not-yet-live 17-state machine (doc #4). Standard-first never run on production-progress vs MRP work-order completion hook. |
+| 10 | `role-4-rd.html` | ❌ | ❌ | ❌ | ❌ | Body prose leaks `etsy.api.log`, `sale.order`. **All 3 mockups labeled "(target)" — none are built**. Story 6.5 — `grep "price.audit\|anomal" custom_addons/` only matches `data_migration_wizard.py` (different concept). Standard-first never run on price-variance reporting vs Odoo 19 CE pivot / spreadsheet views. Per `feedback_ceo_unified_dashboard.md` CEO wants unified ops dashboard — this is a separate audit topic. |
+| 11 | `role-5-pd.html` | ⚠ | ⚠ | ❌ | ✅ | Body prose leaks `sale.order` (one mention). Design Files kanban + upload wizard + versioning are coded (communities #9, #24). Mockup screens don't cite `multichannel_hub_core.design_file_kanban_view` baseline. |
+
+#### Reality cross-cuts (apply to multiple docs)
+
+- **Cron-name drift**: doc #3 says `cron_sync_orders`; actual XML IDs are `etsy_integration.cron_etsy_order_sync` (sale orders, 5-min) and `etsy_integration.ir_cron_etsy_fetch_emails` (Gmail poll, 10-min). The 5-min interval matches the lede claim; only the name is wrong.
+- **Duplicate XML ID**: `ir_cron_etsy_fetch_emails` vs `ir_cron_fetch_etsy_emails` both appear in `grep -E "ir_cron[^\"]*etsy[^\"]*email" custom_addons/`. Out of audit scope but flagged — may be a real bug in `etsy_integration`. Capture as separate finding when verified.
+- **17-stage MTO pipeline is aspirational**: only 5 stages currently seeded; impacts docs #4, #7, #9.
+- **Address-change wizard does NOT exist**: impacts docs #6, #7. Standard-first decision required before any custom build (Odoo 19 has `sale.order.partner_shipping_id` write rules + record rules for FR-017 gating).
+- **Barcode/QR scan is NOT built**: impacts docs #4 mockup #4, #9.
+- **Price audit / anomaly detection is NOT built**: impacts doc #10 entirely. Story 6.5 not started.
+- **Buyer-message ingestion blocked on Etsy `conversations_r` scope**: impacts docs #6, #8. External dep E1.
+
+#### Standard-Odoo-First decisions still owed (must run before any custom build)
+
+Per `feedback_standard_odoo_first.md`, the following customizations described in the docs lack a documented standard-considered trace:
+
+| Doc | Mechanism | Standard option to grep | Owner-escalation required? |
+|---|---|---|---|
+| #4 | 17-state pipeline | `stock.picking` + custom routes; `crm.stage`; `mrp.production` state machine | YES (custom 17-state vs `stock.picking` + `mrp.production` is a strategic call already partially made — needs ADR pointer) |
+| #4 | QC checklist | `quality_control` / `quality.check` (Enterprise) — CE gap; or `stock.move.line.lot_id` + chatter | YES |
+| #4 | Production scan | `stock.barcode` (standard CE); deserves grep | YES if scan-flow is wanted |
+| #6 | Address-change wizard | `sale.order.write({'partner_shipping_id': ...})` with record-rule gate | YES — owner approval before TransientModel |
+| #6 | Refund / `etsy.order.ticket` | `helpdesk.ticket` (Enterprise); `account.move` refund flow; `stock.return.picking` | YES |
+| #8 | Multi-shop message hub | `mail.alias` per shop + `discuss.channel` aggregation; or extending chatter on `etsy.shop` | YES |
+| #10 | Price audit | Pivot/dashboard views on `sale.order.line`; spreadsheet (Enterprise); custom dashboard | YES |
+
+#### Corrections to apply (Phase 3, after this commit)
+
+Red docs (4 + 1 supporting) — must add baseline footnote OR owner-escalation pointer; must strip dev-jargon from body prose:
+
+1. `flow-3a-giao-hang-in-noi-bo.html` — change "17 trạng thái pipeline" to honest "5-trạng thái hiện tại / 17 dự kiến (P1-PIPELINE-FULL)"; remove mockup #4 (barcode) or relabel as `(thiết kế)`; relabel mockup #5 QC checklist as `(thiết kế)` and pointer to standard-first audit owed; add baseline footnote pointing at `mhc.order_pipeline_state_seed.xml`.
+2. `flow-4-hau-mai.html` — flip address-change wizard from "đã có" framing to `(thiết kế, chờ owner duyệt vs sale.order.partner_shipping_id)`; keep refund placeholder as-is.
+3. `role-4-rd.html` — all 3 "(target)" mockups already correctly labeled; add a Section E pointer that Story 6.5 is unbuilt and standard-first not yet run; strip `etsy.api.log` + `sale.order` from body.
+4. `role-5-pd.html` — strip `sale.order` mention; add baseline footnote to Design Files kanban (`mhc.design_file_kanban_view`).
+
+Orange docs (2):
+
+5. `flow-3b-giao-hang-gearment-dropship.html` — strip dev jargon from body; add baseline footnote to fulfillment tab (inherited from `sale.order.view_order_form`); cite `gearment_webhook_dispatcher` real module path.
+6. `role-3-san-xuat.html` — add "depends on P1-PIPELINE-FULL" caveat at the kanban screens.
+
+Yellow docs (2):
+
+7. `flow-1-tao-san-pham.html` — strip dev jargon (`etsy.api.log`, `product.channel.status`, `product.template`); add baseline footnote `addons/product/views/product_views.xml#product_template_form_view`.
+8. `flow-2-nhan-don-hang-etsy.html` — fix cron name `cron_sync_orders` → `cron_etsy_order_sync`; strip dev jargon; add baseline footnote for sale.order Etsy tab.
+
+Green docs (3) — light touch only:
+
+9. `index.html` — verify all hyperlinks resolve after renames.
+10. `role-1-ba-lead.html` — change mockup #4 title from `etsy.api.log Filter HTTP=400` to plain `Bộ lọc lỗi Etsy theo mã HTTP`.
+11. `role-2-marketing.html` — strip dev jargon; multi-shop hub + price dashboard already correctly labeled "trong thiết kế".
+
+#### Acceptance gates for closing this slice
+
+1. Per-doc verdict in table flips from current state to ✅ on POV + Mockup axes (Std-1st may stay ⚠/❌ where owner-escalation is the right answer instead of code).
+2. `grep -rEn 'etsy\.api\.log|product\.channel\.status|@api\.depends|_inherit|cron_sync_orders|ir_cron_[a-z_]+' docs/owner/business-flows/` returns 0 hits in body prose (`<details class="technical">` callouts allowed but not used in current set).
+3. Every mockup has a baseline footnote `Mockup gốc: <XML_ID> tại <addon>/<view-file>; chỗ khác biệt: <lý do>` OR an explicit "(thiết kế, owner chưa duyệt)" pointer.
+4. Each "Standard-Odoo-First decision still owed" row above has an owner-escalation doc reference, an ADR pointer, OR a `(thiết kế)` label — not silent customization.
+5. `git add docs/owner/business-flows/` + commit on `feature/006-master-plan-coding`. Commit body cites this `findings.md` section by anchor.
+6. code-reviewer APPROVE (security-reviewer skipped per doc-only slice contract).
+7. Tracker `state` for `P-DOCS-BUSINESS-FLOWS-AUDIT` flips to `done`; `/learn` entry captures pattern "agent-generated docs need post-hoc Standard-First + reality audit when authored outside the playbook" OR explicit "no new pattern" note.
+
+#### Out of scope for this slice (logged for follow-up)
+
+- Migrate HTML → markdown (owner can request separate slice).
+- Fix the duplicate `ir_cron_etsy_fetch_emails` / `ir_cron_fetch_etsy_emails` XML IDs in `etsy_integration` (likely real bug, separate hotfix).
+- Resolve the 7 "Standard-Odoo-First decisions still owed" rows — each becomes its own owner-escalation request after this audit commits.
+- Refresh graphify when `multichannel_hub_fulfillment` ships new payload code (current graph is a snapshot at 2026-06-03T10:05Z, manifest 220 mhc/mhf refs).
+
+### P-DOCS-BUSINESS-FLOWS-AUDIT — correction pass (2026-06-03 Phase 3)
+
+**Why this addendum:** The initial audit (preceding sections) used graphify alone as the code-reality oracle, then ran a narrow `grep` on `address.*wizard`. Both signals returned empty, producing a "NOT BUILT" verdict for the address-change wizard. The HTML correction commit (`00dd25d561a`) relabeled flow-4 + role-1 mockup #3 as `(thiết kế)`. This was wrong.
+
+**Actual reality:**
+
+| Feature | Initial verdict | Correct verdict | Evidence |
+|---|---|---|---|
+| Address-change wizard | ❌ NOT built | ✅ **BUILT** | `etsy_integration/models/etsy_address_change_request.py` (docstring "Spec 003 US4 / P1-04", constraints C-AC-001/002/003), `views/etsy_address_change_request_views.xml` (73 lines list+form+action_approve+action_reject), `__manifest__.py:51` registered, tests in `test_address_change_db.py` + `test_address_change_workflow.py` |
+| Operations Dashboard | ❌ INVENTED (agent verdict) | ✅ **BUILT** | `multichannel_hub_core/views/operations_dashboard_views.xml` (185 lines, P1-01b refactor on sale.order.line with 34 columns from Excel fixture), `__manifest__.py:56` + `menu.xml:15` registered with action `action_operations_dashboard` |
+| Order pipeline framework | ⚠ partial (5 of 17 stages) | ⚠ partial **(verdict stands)** | `mhc/views/order_pipeline_views.xml` 226 lines; `data/order_pipeline_state_seed.xml:22` explicit "5-stage compact; 17-stage detail" |
+
+**Root cause for the wrong verdict:** graphify's community detection skips features with thin Python footprints. A model + list+form view + menu + manifest entry with ~20 LOC of business logic is real shipped code, but its community is too small to surface in `GRAPH_REPORT.md`. The narrow grep template (`address.*wizard`) missed `etsy_address_change_request*` because the model name doesn't contain "wizard" (the model IS the wizard backing — not a TransientModel wrapper around it).
+
+**Lesson codified:** memory `feedback_graphify_xml_blindspot.md`. 3-pronged check now mandatory: graphify + `find custom_addons -path '*/views/*<concept>*'` + `find custom_addons -path '*/models/*<concept>*'`. Any positive flips the verdict.
+
+**Amended verdicts in the main audit table** (now correct):
+- Row 6 (flow-4): POV ✅ · Std-1st ⚠ (refund not built; address-change built) · Mockup ⚠ (now needs baseline footnote, not "thiết kế" label) · Reality ⚠ (refund unbuilt; address-change shipped).
+- Row 7 (role-1): mockup #3 verdict same flip — ✅ for built, baseline `etsy_integration.view_etsy_address_change_request_form`.
+
+**Corrections applied** (Phase 3 of this slice):
+1. Reverted `(thiết kế)` labels in `flow-4-hau-mai.html` swimlane row 2, steps 5/6/7, mockup #2 title, Section E paragraph (restored FR-017-lock framing with code citation).
+2. Reverted `(thiết kế)` qualifier in `role-1-ba-lead.html` mu-lede.
+3. Relabeled `role-3-san-xuat.html` Production EOD Report as `(thiết kế)` — that one IS actually unbuilt (no `eod`/`shift_report` files anywhere in `custom_addons`).
+
+**Still owed for this audit** (not blocking the slice but worth tracking):
+- ~~Baseline XML-ID footnotes on the ~30 ⚠ screens~~ — **DONE in commit `43e6d275349`** (33 footnotes across 9 docs).
+- ~~Coverage gaps: flow-1 step 7 error-drill list, flow-2 partner-match disambiguation dialog~~ — **DONE in commit `<next>`** as inline pointers (cross-references to existing mockups rather than net-new screens, since the underlying surfaces are already covered: flow-1 step 7 → role-1 mockup #4 (Etsy log HTTP=400 filter); flow-2 step 5 → mockup #4 (Email log queue) + Odoo standard partner search dialog; flow-3a step 10 → mockup #6 (Mark Shipped). No new mockups needed.
+
+**Slice ready to flip to `done` after this commit lands.** All acceptance gates from the Phase 1 audit table are met. The 7 Standard-Odoo-First decisions still owed (multi-shop hub, price audit, QC checklist, barcode scan, refund, etc.) are tracked as separate follow-up audits — they will become individual owner-escalation requests when each becomes a build candidate.
+

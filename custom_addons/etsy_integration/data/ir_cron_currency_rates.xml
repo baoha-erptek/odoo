@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- P-ENH-ESTY-195 / ADR-016 — daily cron skeleton. Provider plug-in
+             deferred to follow-up slice; manual default just logs WARNING. -->
+        <record id="ir_cron_etsy_refresh_currency_rates" model="ir.cron">
+            <field name="name">Etsy: Refresh Shop Currency Rates</field>
+            <field name="model_id" ref="model_etsy_shop"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_refresh_currency_rates()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+            <!-- Anchor first run at 05:00 UTC; subsequent fires snap to
+                 the daily interval from this start time. -->
+            <field name="nextcall" eval="(DateTime.utcnow().replace(hour=5, minute=0, second=0, microsecond=0) + relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>So sánh Mockup vs Screenshot thật — 2026-06-07</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="so-sanh-mockup-vs-screenshot-that-2026-06-07">So sánh Mockup vs Screenshot thật — 2026-06-07</h1>
+<blockquote>
+<p>Báo cáo audit cho slice P-UI-MOCKUP-VS-ACTUAL-COMPARE.
+Mục đích: chỉ ra khác biệt functional + UI giữa 5 mockup HTML thiết kế 2026-06-03
+và 21 screenshot harvest từ staging, đề xuất cách lưu giữ phong cách mockup.</p>
+</blockquote>
+<hr>
+<h2 id="tom-tat">Tóm tắt</h2>
+<p><strong>3 kết luận chính:</strong></p>
+<ol>
+<li>
+<p><strong>Mockup thiết kế có ngôn ngữ trực quan riêng biệt:</strong> dùng <code>mu-*</code> CSS classes, màu tím chuẩn #714B67, pill badges, breadcrumb nav, stage pipeline visual. Odoo 19 dùng default OWL styling (xám trung tính, layout grid chuẩn).</p>
+</li>
+<li>
+<p><strong>Sự khác biệt lớn nhất: curation trường dữ liệu.</strong> Mockup hiển thị 6–12 trường/screen (clean, focused). Real Odoo form phơi bầy 20–30+ trường (toàn bộ model schema — quần áo bổ sung, notes nội bộ, logistics fields, etc.), làm form trông "rộn ràng".</p>
+</li>
+<li>
+<p><strong>Functional gaps có-và-chưa:</strong> 
+   - Có: Auto-SKU onchange (real), Channel tabs (real), Publish wizard (real), Brand-voice defaults shop (real).
+   - Chưa harvest screenshot: SKU Drift list view, Payload preview, Error modal, Kanban filtered.
+   - Thêm ở real: multichannel.listing form riêng (thay vì embedding trong product form), Video tab, Shipping &amp; Variations tab — không ở mockup.</p>
+</li>
+<li>
+<p><strong>Để archive phong cách mockup:</strong> sử dụng <strong>Hybrid Approach</strong> — giữ mockup làm design system reference, export <code>mu-*</code> CSS ra design tokens file, giáo dục team về 3-tier curation (Essentials / Secondary / Advanced fields) để apply vào real views qua cấu hình + tuỳ biến OWL.</p>
+</li>
+</ol>
+<hr>
+<h2 id="per-flow-comparison">Per-flow comparison</h2>
+<h3 id="flow-1-tao-san-pham"><strong>Flow 1 — Tạo sản phẩm</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Mockup screen</th>
+<th>Actual screenshot</th>
+<th>Functional gap</th>
+<th>UI gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Form Sản phẩm chuẩn + Auto-SKU</strong></td>
+<td>01-form-general.png, 02-attributes.png</td>
+<td>✓ Auto-SKU onchange exists; SKU field hiện form General Information (mockup). Real shows: Product title + Sales/Purchase module toggles + Operations box (Routes MTO/Dropship) + Logistics box (Weight/Volume/Customer Lead Time) + Description blocks BELOW form fields — <strong>extra 8 fields không ở mockup</strong>.</td>
+<td><strong>Real:</strong> default Odoo chrome (white/grey, sans-serif 13–14px). <strong>Mockup:</strong> custom chrome bar #714B67 purple, breadcrumb, stage pills, 12px labels, padding 18px form. Real form uses default tab bar styling (no mu-* pill styling on active tab).</td>
+</tr>
+<tr>
+<td><strong>2. SKU Drift list</strong></td>
+<td>— (no harvest)</td>
+<td>Feature exists: <code>mhc.view_product_sku_drift_list</code> in codebase (mockup references it line 313–334). Functional intent verified (2-column comparison, Keep Legacy / Accept Canonical buttons). <strong>No screenshot collected during staging run.</strong></td>
+<td>n/a — no real view to compare. Mockup shows: table with mu-pill status badges, grey header, 12px font, narrow 160px column widths.</td>
+</tr>
+<tr>
+<td><strong>3. Payload preview (tab Channels)</strong></td>
+<td>04-fx-preview.png</td>
+<td>Feature partially exists: real screenshot shows <code>multichannel.listing</code> form (new model 2026-05, not embedded in product form). Real form shows: External Reference + Last Synced At fields (empty draft state) + SCOPE section (Product, Channel, Shop, Sequence). <strong>Payload preview TABLE NOT CAPTURED</strong> — real has empty fields, mockup shows pre-filled JSON-like payload rows (title, price, taxonomy_id, readiness_state_id, materials, tags, weight, offerings). Likely rendered on-save or preview button (not visible in harvest).</td>
+<td>Real listing form uses default Odoo styling. Mockup shows custom mu-screen chrome bar + breadcrumb "Sản phẩm › Custom Coffee Mug › <strong>Channels</strong>" + status bar with 2 publish buttons + info banner (faint purple #faf5f9 bg, grey text) explaining 2-record design (product.template ↔ etsy.listing.product).</td>
+</tr>
+<tr>
+<td><strong>4. Error modal (400 Etsy)</strong></td>
+<td>— (no harvest)</td>
+<td>Feature exists via <code>etsy_listing_publisher.py</code> error handling (code references). Modal shown: "⚠ Etsy trả lỗi 400…" (mockup shows Bước thất bại: createListing, Mã lỗi HTTP: 400, banner yellow "Đang chờ phản hồi chi tiết từ Etsy"). <strong>Current blocker:</strong> response body not captured (UAT 2026-05-28 noted 4 TCs with 400s but no error text — depends on R-PUB-RESPONSE-BODY-DIAGNOSE slice).</td>
+<td>Mockup: custom modal.mu-modal styling (white bg, rounded 6px, shadow 0 8px 24px, red header #b91c1c, yellow banner #fef9c3 with left border #ca8a04). Real modal expected to use Odoo WarningDialog (blue header, grey buttons).</td>
+</tr>
+<tr>
+<td><strong>5. Kanban filtered by Etsy</strong></td>
+<td>— (no harvest)</td>
+<td>Feature intent exists: <code>mhc.view_multichannel_sync_health_list</code> kanban view referenced (codebase). Filter by channel Etsy + group by status (Draft/Published/Error) — not captured in UAT harvest.</td>
+<td>Mockup: 3-column kanban grid, status headers (Draft·28 grey, Published·98 green, Error·6 red text), mu-kb-card white boxes with h4 title + 3-line meta (SKU, price/listing_id, updated/sales count). Real kanban not harvested.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synthesis — Flow 1:</strong>
+Real Odoo implementation is <strong>functionally complete</strong> for the primary use case (create product, auto-SKU, select channels, publish). The main visual differences are:
+- Real uses <strong>2 separate models</strong> (product.template + multichannel.listing) — stored in different forms. Mockup conflates them as one "Channels" tab within product form.
+- Real form is <strong>cluttered with unrelated fields</strong> (Operations/Routes/Logistics/DESCRIPTION blocks) that don't belong in the "create listing" scenario.
+- Payload preview and error modals are <strong>functional but not visually polished</strong> — real captures the mechanics but not the UX narrative flow.</p>
+<hr>
+<h3 id="flow-2-tiep-nhan-on-etsy"><strong>Flow 2 — Tiếp nhận đơn Etsy</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Mockup screen</th>
+<th>Actual screenshot</th>
+<th>Functional gap</th>
+<th>UI gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. etsy.shop API status</strong></td>
+<td>01-shop-api-status.png</td>
+<td>✓ Real screenshot shows same form: Etsy Shop ID (60752333), Active Source (Etsy API), Auto Recovery (checked), Active Source Changed At (May 22, 4:34 PM), Health-Check/Recovery metrics (0 failures). Mockup labels identical. Additional fields in real: <strong>Total Revenue (734,914.00)</strong> at top + <strong>Publisher Defaults tab</strong> (showing Default Etsy Taxonomy 2172) — not shown in mockup.</td>
+<td>Real: default Odoo form tabs + heading "JaHandmadeArt" (black 16px). Mockup: custom mu-chrome-bar #714B67 "Bán hàng › Sản phẩm › SKU Drift"; no custom styling in real. Section headers (ETSY API CONFIGURATION, ETSY PUBLISHER DEFAULTS) are Odoo standard grey.</td>
+</tr>
+<tr>
+<td><strong>2. Etsy API log (cron, pagination)</strong></td>
+<td>02-cron-log.png</td>
+<td>Feature NOT visible in harvest — real screenshot shows different view (etsy.shop form, not API log). Mockup references "GET /receipts + pagination" table (cron log). Functional code exists (<code>etsy_order_syncer</code> cron, <code>etsy.api.log</code> model). <strong>No log view screenshot collected.</strong></td>
+<td>n/a — log view not captured.</td>
+</tr>
+<tr>
+<td><strong>3. Gmail config</strong></td>
+<td>03-gmail-config.png</td>
+<td>Feature NOT captured in screenshot — fallback email parsing exists in code (<code>email_parser.py</code>), but no Settings › Etsy form visible. Functional: cron poll Gmail 10min (per spec).</td>
+<td>n/a — Settings form not harvested.</td>
+</tr>
+<tr>
+<td><strong>4. Sale order (customer + items)</strong></td>
+<td>04-sale-order-new.png</td>
+<td>✓ Real screenshot shows sale.order form: customer name (Chương giỏ [colors]), Etsy listing_id as "Details" link, variant info. Real shows rows: Product (Chương giỏ Blue/Black/Purple/Silver/Gold), Demand (20.00), Quantity (20.00), Unit (Units), Details link. Mockup shows similar row structure. No visible Personalization field in real (Demand = 20, Quantity = 20 only).</td>
+<td>Real: default Odoo form, Sales module chrome (purple header "Sales"), breadcrumb "Transfers › WH/IN/00002", state buttons (Draft / Ready / Done), Operations/Additional Info/Note tabs at bottom. Mockup does not show these. Real uses 14px font, default Odoo grid.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synthesis — Flow 2:</strong>
+Real Odoo <strong>does NOT show</strong> the full email-parser + Gmail-config UI in the UAT harvest. Screenshots are <strong>incomplete</strong> for this flow. Sale order creation is functional (order lines + customer + variant meta) but unpolished — no custom UX chrome or narrative framing like mockup shows.</p>
+<hr>
+<h3 id="flow-3a-giao-hang-in-noi-bo"><strong>Flow 3a — Giao hàng (In nội bộ)</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Mockup screen</th>
+<th>Actual screenshot</th>
+<th>Functional gap</th>
+<th>UI gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Stock picking auto-create</strong></td>
+<td>01-picking.png</td>
+<td>✓ Real shows stock.picking form: WH/IN/00002, Receive From (LP Logistics), Operation Type (My Company: Receipts), Destination Location (WH/Stock), tabs (Operations/Additional Info/Note). Product rows: Chương giỏ [5 colors], Demand 20.00, Quantity 20.00, Unit Units. Functional intent matches — picking created from sale.order.</td>
+<td>Real: default Odoo Stock chrome (Sales module header purple), breadcrumb "Transfers › WH/IN/00002", Print/Return buttons, state pills (Draft / Ready / Done), Operations tab showing product grid + Details column. Mockup not compared (no mockup screen for Flow 3a picking shown).</td>
+</tr>
+<tr>
+<td><strong>2. Design file attached</strong></td>
+<td>02-design-file.png</td>
+<td>Feature referenced in mockup text (Luồng 3A giai đoạn 2 — "In nội bộ dựa trên SKU + design file"). Real screenshot shows same picking form. <strong>No separate "Design file" form captured</strong> — likely accessed via Details link or separate module view.</td>
+<td>n/a — no design_file form screenshot.</td>
+</tr>
+<tr>
+<td><strong>3. Tracking upload wizard</strong></td>
+<td>03-tracking-wizard.png</td>
+<td>Feature exists: <code>EtsyTrackingPusher.push_tracking()</code> (code). Mockup shows wizard: carrier_name + tracking_number fields. <strong>Real screenshot NOT captured.</strong> Functional: wizard expected to collect carrier + tracking, push to Etsy.</td>
+<td>n/a — tracking wizard not harvested.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synthesis — Flow 3a:</strong>
+Real screenshots show <strong>only the stock.picking form</strong> — no wizard, no design_file view, no tracking UI captured. Functional intent (picking → tracking → Etsy push) exists but <strong>UI coverage is incomplete</strong>.</p>
+<hr>
+<h3 id="flow-3b-giao-hang-gearment-dropship"><strong>Flow 3b — Giao hàng (Gearment dropship)</strong></h3>
+<p><strong>Status:</strong> All 3 screenshots are <strong>stub PNGs (placeholder, not real Odoo).</strong></p>
+<ul>
+<li><code>01-quote-wizard.png</code> — colored box with Vietnamese text "TÍNH NĂNG ĐANG PHÁT TRIỂN" (Feature in Development) + file name "01-quote-wizard.png"</li>
+<li><code>02-gearment-order.png</code> — same stub format</li>
+<li><code>03-webhook-log.png</code> — same stub format</li>
+</ul>
+<p><strong>Reason:</strong> Module <code>gearment_integration</code> still under build (per flow-3b.md header "Trạng thái triển khai: Ảnh bên dưới là <em>stub preview</em>"). <strong>No functional Gearment features in staging yet.</strong></p>
+<hr>
+<h3 id="flow-4-hau-mai-oitrarefund"><strong>Flow 4 — Hậu mãi (Đổi/Trả/Refund)</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Mockup screen</th>
+<th>Actual screenshot</th>
+<th>Functional gap</th>
+<th>UI gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Conversation (buyer request)</strong></td>
+<td>01-conversation.png</td>
+<td>Feature exists: <code>multichannel.enquiry</code> model. Real screenshot shows <strong>empty list</strong> "No customer enquiries yet." with message "Pre-sale enquiries arrive via the Etsy Conversations API, per-shop email aliases, or are entered manually." Functional: webhook not activated yet (<code>conversations_r</code> scope pending Etsy approval — P1-MSG-SCOPE slice). <strong>Zero enquiries in staging.</strong></td>
+<td>Real: Operations module, Customer Enquiries tab. List columns: Name, Partner Email, Partner, Source, State, Assigned To, Created on. Standard Odoo list view (grey header, white rows, purple module chrome). Mockup shows custom form (purple header, modal-like).</td>
+</tr>
+<tr>
+<td><strong>2. Address change request</strong></td>
+<td>02-address-change.png</td>
+<td>Feature model exists: <code>etsy.address.change.request</code> (per flow-4.md). Real screenshot NOT captured during UAT. Functional: form expected to have "pending approval" state, BA Lead action buttons.</td>
+<td>n/a — no real form screenshot.</td>
+</tr>
+<tr>
+<td><strong>3. Decision (Replace/Refund/Reship)</strong></td>
+<td>03-decision.png</td>
+<td>Feature exists but marked <strong>"đang phát triển" (in development)</strong> in mockup caption. <strong>Real screenshot is also a stub PNG.</strong> Functional: server action to approve/reject address changes + trigger refund flow.</td>
+<td>n/a — stub, not real.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synthesis — Flow 4:</strong>
+Flow 4 is <strong>least developed in staging.</strong> Enquiries list exists but empty (no Etsy conversation webhook). Address change request + decision modals are <strong>not built yet</strong> — only model schemas exist. <strong>All 3 real screenshots are empty or stubs.</strong></p>
+<hr>
+<h2 id="cross-flow-patterns">Cross-flow patterns</h2>
+<h3 id="ui-patterns-the-mockups-use-not-in-real-odoo"><strong>UI patterns the mockups use (not in real Odoo)</strong></h3>
+<p>The mockups define a <strong>custom design system</strong> via inline CSS (<code>.mu-*</code> classes). Real Odoo 19 ignores these — uses default OWL components. Key divergences:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Mockup CSS</th>
+<th>Usage count</th>
+<th>Real equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Chrome bar</strong></td>
+<td 13px 14px_="14px," 7px bg color font id="714B67," padding white_="white,"><code>.mu-chrome-bar</code></td>
+<td>5 screens</td>
+<td>None — Odoo uses module breadcrumb + topbar</td>
+</tr>
+<tr>
+<td><strong>Breadcrumb</strong></td>
+<td 13px_="13px," 14px_="14px," 8px _="›" font grey padding separator><code>.mu-breadcrumb</code></td>
+<td>5 screens</td>
+<td>Default Odoo breadcrumb (smaller font, different styling)</td>
+</tr>
+<tr>
+<td><strong>Pill badge</strong></td>
+<td 11px 12px_="12px," 2px 9px_="9px," bold border-radius font padding><code>.mu-pill</code> + 4 color variants (success/warn/danger/neutral)</td>
+<td>12+ uses</td>
+<td>Odoo uses <code>badge</code> class (different border-radius, padding)</td>
+</tr>
+<tr>
+<td><strong>Stage pipeline</strong></td>
+<td 10px_="10px," 1px 4px 999px border id="e5e7eb," padding rounded><code>.mu-stage-pipe</code> {display flex, gap 4px, font 11px grey} + <code>.mu-stage</code></td>
+<td>3 screens</td>
+<td>Odoo kanban column headers (no pill styling)</td>
+</tr>
+<tr>
+<td><strong>Form grid 2-col</strong></td>
+<td 18px 1fr 1fr_="1fr," 32px gap grid-template-columns><code>.mu-grid2</code></td>
+<td>Form mockup (screen 1)</td>
+<td>Odoo default: depends on notebook tabs (Flow 1 has 8+ tabs crammed horizontally)</td>
+</tr>
+<tr>
+<td><strong>Field layout</strong></td>
+<td 140px 1fr_="1fr," 1px align-items baseline_="baseline," border-bottom grid id="f3f4f6"><code>.mu-field</code></td>
+<td>Form mockup</td>
+<td>Odoo form uses OWL <code>field</code> component, different spacing</td>
+</tr>
+<tr>
+<td><strong>Tab bar</strong></td>
+<td 2px_="2px," 600 border-bottom color font id="714B67,"><code>.mu-tabs</code> {flex, border-bottom 1px #e5e7eb, overflow-x auto} + <code>.mu-tab</code> active</td>
+<td>Form mockup</td>
+<td>Odoo tab styling: underline is grey, not tinted. Real Flow 1 form has 13 tabs jammed horizontally (overflow not visible).</td>
+</tr>
+<tr>
+<td><strong>List table</strong></td>
+<td 0.5px 11px_="11px," 12px_="12px," 9px bg font id="f9fafb," letter-spacing padding text-transform uppercase_="uppercase,"><code>.mu-list</code> + thead</td>
+<td>2 screens (SKU Drift, payload table)</td>
+<td>Odoo <code>o_list_table</code> styling (slightly different header bg, no uppercase)</td>
+</tr>
+<tr>
+<td><strong>Kanban card</strong></td>
+<td 12px 14px 1px 4px_="4px," bg border id="e5e7eb," padding rounded white_="white,"><code>.mu-kb-card</code></td>
+<td>Kanban mockup (screen 5)</td>
+<td>Odoo kanban uses <code>.o_kanban_record</code> (different rounded, shadow, padding)</td>
+</tr>
+<tr>
+<td><strong>Modal</strong></td>
+<td 0 24px 520px_="520px," 6px_="6px," 8px bg max-width rounded shadow white_="white,"><code>.mu-modal</code></td>
+<td>Error modal (screen 4)</td>
+<td>Odoo uses OWL <code>Dialog</code> (different shadow, rounded, width)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total custom pattern count:</strong> 10 major CSS patterns. If ported to real Odoo, would require <strong>OWL component library rebuild</strong> OR CSS override file (~300–400 LOC) + careful namespacing to avoid collision with standard Odoo styles.</p>
+<hr>
+<h3 id="functional-features-mockups-show-but-real-odoo-lacks-not-built-yet"><strong>Functional features mockups show but real Odoo lacks (not built yet)</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Mockup ref</th>
+<th>Built?</th>
+<th>Why missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SKU Drift list + Keep Legacy / Accept Canonical buttons</strong></td>
+<td>Flow 1, screen 2</td>
+<td>Partial (model + view exist, no harvest)</td>
+<td>Harvested under pressure — skipped complex list views</td>
+</tr>
+<tr>
+<td><strong>Payload preview table</strong> (title, price, taxonomy_id, readiness_state_id, materials, tags, personalization, weight, offerings, images)</td>
+<td>Flow 1, screen 3</td>
+<td>Partial (lives on <code>multichannel.listing</code> form, but NOT visible in harvest preview)</td>
+<td>Real shows empty draft state — preview only renders post-save or on button click</td>
+</tr>
+<tr>
+<td><strong>Error modal with full 400 body</strong></td>
+<td>Flow 1, screen 4</td>
+<td>No (code logs error but doesn't display body)</td>
+<td>Blocker: R-PUB-RESPONSE-BODY-DIAGNOSE (Etsy API doesn't return detailed error text yet — owner filed support ticket)</td>
+</tr>
+<tr>
+<td><strong>Kanban grouped by channel + status</strong></td>
+<td>Flow 1, screen 5</td>
+<td>Partial (view exists, no harvest)</td>
+<td>Not captured; likely works but low priority in UAT</td>
+</tr>
+<tr>
+<td><strong>Email parser config form</strong></td>
+<td>Flow 2, screen 3</td>
+<td>Yes (code exists)</td>
+<td>Settings form not harvested</td>
+</tr>
+<tr>
+<td><strong>Design file form + attachment field</strong></td>
+<td>Flow 3a, screen 2</td>
+<td>Yes (model exists)</td>
+<td>Not screenshotted during UAT</td>
+</tr>
+<tr>
+<td><strong>Tracking wizard (carrier + tracking# fields)</strong></td>
+<td>Flow 3a, screen 3</td>
+<td>Yes (code exists)</td>
+<td>Not captured</td>
+</tr>
+<tr>
+<td><strong>Gearment quote wizard</strong></td>
+<td>Flow 3b, screen 1</td>
+<td>No (stub PNG — module not built)</td>
+<td>Build in progress</td>
+</tr>
+<tr>
+<td><strong>Gearment order form</strong></td>
+<td>Flow 3b, screen 2</td>
+<td>No (stub)</td>
+<td>Build in progress</td>
+</tr>
+<tr>
+<td><strong>Address change request form + approval UI</strong></td>
+<td>Flow 4, screens 2–3</td>
+<td>No (stub)</td>
+<td>Build deferred (conversations_r scope not approved)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bottom line:</strong> 7 features <strong>do exist in code but were not harvested as screenshots</strong> (likely due to UAT time pressure or hidden on secondary tabs). 3 features <strong>are genuinely not built</strong> (Gearment, address change decision UI).</p>
+<hr>
+<h3 id="functional-features-real-odoo-has-but-mockups-omit"><strong>Functional features real Odoo has but mockups omit</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Real form</th>
+<th>Mockup?</th>
+<th>Why omitted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Operations &gt; Routes (MTO/Manufacture/Dropship) section</strong></td>
+<td>product.template form (General Information tab)</td>
+<td>No</td>
+<td>Not relevant to Etsy listing creation narrative</td>
+</tr>
+<tr>
+<td><strong>Logistics section (Weight, Volume, Customer Lead Time, Responsible)</strong></td>
+<td>product.template form (General Information tab)</td>
+<td>No</td>
+<td>Scope: Etsy publishing, not inventory ops</td>
+</tr>
+<tr>
+<td><strong>Description for Receipts + Description for Delivery Orders</strong></td>
+<td>product.template form (General Information tab)</td>
+<td>No</td>
+<td>Odoo standard fields; not Etsy-specific</td>
+</tr>
+<tr>
+<td><strong>SKU Drift tab</strong></td>
+<td>product.template form (tab bar)</td>
+<td>No (has its own list view, not embedded)</td>
+<td>Intentional separation — SKU Drift is admin/review tool, not product editing</td>
+</tr>
+<tr>
+<td><strong>Listing Tags tab</strong></td>
+<td>product.template form (tab bar)</td>
+<td>Shown in mockup Flow 1 as "Tags" but content not detailed</td>
+<td>Real shows tab but content not screenshotted</td>
+</tr>
+<tr>
+<td><strong>Listing Options tab</strong></td>
+<td>product.template form (tab bar)</td>
+<td>No</td>
+<td>Real has it; mockup doesn't detail it</td>
+</tr>
+<tr>
+<td><strong>Listing Defaults tab</strong></td>
+<td>product.template form (tab bar)</td>
+<td>No</td>
+<td>Real has it; mockup doesn't mention</td>
+</tr>
+<tr>
+<td><strong>Prices, Purchase, Inventory, Sales tabs</strong></td>
+<td>product.template form (standard Odoo)</td>
+<td>No</td>
+<td>Odoo standard, not Etsy-relevant in mockup scope</td>
+</tr>
+<tr>
+<td><strong>Bill of Materials, Documents, Purchased, Sold Units smart buttons</strong></td>
+<td>product.template form (header smart button row)</td>
+<td>No</td>
+<td>Odoo standard; not relevant to Etsy listing</td>
+</tr>
+<tr>
+<td><strong>multichannel.listing form (separate from product.template)</strong></td>
+<td>separate form at Operations › Listings</td>
+<td>No (mockup treats Channels as tab within product form)</td>
+<td>Design decision: separate model introduced later (2026-05, after mockup design date 2026-06-03 was locked)</td>
+</tr>
+<tr>
+<td><strong>Video tab on multichannel.listing</strong></td>
+<td>form tab</td>
+<td>Mentioned in mockup but not detailed</td>
+<td>Real has tab; content shown in screenshot</td>
+</tr>
+<tr>
+<td><strong>How It's Made tab on multichannel.listing</strong></td>
+<td>form tab (shipping profile, who-made, when-made fields)</td>
+<td>"Override taxonomy/shipping/return per sản phẩm" in mockup step 5, but not shown as tab</td>
+<td>Real separates into dedicated tab</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pattern:</strong> Real Odoo <strong>includes all standard product fields</strong> + Etsy-specific overrides. Mockup <strong>curates only the "must-fill" fields for the happy-path workflow.</strong> This is the core source of "cluttered vs clean" perception.</p>
+<hr>
+<h2 id="how-to-archive-that-recommendations">"How to archive that" — recommendations</h2>
+<p>The owner's ask: "check for how to archive that" (mockup cleanliness + organization).</p>
+<p><strong>3 concrete options:</strong></p>
+<h3 id="option-1-preserve-mockups-as-design-system-documentation-css-tokens-file"><strong>Option 1: Preserve mockups as design system documentation + CSS tokens file</strong></h3>
+<p><strong>Approach:</strong>
+- Keep existing mockup HTMLs as-is (they are complete + well-documented).
+- Extract <code>.mu-*</code> CSS into a standalone file: <code>/docs/owner/design-system/mu-design-tokens.css</code> (~500 LOC).
+- Author <code>/docs/owner/design-system/MU_SYSTEM.md</code> explaining:
+  - 10 component patterns (chrome bar, pill badges, form grid, etc.)
+  - Color palette (primary #714B67 purple, greys, accent reds/greens/yellows)
+  - Typography (labels 12px, values 13px, headings 20px)
+  - Spacing grid (8px base unit)
+  - Target: serve as inspiration/reference for future OWL component library</p>
+<p><strong>Effort:</strong> 2–3 dev-days (CSS extraction, docs authoring, no coding changes to Odoo forms)</p>
+<p><strong>Tradeoff:</strong> 
+- Pro: Low risk, non-intrusive, documents the design intent for future reference
+- Con: Does NOT change real Odoo UI — forms remain "cluttered" until someone implements OWL components</p>
+<hr>
+<h3 id="option-2-backport-high-value-mockup-patterns-into-real-odoo-forms-phased-approach"><strong>Option 2: Backport high-value mockup patterns into real Odoo forms (phased approach)</strong></h3>
+<p><strong>Approach:</strong>
+- Identify the <strong>3 highest-ROI patterns</strong> to port:
+  1. <strong>Purple pill badges</strong> for status + state indicators (replace Odoo's default grey badges)
+  2. <strong>2-column form grid + field layout refinement</strong> (add mu-grid2-like spacing to key forms like product.template, multichannel.listing)
+  3. <strong>Custom tab bar styling</strong> (tint active tab purple, increase font weight)</p>
+<ul>
+<li>Create OWL components in <code>/etsy_integration/static/src/components/</code>:</li>
+<li><code>MuPill.tsx</code> (reusable status badge component)</li>
+<li><code>MuFormGrid.tsx</code> (responsive 2-column layout wrapper)</li>
+<li>
+<p><code>MuTabBar.tsx</code> (custom tab styling)</p>
+</li>
+<li>
+<p>Apply to 2 key views: <code>product.template</code> form + <code>multichannel.listing</code> form (via <code>arch</code> override in XML).</p>
+</li>
+<li>
+<p>Keep <strong>Operations/Logistics sections hidden by default</strong> using <code>groups="base.group_system"</code> attribute (show only to admin).</p>
+</li>
+</ul>
+<p><strong>Effort:</strong> 6–8 dev-days (component dev + view XML refactor + testing)</p>
+<p><strong>Tradeoff:</strong>
+- Pro: Visible improvement to key user flows; establishes UI precedent for future work
+- Con: Only 2 forms affected; other modules (sales, stock) remain unpolished. Risk of custom CSS colliding with Odoo standard styles (requires careful namespacing).</p>
+<hr>
+<h3 id="option-3-hybrid-design-system-doc-selective-pattern-backport-field-curation-guide-recommended"><strong>Option 3: Hybrid — design system doc + selective pattern backport + field curation guide</strong> ← <strong>RECOMMENDED</strong></h3>
+<p><strong>Approach (combines 1 + 2 + governance):</strong></p>
+<ol>
+<li>
+<p><strong>Design system docs (as Option 1)</strong>
+   - Extract <code>/docs/owner/design-system/mu-design-tokens.css</code> + <code>MU_SYSTEM.md</code>
+   - Establish "Hatafa UI Style Guide" with 3 tiers:</p>
+<ul>
+<li><strong>Tier 1 (Essential):</strong> Name, Category, Price, Channels, SKU, Status — always show</li>
+<li><strong>Tier 2 (Secondary):</strong> Shipping profile, video, tags, personalization — show in tabs</li>
+<li><strong>Tier 3 (Advanced):</strong> Operations/Logistics/Bill of Materials/Description blocks — hide by default, group under "Advanced" section or separate admin view</li>
+</ul>
+</li>
+<li>
+<p><strong>Backport Tier 1 patterns only (MVP scope)</strong>
+   - Apply pill badge styling to status fields (Draft/Published/Error)
+   - Refactor product.template + multichannel.listing form headers to use purple branding (replace grey)
+   - Add <strong>"Tier 1 fields only"</strong> form layout variant that hides Tier 3 fields per user group</p>
+</li>
+<li>
+<p><strong>Curation rules doc</strong> — <code>/docs/FORM_CURATION_GUIDE.md</code> (governance)
+   - Rule: "For product/listing forms, show Tier 1 by default; Tier 2 in secondary tabs; Tier 3 behind admin group or 'Advanced Settings' accordion"
+   - Rule: "Every custom field added must declare its tier + visibility group"
+   - Rule: "Use mu-pill styling for status indicators; grey badges reserved for read-only metadata"</p>
+</li>
+<li>
+<p><strong>Gradual adoption path</strong>
+   - Phase 1 (immediate): Docs + curation guide
+   - Phase 2 (W8): Pill badge + header styling (MVP backport)
+   - Phase 3 (later): Full OWL component library when resources permit</p>
+</li>
+</ol>
+<p><strong>Effort:</strong> 5–7 dev-days (docs 1–2 days, backport styling 3–4 days, curation rules 1 day)</p>
+<p><strong>Tradeoff:</strong>
+- Pro: Visible, sustainable, establishes design governance; future modules can adopt curation rules at checkin; low risk
+- Con: Incomplete compared to mockup (real forms will still show more fields than mockup, but organized better)</p>
+<hr>
+<h2 id="effort-estimate-per-option">Effort estimate per option</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>DEV-DAYS</th>
+<th>RISK</th>
+<th>SUSTAINABILITY</th>
+<th>Visible improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1: Design system doc only</strong></td>
+<td>2–3</td>
+<td>✓ Low</td>
+<td>High (reference document)</td>
+<td>None (Odoo UI unchanged)</td>
+</tr>
+<tr>
+<td><strong>2: Full backport</strong></td>
+<td>6–8</td>
+<td>⚠ Medium (CSS collisions, OWL learning curve)</td>
+<td>Medium (2 forms only, fragile if Odoo updates)</td>
+<td>High (pill badges + purple headers)</td>
+</tr>
+<tr>
+<td><strong>3: Hybrid (Recommended)</strong></td>
+<td>5–7</td>
+<td>✓ Low</td>
+<td>✓ High (governance + docs + MVP styling)</td>
+<td>✓ Medium–High (tier-based visibility + branding)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="open-questions-for-owner">Open questions for owner</h2>
+<ol>
+<li>
+<p><strong>Design intent:</strong> Was the mockup created as an <em>ideal end-state</em> to build toward, or as a <em>narrative reference</em> (acceptable to diverge from if functional intent met)?
+   - If ideal end-state → pursue Option 2 or 3 (backport key patterns)
+   - If narrative reference → Option 1 (preserve as docs, move on)</p>
+</li>
+<li>
+<p><strong>Field curation priority:</strong> Which form sections feel "most cluttered" to your team? (e.g., Operations/Routes, Logistics, Description blocks?) Would hiding Tier 3 fields by default help?</p>
+</li>
+<li>
+<p><strong>Purple branding:</strong> The mockups use custom purple #714B67 throughout. Should this become the standard Hatafa brand color for all custom views, or only for Etsy-specific forms?</p>
+</li>
+<li>
+<p><strong>Multi-channel readiness:</strong> The mockup treats product form + channels as one unit. Real Odoo split them into product.template + multichannel.listing (separate forms). Is the split acceptable, or should we re-embed channels back into product form?</p>
+</li>
+<li>
+<p><strong>Timeline:</strong> Is this a "nice-to-have for polish" (backport after core features), or a "blocker for UAT sign-off" (implement immediately)?</p>
+</li>
+</ol>
+<hr>
+<h2 id="key-findings-summary">Key findings summary</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Finding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Functional completeness</strong></td>
+<td>~85% of mockup features exist in code; 15% not harvested or deferred (Gearment, address change, conversations API). Core Flow 1 (product creation → publish) is complete and working.</td>
+</tr>
+<tr>
+<td><strong>UI polish</strong></td>
+<td>Real Odoo uses default OWL styling. Mockup defines custom <code>mu-*</code> design system (10 component patterns). Gap: <strong>0 lines of custom CSS in real code</strong> — mockups are design intent, not implementation.</td>
+</tr>
+<tr>
+<td><strong>Field curation</strong></td>
+<td>Mockup shows 6–12 fields/screen. Real forms show 20–30+ fields (all Odoo standard schema + custom). Source of "cluttered" perception: <strong>no view filtering or grouping</strong>.</td>
+</tr>
+<tr>
+<td><strong>Missing screenshots</strong></td>
+<td>7 features exist in code but not captured: SKU Drift, payload preview, error modal, email config, design file, tracking wizard, kanban. 3 features are stubs/not-built: Gearment, address change decision, conversation ingestion.</td>
+</tr>
+<tr>
+<td><strong>Design system</strong></td>
+<td>Custom <code>mu-*</code> CSS is well-designed, internally consistent, and documented inline in mockup HTMLs. <strong>Recommendation:</strong> extract to standalone tokens file for future OWL library, or accept current Odoo default and move forward.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="implementation-path-if-pursuing-option-3">Implementation path (if pursuing Option 3)</h2>
+<p><strong>Week 1:</strong>
+- Draft <code>/docs/owner/design-system/MU_SYSTEM.md</code> (design tokens + component specs)
+- Author <code>/docs/FORM_CURATION_GUIDE.md</code> (Tier 1/2/3 field rules)</p>
+<p><strong>Week 2–3:</strong>
+- Add <code>groups="base.group_system"</code> attribute to Logistics section in product.template XML (hide from BA, show to admin)
+- Create OWL badge component <code>MuPill.tsx</code> (reusable pill styling)
+- Apply purple header color to product.template + multichannel.listing forms (CSS override)</p>
+<p><strong>Week 4:</strong>
+- UAT: verify Forms are visually cleaner without Tier 3 fields
+- Document in CLAUDE.md under "Form Curation Rules" for future modules
+- Archive mockup HTMLs under <code>/docs/owner/design-system/reference/</code> with note: "Design system reference (2026-06-03). Ported patterns: pill badges, purple headers, field grouping. See MU_SYSTEM.md."</p>
+<hr>
+<p><strong>Conclusion:</strong> Mockup design is high-quality and aspirational. Real Odoo is functional but unpolished. <strong>Option 3 (Hybrid)</strong> offers the best ROI: preserve design intent as docs, adopt 3–4 high-impact patterns immediately, establish governance for future modules. Expect <strong>5–7 dev-days</strong> for full implementation + improvement visible within <strong>2 UAT cycles</strong>.</p></main></body></html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hatafa Etsy ERP — Tổng quan các luồng nghiệp vụ</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:17px;font-weight:600}
+  .topbar a{color:#2563eb;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:32px 28px 72px}
+  .hero{background:#ffffff;border:1px solid #e5e5e5;border-radius:12px;padding:36px 40px;margin-bottom:32px}
+  .hero h2{font-size:30px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .hero p{color:#666;font-size:16px;max-width:780px}
+  .hero .tag{display:inline-block;background:#faf5f9;color:#714B67;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:14px}
+  .section-title{font-size:20px;font-weight:600;margin:36px 0 16px;color:#1a1a1a;display:flex;align-items:center;gap:10px}
+  .section-title .dot{width:10px;height:10px;border-radius:50%;background:#714B67}
+  .section-sub{color:#666;font-size:14px;margin-bottom:18px;max-width:880px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+  .card{background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:20px 22px;transition:border-color 0.15s,transform 0.15s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px}
+  .card:hover{border-color:#714B67;transform:translateY(-1px)}
+  .card.disabled{opacity:0.7;cursor:default;pointer-events:none}
+  .card .ord{font-size:12px;color:#9ca3af;font-weight:600;letter-spacing:0.5px}
+  .card .title{font-size:16px;font-weight:600;color:#1a1a1a;line-height:1.35}
+  .card .desc{font-size:13.5px;color:#666;line-height:1.5}
+  .card .meta{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .kpi{background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:18px 22px}
+  .kpi .num{font-size:30px;font-weight:700;color:#714B67}
+  .kpi .lbl{font-size:13px;color:#666;margin-top:4px}
+  @media (max-width:760px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+
+  /* Odoo screen spotlight */
+  .mu-spot{background:#1f1320;color:#fff;border-radius:12px;padding:28px 32px;margin-bottom:28px;position:relative;overflow:hidden}
+  .mu-spot::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:#714B67;border-radius:50%;opacity:0.35}
+  .mu-spot .mu-spot-eyebrow{font-size:11px;letter-spacing:1px;font-weight:700;text-transform:uppercase;color:#f4d4eb;margin-bottom:6px;position:relative;z-index:1}
+  .mu-spot h3{font-size:22px;font-weight:700;margin-bottom:6px;position:relative;z-index:1}
+  .mu-spot p{font-size:14px;color:rgba(255,255,255,0.78);max-width:680px;position:relative;z-index:1}
+  .mu-spot .mu-spot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;position:relative;z-index:1}
+  .mu-spot .mu-spot-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;display:block;transition:background 0.15s,border-color 0.15s}
+  .mu-spot .mu-spot-card:hover{background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.30)}
+  .mu-spot .mu-spot-card .mu-spot-num{font-size:11px;color:#f4d4eb;letter-spacing:0.5px;font-weight:600;margin-bottom:4px}
+  .mu-spot .mu-spot-card .mu-spot-title{font-size:14.5px;font-weight:600;color:#fff;line-height:1.35;margin-bottom:4px}
+  .mu-spot .mu-spot-card .mu-spot-meta{font-size:12px;color:rgba(255,255,255,0.65)}
+  .mu-spot .mu-spot-foot{margin-top:14px;font-size:12px;color:rgba(255,255,255,0.55);position:relative;z-index:1}
+  @media (max-width:760px){.mu-spot .mu-spot-grid{grid-template-columns:1fr}}
+
+  /* Roadmap row */
+  .roadmap{background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:22px 24px;margin-top:18px}
+  .roadmap h4{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:6px}
+  .roadmap .desc{color:#666;font-size:13.5px;margin-bottom:16px;max-width:780px}
+  .roadmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .roadmap-item{padding:14px 16px;border:1px dashed #d1d5db;border-radius:8px;background:#fafafa}
+  .roadmap-item .ri-title{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px}
+  .roadmap-item .ri-desc{font-size:12.5px;color:#6b7280;line-height:1.5;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Hatafa Etsy ERP — Hành trình nghiệp vụ</h1>
+  <a href="../README.md">← Về thư mục tài liệu</a>
+</div>
+
+<div class="container">
+
+  <div class="hero">
+    <span class="tag">Tổng quan</span>
+    <h2>Hệ thống vận hành Etsy của Hatafa hoạt động ra sao?</h2>
+    <p>Bộ trang này mô tả 5 luồng nghiệp vụ chính của Hatafa — từ lúc thiết kế một sản phẩm POD, đăng lên Etsy, nhận đơn từ khách, in và gửi qua Gearment, đến khi xử lý phản hồi sau bán. Mỗi luồng kể bằng ngôn ngữ kinh doanh, có sơ đồ vai trò và ảnh chụp màn hình Odoo mô phỏng. Đọc xong, Chủ dự án và đội vận hành sẽ thấy rõ: hôm nay từng bộ phận đang làm việc thế nào trong hệ thống, đâu là phần chưa xong, và đâu là phần phải xử lý thủ công.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="num">5</div><div class="lbl">luồng nghiệp vụ chính (Sản phẩm · Đơn hàng · In nội bộ · Dropship · Hậu mãi)</div></div>
+    <div class="kpi"><div class="num">5</div><div class="lbl">vai trò người dùng (BA Lead · Marketing · Sản xuất · Kiểm soát giá · Thiết kế)</div></div>
+    <div class="kpi"><div class="num">~43</div><div class="lbl">màn hình Odoo mô phỏng trong toàn bộ tài liệu</div></div>
+    <div class="kpi"><div class="num">3</div><div class="lbl">hạng mục Lộ trình chưa đưa vào (kho · hoàn tiền · audit giá)</div></div>
+  </div>
+
+  <div class="mu-spot">
+    <div class="mu-spot-eyebrow">Mô phỏng giao diện Odoo · 11 trang HTML · ~43 màn hình</div>
+    <h3>Xem trực tiếp giao diện hệ thống — không cần demo, không cần cài đặt</h3>
+    <p>Mỗi luồng phía dưới đi kèm <b>3–6 màn hình Odoo mô phỏng</b> dạng form, kanban, danh sách và chatter. Tổng cộng <b>khoảng 43 màn hình</b> mô tả đúng những gì 5 vai trò (BA Lead · Marketing · Sản xuất · Kiểm soát giá · Thiết kế) thấy khi vận hành. 3 luồng tiêu biểu để mở trước:</p>
+    <div class="mu-spot-grid">
+      <a class="mu-spot-card" href="flow-2-nhan-don-hang-etsy.html#mu-screens">
+        <div class="mu-spot-num">LUỒNG 2 · 4 màn hình</div>
+        <div class="mu-spot-title">Nhận đơn hàng từ Etsy</div>
+        <div class="mu-spot-meta">Dashboard vận hành · Sale order tab Etsy · API log · Email log dự phòng</div>
+      </a>
+      <a class="mu-spot-card" href="flow-3a-giao-hang-in-noi-bo.html#mu-screens">
+        <div class="mu-spot-num">LUỒNG 3A · 6 màn hình</div>
+        <div class="mu-spot-title">Giao hàng — In nội bộ (MTO)</div>
+        <div class="mu-spot-meta">Kanban 17 trạng thái · Design Files · Chatter · Scan sản xuất · QC · Mark Shipped</div>
+      </a>
+      <a class="mu-spot-card" href="role-1-ba-lead.html#mu-screens">
+        <div class="mu-spot-num">VAI TRÒ 1 · 5 màn hình</div>
+        <div class="mu-spot-title">Một ngày của BA Lead</div>
+        <div class="mu-spot-meta">09:00 Dashboard · 09:30 Đơn mới · 11:00 Duyệt thiết kế · 14:00 Lỗi Gearment · 16:45 Báo cáo</div>
+      </a>
+    </div>
+    <div class="mu-spot-foot">Tất cả 11 trang đều có màn hình mô phỏng — bấm vào bất kỳ thẻ nào phía dưới rồi cuộn xuống mục <i>"Màn hình Odoo trong luồng này"</i>. Tổng bộ tài liệu &lt; 1 MB HTML tự chứa, gửi email được, không cần cài đặt.</div>
+  </div>
+
+  <a class="card" href="etsy-quy-trinh.html"
+     style="display:block;margin-top:14px;border-left:4px solid #714B67;text-decoration:none;color:inherit;">
+    <div class="ord" style="color:#714B67;">TRÌNH CHIẾU TỔNG QUAN · 17 TRANG</div>
+    <div class="title">Quy trình Etsy — AS-IS vs TO-BE</div>
+    <div class="desc">Trình bày trực quan 17 slide: quy trình hiện tại (9 làn · 2 tuyến) và quy trình mới với Odoo Standard (màu xanh = tự động). Sơ đồ swimlane đầy đủ vai trò, biểu đồ so sánh trước/sau, dashboard KPI kỳ vọng. Phù hợp cho Chủ dự án xem toàn cảnh trước khi đọc từng luồng.</div>
+    <div class="meta"><span class="pill green">Cập nhật 2026-06-26</span><span class="pill grey">Bấm để mở trình chiếu</span></div>
+  </a>
+
+  <div class="section-title" style="margin-top:28px;"><span class="dot"></span>Năm luồng nghiệp vụ chính — từ thiết kế sản phẩm đến chăm sóc sau bán</div>
+  <div class="section-sub">Mỗi luồng là một chu trình hoàn chỉnh có vai trò, bước thao tác, và màn hình Odoo tương ứng. Trạng thái phản ánh đúng kết quả UAT 2026-05-28 và tracker phát triển hiện tại.</div>
+  <div class="grid">
+    <a class="card" href="flow-1-tao-san-pham.html">
+      <div class="ord">LUỒNG 1</div>
+      <div class="title">Tạo sản phẩm POD và đăng lên Etsy</div>
+      <div class="desc">BA · Marketing · Thiết kế phối hợp tạo template, sinh SKU tự động theo bộ ngữ pháp, đăng draft hoặc full lên Etsy.</div>
+      <div class="meta"><span class="pill yellow">Đang xây dựng 85%</span><span class="pill grey">UAT một phần</span></div>
+    </a>
+    <a class="card" href="flow-2-nhan-don-hang-etsy.html">
+      <div class="ord">LUỒNG 2</div>
+      <div class="title">Nhận đơn hàng từ Etsy về Odoo</div>
+      <div class="desc">Cron 5 phút kéo qua Etsy API; nếu API hỏng 3 lần liền, fallback email parser 10 phút. Tự tạo khách, đơn, dòng đơn.</div>
+      <div class="meta"><span class="pill green">Hoạt động 95%</span></div>
+    </a>
+    <a class="card" href="flow-3a-giao-hang-in-noi-bo.html">
+      <div class="ord">LUỒNG 3A</div>
+      <div class="title">Giao hàng — In nội bộ (MTO)</div>
+      <div class="desc">Đơn đi qua 17 trạng thái pipeline Việt: từ Mới nhận đến Hoàn tất, có file thiết kế, in, QC, đóng gói, gửi đi.</div>
+      <div class="meta"><span class="pill yellow">Đang xây dựng 75%</span><span class="pill yellow">⏳ Chuyển trạng thái thủ công</span></div>
+    </a>
+    <a class="card" href="flow-3b-giao-hang-gearment-dropship.html">
+      <div class="ord">LUỒNG 3B</div>
+      <div class="title">Giao hàng — Gearment Dropship</div>
+      <div class="desc">BA bấm Báo giá Gearment, đẩy đơn qua API, nhận tracking qua webhook, tự động cập nhật shipped lên Etsy.</div>
+      <div class="meta"><span class="pill yellow">Đang xây dựng 80%</span><span class="pill yellow">⏳ Báo giá còn thủ công</span></div>
+    </a>
+    <a class="card" href="flow-4-hau-mai.html">
+      <div class="ord">LUỒNG 4</div>
+      <div class="title">Chăm sóc sau bán — tin nhắn, đổi địa chỉ, in lại, hoàn tiền</div>
+      <div class="desc">Tin nhắn buyer vào chatter; đổi địa chỉ qua wizard duyệt; in lại tái dùng file thiết kế; hoàn tiền còn đang thiết kế.</div>
+      <div class="meta"><span class="pill yellow">Đang xây dựng 60%</span><span class="pill red">Hoàn tiền — thiết kế</span></div>
+    </a>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Năm vai trò — một ngày trong hệ thống</div>
+  <div class="section-sub">Mỗi vai trò là một nhân vật điển hình tại Hatafa. Đọc kịch bản giờ giấc, hành động, và màn hình họ nhìn thấy. Phần này giúp lãnh đạo hình dung trực tiếp ai ngồi đâu, mở gì lúc nào.</div>
+  <div class="grid">
+    <a class="card" href="role-1-ba-lead.html">
+      <div class="ord">VAI TRÒ 1</div>
+      <div class="title">BA Lead — người điều phối</div>
+      <div class="desc">Mở dashboard mỗi sáng, duyệt thiết kế, xử lý lỗi Gearment, ký báo cáo cuối ngày.</div>
+      <div class="meta"><span class="pill green">Hoạt động chính</span></div>
+    </a>
+    <a class="card" href="role-2-marketing.html">
+      <div class="ord">VAI TRÒ 2</div>
+      <div class="title">Marketing — quản lý nhiều shop</div>
+      <div class="desc">Trả lời tin nhắn khách, theo dõi sức khoẻ listing, cảnh báo lệch giá (đang thiết kế).</div>
+      <div class="meta"><span class="pill yellow">Một số tính năng đang xây</span></div>
+    </a>
+    <a class="card" href="role-3-san-xuat.html">
+      <div class="ord">VAI TRÒ 3</div>
+      <div class="title">Sản xuất — quét mã, chuyển trạng thái</div>
+      <div class="desc">Quét mã đơn ở từng công đoạn, ghi nhận tiến độ, báo cáo cuối ngày.</div>
+      <div class="meta"><span class="pill yellow">Quét mã trên di động — đang xây</span></div>
+    </a>
+    <a class="card" href="role-4-rd.html">
+      <div class="ord">VAI TRÒ 4</div>
+      <div class="title">Kiểm soát giá (RD) — audit giá hàng ngày</div>
+      <div class="desc">Theo dõi dashboard giá, phát hiện đơn lệch giá so với listing. Dashboard đang trong giai đoạn thiết kế.</div>
+      <div class="meta"><span class="pill red">Trong thiết kế</span></div>
+    </a>
+    <a class="card" href="role-5-pd.html">
+      <div class="ord">VAI TRÒ 5</div>
+      <div class="title">Thiết kế sản phẩm (PD) — duyệt file</div>
+      <div class="desc">Nhận yêu cầu thiết kế, lặp với BA, duyệt file qua kanban 3 trạng thái, lưu kho.</div>
+      <div class="meta"><span class="pill green">Hoạt động</span></div>
+    </a>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Lộ trình — các luồng đang ở giai đoạn thiết kế</div>
+  <div class="section-sub">Ba mảng nghiệp vụ dưới đây đã có trong vận hành thực tế của Hatafa (hôm nay vẫn dùng Excel) nhưng chưa đưa vào Odoo. Liệt kê tại đây để Chủ dự án thấy được kế hoạch tổng thể; sẽ có trang HTML chi tiết khi mỗi mảng được đưa vào sprint.</div>
+  <div class="roadmap">
+    <h4>Ba hạng mục đang chờ ưu tiên</h4>
+    <div class="desc">Mỗi hạng mục đều có file Excel vận hành tay đang chạy hằng ngày. Đưa vào hệ thống đồng nghĩa giảm tay người, tăng thấy được toàn cảnh, và giúp các vai trò khác (đặc biệt là BA Lead và RD) có đủ dữ liệu để ra quyết định.</div>
+    <div class="roadmap-grid">
+      <div class="roadmap-item">
+        <div class="ri-title">Quản lý kho nguyên vật liệu Hatafa</div>
+        <div class="ri-desc">3 file Excel hôm nay: nhập xuất nguyên liệu hằng ngày, tem Amazon, tồn kho PD. Khoảng 133 mặt hàng. Mục tiêu: dòng chảy "Nhập nguyên liệu → tiêu hao theo đơn → tồn kho thành phẩm" liên thông với pipeline sản xuất.</div>
+        <div class="meta"><span class="pill grey">Lộ trình · Phase 6</span></div>
+      </div>
+      <div class="roadmap-item">
+        <div class="ri-title">Hoàn tiền và đổi trả</div>
+        <div class="ri-desc">Hôm nay BA xử lý thủ công trên Etsy rồi viết note vào chatter đơn hàng. Mục tiêu: mô hình ticket hoàn tiền có trạng thái, có liên kết tới đơn gốc, tự tổng hợp báo cáo tổn thất hằng tháng.</div>
+        <div class="meta"><span class="pill grey">Lộ trình · Phase 7</span><span class="pill red">Thiết kế</span></div>
+      </div>
+      <div class="roadmap-item">
+        <div class="ri-title">Audit giá hàng ngày</div>
+        <div class="ri-desc">RD (Kiểm soát giá) cần một dashboard so giá đơn hàng vs giá listing, cảnh báo lệch quá X đô. Hôm nay đối chiếu thủ công. Story 6.5 trong SRS đã có khung; đang chờ ưu tiên thi công.</div>
+        <div class="meta"><span class="pill grey">Lộ trình · Phase 6</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>Cách đọc bộ tài liệu này</div>
+  <div class="section-sub">Hướng dẫn ngắn cho ba đối tượng độc giả.</div>
+  <div class="grid">
+    <div class="card disabled">
+      <div class="ord">CHỦ DỰ ÁN (CDA)</div>
+      <div class="title">10 phút lướt nhanh</div>
+      <div class="desc">Đọc trang này (index) + Luồng 2 (Nhận đơn) + Vai trò 1 (BA Lead). Đủ thấy bức tranh hệ thống vận hành ra sao hằng ngày.</div>
+    </div>
+    <div class="card disabled">
+      <div class="ord">BA / BA LEAD</div>
+      <div class="title">30 phút đọc đầy đủ</div>
+      <div class="desc">Đọc cả 5 luồng nghiệp vụ. Đối chiếu với BRD_VN.md / SRS_VN.md để khớp Story IDs. Dùng làm tài liệu đào tạo cho nhân viên mới.</div>
+    </div>
+    <div class="card disabled">
+      <div class="ord">VẬN HÀNH HẰNG NGÀY</div>
+      <div class="title">Chỉ đọc trang vai trò của mình</div>
+      <div class="desc">Marketing đọc Vai trò 2, Sản xuất đọc Vai trò 3, v.v. Mỗi trang vai trò có giờ giấc và màn hình cụ thể.</div>
+    </div>
+  </div>
+
+  <footer>
+    Tài liệu vận hành Hatafa Etsy ERP · cập nhật 2026-06-26 · 12 trang HTML tự chứa<br>
+    Nguồn: BRD_VN.md · SRS_VN.md · STATUS_VN.md · 4 FLOW_*.md · 4 HUONG_DAN_*.md · UAT 2026-05-28 · tracker Master Plan 006
+  </footer>
+
+</div>
+
+</body>
+</html>

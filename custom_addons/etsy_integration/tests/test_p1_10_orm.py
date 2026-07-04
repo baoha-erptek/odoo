@@ -239,7 +239,7 @@ class TestScopeValidation(HttpCase):
     def test_scope_assertion_accepts_four_approved_scopes(self):
         """Test that callback accepts the 4 approved scopes (approved by E1 2026-05-12).
 
-        Granted scopes: transactions_r transactions_w listings_r listings_w shops_r email_r
+        Granted scopes: transactions_r transactions_w listings_r listings_w shops_r shops_w email_r
         Expected: callback proceeds (status 200/302).
         """
         # Mock exchange_code_for_token to return tokens with approved scopes
@@ -250,7 +250,7 @@ class TestScopeValidation(HttpCase):
                 'refresh_token': 'test_refresh_token_approved',
                 'token_type': 'Bearer',
                 'expires_in': 3600,
-                'scope': 'transactions_r transactions_w listings_r listings_w shops_r email_r',
+                'scope': 'transactions_r transactions_w listings_r listings_w shops_r shops_w email_r',
             },
         ):
             # Create a pending OAuth state + verifier
@@ -336,7 +336,7 @@ class TestScopeValidation(HttpCase):
     def test_scope_assertion_rejects_conversations_r(self):
         """Test that callback rejects conversations_r scope (explicitly forbidden by E1).
 
-        Granted scopes: transactions_r transactions_w listings_r listings_w shops_r email_r conversations_r
+        Granted scopes: transactions_r transactions_w listings_r listings_w shops_r shops_w email_r conversations_r
         Expected: HTTP 400 + audit log with explicit forbidden-scope mention.
         """
         with mock.patch(
@@ -346,7 +346,7 @@ class TestScopeValidation(HttpCase):
                 'refresh_token': 'test_refresh_token_forbidden',
                 'token_type': 'Bearer',
                 'expires_in': 3600,
-                'scope': 'transactions_r transactions_w listings_r listings_w shops_r email_r conversations_r',
+                'scope': 'transactions_r transactions_w listings_r listings_w shops_r shops_w email_r conversations_r',
             },
         ):
             state = 'test_state_forbidden_scope'

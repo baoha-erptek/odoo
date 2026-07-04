@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-MODEL — base views for multichannel.listing.
+
+        Wave-2 slices extend with Etsy-specific tabs (taxonomy,
+        shipping profile, who_made/when_made/is_supply, video,
+        attribute mapping).
+    -->
+
+    <record id="view_multichannel_listing_list" model="ir.ui.view">
+        <field name="name">multichannel.listing.list</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <list string="Listings"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'published'"
+                  decoration-warning="state == 'ready'"
+                  decoration-danger="state == 'error'">
+                <field name="product_tmpl_id"/>
+                <field name="channel_id"/>
+                <field name="shop_ref"/>
+                <field name="title"/>
+                <field name="state" widget="badge"/>
+                <field name="external_ref" optional="show"/>
+                <field name="last_synced_at" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_multichannel_listing_form" model="ir.ui.view">
+        <field name="name">multichannel.listing.form</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <form string="Listing">
+                <header>
+                    <!-- P-LIST-UX-FIXES R1 — Open in Etsy CTA, visible
+                         only for published listings with a known
+                         external_ref. -->
+                    <button name="action_open_in_etsy_shop_manager"
+                            type="object"
+                            string="Open in Etsy Shop Manager"
+                            class="btn-primary"
+                            invisible="state != 'published' or not external_ref"
+                            icon="fa-external-link"/>
+                    <!-- P-LIST-STATUSBAR-CLICKABLE — Draft <-> Ready as
+                         clickable Marketing-approval steps. Published and
+                         Error are not in statusbar_visible so they don't
+                         render as clickable pills; the widget still shows
+                         the state badge on records that are in those
+                         states (Odoo statusbar "fold" behaviour). Setting
+                         Published is the publisher service's job, never a
+                         direct statusbar click. -->
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,ready"
+                           options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <!-- P-LIST-UX-FIXES R2 — workflow context box. -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="state == 'published'">
+                        <strong>Publishing workflow:</strong> Draft (you edit)
+                        → Ready (BA approves) → Published (synced to Etsy).
+                        After publish, edits here overwrite Etsy on the next
+                        sync.
+                    </div>
+                    <!-- P-LIST-UX-FIXES R3 — readonly indicator when
+                         the record is locked (everything except draft). -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state == 'draft'">
+                        <strong>Read-only:</strong> this listing is no longer
+                        in Draft. To edit, ask a BA to revert the state to
+                        Draft or use Reset to Draft below.
+                    </div>
+                    <!-- P-D6-ERROR-SURFACE (Flow 1 #4) — show the last Etsy
+                         publisher error so the operator can diagnose a failed
+                         publish without re-running it. -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'error'">
+                        <strong>Publish failed.</strong> Last error from the
+                        channel:
+                        <field name="last_sync_error" nolabel="1" readonly="1"/>
+                    </div>
+                    <field name="image_1920" widget="image"
+                           class="oe_avatar"
+                           readonly="state != 'draft'"/>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1><field name="title"
+                                   placeholder="Falls back to product name when empty"
+                                   readonly="state != 'draft'"/></h1>
+                    </div>
+                    <!-- P-LIST-UX-FIXES finding-5 — Scope group collapsed
+                         behind an Advanced settings outer group.
+                         BA/admins can expand; Marketing sees less noise. -->
+                    <group>
+                        <group string="External">
+                            <!-- P-DS-2-MVP-BACKPORT — .mu-mono renders the
+                                 Etsy listing_id in a purple monospace badge
+                                 so users read it as a system-generated
+                                 identifier, not user-edited copy. -->
+                            <field name="external_ref" readonly="1" class="mu-mono"/>
+                            <field name="last_synced_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <!-- P-DS-2-MVP-BACKPORT — Advanced settings group is
+                         set at create-time and never edited by Marketing /
+                         BA after.  Hide behind developer mode to reduce
+                         clutter for BA users. Reversible by toggling
+                         developer mode. -->
+                    <group string="Advanced settings" name="scope_advanced"
+                           groups="base.group_no_one">
+                        <group string="Scope">
+                            <field name="product_tmpl_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="channel_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="shop_ref"
+                                   placeholder="jahandmadeart / namcohome / ..."
+                                   readonly="state != 'draft'"/>
+                            <field name="sequence"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Listing Basics" name="marketing">
+                            <field name="description"
+                                   placeholder="Falls back to product.description_sale when empty"
+                                   readonly="state != 'draft'"/>
+                        </page>
+                        <page string="Images" name="images">
+                            <field name="extra_image_ids"
+                                   readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="image_1920" widget="image"
+                                           options="{'size': [64, 64]}"/>
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                            <p class="text-muted">
+                                The hero image above publishes first, then these
+                                gallery images (Etsy caps a listing at 10
+                                images). These images are shared with the product
+                                across all sales channels.
+                            </p>
+                        </page>
+                        <page string="Video" name="video">
+                            <group>
+                                <field name="video_attachment_id"
+                                       readonly="state != 'draft'"/>
+                            </group>
+                            <p class="text-muted">
+                                Etsy accepts at most one video per listing.
+                                Leave empty to publish without video.
+                            </p>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_multichannel_listing_search" model="ir.ui.view">
+        <field name="name">multichannel.listing.search</field>
+        <field name="model">multichannel.listing</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_tmpl_id"/>
+                <field name="title"/>
+                <field name="shop_ref"/>
+                <field name="external_ref"/>
+                <!-- P-LIST-SHOP-BULK — default to active work
+                     (draft + ready) so Marketing doesn't drown in
+                     published rows during bulk operations. -->
+                <filter string="Editable" name="state_editable"
+                        domain="[('state', 'in', ['draft', 'ready'])]"/>
+                <filter string="Draft" name="state_draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Ready" name="state_ready"
+                        domain="[('state', '=', 'ready')]"/>
+                <filter string="Published" name="state_published"
+                        domain="[('state', '=', 'published')]"/>
+                <filter string="Error" name="state_error"
+                        domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="By Channel" name="group_channel"
+                        context="{'group_by': 'channel_id'}"/>
+                <filter string="By Shop" name="group_shop"
+                        context="{'group_by': 'shop_ref'}"/>
+                <filter string="By State" name="group_state"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_multichannel_listing" model="ir.actions.act_window">
+        <field name="name">Listings</field>
+        <field name="res_model">multichannel.listing</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_multichannel_listing_search"/>
+        <field name="context">{'search_default_state_editable': 1, 'search_default_group_shop': 1}</field>
+    </record>
+
+    <!-- P-LIST-SHOP-BULK — server actions for bulk state transitions on
+         the Listings list view. -->
+    <record id="action_bulk_mark_ready" model="ir.actions.server">
+        <field name="name">Mark Ready for Publish</field>
+        <field name="model_id" ref="model_multichannel_listing"/>
+        <field name="binding_model_id" ref="model_multichannel_listing"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_mark_ready()</field>
+    </record>
+
+    <record id="action_bulk_reset_to_draft" model="ir.actions.server">
+        <field name="name">Reset to Draft</field>
+        <field name="model_id" ref="model_multichannel_listing"/>
+        <field name="binding_model_id" ref="model_multichannel_listing"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_reset_to_draft()</field>
+    </record>
+
+    <menuitem id="menu_multichannel_listing"
+              name="Listings"
+              parent="multichannel_hub_core.menu_operations_root"
+              action="action_multichannel_listing"
+              sequence="25"/>
+</odoo>

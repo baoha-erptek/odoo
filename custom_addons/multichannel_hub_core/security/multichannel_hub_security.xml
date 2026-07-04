@@ -52,5 +52,23 @@
             <field name="comment">Senior BA role with master-data write permission (label statuses, future enums). Implies BA Lead.</field>
         </record>
 
+        <!-- P-LIST-MODEL (ADR-015 §4) — Marketing has perm_unlink on
+             multichannel.listing, but published listings carry an
+             external_ref pointing at a live Etsy listing. Allowing unlink
+             at that state orphans the channel mirror. Record rule blocks
+             unlink for state=published; Marketing must explicitly archive
+             the Etsy listing first, flip state back to error/draft, then
+             unlink. System group bypasses this rule (default Odoo behavior). -->
+        <record id="rule_multichannel_listing_published_no_unlink" model="ir.rule">
+            <field name="name">Multichannel Listing: block unlink when published</field>
+            <field name="model_id" ref="model_multichannel_listing"/>
+            <field name="domain_force">[('state', '!=', 'published')]</field>
+            <field name="groups" eval="[(4, ref('multichannel_hub_core.group_marketing_user'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
     </data>
 </odoo>

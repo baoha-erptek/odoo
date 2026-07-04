@@ -271,12 +271,21 @@ export class ProductFormPage {
    * Requires etsy_integration >= 19.0.2.24.0 (adds the "Publish Draft Only" button).
    * Fills shop_id if the wizard opens it empty.
    */
-  async publishDraftOnly(shopName = 'JaHandmadeArt'): Promise<void> {
+  async publishDraftOnly(
+    shopName = 'JaHandmadeArt',
+    opts: { onWizardOpen?: (modal: Locator) => Promise<void> } = {},
+  ): Promise<void> {
     await this.publishButton.click();
     const modal = this.page.locator('.modal-dialog', {
       has: this.page.locator('.modal-title:has-text("Publish to Etsy")'),
     }).first();
     await modal.waitFor({ state: 'visible', timeout: 10000 });
+    // Capture (e.g. screenshot harvest) BEFORE filling fields so the wizard is
+    // shown in its initial-open state and the autocomplete dropdown doesn't
+    // intercept the submit click below (see P-UAT-SCREENSHOTS-WAVE-2-3 iter1).
+    if (opts.onWizardOpen) {
+      await opts.onWizardOpen(modal);
+    }
     const shopInput = modal.locator('[name="shop_id"] input').first();
     if ((await shopInput.inputValue()).trim() === '') {
       await this._selectMany2one(shopInput, shopName);

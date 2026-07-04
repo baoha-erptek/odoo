@@ -25,3 +25,11 @@
 - Check logs for error details
 - Search codebase for similar patterns
 - Ask for clarification rather than guessing
+
+## Architecture Decision Records (ADRs)
+When a slice diverges from the obvious/standard approach — a non-default inheritance
+choice, a new model where a standard one nearly fit, an integration topology decision —
+record a short ADR alongside the spec (`specs/<NNN>-<slug>/adrs/ADR-NNN-<slug>.md`).
+Capture: context, the decision, alternatives considered, and consequences. The ADR
+explains the *why* that the code and git history cannot. Reference the ADR id in the
+slice's tracker notes. (Both openeducat and esty projects run this discipline.)

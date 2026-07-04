@@ -188,6 +188,7 @@ class TestP1_11a_Phase2_ConstraintC_ESY_001(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'test_access_token_value',
             'etsy_oauth_refresh_token': 'test_refresh_token_value',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         self.assertEqual(
@@ -277,6 +278,7 @@ class TestP1_11a_Phase2_ConstraintC_ESY_002(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'test_token',
             'etsy_oauth_refresh_token': 'test_refresh',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         self.assertEqual(
@@ -297,6 +299,7 @@ class TestP1_11a_Phase2_ConstraintC_ESY_002(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'token',
             'etsy_oauth_refresh_token': 'refresh',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         # Check that a log entry was created
@@ -322,6 +325,7 @@ class TestP1_11a_Phase2_ConstraintC_ESY_002(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'token',
             'etsy_oauth_refresh_token': 'refresh',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         # Find the most recent manual log entry
@@ -560,6 +564,7 @@ class TestP1_11a_Phase2_SourceChangeLogAudit(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'token1',
             'etsy_oauth_refresh_token': 'refresh1',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         # Second change: api → email
@@ -588,6 +593,7 @@ class TestP1_11a_Phase2_SourceChangeLogAudit(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'token',
             'etsy_oauth_refresh_token': 'refresh',
+            'etsy_api_shop_id': '60752333',  # C-ESY-003 (P1-11-SHOPID-BOOTSTRAP)
         })
 
         log_entry = self.env['etsy.shop.source.change.log'].search([

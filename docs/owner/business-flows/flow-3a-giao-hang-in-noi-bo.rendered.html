@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Flow 3a — Giao hàng (In nội bộ)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="flow-3a-giao-hang-in-noi-bo">Flow 3a — Giao hàng (In nội bộ)</h1>
+<p><strong>Phiên bản:</strong> 1.0 · <strong>Ngày:</strong> 2026-06-07 · <strong>Mã luồng:</strong> flow-3a
+<strong>Sơ đồ kiến trúc:</strong> <a href="./flow-3a-giao-hang-in-noi-bo.html"><code>flow-3a-giao-hang-in-noi-bo.html</code></a>
+<strong>Hướng dẫn chi tiết:</strong> <a href="../HUONG_DAN_GIAO_HANG_VN.md"><code>../HUONG_DAN_GIAO_HANG_VN.md</code></a>
+<strong>Tài liệu nghiệp vụ:</strong> <a href="../FLOW_GIAO_HANG_VN.md"><code>../FLOW_GIAO_HANG_VN.md</code></a>
+<strong>Test tự động:</strong> <code>tests/e2e/tests/uat_huong_dan_giao_hang.spec.ts</code></p>
+<blockquote>
+<p>Luồng 3a — sản phẩm in tại xưởng nội bộ, vận chuyển bằng USPS/UniUni/YunExpress.</p>
+</blockquote>
+<hr>
+<h2 id="so-o-tom-tat">Sơ đồ tóm tắt</h2>
+<pre><code>BA Lead         Warehouse              Carrier         Customer
+   │                │                      │                │
+   │── Confirm ───▶│                      │                │
+   │   sale.order  │── Pick + Pack       │                │
+   │                │── In sản phẩm        │                │
+   │                │── Upload tracking ──▶│                │
+   │                │                      │── Ship ───────▶│
+   │                │                      │── Update ─────▶│
+   │                │                      │    status      │
+</code></pre>
+<hr>
+<h2 id="giai-oan-1-confirm-pick">Giai đoạn 1 — Confirm + Pick</h2>
+<p><strong>Trigger:</strong> BA confirm sale.order → tự sinh <code>stock.picking</code> (kho → khách)
+<strong>Vai trò:</strong> BA Shipping</p>
+<blockquote>
+<p><img alt="Stock Picking auto-tạo từ sale.order" src="./screenshots/flow-3a/01-picking.png" title="Stock Picking auto-tạo từ sale.order"></p>
+</blockquote>
+<hr>
+<h2 id="giai-oan-2-in-noi-bo-pack">Giai đoạn 2 — In nội bộ + Pack</h2>
+<p>Sản phẩm in tại xưởng dựa trên SKU + design file (xem <code>design_file</code> model).</p>
+<blockquote>
+<p><img alt="Design file đính kèm sale order line" src="./screenshots/flow-3a/02-design-file.png" title="Design file đính kèm sale order line"></p>
+</blockquote>
+<hr>
+<h2 id="giai-oan-3-upload-tracking-push-len-etsy">Giai đoạn 3 — Upload tracking + Push lên Etsy</h2>
+<p><strong>Vị trí:</strong> Form sale.order → header → "Upload Tracking" → wizard hiện ra
+<strong>Field bắt buộc:</strong> carrier_name + tracking_number</p>
+<blockquote>
+<p><img alt="Wizard upload tracking — chọn carrier" src="./screenshots/flow-3a/03-tracking-wizard.png" title="Wizard upload tracking — chọn carrier"></p>
+</blockquote>
+<p>Wizard gọi <code>EtsyTrackingPusher.push_tracking()</code> → Etsy
+<code>POST /v3/.../receipts/{receipt_id}/tracking</code> → trạng thái Etsy chuyển sang "Shipped".</p>
+<blockquote>
+<p><img alt="placeholder: tracking đã push lên Etsy" src="./screenshots/flow-3a/04-etsy-shipped.png" title="Etsy Shop Manager — receipt với trạng thái Shipped + tracking link"></p>
+</blockquote>
+<hr>
+<h2 id="kiem-thu">Kiểm thử</h2>
+<pre><code class="language-bash">cd tests/e2e
+npm run test:giao-hang
+</code></pre>
+<hr>
+<h2 id="bao-loi">Báo lỗi</h2>
+<table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tracking push 400</td>
+<td>Kiểm tra <code>carrier_name</code> phải khớp Etsy carrier list (USPS, UniUni, etc.)</td>
+</tr>
+<tr>
+<td>Design file thiếu</td>
+<td>Cảnh báo BA — không in được khi <code>sale.order.line.design_file_id</code> rỗng</td>
+</tr>
+</tbody>
+</table></main></body></html>

@@ -93,14 +93,14 @@ class TestPubClientORM(TransactionCase):
 
     def test_shop_default_fields_writable(self):
         self.shop.sudo().write({
-            'default_taxonomy_id': 1234,
-            'default_shipping_profile_id': 5678,
-            'default_return_policy_id': 9012,
+            'default_taxonomy_id': '1234',
+            'default_shipping_profile_id': '5678',
+            'default_return_policy_id': '9012',
             'default_who_made': 'i_did',
             'default_when_made': '2020_2026',
             'default_is_supply': False,
         })
-        self.assertEqual(self.shop.sudo().default_taxonomy_id, 1234)
+        self.assertEqual(self.shop.sudo().default_taxonomy_id, '1234')
         self.assertEqual(self.shop.sudo().default_who_made, 'i_did')
         self.assertFalse(self.shop.sudo().default_is_supply)
 

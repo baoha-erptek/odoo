@@ -192,10 +192,8 @@ class ProductCreationWizard(models.TransientModel):
             # product_template._compute_x_sku_v2 line 151 leaves it alone.
             tmpl_vals['x_sku_v2_status'] = 'ba_approved_legacy'
         tmpl = Template.create(tmpl_vals)
-        Status.create([
-            {'product_tmpl_id': tmpl.id, 'channel_id': ch_id, 'state': 'draft'}
-            for ch_id in channel_ids
-        ])
+        # NOTE: x_channel_applicability_ids write triggers product_template._sync_channel_statuses()
+        # which creates draft status rows, so no explicit Status.create() needed here.
         return {
             'type': 'ir.actions.act_window',
             'name': _('Product Created'),

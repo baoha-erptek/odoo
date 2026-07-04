@@ -208,6 +208,10 @@ class TestProductTemplateOnchangeAutofill(TransactionCase):
         cls.fam_mug = cls.Family.search([('code', '=', 'MUG')], limit=1)
         cls.fam_tum = cls.Family.search([('code', '=', 'TUM')], limit=1)
 
+        # Enable product variants group for Form() to access attribute_line_ids
+        variant_group = cls.env.ref('product.group_product_variant')
+        cls.env.user.group_ids |= variant_group
+
     def test_onchange_categ_id_fills_default_code_when_blank(self):
         """Onchange on categ_id should auto-fill default_code if blank."""
         cat = self.Category.create({

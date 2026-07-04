@@ -19,7 +19,53 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 > **Đã sync lên Jira ngày 2026-05-21** (lần đầu) **+ delta sync 2026-05-25** (3 Story Done + Epic 7).
 > **Board Jira:** https://erptek.atlassian.net/jira/software/projects/ESTY/board
 > **Confluence (bản tài liệu đầy đủ):** https://erptek.atlassian.net/wiki/spaces/HEP
+> **Trang Confluence dự án:** https://erptek.atlassian.net/jira/software/projects/ESTY/pages
 > Xem `JIRA_SYNC_REPORT.md` để biết chi tiết keys.
+
+---
+
+## Sơ đồ quy trình (Process Flow Diagrams)
+
+Sơ đồ bơi làn (swimlane) — ai làm gì, theo thứ tự nào — dùng để phổ biến nội bộ và onboard nhân viên mới.
+
+| Sơ đồ | Mô tả | Xem PNG | Chỉnh sửa |
+|---|---|---|---|
+| **AS-IS — Quy trình hiện tại** | Toàn bộ luồng thủ công trước khi dùng Odoo: 9 làn (Khách hàng, Etsy, Hệ thống cũ, MP, BA, PD, Kho, RD, Gearment). Có điểm đau (⚠) và 2 nhánh Route US-od / Vietnam-od. | [`process-flows/AS-IS_Quy_trinh_hien_tai.drawio.png`](../process-flows/AS-IS_Quy_trinh_hien_tai.drawio.png) | [`process-flows/AS-IS_Quy_trinh_hien_tai.drawio`](../process-flows/AS-IS_Quy_trinh_hien_tai.drawio) |
+| **TO-BE — Với Odoo Standard** | Luồng sau triển khai Odoo 19 CE: Hệ thống tự nhận đơn, tự tạo Lệnh SX / Yêu cầu mua hàng Gearment, tự trừ kho, tự gửi tracking về Etsy. 3 nhánh Route A (nội bộ) / Route B (Gearment POD) / Route C (chờ xếp loại). | [`process-flows/TO-BE_Voi_Odoo_Standard.drawio.png`](../process-flows/TO-BE_Voi_Odoo_Standard.drawio.png) | [`process-flows/TO-BE_Voi_Odoo_Standard.drawio`](../process-flows/TO-BE_Voi_Odoo_Standard.drawio) |
+
+> **Cách mở để chỉnh sửa:** Tải file `.drawio` về → mở bằng [draw.io Desktop](https://github.com/jgraph/drawio-desktop/releases) hoặc truy cập [draw.io online](https://app.diagrams.net/) và kéo file vào.
+> **Định dạng SVG** (vector, phóng to không vỡ): [`AS-IS_Quy_trinh_hien_tai.svg`](../process-flows/AS-IS_Quy_trinh_hien_tai.svg) · [`TO-BE_Voi_Odoo_Standard.svg`](../process-flows/TO-BE_Voi_Odoo_Standard.svg)
+
+---
+
+## Hướng dẫn nghiệp vụ (4 luồng chính)
+
+| Luồng | Tài liệu nghiệp vụ | Hướng dẫn thao tác | Sơ đồ + ảnh chụp |
+|---|---|---|---|
+| Tạo sản phẩm | [`FLOW_TAO_SAN_PHAM_VN.md`](FLOW_TAO_SAN_PHAM_VN.md) | [`HUONG_DAN_TAO_SAN_PHAM_VN.md`](HUONG_DAN_TAO_SAN_PHAM_VN.md) | [`business-flows/flow-1-tao-san-pham.md`](business-flows/flow-1-tao-san-pham.md) |
+| Tiếp nhận đơn Etsy | [`FLOW_DON_HANG_ETSY_VN.md`](FLOW_DON_HANG_ETSY_VN.md) | [`HUONG_DAN_DON_HANG_ETSY_VN.md`](HUONG_DAN_DON_HANG_ETSY_VN.md) | [`business-flows/flow-2-nhan-don-hang-etsy.md`](business-flows/flow-2-nhan-don-hang-etsy.md) |
+| Giao hàng | [`FLOW_GIAO_HANG_VN.md`](FLOW_GIAO_HANG_VN.md) | [`HUONG_DAN_GIAO_HANG_VN.md`](HUONG_DAN_GIAO_HANG_VN.md) | [`business-flows/flow-3a-giao-hang-in-noi-bo.md`](business-flows/flow-3a-giao-hang-in-noi-bo.md) + [`flow-3b-giao-hang-gearment-dropship.md`](business-flows/flow-3b-giao-hang-gearment-dropship.md) |
+| Hậu mãi | [`FLOW_HAU_MAI_VN.md`](FLOW_HAU_MAI_VN.md) | [`HUONG_DAN_HAU_MAI_VN.md`](HUONG_DAN_HAU_MAI_VN.md) | [`business-flows/flow-4-hau-mai.md`](business-flows/flow-4-hau-mai.md) |
+
+Chỉ mục business-flows: [`business-flows/README.md`](business-flows/README.md)
+Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.html)
+
+## UAT (Owner kiểm thử)
+
+| File | Mục đích | Phiên bản |
+|---|---|---|
+| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md) | Kịch bản click-by-click cho Wave 2/3 (ESTY-189..199) | 1.2 — **dùng** |
+| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md) | Phiên bản trước (TC-006..TC-012 vẫn còn dùng) | 1.0 |
+| [`UAT_FINDINGS_2026-05-26.md`](UAT_FINDINGS_2026-05-26.md) | Kết quả UAT lần 1 (9 PASS / 3 SKIP) | — |
+| [`UAT_FINDINGS_2026-05-28.md`](UAT_FINDINGS_2026-05-28.md) | Kết quả UAT v1.2 form-only | — |
+| [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md) | Checklist trước khi publish live | — |
+| [`INVENTORY_SETUP_VN.md`](INVENTORY_SETUP_VN.md) | Cấu hình kho + bin | — |
+| [`SKU_GRAMMAR.md`](SKU_GRAMMAR.md) | Ngữ pháp SKU + defect matrix | — |
+
+## Lưu trữ (đã archive)
+
+Tài liệu cũ / chạy log / draft email đã chuyển sang [`../archive/2026-06-07/`](../archive/2026-06-07/).
+Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 
 ---
 
@@ -60,6 +106,7 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 |-----------|------|-------------|-----------------|
 | 1.0 | 2026-05-21 | BA Consultant | Tài liệu khởi tạo — 4 file owner-readable, chuẩn bị sync Jira |
 | 1.1 | 2026-05-25 | BA Consultant | Delta sync — 3 Story Done, Epic 7 (Trung tâm sản phẩm + xuất kênh) thêm 7 Story, mirror lên Confluence space HEP |
+| 1.2 | 2026-06-07 | UAT sweep | Thêm 5 business-flows companion markdown + UAT_WALKTHROUGH v1.2 Wave 2/3; archive 19 file E2E run logs / legacy guides sang `../archive/2026-06-07/` |
 
 ---
 

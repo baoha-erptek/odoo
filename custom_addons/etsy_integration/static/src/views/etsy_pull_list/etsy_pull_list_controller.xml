@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Inherit the sale/account file-upload list buttons so the standard
+         buttons (e.g. Upload) are preserved, and append an always-visible
+         "Pull Etsy Orders" button in the control panel next to "New". -->
+    <t t-name="etsy_integration.EtsyPullListView.Buttons"
+       t-inherit="account.FileuploadListView.Buttons"
+       t-inherit-mode="primary">
+        <xpath expr="." position="inside">
+            <button type="button"
+                    class="btn btn-secondary o_etsy_pull_orders_button"
+                    t-on-click="() => this.onPullEtsyOrders()">
+                Pull Etsy Orders
+            </button>
+        </xpath>
+    </t>
+
+</templates>

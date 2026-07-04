@@ -78,3 +78,13 @@ from . import test_phase1_product_image_gallery_db
 from . import test_phase1_pub_personalization_db
 from . import test_phase2_pub_personalization_validator_orm
 from . import test_phase1_pub_per_product_defaults_db
+from . import test_multichannel_listing_db
+from . import test_multichannel_listing_orm
+from . import test_multichannel_listing_ux_fixes
+from . import test_multichannel_listing_shop_bulk
+from . import test_multichannel_listing_statusbar_clickable
+from . import test_p_list_image_gallery_surface_db
+from . import test_p_list_image_gallery_surface_orm
+from . import test_p_d6_error_surface_orm
+from . import test_p_d3_pipeline_wizard_orm
+from . import test_p_c_product_curation_orm

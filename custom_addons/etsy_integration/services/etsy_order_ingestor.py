@@ -25,7 +25,12 @@ _logger = logging.getLogger(__name__)
 # fields (mp_note, pic_user_id, design state) are intentionally
 # absent. Add to this list ONLY when a new field is provably
 # adapter-sourced and never operator-edited.
-_STATUS_ONLY_FIELDS = ('payment_status', 'etsy_last_modified')
+_STATUS_ONLY_FIELDS = (
+    'payment_status',
+    'etsy_last_modified',
+    'etsy_receipt_status',
+    'etsy_is_shipped',
+)
 
 
 class EtsyOrderIngestor:
@@ -88,6 +93,8 @@ class EtsyOrderIngestor:
         vals = {
             'payment_status': payload.payment_status or False,
             'etsy_last_modified': payload.last_modified or False,
+            'etsy_receipt_status': payload.receipt_status or False,
+            'etsy_is_shipped': bool(payload.is_shipped),
         }
         # Filter out no-op writes so we don't churn `write_date` on
         # orders whose payment status is unchanged.

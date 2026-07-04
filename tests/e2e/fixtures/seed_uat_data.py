@@ -41,6 +41,18 @@ LEGACY_CODE = "UAT-MUG-001"
 VALID_TAGS = [f"uat-tag-{i:02d}" for i in range(1, 16)]   # 15 valid tags
 LONG_TAG = "uat" + "a" * 18                               # 21 chars (>20 -> violation)
 
+# Flow-2 + Flow-3 order fixtures (P-UAT-AUTOMATION-2FLOWS, 2026-05-31).
+# Naming convention `UAT-2026-05-31-{kind}-NNN` so cleanup can sweep via
+# `name ilike 'UAT-2026-05-31-'` without touching real orders. Teardown
+# archives only draft/cancel state; confirmed orders are left for review.
+UAT_ORDER_PREFIX = "UAT-2026-05-31"
+UAT_MTO_PRODUCT_CODE = "UAT-MTO-RDISH"      # MTO: no Gearment SKU -> manual route
+UAT_DROP_PRODUCT_CODE = "UAT-DROP-MUG"       # Dropship: x_gearment_sku populated
+UAT_DROP_GEARMENT_SKU = "GEAR-UAT-MUG-001"
+UAT_ADDR_PRODUCT_CODE = "UAT-ADDR-DOORMAT"   # any product; partner needs an Etsy-shaped address
+UAT_PARTNER_NAME = "UAT Buyer Auto"
+UAT_EMAIL_DEDUP_GMAIL_ID = "uat-2026-05-31-dedupe-fixture-msg-id"
+
 
 def _fam_resid(s, xmlid: str) -> int | None:
     d = s.call("ir.model.data", "search_read",
@@ -107,6 +119,164 @@ def seed_tags(s) -> None:
     log.info("product.tag fixtures present: %d valid + 1 long (21-char)", len(VALID_TAGS))
 
 
+def _ensure_partner(s) -> int:
+    """Idempotent: returns an existing or freshly created res.partner suitable
+    as an Etsy buyer (street + city + country populated, so address-change TC
+    has something to diff against).
+    """
+    existing = s.call("res.partner", "search",
+                      [[("name", "=", UAT_PARTNER_NAME)]],
+                      {"limit": 1, "context": {"active_test": False}})
+    if existing:
+        s.call("res.partner", "write", [existing, {"active": True}])
+        return existing[0]
+    country_ids = s.call("res.country", "search", [[("code", "=", "US")]], {"limit": 1})
+    vals = {
+        "name": UAT_PARTNER_NAME,
+        "street": "123 UAT Lane",
+        "city": "Springfield",
+        "zip": "62704",
+        "email": "uat-buyer@hatafax.demo",
+        "phone": "+1-555-0100",
+    }
+    if country_ids:
+        vals["country_id"] = country_ids[0]
+    pid = s.call("res.partner", "create", [vals])
+    log.info("partner created id=%s name=%s", pid, UAT_PARTNER_NAME)
+    return pid
+
+
+def _ensure_simple_product(s, code: str, name: str, list_price: float,
+                           gearment_sku: str | None = None,
+                           categ_id: int | None = None) -> int:
+    """Idempotent product.template fixture for the SO-line backing product."""
+    existing = s.call("product.template", "search",
+                      [[("default_code", "=", code)]],
+                      {"context": {"active_test": False}})
+    if existing:
+        s.call("product.template", "write", [existing, {"active": True}])
+        return existing[0]
+    vals = {
+        "name": name,
+        "default_code": code,
+        "list_price": list_price,
+        "type": "consu",
+        "sale_ok": True,
+    }
+    if categ_id:
+        vals["categ_id"] = categ_id
+    if gearment_sku:
+        vals["x_gearment_sku"] = gearment_sku
+    tid = s.call("product.template", "create", [vals])
+    log.info("product created id=%s code=%s gearment_sku=%s", tid, code, gearment_sku or "(none)")
+    return tid
+
+
+def _product_variant_for_template(s, template_id: int) -> int:
+    """Returns the first product.product variant for the given template."""
+    rec = s.call("product.template", "read", [[template_id], ["product_variant_id"]])[0]
+    variant = rec.get("product_variant_id")
+    if isinstance(variant, list) and variant:
+        return variant[0]
+    pids = s.call("product.product", "search", [[("product_tmpl_id", "=", template_id)]], {"limit": 1})
+    if pids:
+        return pids[0]
+    raise RuntimeError(f"template {template_id} has no product.product variant")
+
+
+def _ensure_uat_order(s, name: str, partner_id: int, product_id: int,
+                      quantity: float = 1.0,
+                      price_unit: float | None = None) -> int:
+    """Idempotent sale.order keyed by `client_order_ref` (we use the UAT name
+    there because sale.order.name is auto-numbered).
+
+    Phase D residual #2: globalTeardown cancels these orders between runs
+    (state=cancel). On re-seed, revive any cancelled row back to draft so
+    Flow-3 specs have a workable order, instead of creating duplicates with
+    suffixed refs (which would force every spec to discover the suffix).
+    """
+    existing_rows = s.call(
+        "sale.order", "search_read",
+        [[("client_order_ref", "=", name)]],
+        {"fields": ["id", "state"], "limit": 1, "context": {"active_test": False}},
+    )
+    if existing_rows:
+        row = existing_rows[0]
+        if row["state"] == "cancel":
+            try:
+                s.call("sale.order", "action_draft", [[row["id"]]])
+                log.info("UAT order revived (cancel -> draft) id=%s ref=%s", row["id"], name)
+            except Exception as exc:
+                log.warning("UAT order %s revive failed (continuing): %s", row["id"], exc)
+        return row["id"]
+    line_vals = {"product_id": product_id, "product_uom_qty": quantity}
+    if price_unit is not None:
+        line_vals["price_unit"] = price_unit
+    oid = s.call("sale.order", "create", [{
+        "partner_id": partner_id,
+        "client_order_ref": name,
+        "order_line": [(0, 0, line_vals)],
+    }])
+    log.info("UAT order created id=%s ref=%s partner=%s", oid, name, partner_id)
+    return oid
+
+
+def seed_uat_orders(s, cats: dict[str, int]) -> dict[str, int]:
+    """Seed the 4 UAT-2026-05-31-* orders required by Flow-2 + Flow-3 specs."""
+    partner_id = _ensure_partner(s)
+    mug_categ = cats.get("Mug")
+
+    mto_tmpl = _ensure_simple_product(
+        s, UAT_MTO_PRODUCT_CODE, "UAT MTO Ring Dish (auto-seeded)",
+        list_price=29.99, gearment_sku=None, categ_id=mug_categ,
+    )
+    drop_tmpl = _ensure_simple_product(
+        s, UAT_DROP_PRODUCT_CODE, "UAT Dropship Mug (auto-seeded)",
+        list_price=14.99, gearment_sku=UAT_DROP_GEARMENT_SKU, categ_id=mug_categ,
+    )
+    addr_tmpl = _ensure_simple_product(
+        s, UAT_ADDR_PRODUCT_CODE, "UAT Address-Change Doormat (auto-seeded)",
+        list_price=39.99, gearment_sku=None, categ_id=mug_categ,
+    )
+
+    mto_v = _product_variant_for_template(s, mto_tmpl)
+    drop_v = _product_variant_for_template(s, drop_tmpl)
+    addr_v = _product_variant_for_template(s, addr_tmpl)
+
+    return {
+        f"{UAT_ORDER_PREFIX}-MTO-001": _ensure_uat_order(s, f"{UAT_ORDER_PREFIX}-MTO-001", partner_id, mto_v),
+        f"{UAT_ORDER_PREFIX}-MTO-002": _ensure_uat_order(s, f"{UAT_ORDER_PREFIX}-MTO-002", partner_id, mto_v),
+        f"{UAT_ORDER_PREFIX}-DROP-001": _ensure_uat_order(s, f"{UAT_ORDER_PREFIX}-DROP-001", partner_id, drop_v),
+        f"{UAT_ORDER_PREFIX}-ADDR-001": _ensure_uat_order(s, f"{UAT_ORDER_PREFIX}-ADDR-001", partner_id, addr_v),
+    }
+
+
+def seed_email_dedupe_fixture(s) -> int | None:
+    """Idempotent etsy.email.log row used by Flow-2 TC-008 (active_source dedupe).
+    The row carries a deterministic gmail_message_id so the test can assert the
+    parser refuses to re-create an order on a second run.
+    """
+    if "etsy.email.log" not in (s.call("ir.model", "search_read",
+                                       [[("model", "=", "etsy.email.log")]],
+                                       {"fields": ["model"], "limit": 1}) or [{}])[0].get("model", ""):
+        # Model not installed yet (etsy_integration absent); skip silently.
+        log.info("etsy.email.log model not present on staging — skipping dedupe fixture")
+        return None
+    existing = s.call("etsy.email.log", "search",
+                      [[("gmail_message_id", "=", UAT_EMAIL_DEDUP_GMAIL_ID)]],
+                      {"limit": 1, "context": {"active_test": False}})
+    if existing:
+        return existing[0]
+    eid = s.call("etsy.email.log", "create", [{
+        "gmail_message_id": UAT_EMAIL_DEDUP_GMAIL_ID,
+        "subject": "Etsy order #UAT-DEDUP — auto-seeded fixture",
+        "parse_status": "skipped",
+        "raw_body_text": "UAT dedupe fixture (auto-seeded). Do not retry-parse on production.",
+    }])
+    log.info("email-log dedup fixture created id=%s gmail_id=%s", eid, UAT_EMAIL_DEDUP_GMAIL_ID)
+    return eid
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base-url", default=None)
@@ -120,6 +290,17 @@ def main() -> int:
     if "Mug" in cats:
         seed_legacy_product(s, cats["Mug"])
     seed_tags(s)
+    try:
+        seed_uat_orders(s, cats)
+    except Exception:
+        # Non-fatal: Flow-2/3 spec TCs skip when fixtures missing. Use
+        # log.exception so the traceback survives — silently swallowing
+        # programming errors here cost a half-day of triage in the past.
+        log.exception("UAT order seeding skipped")
+    try:
+        seed_email_dedupe_fixture(s)
+    except Exception:
+        log.exception("Email dedupe fixture skipped")
     log.info("UAT seed complete")
     return 0
 

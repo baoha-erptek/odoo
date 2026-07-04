@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-CATEGORY view inherit — add Etsy notebook tab to the
+        multichannel.listing form so Marketing can pick a per-listing
+        taxonomy override. ADR-003: Etsy-specific UI lives here, not
+        in mhc.
+    -->
+    <record id="view_multichannel_listing_form_etsy" model="ir.ui.view">
+        <field name="name">multichannel.listing.form.etsy</field>
+        <field name="model">multichannel.listing</field>
+        <field name="inherit_id"
+               ref="multichannel_hub_core.view_multichannel_listing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='marketing']" position="after">
+                <page string="How It's Made" name="etsy">
+                    <group>
+                        <field name="etsy_who_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_when_made"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_is_supply"
+                               readonly="state != 'draft'"/>
+                    </group>
+                    <p class="text-muted">
+                        Empty → product fallback → shop default. Etsy
+                        requires all three on every listing.
+                    </p>
+                </page>
+                <page string="Shipping &amp; Variations" name="shipping_variations">
+                    <!-- P-ENH-ESTY-195 / ADR-016 — converted-price preview.
+                         Read-only; SOFT-FAIL → 0.0 when shop or currency
+                         unconfigured. -->
+                    <group string="Shop Currency Preview">
+                        <field name="etsy_shop_id"
+                               options="{'no_create': True}"
+                               readonly="state != 'draft'"/>
+                        <field name="display_currency_id" invisible="1"/>
+                        <field name="display_price_in_shop_currency"
+                               readonly="1"
+                               widget="monetary"
+                               options="{'currency_field': 'display_currency_id'}"
+                               help="Shop currency not configured — set Etsy Shop and its listing currency to enable preview."/>
+                    </group>
+                    <group>
+                        <field name="etsy_taxonomy_id"
+                               options="{'no_create': True, 'no_open': True}"
+                               readonly="state != 'draft'"/>
+                        <field name="etsy_taxonomy_last_synced_at"
+                               readonly="1"
+                               nolabel="1"
+                               invisible="not etsy_taxonomy_last_synced_at"/>
+                        <field name="etsy_shipping_profile_id"
+                               options="{'no_create': True, 'no_open': True}"
+                               readonly="state != 'draft'"/>
+                        <button name="action_open_shipping_profile_create_wizard"
+                                type="object"
+                                string="Create new shipping profile"
+                                icon="fa-plus"
+                                class="btn-link"
+                                invisible="state != 'draft'"
+                                groups="multichannel_hub_core.group_ba_user"/>
+                        <field name="etsy_shipping_last_synced_at"
+                               readonly="1"
+                               nolabel="1"
+                               invisible="not etsy_shipping_last_synced_at"/>
+                    </group>
+                    <!-- P-LIST-ATTRIBUTES — fallback chain help text per
+                         UX review HIGH #4. -->
+                    <div class="alert alert-info" role="alert">
+                        <strong>Attribute mapping priority:</strong>
+                        Per-listing rows below → Shop default
+                        (<em>Etsy Shop &gt; Attribute Defaults</em>) →
+                        Product global (<em>Product Attribute</em>).
+                        Leave a row's override empty to fall through to the
+                        next tier.
+                    </div>
+                    <field name="attribute_mapping_ids"
+                           readonly="state != 'draft'">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_attribute_id"
+                                   options="{'no_create': True}"/>
+                            <field name="etsy_property_id_override"
+                                   placeholder="Numeric Etsy property_id"/>
+                            <field name="etsy_property_name_override"
+                                   placeholder="Etsy property_name string"/>
+                        </list>
+                    </field>
+                    <p class="text-muted">
+                        Refresh the taxonomy / shipping caches from
+                        <em>Etsy Shop Settings</em> if the dropdowns look
+                        stale.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -14,6 +14,13 @@ class EtsyShop(models.Model):
 
     name = fields.Char(string='Shop Name', required=True, index=True)
     active = fields.Boolean(default=True)
+    user_id = fields.Many2one(
+        'res.users',
+        string='Responsible',
+        help='Odoo user who manages this shop; scopes order visibility and manual pull.',
+        ondelete='set null',
+        index=True,
+    )
     order_ids = fields.One2many('sale.order', 'etsy_shop_id', string='Orders')
     order_count = fields.Integer(
         string='Order Count', compute='_compute_order_count')
@@ -99,6 +106,17 @@ class EtsyShop(models.Model):
              'createDraftListing for physical listings as of the 2025 API update. '
              'Discover via GET /shops/{shop_id}/readiness-state-definitions.',
     )
+    listing_currency_id = fields.Many2one(
+        'res.currency',
+        string='Etsy Listing Currency',
+        groups='base.group_system',
+        ondelete='restrict',
+        help='Etsy shop listing currency (e.g. VND, USD). Discovered via '
+             'GET /shops/{shop_id}; used by the publisher to convert outbound '
+             'list_price from company currency to shop currency. Without it '
+             'Etsy 400s with "price_too_low" when company currency differs '
+             'from shop currency.',
+    )
     default_who_made = fields.Selection(
         selection=[
             ('i_did', 'I did'),
@@ -116,6 +134,45 @@ class EtsyShop(models.Model):
     default_is_supply = fields.Boolean(
         string='Default "Is Supply"',
         default=False,
+    )
+
+    # P-ENH-ESTY-190 / ADR-017 — shop-level brand-voice defaults. Bottom
+    # tier of the 3-layer publisher fallback chain:
+    #   multichannel.listing.title → product.template.name → shop.default_title
+    # Same shape for description and image. Empty → continues to next tier;
+    # never raises.
+    default_title = fields.Char(
+        string='Default Listing Title',
+        size=140,
+        help='Per-shop brand-voice title used when neither the listing '
+             'override nor the product canonical name is set. Marketing '
+             'owns this field — leave empty to inherit product name.',
+    )
+    default_description = fields.Text(
+        string='Default Listing Description',
+        help='Per-shop brand-voice description used when neither the listing '
+             'override nor the product canonical description is set. '
+             'Marketing owns this field — leave empty to inherit product '
+             'description_sale.',
+    )
+    default_image_1920 = fields.Image(
+        string='Default Listing Image',
+        max_width=1920,
+        max_height=1920,
+        help='Per-shop hero image used when neither the listing override '
+             'nor the product canonical image is set. Marketing owns this '
+             'field — leave empty to inherit product image_1920.',
+    )
+
+    # P-LIST-ATTR-CONFIG (ADR-015 §3 / spec 012 §US6) — shop-wide
+    # default attribute mapping. Tier 2 of the publisher's 3-tier
+    # property-id fallback chain.
+    default_attribute_mapping_ids = fields.One2many(
+        'etsy.shop.attribute.mapping',
+        'shop_id',
+        string='Attribute mapping defaults',
+        help='Shop-wide overrides for product.attribute → Etsy property_id. '
+             'Listings can still override per row.',
     )
 
     # Spec 011 P-PUB-WEIGHT-DIMENSIONS — shop-wide unit preferences for
@@ -292,6 +349,43 @@ class EtsyShop(models.Model):
                 raise ValidationError(
                     "Etsy OAuth refresh token is required when "
                     "active_source is 'api' (C-ESY-001)."
+                )
+
+    @api.constrains('active_source', 'etsy_api_shop_id',
+                    'etsy_oauth_access_token', 'etsy_oauth_refresh_token')
+    def _check_api_source_has_shop_id(self):
+        """C-ESY-003: `active_source='api'` requires a non-empty etsy_api_shop_id.
+
+        Gated on tokens-present so C-ESY-001 (token-required-when-api)
+        owns the "totally unconfigured" failure mode and we own only the
+        "post-authorization gap" — tokens landed but the OAuth callback
+        skipped the /users/me bootstrap (e.g. transient Etsy 4xx). This
+        ordering keeps each constraint's error message diagnostic for
+        the operator and prevents constraint-evaluation race from
+        masking C-ESY-001 in unit tests.
+
+        sudo() rationale: `etsy_api_shop_id` carries
+        `groups='base.group_system'`; the constraint must read it
+        regardless of which (system) user triggered the write.
+
+        Without this gate, an api-source shop with NULL shop_id sends
+        `/shops//...` (or `/shops/{odoo_pk}/...`) which Etsy 403s with
+        "User does not own Shop {n}" — and the 403 path discards the
+        request body, so diagnosis is expensive (P1-11-WIRE-LIVE 2026-05-22).
+        """
+        for shop in self:
+            if shop.active_source != 'api':
+                continue
+            shop_su = shop.sudo()
+            if not (shop_su.etsy_oauth_access_token and shop_su.etsy_oauth_refresh_token):
+                # C-ESY-001 owns this failure mode; let it raise.
+                continue
+            if not shop_su.etsy_api_shop_id:
+                raise ValidationError(
+                    "Etsy shop_id (etsy_api_shop_id) is required when "
+                    "active_source is 'api' (C-ESY-003). Authorize the "
+                    "shop or set the field manually before flipping the "
+                    "source."
                 )
 
     def write(self, vals):
@@ -630,3 +724,116 @@ class EtsyShop(models.Model):
                     'Etsy API sync failed for shop %s (id=%s)',
                     shop.name, shop.id,
                 )
+
+    @api.model
+    def _cron_sync_taxonomy(self):
+        """P-LIST-CATEGORY weekly cron — refresh `etsy.taxonomy.node` cache.
+
+        Etsy taxonomy is a *global* catalog (same node IDs across all shops),
+        so we only need one API call per run. Pick any API-source shop as the
+        credential carrier. If none configured, no-op.
+        """
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy taxonomy sync is restricted to system tasks.'
+            )
+        from ..services.etsy_taxonomy_syncer import sync_taxonomy
+        shop = self.search([('active_source', '=', 'api')], limit=1)
+        if not shop:
+            _logger.debug(
+                'Etsy taxonomy sync cron: no api-source shop available.'
+            )
+            return
+        try:
+            sync_taxonomy(self.env, shop)
+        except Exception:
+            _logger.exception(
+                'Etsy taxonomy sync failed via shop %s (id=%s)',
+                shop.name, shop.id,
+            )
+
+    def action_sync_etsy_taxonomy(self):
+        """Manual trigger button on the shop form — same syncer."""
+        self.ensure_one()
+        from ..services.etsy_taxonomy_syncer import sync_taxonomy
+        created, updated = sync_taxonomy(self.env, self)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Etsy taxonomy synced',
+                'message': '%s new, %s updated' % (created, updated),
+                'type': 'success',
+            },
+        }
+
+    @api.model
+    def _cron_sync_shipping_profiles(self):
+        """P-LIST-SHIPPING daily cron — refresh per-shop profile cache."""
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy shipping profile sync is restricted to system tasks.'
+            )
+        from ..services.etsy_shipping_profile_syncer import (
+            sync_shipping_profiles,
+        )
+        shops = self.search([('active_source', '=', 'api')])
+        for shop in shops:
+            try:
+                sync_shipping_profiles(self.env, shop)
+            except Exception:
+                _logger.exception(
+                    'Etsy shipping profile sync failed for shop %s (id=%s)',
+                    shop.name, shop.id,
+                )
+
+    def action_sync_etsy_shipping_profiles(self):
+        """Manual trigger button on the shop form."""
+        self.ensure_one()
+        from ..services.etsy_shipping_profile_syncer import (
+            sync_shipping_profiles,
+        )
+        created, updated = sync_shipping_profiles(self.env, self)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Etsy shipping profiles synced',
+                'message': '%s new, %s updated' % (created, updated),
+                'type': 'success',
+            },
+        }
+
+    def action_open_shipping_profile_create_wizard(self):
+        """P-LIST-SHIP-CREATE (ESTY-201): open the create wizard seeded
+        with this shop. The shop id is resolved in Python (not an OWL
+        nested-M2O context expression) to avoid the silent-empty trap."""
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'etsy_integration.action_etsy_shipping_profile_create_wizard')
+        action['context'] = {'default_shop_id': self.id}
+        return action
+
+    # ------------------------------------------------------------------
+    # P-ENH-ESTY-195 / ADR-016 — Currency-rate refresh cron skeleton.
+    # Provider implementations (ECB, OpenExchangeRates, Yahoo) are
+    # deferred to a follow-up slice. This cron currently logs a WARNING
+    # under every branch and writes zero ``res.currency.rate`` rows.
+    # ------------------------------------------------------------------
+    @api.model
+    def _cron_refresh_currency_rates(self):
+        provider = self.env['ir.config_parameter'].sudo().get_param(
+            'etsy_integration.currency_rate_provider', 'manual',
+        )
+        if provider == 'manual':
+            _logger.warning(
+                "Etsy currency-rate cron: manual provider — set "
+                "``etsy_integration.currency_rate_provider`` to enable "
+                "auto-refresh. No rates written.",
+            )
+            return
+        _logger.warning(
+            "Etsy currency-rate cron: provider %r not yet implemented; "
+            "manual psql required. No rates written.",
+            provider,
+        )

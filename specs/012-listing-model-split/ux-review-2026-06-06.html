@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>multichannel.listing Form - UX Review Mockup (2026-06-06)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .odoo-badge-draft { @apply bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium; }
+        .odoo-badge-ready { @apply bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium; }
+        .odoo-badge-published { @apply bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium; }
+        .odoo-badge-error { @apply bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium; }
+        .form-label { @apply block text-sm font-medium text-gray-900 mb-1; }
+        .form-hint { @apply text-xs text-gray-500 mt-1; }
+        .form-required::after { content: "*"; @apply text-red-600 ml-1; }
+        .fallback-hint { @apply text-xs italic text-gray-500; }
+        .sync-indicator { @apply text-xs text-gray-500 flex items-center gap-1; }
+        .notebook-tab { @apply px-4 py-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 cursor-pointer; }
+        .notebook-tab.active { @apply border-blue-600 text-blue-600; }
+        .cta-button { @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium; }
+        .help-box { @apply bg-blue-50 border-l-4 border-blue-500 p-3 rounded text-sm text-gray-700; }
+        .error-box { @apply bg-red-50 border-l-4 border-red-500 p-3 rounded text-sm text-gray-700; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-6xl mx-auto p-6">
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <!-- Header with statusbar -->
+            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Listing</h1>
+                    <p class="text-sm text-gray-500 mt-1">Tray Ceramic Coffee Mug 11oz</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex gap-2">
+                        <span class="odoo-badge-draft">Draft</span>
+                    </div>
+                    <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm">Save</button>
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-900 text-sm">Discard</button>
+                </div>
+            </div>
+
+            <div class="px-6 py-6">
+                <!-- Proposed: CRITICAL FIX #1 — Open in Etsy CTA -->
+                <div class="mb-6 flex items-start gap-4">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect fill='%23e5e7eb' width='200' height='200'/%3E%3C/svg%3E" alt="Product" class="w-24 h-24 rounded border border-gray-200">
+                    <div class="flex-1">
+                        <div class="mb-4">
+                            <label class="form-label form-required">Listing Title</label>
+                            <input type="text" value="Tray Ceramic Coffee Mug 11oz" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                            <div class="form-hint fallback-hint">Falls back to product name when empty</div>
+                        </div>
+                        <!-- NEW: Action button for published listings -->
+                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-green-900">Published on Etsy</p>
+                                    <p class="text-xs text-green-700">Last synced: 2 hours ago</p>
+                                </div>
+                                <a href="#" class="cta-button bg-green-600 hover:bg-green-700">Open in Etsy Shop Manager →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proposed: MEDIUM FIX #3 — Hide Scope group from Marketing -->
+                <div class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
+                    <details class="text-sm">
+                        <summary class="font-medium text-gray-700 cursor-pointer">Advanced settings</summary>
+                        <div class="mt-3 grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Product</label>
+                                <input type="text" value="Tray Ceramic Coffee Mug 11oz" disabled class="w-full px-3 py-2 border border-gray-200 rounded text-sm bg-gray-100 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="form-label">Channel</label>
+                                <input type="text" value="Etsy" disabled class="w-full px-3 py-2 border border-gray-200 rounded text-sm bg-gray-100 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="form-label">Shop</label>
+                                <input type="text" value="jahandmadeart" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="form-label">Display Order</label>
+                                <input type="text" value="1" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Proposed: HIGH FIX #2 — Reorganize tabs to match Etsy publish flow -->
+                <div class="border-b border-gray-200 mb-6 flex gap-6">
+                    <div class="notebook-tab active">📝 Listing Basics</div>
+                    <div class="notebook-tab">📸 Photos &amp; Video</div>
+                    <div class="notebook-tab">🔖 How It's Made</div>
+                    <div class="notebook-tab">📦 Shipping &amp; Variations</div>
+                </div>
+
+                <!-- Tab 1: Listing Basics -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Listing Basics</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="form-label">Description</label>
+                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded text-sm" rows="4" placeholder="Enter listing description...">Premium handmade ceramic coffee mug with chrome rim. Dishwasher safe.</textarea>
+                            <div class="form-hint fallback-hint">Falls back to product description when empty</div>
+                        </div>
+                        <div class="help-box">
+                            💡 <strong>Tip:</strong> Keep descriptions clear and concise. Etsy shoppers scan quickly.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: How It's Made -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">How It's Made</h3>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Who Made This?</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                                    <option value="">-- Use shop default --</option>
+                                    <option value="i_did" selected>I did</option>
+                                    <option value="someone_else">Someone else</option>
+                                    <option value="collective">Collective</option>
+                                </select>
+                                <div class="form-hint fallback-hint">Empty → shop default (I did)</div>
+                            </div>
+                            <div>
+                                <label class="form-label">When Was It Made?</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                                    <option value="">-- Use shop default --</option>
+                                    <option value="made_to_order" selected>Made to order</option>
+                                    <option value="2020_2026">2020–2026</option>
+                                    <option value="2010_2019">2010–2019</option>
+                                </select>
+                                <div class="form-hint fallback-hint">Empty → shop default (Made to order)</div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-2 text-sm font-medium text-gray-900 cursor-pointer">
+                                <input type="checkbox" checked class="rounded border-gray-300">
+                                This is a supply or material (not a finished product)
+                            </label>
+                            <div class="form-hint fallback-hint mt-2">Falls back to shop default (No)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Shipping & Variations -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Shipping &amp; Variations</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="form-label form-required">Shipping Profile</label>
+                            <div class="relative">
+                                <input type="text" placeholder="Search profiles..." class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                                <!-- Proposed: HIGH FIX #6 — Sync visibility + refresh CTA -->
+                                <div class="sync-indicator mt-2">
+                                    <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+                                    <span>Last synced 30 min ago</span>
+                                    <button class="ml-2 text-blue-600 hover:text-blue-800 underline text-xs">Refresh now</button>
+                                </div>
+                            </div>
+                            <div class="form-hint fallback-hint">Empty → shop default (Standard Shipping)</div>
+                        </div>
+                        <div>
+                            <label class="form-label form-required">Etsy Category (Taxonomy)</label>
+                            <div class="relative">
+                                <input type="text" placeholder="Search categories..." value="Drinkware › Coffee Mugs" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                                <div class="sync-indicator mt-2">
+                                    <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+                                    <span>3,065 categories cached</span>
+                                    <button class="ml-2 text-blue-600 hover:text-blue-800 underline text-xs">Refresh now</button>
+                                </div>
+                            </div>
+                            <div class="form-hint fallback-hint">Empty → shop default (Tableware › Drinkware)</div>
+                        </div>
+                        <!-- Proposed: HIGH FIX #4 — Fallback chain clarity for P-LIST-ATTRIBUTES -->
+                        <div class="help-box">
+                            🔍 <strong>Attribute Mapping (coming soon):</strong> When you add variant properties (Color, Size, Material), you'll see them here. Priority: <em>Listing override</em> → <em>Shop default</em> → <em>Product global</em>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proposed: CRITICAL FIX #7 — State machine context & readonly lock -->
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <p class="text-sm text-blue-900"><strong>Publishing workflow:</strong></p>
+                    <ol class="list-decimal list-inside text-sm text-blue-800 mt-2 space-y-1">
+                        <li><strong>Draft</strong> — You edit here. BA will review.</li>
+                        <li><strong>Ready</strong> — BA approved. Marketing can still edit before publish.</li>
+                        <li><strong>Published</strong> — Synced to Etsy. Edits here will overwrite Etsy on next sync.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-between">
+                <button class="text-gray-600 hover:text-gray-900 text-sm">Delete</button>
+                <div class="flex gap-2">
+                    <button class="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-100 text-sm">Cancel</button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">Save &amp; Publish</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-8 text-xs text-gray-600 space-y-1">
+            <p><strong>Design notes for this mockup:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Tab order changed to match Etsy Shop Manager flow (Basics → Photos → How Made → Shipping)</li>
+                <li>Scope group collapsed into "Advanced settings" to reduce Marketing noise</li>
+                <li>Open in Etsy CTA visible on published listings (CRITICAL #1)</li>
+                <li>Sync indicators + refresh buttons on taxonomy/shipping dropdowns (HIGH #6)</li>
+                <li>Help text for attribute mapping fallback chain added as blue info box (HIGH #4)</li>
+                <li>State machine context box explains publishing workflow (CRITICAL #7)</li>
+                <li>Form is editable in all states in this mockup; proposed: readonly when state=published</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

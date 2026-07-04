@@ -95,3 +95,384 @@
 ## E2E surfacing (live)
 
 _(none yet — implementation not started)_
+
+---
+
+## P-BUG-ESTY-188 — createListing 400 readiness_state_id bootstrap (2026-06-05)
+
+**Source**: Jira ESTY-188 sub-step 6.11b ("Lỗi Bug ko publish listing lên
+Etsy được"); owner reproduced on staging JaHandmadeArt 2026-06-03.
+
+**Root cause confirmed**: Planner hypothesis #1 (out of 3 candidates) was
+correct. The staging shop JaHandmadeArt (`etsy_api_shop_id=60752333`) had
+NULL `default_readiness_state_id` because the field was added in
+`19.0.2.15.0` but never bootstrapped on shops created before that release.
+`etsy_listing_publisher.py:237-238` includes the key only when truthy, so
+the createListing payload omitted it → Etsy 400 "A readiness_state_id is
+required for physical listings". Personalization regression (candidate #2)
+and new-2026-mandatory-field (candidate #3) were not the cause.
+
+**Fix shape** (commit `297fc717b04`, manifest 19.0.2.33.0):
+
+- New `migrations/_19_0_2_33_0/` Python package with `post_migrate(cr, env)`
+  function callable directly by tests; new `migrations/19.0.2.33.0/post-migrate.py`
+  Odoo discovery shim that constructs `Environment` and delegates.
+- Per-shop GET `/shops/{etsy_api_shop_id}/readiness-state-definitions` →
+  first definition id → write as Char (Etsy ids overflow XML-RPC int32).
+- Filter `active_source='api'` AND empty field; skip rows missing
+  `etsy_api_shop_id`; per-shop `except Exception` swallow with WARNING.
+- `demo_data.xml` pins both demo shops to `1406133708616` for fresh
+  installs (existing demo records untouched due to `noupdate="1"`).
+
+**New gotchas captured for memory**:
+
+1. Odoo 19 recordset has **no `.refresh()` method**. Use
+   `.invalidate_recordset()` to flush cached field values after a sibling
+   process wrote them (the original tdd-guide draft used `shop.refresh()`
+   and ERRORed with AttributeError).
+2. **Mocking `EtsyApiClient.get` is insufficient** when the test code
+   exercises a path that instantiates the client — `EtsyApiClient.__init__`
+   raises `"client_id missing from credentials"` for a test-fixture shop
+   before `.get()` is ever reached. Patch the whole class
+   (`patch('...EtsyApiClient') as MockClient`) and set
+   `MockClient.return_value.get.return_value = ...`.
+3. **Odoo migration dirs with dots** (`19.0.2.33.0`) are not valid Python
+   identifiers — Phase 2 tests that want to call the migrate function
+   directly cannot do `from ...migrations.19.0.2.33.0 import ...`. Pair the
+   standard Odoo discovery file with an underscore-prefixed sibling package
+   (`migrations/_19_0_2_33_0/__init__.py`) where the actual logic lives.
+   Add a no-op `migrations/__init__.py` so the dir becomes a package.
+
+**Open follow-ups** (not blockers):
+
+- T6 staging publish dry-run on JaHandmadeArt owner-gated — confirm the
+  bootstrap migration ran and the next createListing returns 201.
+- Existing demo records on existing DBs do NOT pick up the new
+  `default_readiness_state_id` value (noupdate=1). Operator workaround:
+  manual chatter-fix or set `active_source='api'` and re-run the
+  migration. Documented; not promoted to a separate slice.
+
+### Phase 9 deploy (2026-06-05) — hypothesis #1 RULED OUT, slice flipped back to `doing`
+
+**Deploy path** (per `reference_staging_ssh_deploy.md`):
+
+1. `rsync -avz custom_addons/etsy_integration/ → /odoo/esty19/custom_addons/etsy_integration/` (no `--delete`). Sent 23.5 kB, 1.32 MB total. All P-BUG-ESTY-188 files landed (`migrations/__init__.py`, `migrations/_19_0_2_33_0/__init__.py`, `migrations/19.0.2.33.0/post-migrate.py`, both test files, demo_data.xml, manifest 19.0.2.33.0).
+2. `sudo docker exec esty19_odoo odoo -d esty_odoo19 -u etsy_integration --stop-after-init` — Module loaded in 1.53s / 1144 queries; `Running migration [19.0.2.33.0>] post-migrate`; Registry loaded in 6.241s; exit 0.
+3. `sudo docker restart esty19_odoo`; healthy.
+
+**Expected harmless WARNING captured**: `Invalid version for upgrade script '/mnt/extra-addons/etsy_integration/migrations/_19_0_2_33_0'`. Confirms the split-package design works as intended — Odoo's discovery scans the migrations dir, finds the underscored mirror, can't parse it as a version, and skips it. The dotted `19.0.2.33.0/` IS picked up and executed. Future migrations with this pattern will emit the same WARNING; do NOT promote to ERROR.
+
+**Pre-migration baseline psql** on `esty_odoo19.etsy_shop`:
+
+```
+ id |     name      | etsy_api_shop_id | active_source | default_readiness_state_id
+----+---------------+------------------+---------------+----------------------------
+  1 | Julien        |                  | email         |
+  2 | Carina        |                  | email         |
+  3 | Viktor        |                  | email         |
+  4 | Sven          |                  | email         |
+ 10 | JaHandmadeArt | 60752333         | api           | 1406133708616
+```
+
+**Hypothesis #1 (readiness_state_id NULL) is FALSE** on staging. JaHandmadeArt already has the field populated with the JaHandmadeArt-known value (`1406133708616`); the migration was idempotent and bootstrapped 0 shops. The 4 email-only shops were correctly skipped by the `active_source='api'` filter.
+
+**Implication**: the createListing 400 owner reproduced on 2026-06-03 is NOT caused by hypothesis #1. The publisher payload at `etsy_listing_publisher.py:237-238` WAS including `readiness_state_id=1406133708616` in the request. Etsy rejected for a different reason.
+
+**Pivot decision**: the slice is flipped `done → doing` because the *root cause* is still unknown. The defensive code already shipped (`19.0.2.33.0`) is HARMLESS and stays — it's correct prevention for any future shop where the field WOULD be NULL, just not the fix for this specific 400. Re-target investigation to candidate #2 or #3.
+
+**Candidate #2** (personalization-fields regression):
+- Memory `reference_etsy_createlisting_2025_readiness.md` item (2): 4 inline personalization fields deprecated in 2026; createListing 400s "Use the dedicated personalization endpoints instead". Gated OFF in commit `643370c9837`. Follow-up `R-PUB-PERSONALIZATION-ENDPOINTS` re-implementation deferred.
+- **Verify on staging HEAD**: `git -C /odoo/esty19 log --oneline | grep 643370c9837` AND grep `etsy_listing_publisher.py` for `personalization_is_personalizable / personalization_instructions / personalization_char_count_max / personalization_property_id` — if any of those four keys are still in the createListing payload, that's the bug.
+- If staging is on an older build than the gating commit, the cheapest fix is to deploy the current `feature/006-master-plan-coding` HEAD (which includes the gating).
+
+**Candidate #3** (new 2026 mandatory field):
+- Etsy has been adding required fields with little notice (e.g. `readiness_state_id` was the same kind of change in 19.0.2.15.0). The 2026 personalization migration explicitly says "Use the dedicated personalization endpoints instead" but other endpoints may have new requirements.
+- **The authoritative answer is the 400 response body**, per `feedback_capture_response_body_before_blackbox_probe.md` (5-variant probe cap before vendor escalation, capture body FIRST).
+
+**Capture command for next session** (run while owner reproduces the publish):
+
+```bash
+# Terminal A — follow Odoo logs for the next createListing call:
+ssh -i secrets/ssh-key-2023-02-24.key ubuntu@129.150.63.207 \
+  'sudo docker logs -f --tail 0 esty19_odoo 2>&1 | grep -A 8 -i "createListing\|/v3/application/shops.*listings\|400 Client Error\|HTTPError"'
+
+# Terminal B (owner) — click "Publish to Etsy" in the Odoo web UI against
+# JaHandmadeArt with the same product that 400'd on 2026-06-03.
+
+# The 400 response body will appear in the captured tail because
+# EtsyApiClient._request raises HTTPError which logs the body before the
+# RPC layer scrubs it.
+```
+
+If the body is not visible in the basic Odoo log, alternative is querying `etsy.api.log` directly via psql (per `P-UAT-FIX-API-LOG-HTTP-STATUS`):
+
+```bash
+ssh ... 'sudo docker exec esty19_odoo psql postgresql://odoo:odoo@db/esty_odoo19 -c "SELECT id, source, http_status, error_message, payload_excerpt FROM etsy_api_log WHERE http_status = 400 ORDER BY id DESC LIMIT 5;"'
+```
+
+**Fresh-session resume checklist** (paste into the next session's first prompt):
+
+1. Read this Phase 9 deploy section + `p-bug-esty-188-plan.md` (especially the "Pivot 2026-06-05" header that will be added next).
+2. Confirm tracker P-BUG-ESTY-188 is `doing` with the pivot note.
+3. Capture the 400 body on staging using one of the two commands above.
+4. Match the body to candidate #2 (personalization keys present) or candidate #3 (new mandatory field name in the error message).
+5. Plan + RED + GREEN under a new commit on `feature/006-master-plan-coding`, manifest bump `19.0.2.33.0 → 19.0.2.34.0`.
+6. Flip tracker back to `done` only after staging createListing actually returns 201.
+
+### Phase 9 follow-up (2026-06-05, later) — 400 body captured → CANDIDATE #4 (currency mismatch)
+
+Captured the `etsy.publish.wizard` 400 from staging Odoo container logs (the `etsy.api.log` table only records `listing_pull` / `scope_validation` — the publisher does NOT write its own audit row, so docker logs are the only source). **Three identical reproductions on 2026-06-03**:
+
+```
+2026-06-03 09:07:14,809  WARNING  etsy_api_client: Etsy HTTP 400 url=https://openapi.etsy.com/v3/application/shops/60752333/listings
+  body='[{"path":"/price","type":"price_too_low","message":"must be above min price ₫5,040 VND","transformed":false}]'
+2026-06-03 09:11:36,045  WARNING  ... (same body)
+2026-06-03 09:17:07,374  WARNING  ... (same body)
+```
+
+**Classification**: NEITHER candidate #2 (no personalization key in error) NOR candidate #3 (no missing-mandatory-field name) — this is a **new candidate #4: outbound currency mismatch**.
+
+**Evidence chain**:
+
+1. Staging `res_company.currency_id` = **USD** (`id=1, name='My Company'`).
+2. Etsy shop JaHandmadeArt (`id=60752333`) reports its listing currency as **VND** — the error message embeds `₫5,040 VND` minimum.
+3. `etsy_listing_publisher.py:221` (createListing) and `:379` (push_inventory) both emit:
+   ```python
+   'price': float(s.list_price or 0.0)
+   ```
+   No currency conversion, no shop-currency lookup, no scale awareness.
+4. `etsy_shop` model has NO currency field — there's nowhere to even cache the Etsy-reported shop currency for conversion.
+5. The 4 most recent draft products on staging (ids 451–454, `external_ref=NULL` ⇒ failed publishes) carry **USD-shaped list_prices** ($0.00, $12.99, $12.99, $19.99). All below the 5,040 VND minimum once Etsy reinterprets the number as VND.
+6. The 4 prior UAT products (ids 309–312) succeeded with `external_ref` set (4512614292, 4512614444, 4514022027, 4514024054) because their list_prices were 250,000 — a VND-shaped number that *happens* to clear the threshold. They published not because the code is correct but because the test data accidentally matched the assumed unit.
+7. Grep of the etsy_integration `services/` tree for `currency|_convert\(|to_currency` returns ZERO outbound conversion sites. All currency code paths are INBOUND (orders/receipts) only.
+
+**Root cause statement**: the outbound publisher path treats `product.template.list_price` as if it were already denominated in the Etsy shop's listing currency. When company currency ≠ shop currency, the price is misinterpreted by Etsy by the FX ratio. For a USD-priced Odoo company publishing to a VND Etsy shop, the published value is ~24,000× too low.
+
+**Why hypothesis #1 didn't catch this**: hypothesis #1 was about a missing payload key. Candidate #4 is about a payload value being numerically valid but semantically wrong — the createListing endpoint accepts the request structurally and only rejects on the value-range check. Both paths produce a 400 but only one returns "price_too_low".
+
+**Fix options (graded by scope)**:
+
+| Option | Scope | Cost | Preserves invariants |
+|---|---|---|---|
+| **A. Currency-convert at the publisher boundary (proper fix)** | Add `etsy.shop.listing_currency_id` (Many2one→res.currency, Char fallback for unsupported codes); bootstrap via `GET /shops/{shop_id}` on OAuth callback or on first publish; in publisher line 221 + 379, call `company.currency_id._convert(list_price, shop.listing_currency_id, company, fields.Date.context_today(self))` before emitting. Migration to backfill existing shops. Tests assert payload['price'] reflects converted value. | ~120 LOC + migration + 8 tests | YES — uses standard `res.currency._convert`; respects Odoo's existing multi-currency machinery |
+| **B. Per-shop override price field on product** | Add `product.template.x_etsy_shop_price` (or M2M via shop) so operators set the Etsy-currency price manually; publisher uses override when set, falls back to list_price + warning when not. | ~80 LOC + 5 tests | Partial — operators must maintain duplicate price data; no automatic FX |
+| **C. Staging data fix only** | Owner manually sets `list_price` on the 4 broken UAT templates (451–454) to VND-shaped values (e.g. `250000`) like the working batch. NO code change. | 0 LOC | NO — bug recurs on the next published product; the systemic gap stays open |
+
+Option A is the Standard-Odoo-First pick: `res.currency._convert` is a core Odoo CE method; the only new surface is one Many2one on `etsy.shop` (with a discovery probe — analogous to how `default_readiness_state_id` is bootstrapped via `GET /shops/{id}/readiness-state-definitions`). No custom FX logic, no new currency model.
+
+**Standard-Odoo-First gate**: adding `etsy.shop.listing_currency_id` is a new field on an existing model. Per `feedback_standard_odoo_first.md`: **STOP and ping owner before implementing**. Owner must confirm option A vs B vs C before Phase 1 plan + RED. Drafted owner-question payload below.
+
+**Owner question (paste verbatim into AskUserQuestion or Telegram)**:
+
+> P-BUG-ESTY-188 root cause confirmed via captured 400 body: Odoo company currency is USD, Etsy shop JaHandmadeArt is VND, publisher sends `list_price` raw with no FX conversion. The 4 most recent UAT-TAOSP products (12.99, 19.99 USD) all 400 with "must be above min price ₫5,040 VND". Three options:
+> A. Add `etsy.shop.listing_currency_id` + currency conversion at publish (proper fix, ~120 LOC, uses standard `res.currency._convert`).
+> B. Add per-product `x_etsy_shop_price` override field (operator sets VND price manually; ~80 LOC).
+> C. Staging-data-only — set the 4 broken UAT products to VND-shaped list_price like the older batch (0 LOC; bug recurs).
+> Which option ships in 19.0.2.34.0?
+
+**Next-session entry point** (when owner answers):
+
+- Option A: Spawn planner on `etsy_shop.listing_currency_id` + `_build_create_draft_payload` + `push_inventory` conversion; RED includes a payload test that asserts USD→VND conversion at a known FX rate (mock the currency rate row).
+- Option B: Spawn planner on `product.template.x_etsy_shop_price` + publisher fallback chain.
+- Option C: Owner does the data fix; close P-BUG-ESTY-188 as "data only" and open a follow-up tech-debt slice for the systemic FX gap.
+
+### Phase 9 follow-up part 2 (2026-06-05, owner decision + audit)
+
+Owner picked **Option A** + requested live-listing audit before proceeding. Audit script executed via `odoo shell` on staging using stored OAuth credentials (`EtsyApiClient(shop)`):
+
+| external_ref | Result |
+|---|---|
+| 4512614292 | 404 Not Found (deleted on Etsy or scope mismatch) |
+| 4512614444 | 404 Not Found |
+| 4514022027 | 404 Not Found |
+| 4514024054 | `state=draft`, `price=250000/1 VND`, title "UAT AllFields Doormat-CQLGX" |
+
+**Conclusion**: Etsy interpreted the 250,000 as VND, not USD. ≈ $10 USD equivalent. No 24,000× overcharge to undo. The systemic gap is real but no live audit-and-refund action is needed. Three of the four prior "successes" are gone from Etsy anyway. Proceed to Option A planning.
+
+Audit script saved at `/tmp/audit_etsy_listings.py` (local + staging) for future reuse.
+
+### Phase 9 iter2 deploy (2026-06-06)
+
+**Pre-deploy state on staging (`esty_odoo19`)**:
+- Odoo company currency = USD (id=1)
+- VND was `active=False` (id=23, ships dormant in 19 CE)
+- Zero `res_currency_rate` rows for VND
+- 5 etsy_shop rows: 4 email-only, 1 api (JaHandmadeArt id=10) with `listing_currency_id=NULL`
+
+**Pre-deploy setup** (owner-approved via AskUserQuestion):
+- `UPDATE res_currency SET active=TRUE WHERE name='VND'` (UPDATE 1)
+- `INSERT INTO res_currency_rate (currency_id=23, company_id=1, name=CURRENT_DATE, rate=25400.0)` (1 row, mid-market USD/VND for 2026-06-06)
+
+**Deploy path**:
+1. `rsync` `custom_addons/etsy_integration/` → `/odoo/esty19/custom_addons/etsy_integration/` (109 kB, 12.38× speedup; all `migrations/19.0.2.34.0/`, `migrations/_19_0_2_34_0/`, both iter2 test files landed).
+2. `sudo docker exec esty19_odoo odoo -d esty_odoo19 -u etsy_integration --stop-after-init` — Module loaded in 2.25s / 1155 queries; `Running migration [19.0.2.34.0>] post-migrate`; migration emitted `bootstrapped shop id=10 (JaHandmadeArt) listing_currency_id=23 (currency_code=VND)`; Registry loaded in 6.916s; exit 0.
+3. `sudo docker restart esty19_odoo` — healthy after 5s.
+
+**Expected harmless WARNING** (matches iter1 pattern): `Invalid version for upgrade script '/mnt/extra-addons/etsy_integration/migrations/_19_0_2_34_0'`. Confirms split-package design — Odoo's discovery scans the migrations dir, finds the underscored mirror, can't parse it as a version, and skips it. The dotted `19.0.2.34.0/` IS picked up and executed.
+
+**Post-deploy psql verification**:
+
+```
+ id |     name      | active_source | etsy_api_shop_id | listing_currency_id | default_readiness_state_id
+----+---------------+---------------+------------------+---------------------+----------------------------
+  1 | Julien        | email         |                  |                     |
+  2 | Carina        | email         |                  |                     |
+  3 | Viktor        | email         |                  |                     |
+  4 | Sven          | email         |                  |                     |
+ 10 | JaHandmadeArt | api           | 60752333         |                  23 | 1406133708616
+```
+
+JaHandmadeArt's `listing_currency_id` is now `23` (VND). Email-only shops correctly skipped by the migration's `active_source='api'` filter.
+
+**End-to-end verification via odoo shell** on staging confirmed conversion works:
+
+| Test | Input | Output | Notes |
+|---|---|---|---|
+| Helper at 0.50 USD | 0.50 | 12,700 VND | Above Etsy's 5,040 VND minimum ✓ |
+| Helper at 12.99 USD | 12.99 | 329,946 VND | The owner's typical UAT product price ✓ |
+| Helper at 19.99 USD | 19.99 | 507,746 VND | ✓ |
+| Full payload build for real product (id=424, "Aceton", list_price=1.0 USD) | 1.0 | `payload['price']` = 25,400 VND | matches rate ✓ |
+
+**Implication**: The publisher is now emitting Etsy-acceptable VND-denominated prices for JaHandmadeArt. The exact failure mode (`price_too_low ₫5,040 VND`) cannot recur for this shop while: (a) `listing_currency_id` is set, (b) `res_currency_rate` for VND is configured at a non-zero rate.
+
+**T6 exit gate (createListing → 201)**: not yet verified — requires owner to retry the publish that 400'd on 2026-06-03. Tracker stays `doing` until that gate closes. If owner reproduces and the publish succeeds (201, listing_id returned), flip tracker to `done` and trigger Phase 8 (`/learn`).
+
+**Operator follow-up for fresh `etsy.shop` records**: any new api-source shop created on staging must:
+1. Have `etsy_api_shop_id` set (existing FR-017 path covers this on OAuth callback);
+2. Have `listing_currency_id` set — the new field is bootstrapped by the OAuth flow if a future slice wires it, but for now the migration only runs once on install. Documented as a `P-BUG-ESTY-188b` follow-up consideration.
+3. Have a `res_currency_rate` row for that currency. Operators should add rates manually or via a future `ir.cron` to refresh from a vendor feed.
+
+---
+
+### iter3 RCA evidence — 2026-06-06 06:57 UTC (post-iter2 owner re-publish)
+
+After iter2 (`d660afd7c4b`, manifest `19.0.2.34.0`) shipped currency conversion, owner re-ran the Etsy publish wizard against JaHandmadeArt. T6 still does NOT close. The 400 body is now different.
+
+**Reproduction**: owner clicked Publish on `product.template` id=**456** "*Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake*" against JaHandmadeArt (shop id=10, etsy_api_shop_id=`60752333`) at 2026-06-06 06:57:18 UTC.
+
+**400 body captured from staging container logs**:
+
+```
+2026-06-06 06:57:18,620  WARNING  etsy_integration.services.etsy_api_client:
+Etsy HTTP 400 url=https://openapi.etsy.com/v3/application/shops/60752333/listings
+body='[{"path":"/price","type":"empty","message":"cannot be empty","transformed":false}]'
+```
+
+| path | type | message |
+|---|---|---|
+| `/price` | `empty` | cannot be empty |
+
+This is a **distinct failure mode** from iter2's `price_too_low ₫5,040 VND`. iter2 fix (currency conversion) is functioning correctly — Etsy is now rejecting because the value passed through the conversion is `0`, not because the value is too low after conversion.
+
+**psql evidence (staging, 2026-06-06)**:
+
+```
+SELECT pt.id, pt.list_price FROM product_template pt WHERE id = 456;
+ id  | list_price
+-----+------------
+ 456 |        0.0
+```
+
+```
+SELECT ptav.price_extra, pa.name->>'en_US' AS attr, pav.name->>'en_US' AS value
+FROM product_template_attribute_value ptav
+LEFT JOIN product_attribute pa  ON pa.id  = ptav.attribute_id
+LEFT JOIN product_attribute_value pav ON pav.id = ptav.product_attribute_value_id
+WHERE ptav.product_tmpl_id = 456;
+ price_extra | attr | value
+-------------+------+-------
+        20.0 | Size | 6"
+        30.0 | Size | 8"
+        10.0 | Size | 4''
+```
+
+So variant `lst_price` = template `list_price` (0) + ptav `price_extra` (10/20/30) = **$10 / $20 / $30**. The template is correctly priced via the variant axis; only the template-level `list_price` is 0.
+
+**Code trace**:
+- `etsy_listing_publisher.py:227` — `payload['price'] = self._convert_to_shop_currency(s.list_price, shop)` → `_convert(0.0, ...)` → `0.0` → JSON `"price": 0.0` → Etsy rejects as "empty".
+- `etsy_listing_publisher.py:436` — `push_inventory` uses the same raw `t.list_price`. Even if createListing were patched, push_inventory would 400 the same way.
+
+**Implication**: the publisher's price source (`tmpl.list_price`) is **incorrect for the standard Odoo variant-pricing pattern**. When pricing is configured via `product.template.attribute.value.price_extra` (legitimate Odoo data shape, not a misconfiguration), `tmpl.list_price` stays 0 and only `variant.lst_price` carries the real price.
+
+**Hypothesis #4 (iter3)**: the publisher must resolve a non-zero "starts at" price from the variant lattice (min `variant.lst_price` across active publishable variants), falling back to `tmpl.list_price` only when there are no variants. If the resolved price is still 0, raise a `UserError` at the boundary with a clear "set list_price or per-variant price_extra" message BEFORE any vendor call.
+
+**Tracker**: stays `doing`. T6 unmet. Iter3 GREEN target: manifest `19.0.2.34.0 → 19.0.3.0.0` (minor bump — payload-shape design change).
+
+---
+
+### iter3 Phase 0 — Etsy docs cache refresh (2026-06-06)
+
+Owner directive (2026-06-06): pivot iter3 to implement Etsy's native per-variant model end-to-end (SKU, qty, price, image per variant), grounded in Etsy docs + Odoo 19 standard variant fields. Phase 0's decision gate: does Etsy v3 expose a per-variant image binding endpoint?
+
+**Source pulled**: `https://www.etsy.com/openapi/generated/oas/3.0.0.json` (full OpenAPI 3.0.2 spec, 895 KB, saved at `/tmp/etsy_oas.json`). This is the authoritative schema source; the docs site `/documentation/reference` is a JS-rendered SPA that crawl4ai and WebFetch cannot capture as static markdown.
+
+**Variation image endpoint found** ✓:
+
+```
+GET  /v3/application/shops/{shop_id}/listings/{listing_id}/variation-images  -> getListingVariationImages
+POST /v3/application/shops/{shop_id}/listings/{listing_id}/variation-images  -> updateVariationImages
+```
+
+`updateVariationImages` body schema (verbatim from OAS):
+
+```json
+{
+  "variation_images": [
+    {"property_id": <int64>, "value_id": <int64>, "image_id": <int64>}
+  ]
+}
+```
+
+All three fields required per entry. Binding is **one image per (property × value)** — NOT per variant combination. For an axis with N values, up to N entries. The `image_id` is the `listing_image_id` returned by a prior `uploadListingImage` call.
+
+**Implication for iter3 publisher**: ship per-variant image binding. Pick one variation-creating axis (the one whose variants carry distinct `image_variant_1920` — typically Color in mixed-axis cases; for Leather Tray it's Size). Upload each variant's image via `uploadListingImage` (gets listing_image_id), then POST `variation-images` with the (property_id, value_id, image_id) triples. Skip the binding when the variant has no `image_variant_1920` (fallback to template image would be a no-op since the template image is already bound at listing level).
+
+**`updateListingInventory` schema** (also verbatim) confirms the per-variant SKU/qty/price model the design relies on:
+
+```
+products[].sku           string, nullable
+products[].offerings[].price          float
+products[].offerings[].quantity       int64
+products[].offerings[].readiness_state_id  int64
+price_on_property[]      array of property_id
+quantity_on_property[]   array of property_id
+sku_on_property[]        array of property_id
+readiness_state_on_property[]  array of property_id (new — supports per-variant processing profiles)
+```
+
+**Decision gate outcome**: iter3 ships **all four** per-variant aspects (SKU, qty, price, image). No follow-up slice needed for images.
+
+**Out-of-scope finding**: `readiness_state_on_property` is also new — sellers can have per-variant processing profiles. Not needed for the Leather Tray UAT (single shop-level default). Note as a future enhancement; do NOT add in iter3.
+
+---
+
+### iter3 Phase 3 GREEN landed — 2026-06-06 08:35 UTC
+
+**Branch**: `feature/006-master-plan-coding`
+**Manifest**: `etsy_integration 19.0.2.34.0 → 19.0.3.0.0` (minor bump — payload shape change)
+
+**New surface** (`custom_addons/etsy_integration/services/etsy_listing_publisher.py`):
+
+- `_slugify_value_name(name)` — static — uppercase-alphanumeric slug; `"` → `IN`.
+- `_synthesize_variant_sku(base, value_names)` — classmethod — `{base}-{slugs}` clamped to 32 chars with WARNING on truncation; `UserError` when base + every slug are empty.
+- `_resolve_variant_sku(tmpl, variant)` — variant.default_code wins; falls through to synthesis.
+- `_resolve_starting_price(tmpl, shop)` — min positive variant.lst_price → fallback to template list_price → `UserError` when both 0. Always converted to shop currency.
+- `_variant_for_combo(tmpl, combo_value_ids)` — refactored helper; prefetches the M2M before the loop to avoid N+1.
+- Rewritten `push_inventory` — emits per-variant `sku` / `offerings[].price` / `offerings[].quantity` using `_variant_for_combo` lookup; computes `sku_on_property[]` / `quantity_on_property[]` / `price_on_property[]` from the varying axes' Etsy property IDs whenever the corresponding dimension actually varies across `products[]`.
+- New `push_variation_images(tmpl, listing_id, shop)` — uploads each variant's `image_variant_1920` via `uploadListingImage` then POSTs `/variation-images` with `{property_id, value_id, image_id}` triples. Best-effort: per-variant decode/upload failure logs WARNING and skips.
+- `run()` orchestrator — calls `push_variation_images` after `push_inventory` and before `publish`; non-fatal try/except so a variation-binding failure does not block publish.
+- `_build_create_draft_payload` — `price` now flows through `_resolve_starting_price` instead of raw `s.list_price`.
+
+**Test results**: 9 RED → 9 GREEN under `--test-tags /etsy_integration`; full suite 18 failed / 5 error of 700 = exact iter2 baseline (18 / 5 / 691) + 9 new iter3 GREEN. Zero new regressions.
+
+**Reviews** (parallel Phase 4):
+- **code-reviewer**: 0 CRITICAL. 1 HIGH (N+1 in `_variant_for_combo` — applied: prefetch `mapped('product_template_attribute_value_ids.product_attribute_value_id')` before the loop). MEDIUMs documented; LOWs accepted.
+- **security-reviewer**: 0 CRITICAL. 1 HIGH (URL-injection risk on `bind_path` — mitigated: `listing_id` originates from Etsy API response not operator; added comment documenting the assumption). 1 MEDIUM (`int(image_id)` malformed-vendor-response — applied: try/except TypeError, ValueError around the cast with WARNING + skip). Slugify regex `[^A-Za-z0-9]+` is sufficient; no PII leakage in logs.
+
+**Owner-facing docs updated**:
+- `docs/owner/UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md` — new `TC-014` Per-variant publish + negative-path test added to summary table.
+- `docs/owner/HUONG_DAN_TAO_SAN_PHAM_VN.md` — §7.4 added the new `Cannot resolve a positive starting price …` UserError row; new §7.5 "Sản phẩm có nhiều size / màu (per-variant)" explains Price Extra / Variant Image / synthetic SKU rules.
+
+**Lint / debug**: `ruff` not installed in this dev shell — relying on test gates and reviewer ORM/style scans. Grep clean for `_logger.info(` / `print(`. Linter (likely pre-commit hook) auto-wrapped `UserError` messages with `_()` for translation — accepted, matches Odoo style.
+
+**Owner-gated next**: Phase 9 staging deploy (rsync + `-u etsy_integration` + restart) and owner re-publish on `product.template id=456` to flip T6 → done. Will ping via Telegram when staging is patched.

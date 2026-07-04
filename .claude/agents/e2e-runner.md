@@ -2,7 +2,7 @@
 name: e2e-runner
 description: End-to-end testing specialist using agent-browser (primary) with Playwright fallback for Odoo web interface. Use PROACTIVELY for generating, maintaining, and running E2E tests. Tests Odoo workflows including forms, One2many fields, wizards, and reports.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: opus
+model: sonnet
 ---
 
 # Odoo E2E Test Runner

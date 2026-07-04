@@ -33,6 +33,11 @@ from . import test_p4_01_fix_payload_schema
 from . import test_p4_01_fix_log_linkage
 from . import test_p4_01_fix_log_linkage_exception_path
 from . import test_p4_01b_bulk_push_all_orm
+from . import test_p_d8_fulfillment_detail_orm
+from . import test_esty_246_phase1_db
+from . import test_esty_246_phase2_orm
+from . import test_esty_248_phase1_db
+from . import test_esty_248_phase2_orm
 
 __all__ = [
     'test_gearment_api_client',
@@ -66,4 +71,9 @@ __all__ = [
     'test_p4_01_fix_log_linkage',
     'test_p4_01_fix_log_linkage_exception_path',
     'test_p4_01b_bulk_push_all_orm',
+    'test_p_d8_fulfillment_detail_orm',
+    'test_esty_246_phase1_db',
+    'test_esty_246_phase2_orm',
+    'test_esty_248_phase1_db',
+    'test_esty_248_phase2_orm',
 ]

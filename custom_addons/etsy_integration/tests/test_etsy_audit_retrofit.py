@@ -49,6 +49,7 @@ class TestEtsyOrderSyncer_AuditLogPersists(TransactionCase):
             'name': 'Audit Test Shop',
             'sync_mode': 'api_only',
             'sync_audit_mode': True,
+            'etsy_api_shop_id': '60752333',
         })
 
     def _run_sync(self, fixture_name='receipts_page1.json'):

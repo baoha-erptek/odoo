@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hatafa Etsy ERP — UI/UX Improvement Proposal (2026-06-27)</title>
+<style>
+  :root{
+    --brand:#714B67; --brand-d:#573a50; --brand-l:#8d6383; --accent:#e8a13a;
+    --bg:#f5f3f6; --card:#fff; --ink:#23202a; --muted:#6b6675; --line:#e7e2e9;
+    --ok:#1f9d63; --warn:#c98a00; --bad:#c0392b; --info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:38px 40px}
+  header.hero h1{margin:0 0 6px;font-size:26px}
+  header.hero .sub{opacity:.92;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 40px 80px}
+  h2{margin:44px 0 12px;font-size:20px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:24px 0 8px;font-size:16px}
+  p{margin:8px 0}.lead{color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:840px){.two{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#faf8fb;color:var(--brand-d);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:last-child td{border-bottom:none}
+  code{background:#f0ecf2;padding:1px 5px;border-radius:5px;font-size:12px;color:var(--brand-d)}
+  figure{margin:14px 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
+  figure img{width:100%;border-radius:7px;display:block;border:1px solid var(--line)}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .callout{border-left:4px solid var(--brand);background:#fbf9fb;padding:12px 16px;border-radius:0 10px 10px 0;margin:14px 0}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+  .t-new{background:#e6f6ee;color:var(--ok)}.t-reuse{background:#eaf1fd;color:var(--info)}.t-build{background:#fdf3dd;color:var(--warn)}
+  .pri{font-weight:700}.p0{color:var(--bad)}.p1{color:var(--warn)}.p2{color:var(--muted)}
+
+  /* ---- live mockups ---- */
+  .mock{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0;font-size:13px;background:#fff}
+  .mock .topbar{background:var(--brand);color:#fff;padding:8px 14px;display:flex;gap:18px;align-items:center;font-size:13px}
+  .mock .topbar .logo{font-weight:700;letter-spacing:.3px}
+  .mock .topbar a{color:#fff;opacity:.85;text-decoration:none}
+  .mock .topbar a.active{opacity:1;border-bottom:2px solid var(--accent);padding-bottom:6px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px}
+  @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpic{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#faf8fb}
+  .kpic .n{font-size:24px;font-weight:800;color:var(--brand-d)}
+  .kpic .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .kpic .d{font-size:11px;margin-top:3px}.kpic .up{color:var(--ok)}.kpic .dn{color:var(--bad)}
+  .kpic.alert{background:#fdeceb;border-color:#f3c7c2}.kpic.alert .n{color:var(--bad)}
+  .filtbar{display:flex;gap:8px;padding:0 14px 12px;flex-wrap:wrap}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:3px 11px;background:#fff;color:var(--muted)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .mtbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .mtbl th,.mtbl td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+  .mtbl th{background:#faf8fb;color:var(--brand-d);font-size:11px;text-transform:uppercase}
+  .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill.prod{background:#fdf3dd;color:var(--warn)}.pill.ship{background:#e6f6ee;color:var(--ok)}.pill.design{background:#eaf1fd;color:var(--info)}.pill.qc{background:#eee9f7;color:#5a4b8a}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  /* kanban */
+  .kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;overflow-x:auto}
+  .kcol{background:#f3f0f4;border-radius:10px;padding:8px;min-width:150px}
+  .kcol h4{margin:2px 4px 8px;font-size:12px;color:var(--brand-d);display:flex;justify-content:space-between}
+  .kcard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px}
+  .kcard .o{font-weight:700;color:var(--brand-d)}
+  .kcard .m{color:var(--muted);font-size:11px}
+  .sidebar-demo{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0}
+  .sb{background:var(--brand-d);color:#fff;width:190px;padding:12px 0;font-size:13px}
+  .sb .grp{padding:6px 16px;opacity:.6;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;margin-top:8px}
+  .sb .it{padding:6px 16px;display:flex;gap:8px;align-items:center}
+  .sb .it.on{background:rgba(255,255,255,.14);border-left:3px solid var(--accent)}
+  .sb-main{flex:1;padding:16px;background:#fff;color:var(--muted);font-size:13px}
+  pre.ascii{background:#2b2530;color:#f3eef4;border-radius:10px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.4}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:40px;padding-top:16px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>UI/UX Improvement Proposal</h1>
+  <div class="sub">Hatafa Etsy ERP · <b>2026-06-27</b> · a NEW design exploration — does not modify <code>docs/owner/business-flows</code>. Companion to the mismatch report.</div>
+</header>
+<div class="wrap">
+
+  <p class="lead">The functional contract is largely delivered. What's missing is <b>presentation and findability</b>: the dashboard dumps 25–34 columns with no summary, work has no board to flow across, and the app is split into two overlapping menus. This proposal closes those gaps with <b>standard Odoo views + reuse of the in-house <code>muk_web_*</code> bundle</b> — minimal custom code, maximum visible polish.</p>
+
+  <h2>1 · Design principles</h2>
+  <div class="card">
+    <ol>
+      <li><b>Summarise before you enumerate.</b> Every operational screen opens with a KPI band answering "what needs me now?" before the raw table.</li>
+      <li><b>One hub, role-aware.</b> Collapse the Etsy + Operations split into a single operational app with a role-scoped sidebar. Each role lands where its work is.</li>
+      <li><b>Let work flow on a board.</b> The 17-stage pipeline becomes a kanban; status changes by drag, not by opening a wizard.</li>
+      <li><b>Curate, don't truncate.</b> Default views show 8–12 high-signal columns; the full 34-column Excel view stays available as a saved "Excel" filter.</li>
+      <li><b>Reuse the brand chrome we already own.</b> <code>muk_web_colors</code> applies <code>#714B67</code> everywhere; <code>muk_web_appsbar</code> gives the sidebar; <code>muk_web_refresh</code> makes dashboards live.</li>
+    </ol>
+  </div>
+
+  <h2>2 · Current state (what we're fixing)</h2>
+  <div class="two">
+    <figure><img src="./screenshots/verify-2026-06-27/ops-dashboard.png" alt="current dashboard"><figcaption><b>Today:</b> 25-col flat list, no KPIs, light navbar, Operations app only.</figcaption></figure>
+    <figure><img src="./screenshots/verify-2026-06-27/sale-order-form.png" alt="current order form"><figcaption><b>Today:</b> order form is solid (tabs all present) but lives under a <i>separate</i> Etsy app with its own nav.</figcaption></figure>
+  </div>
+
+  <h2>3 · Proposed: unified, role-aware navigation</h2>
+  <p>Merge the two top-bar apps into one <b>Hatafa Operations</b> hub with a left sidebar (<code>muk_web_appsbar</code>). Eliminates the Design Queue/Design Files and Listing Variants/Listings duplication. Each role's group controls which sections show and which is the landing page.</p>
+  <div class="sidebar-demo">
+    <div class="sb">
+      <div class="logo" style="padding:6px 16px;font-weight:700">▦ Hatafa Ops</div>
+      <div class="grp">Daily</div>
+      <div class="it on">▣ My Dashboard</div>
+      <div class="it">◷ Order Pipeline</div>
+      <div class="it">✎ Design Approvals</div>
+      <div class="grp">Sell</div>
+      <div class="it">⬚ Products &amp; SKU</div>
+      <div class="it">⊞ Listings &amp; Publish</div>
+      <div class="it">◍ Channel Status</div>
+      <div class="grp">Fulfil</div>
+      <div class="it">⇲ Gearment</div>
+      <div class="it">⛟ Tracking Import</div>
+      <div class="grp">Care</div>
+      <div class="it">✉ After-Sales</div>
+      <div class="it">↩ Address Changes</div>
+      <div class="grp">Watch</div>
+      <div class="it">⚇ Sync Health</div>
+      <div class="it">$ Price Control</div>
+      <div class="grp">Setup</div>
+      <div class="it">⚙ Shops · Logs · Carriers</div>
+    </div>
+    <div class="sb-main">
+      <b>Role landing (group → default section):</b>
+      <table style="margin-top:8px">
+        <tr><th>Role</th><th>Group</th><th>Lands on</th></tr>
+        <tr><td>BA Lead</td><td><code>group_ba_lead</code></td><td>My Dashboard (all shops)</td></tr>
+        <tr><td>BA / Order ops</td><td><code>group_ba_user</code></td><td>Order Pipeline (my shops)</td></tr>
+        <tr><td>Marketing</td><td><code>group_marketing_user</code></td><td>Listings &amp; Publish</td></tr>
+        <tr><td>Production</td><td><code>group_production_team</code></td><td>Order Pipeline (board)</td></tr>
+        <tr><td>Shipping</td><td><code>group_ba_shipping</code></td><td>Gearment + Tracking</td></tr>
+        <tr><td><b>PD (new)</b></td><td><code>group_pd</code> <span class="tag t-build">add</span></td><td>Design Approvals</td></tr>
+        <tr><td><b>RD (new)</b></td><td><code>group_rd</code> <span class="tag t-build">add</span></td><td>Price Control</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>4 · Proposed: Operations Dashboard with KPI band</h2>
+  <p>Open with a 4-card KPI band (orders today, awaiting design approval, stuck in pipeline, tracking-push failures), saved filter chips, and a <b>curated 10-column</b> table. The 34-column view survives as the "Excel" chip. Cards are clickable filters; <code>muk_web_refresh</code> auto-refreshes every 60s.</p>
+  <div class="mock">
+    <div class="topbar"><span class="logo">▦ Hatafa Ops</span><a class="active">Dashboard</a><a>Pipeline</a><a>Design</a><a>Listings</a><a>Gearment</a><a>After-Sales</a></div>
+    <div class="kpis">
+      <div class="kpic"><div class="l">Orders today</div><div class="n">42</div><div class="d up">▲ 12% vs yest.</div></div>
+      <div class="kpic"><div class="l">Awaiting design approval</div><div class="n">7</div><div class="d">3 overdue &gt;24h</div></div>
+      <div class="kpic alert"><div class="l">Stuck in pipeline</div><div class="n">5</div><div class="d">&gt;48h no movement</div></div>
+      <div class="kpic alert"><div class="l">Tracking push failed</div><div class="n">2</div><div class="d">needs retry</div></div>
+    </div>
+    <div class="filtbar">
+      <span class="chip on">Last 24h</span><span class="chip">Needs me</span><span class="chip">Unassigned</span><span class="chip">Dropship</span><span class="chip">MTO</span><span class="chip">Excel (34 col)</span>
+    </div>
+    <table class="mtbl">
+      <tr><th>Date</th><th>Shop</th><th>Order</th><th>Buyer</th><th>SKU</th><th>Qty</th><th>Stage</th><th>BA</th><th>Label</th><th>Track</th></tr>
+      <tr><td>06-27 09:12</td><td>JaHandmade</td><td class="mono">S03341</td><td>S. Miller</td><td class="mono">MUG-CR-F11</td><td>2</td><td><span class="pill design">Chờ duyệt TK</span></td><td>Lan</td><td>US-od</td><td>—</td></tr>
+      <tr><td>06-27 08:40</td><td>JaHandmade</td><td class="mono">S03340</td><td>A. Chen</td><td class="mono">TEE-BK-L</td><td>1</td><td><span class="pill prod">Sản xuất</span></td><td>Huy</td><td>Urgent</td><td>—</td></tr>
+      <tr><td>06-27 08:05</td><td>CraftNest</td><td class="mono">S03339</td><td>M. Diaz</td><td class="mono">MAT-30x18</td><td>1</td><td><span class="pill ship">Đã gửi bưu vận</span></td><td>Lan</td><td>VN-Tattoo</td><td class="mono">9400…21</td></tr>
+      <tr><td>06-27 07:55</td><td>CraftNest</td><td class="mono">S03338</td><td>J. Park</td><td class="mono">MUG-WT-F15</td><td>3</td><td><span class="pill qc">QC</span></td><td>Huy</td><td>Chờ duyệt</td><td>—</td></tr>
+    </table>
+  </div>
+  <p class="lead">Build cost: one OWL/QWeb client-action (or a kanban-of-tiles) above the existing list — no model changes. KPIs are <code>read_group</code> counts over <code>sale.order</code>/<code>sale.order.fulfillment</code>.</p>
+
+  <h2>5 · Proposed: Pipeline board (kanban)</h2>
+  <p>The 13 seeded states already exist; surface them as a board grouped by <code>x_pipeline_state_id</code>. Drag a card → routes through the audited <code>_write_pipeline_state()</code> (same guard as the wizard, so the audit trail is preserved). This is the single biggest "feels alive" win and needs <b>only a new <code>&lt;kanban&gt;</code> view</b>.</p>
+  <div class="mock">
+    <div class="kanban">
+      <div class="kcol"><h4><span>Mới nhận</span><span>8</span></h4>
+        <div class="kcard"><div class="o mono">S03341</div><div class="m">MUG-CR-F11 ×2 · US-od</div></div>
+        <div class="kcard"><div class="o mono">S03342</div><div class="m">TEE-WT-M ×1</div></div>
+      </div>
+      <div class="kcol"><h4><span>Chờ duyệt TK</span><span>7</span></h4>
+        <div class="kcard" style="border-left:3px solid var(--bad)"><div class="o mono">S03330</div><div class="m">overdue 26h</div></div>
+        <div class="kcard"><div class="o mono">S03337</div><div class="m">MAT-30x18</div></div>
+      </div>
+      <div class="kcol"><h4><span>Sản xuất</span><span>11</span></h4>
+        <div class="kcard"><div class="o mono">S03340</div><div class="m">TEE-BK-L · Urgent</div></div>
+      </div>
+      <div class="kcol"><h4><span>QC / Đóng gói</span><span>4</span></h4>
+        <div class="kcard"><div class="o mono">S03338</div><div class="m">MUG-WT-F15 ×3</div></div>
+      </div>
+      <div class="kcol"><h4><span>Đã gửi bưu vận</span><span>19</span></h4>
+        <div class="kcard"><div class="o mono">S03339</div><div class="m">tracking ✓</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>6 · Proposed: order form &amp; wizard polish</h2>
+  <div class="card">
+    <ul>
+      <li><b>Rename</b> the "Gearment" tab to <b>Fulfillment</b> and the button to <b>Request Gearment Quote</b> (match the mockup vocabulary); add a read-only recipient/address block in the quote wizard so the operator confirms <i>where</i> before committing.</li>
+      <li><b>Status badges</b> everywhere a state lives (<code>widget="badge"</code> + <code>decoration-*</code>) — pipeline stage, design status, tracking-push status — so state reads at a glance.</li>
+      <li><b>Chatter on the side</b> (<code>muk_web_chatter</code>) on the order form so buyer messages and the conversation sit next to the order, not below the fold.</li>
+    </ul>
+  </div>
+
+  <h2>7 · Reuse vs build (Standard-Odoo-First)</h2>
+  <p>All seven <code>muk_web_*</code> modules already exist in <code>openeducat_erp19/custom_addons/</code> — <b>Odoo 19, LGPL-3, CE, no Enterprise dependency</b>. Copy them into <code>odoo19_esty/custom_addons/</code> (or share the addons-path). They close most of the <i>chrome</i> gaps for near-zero custom code.</p>
+  <table>
+    <tr><th>Need</th><th>Approach</th><th>How</th></tr>
+    <tr><td>Brand <code>#714B67</code> everywhere (incl. navbar)</td><td><span class="tag t-reuse">reuse</span></td><td><code>muk_web_colors</code> + <code>muk_web_theme</code> — replaces hand-rolled <code>mu_tokens.scss</code></td></tr>
+    <tr><td>Unified role sidebar nav</td><td><span class="tag t-reuse">reuse</span></td><td><code>muk_web_appsbar</code> sidebar + one merged menu tree</td></tr>
+    <tr><td>Live-refreshing dashboard</td><td><span class="tag t-reuse">reuse</span></td><td><code>muk_web_refresh</code> (auto/interval refresh)</td></tr>
+    <tr><td>Side chatter on order form</td><td><span class="tag t-reuse">reuse</span></td><td><code>muk_web_chatter</code></td></tr>
+    <tr><td>KPI band on dashboard</td><td><span class="tag t-build">build</span></td><td>small OWL/QWeb tile action over <code>read_group</code> — <span class="tag t-new">new</span></td></tr>
+    <tr><td>Pipeline kanban board</td><td><span class="tag t-build">build</span></td><td>one <code>&lt;kanban&gt;</code> view grouped by pipeline state — <span class="tag t-new">new</span></td></tr>
+    <tr><td>RD Price-Control dashboard</td><td><span class="tag t-build">build</span></td><td>new list/graph view + anomaly domain — <span class="tag t-new">new</span></td></tr>
+    <tr><td><code>group_rd</code> / <code>group_pd</code> + landings</td><td><span class="tag t-build">build</span></td><td>2 res.groups + menu visibility — <span class="tag t-new">new</span></td></tr>
+  </table>
+
+  <h2>8 · Suggested rollout order (low risk → high value)</h2>
+  <pre class="ascii">
+  Wave 1  Reuse chrome      muk_web bundle in addons-path  → brand + sidebar + live refresh   (1-2 days, zero model change)
+  Wave 2  Dashboard KPIs    KPI band + saved filters + curated columns                        (2-3 days)
+  Wave 3  Pipeline board    kanban grouped by state, drag→_write_pipeline_state                (2-3 days)
+  Wave 4  Nav merge         collapse Etsy+Operations into one role-aware menu tree             (2 days)
+  Wave 5  Roles + RD dash   group_rd/group_pd + Price-Control view + role landings             (3-4 days)
+  Wave 6  Form polish       Fulfillment rename + badges + quote recipient block + side chatter (1-2 days)
+  </pre>
+
+  <div class="callout">
+    Each wave is independently shippable and reversible. Waves 1–3 deliver ~80% of the perceived improvement. None of them touch the functional contract — they re-present what already works.
+  </div>
+
+  <footer>
+    A NEW proposal — the existing owner mockups under <code>docs/owner/business-flows/</code> are untouched. Mockups above are illustrative HTML, not pixel specs. Pair with <code>mismatch-report.html</code> and <code>jira-sprint-draft.md</code>. Generated 2026-06-27.
+  </footer>
+</div>
+</body>
+</html>

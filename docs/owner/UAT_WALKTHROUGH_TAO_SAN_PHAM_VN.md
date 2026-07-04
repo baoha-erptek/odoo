@@ -315,7 +315,6 @@
 
 **Pass / Fail:** ☐ Pass  ☐ Fail
 
----
 
 ## TC-012 — FR-017: Non-BA user bị chặn ở Create
 
@@ -341,6 +340,235 @@
 
 ---
 
+## TC-013 — Publish giá USD lên shop Etsy dùng VND không lỗi `price_too_low`
+
+> Mới từ 2026-06-06. Kiểm tra hệ thống tự đổi giá USD sang đơn vị tiền của shop Etsy (ví dụ VND) khi đăng listing.
+
+**Pre-condition**
+- Đã chạy trên **Staging**, shop *JaHandmadeArt* (đơn vị tiền Etsy = **VND**).
+- Admin đã set sẵn (1 lần) trên môi trường test:
+  - Bật **VND** ở menu *Cài đặt → Đơn vị tiền tệ → Currencies* (active = ✅).
+  - Có **tỷ giá USD → VND** ngày hôm nay ở *Cài đặt → Đơn vị tiền tệ → Rates* (ví dụ `25400`).
+  - Shop Etsy có trường **Listing Currency** = `VND` (hệ thống tự bootstrap khi cài bản mới — Admin xem ở Etsy → Shop Settings).
+- BA Lead login.
+
+**Các bước**
+
+1. Tạo 1 sản phẩm thử qua menu **Operations → Configuration → Build SKU & Create Product** với:
+   - **Product Name:** `UAT-CURRENCY <date>`
+   - **Family / Material / Size:** chọn bất kỳ giá trị hợp lệ
+   - **Listing Price (USD):** `12.99`
+2. Bấm **Create** → SP được tạo, sang form Sản phẩm.
+3. Trên form SP, chọn shop Etsy `JaHandmadeArt` (nếu có chọn nhiều shop) → bấm **Publish to Etsy**.
+4. Đợi hệ thống gọi API Etsy. Quan sát thông báo / chatter.
+
+**Kỳ vọng**
+
+- Publish **thành công** — không có thông báo lỗi `price_too_low`. Trên chatter có dòng "Published to Etsy" (hoặc tương đương) kèm **Listing ID** Etsy trả về.
+- Vào Etsy Shop Manager (https://www.etsy.com/your/shops/JaHandmadeArt/listings) → tìm draft mới — **giá listing hiển thị bằng VND** (ví dụ `12.99 × 25.400 = 329.946 ₫`, có thể sai số do làm tròn).
+- BA chỉ điền giá USD ở Odoo — hệ thống tự đổi sang VND khi đăng. BA không cần tự nhân tỷ giá.
+
+**Trường hợp âm — kiểm tra hệ thống cảnh báo khi thiếu cấu hình**
+
+5. (tuỳ chọn) Admin tạm tắt VND ở *Cài đặt → Đơn vị tiền tệ* HOẶC xoá tỷ giá USD→VND hôm nay.
+6. Lặp lại bước 1–3 với SP mới (USD `12.99`).
+7. Kỳ vọng: hiện thông báo lỗi rõ ràng (ví dụ "*No conversion rate found for VND on …*") — KHÔNG publish thầm với giá sai. Admin bật lại VND / thêm lại tỷ giá → publish lại OK.
+
+**Cleanup**
+- Vào Etsy Shop Manager → xoá draft UAT vừa tạo.
+- Archive SP UAT trong Odoo (Action → Archive).
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có quyền truy cập Etsy Shop Manager)
+
+---
+
+## TC-014 — Publish SP nhiều size: mỗi size có SKU + giá + hình riêng (LIVE JaHandmadeArt)
+
+> Mới từ 2026-06-06 (P-BUG-ESTY-188 iter3). Kiểm tra hệ thống publish đúng mô hình "biến thể" (per-variant) của Etsy thay vì gửi một SKU/giá chung cho cả listing.
+
+**Tại sao TC này quan trọng**
+
+Trước iter3, hệ thống chỉ gửi 1 SKU + 1 giá + 1 hình cho cả listing (kể cả khi SP có nhiều size). Etsy từ chối với 2 lỗi:
+- `400 /price empty` — nếu giá gốc SP là `0` và giá thật nằm ở "Giá thêm theo size" (price_extra).
+- `quantity must be consistent across all products` — nếu mỗi size có số lượng tồn khác nhau.
+
+Sau iter3 hệ thống tự:
+- Lấy giá thấp nhất trong các biến thể làm giá "từ" cho listing.
+- Mỗi size có SKU + giá + tồn riêng trong payload gửi Etsy.
+- Nếu mỗi size có hình riêng (`Variant Image`), hệ thống tự upload + gán cho từng size trên Etsy.
+
+**Pre-condition**
+- Đã chạy trên **Staging**, shop *JaHandmadeArt*.
+- Tỷ giá USD→VND của ngày hôm nay đã có (xem TC-013 prerequisites).
+- BA Lead login.
+
+**Các bước**
+
+1. Vào menu **Sản phẩm → Tất cả Sản phẩm** → tạo SP mới (hoặc dùng wizard SKU Builder) với:
+   - **Product Name:** `UAT-PV <date>` (PV = per-variant)
+   - **List Price (USD):** `0.00` (cố ý để 0 — giá thật nằm ở size)
+   - **Variants:** tab *Attributes & Variants*, thêm thuộc tính `Size` với 3 giá trị (ví dụ `4"`, `6"`, `8"`).
+2. Mở tab *Attributes & Variants* → ở từng dòng giá trị Size, điền **Price Extra** lần lượt `10.00`, `20.00`, `30.00`.
+3. Vào menu **Sản phẩm → Variants** (Biến thể), tìm 3 variant của SP `UAT-PV` → mỗi variant upload 1 hình khác nhau vào trường **Variant Image** (kích thước ≥ 1 MB, JPEG / PNG).
+4. Quay lại form SP → bấm **Publish to Etsy** với shop `JaHandmadeArt`.
+5. Đợi hệ thống gọi API Etsy. Quan sát thông báo / chatter.
+
+**Kỳ vọng**
+
+- Publish **thành công** — không có lỗi `/price empty` hoặc `quantity must be consistent`.
+- Vào Etsy Shop Manager → tìm draft `UAT-PV <date>` → tab **Variations**:
+  - Có 3 variation Size: 4", 6", 8" — mỗi cái có SKU + giá + tồn kho riêng.
+  - Giá lần lượt khoảng `10 × 25.400 ≈ 254.000 ₫`, `20 × 25.400 ≈ 508.000 ₫`, `30 × 25.400 ≈ 762.000 ₫` (sai số làm tròn được).
+  - Mỗi variation có **hình riêng** (Etsy hiển thị hình variant ở dropdown chọn size). Tức 4" hiện hình đã upload cho variant 4", v.v.
+
+**Negative path — hệ thống chặn khi không có giá**
+
+6. Tạo SP mới `UAT-PV-NOPRICE` với `List Price = 0` và KHÔNG điền `Price Extra` cho bất kỳ size nào.
+7. Bấm **Publish to Etsy**.
+8. Kỳ vọng: hệ thống chặn ngay (UserError "*Cannot resolve a positive starting price …*") — KHÔNG gọi API Etsy. Chatter ghi rõ thông báo. BA biết cần điền giá trước.
+
+**Cleanup**
+- Etsy Shop Manager → Drafts → xoá listing UAT-PV vừa tạo.
+- Archive SP UAT trong Odoo.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có quyền truy cập Etsy Shop Manager)
+
+---
+
+## TC-015 — Tách lớp Sản phẩm/Listing — backfill ngày 1 + override title (LIVE JaHandmadeArt)
+
+> Mới từ 2026-06-06 (P-LIST-MODEL, ADR-015). Kiểm tra hệ thống đã tự tạo "dòng Listing" cho mọi SP đã đăng Etsy + Marketing có thể override title riêng cho từng shop.
+
+**Tại sao TC này quan trọng**
+
+ADR-015 tách 2 khái niệm: "Sản phẩm" (BA sở hữu — kích thước/SKU/giá) vs "Listing" (Marketing sở hữu — title/mô tả marketing/category Etsy theo từng shop). Hệ thống tự backfill ngày 1 nên không gián đoạn các SP đã đăng. Sau đó Marketing có thể bắt đầu nhập override.
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core` trên Staging.
+- Tài khoản BA Lead + tài khoản Marketing (Admin gán quyền nếu chưa).
+- Có ít nhất 1 SP `product.template` đã đăng Etsy thành công trước đây (ví dụ SP từ TC-014).
+
+**Các bước**
+
+**Phần 1 — Verify backfill (Admin / BA Lead login)**
+
+1. Vào menu **Operations → Listings** (menu MỚI sau khi cài bản này).
+2. Tìm dòng tương ứng SP đã đăng Etsy ở pre-condition.
+3. Kỳ vọng: 1 dòng Listing tồn tại, **State = Draft**, **Title = trống** (rỗng), **Description = trống**, **Channel = Etsy**, **Shop = trống**, **External Reference = trống**.
+4. Backfill chỉ tạo stub — override fields đều null. Vẫn lấy fallback từ SP master.
+
+**Phần 2 — Verify publish không gián đoạn (BA Lead login)**
+
+5. Vào SP master, bấm **Publish to Etsy** như TC-005.
+6. Kỳ vọng: publish thành công, listing Etsy hiển thị title = `product.template.name` (như cũ, không thay đổi).
+
+**Phần 3 — Marketing override title (Marketing login)**
+
+7. Login bằng tài khoản Marketing. Vào **Operations → Listings**.
+8. Mở dòng Listing của SP. **Title** trống → điền `Marketing Override Title <date>`.
+9. Bấm Save.
+10. Kỳ vọng: ghi được. (Nếu báo lỗi AccessError → kiểm tra quyền Marketing đã add đúng group `Multichannel Hub Core / Marketing User`.)
+
+**Phần 4 — Verify override emit khi publish (BA Lead login lại)**
+
+11. Login lại BA Lead. Mở SP master, bấm Publish to Etsy lần nữa với shop khác (hoặc archive listing cũ + publish lại).
+12. Kỳ vọng: listing Etsy mới hiển thị title = `Marketing Override Title <date>` (đã override), KHÔNG dùng `product.template.name`.
+
+**Phần 5 — Verify BA read-only trên Listing (BA Lead login)**
+
+13. Vào **Operations → Listings**, mở 1 dòng bất kỳ.
+14. Thử sửa Title.
+15. Kỳ vọng: hệ thống chặn (AccessError "You do not have write access on multichannel.listing"). BA chỉ xem được, không sửa.
+
+**Phần 6 — Verify record-rule chống unlink published listing (Marketing login)**
+
+16. Login Marketing. Vào **Operations → Listings**.
+17. Filter `State = Published`. Tick 1 dòng → Action → Delete.
+18. Kỳ vọng: hệ thống chặn xoá (AccessError record rule). Marketing phải archive listing Etsy trước rồi mới xoá được.
+
+**Cleanup**
+- Sửa Title về trống ở các dòng đã override trong TC.
+- Archive bất kỳ Etsy Draft nào tạo trong TC.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có tài khoản Marketing riêng)
+
+---
+
+## TC-016 — Upload video lên Etsy listing (P-LIST-VIDEO)
+
+> Mới từ 2026-06-06 (P-LIST-VIDEO, Jira ESTY-199). Kiểm tra Marketing upload được 1 video cho từng listing và Etsy nhận đúng.
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core,etsy_integration` trên Staging.
+- Có 1 SP đã đăng Etsy thành công trên `JaHandmadeArt` (dùng TC-014/TC-015 hoặc SP cũ).
+- Có 1 file video `.mp4` ngắn (10-30 giây) cỡ ≤ 50MB để upload.
+- Tài khoản Marketing login.
+
+**Các bước**
+
+1. Login Marketing. Vào **Operations → Listings**.
+2. Mở dòng Listing của SP × `JaHandmadeArt`.
+3. Sang tab **Video** (tab mới).
+4. Bấm vào trường **Video** → tải lên file `.mp4` chuẩn bị.
+5. Save.
+6. Login lại BA Lead.
+7. Mở SP master, bấm **Publish to Etsy** với shop `JaHandmadeArt`.
+8. Đợi hệ thống chạy hết publish chain (~30-60s).
+
+**Kỳ vọng**
+
+- Publish thành công. Trên chatter: không lỗi, có dòng log "Etsy createListing", "Etsy push_inventory", "Etsy uploadListingVideo" (hoặc tương đương).
+- Vào Etsy Shop Manager → tìm draft mới → tab Listing details → mục Video: thấy video đã upload. Click play để xác nhận đúng video.
+
+**Negative path — upload thất bại không chặn publish**
+
+9. (tuỳ chọn) Marketing đổi file video bằng file rỗng (`.mp4` 0 byte) hoặc file lỗi format.
+10. BA bấm Publish lại.
+11. Kỳ vọng: listing vẫn publish thành công (không có video). Log có dòng WARNING "Etsy push_video failed for listing ...". Chatter SP hiển thị listing đã đăng nhưng video trống.
+
+**Cleanup**
+- Etsy Shop Manager → Drafts → xoá draft UAT.
+- Operations → Listings → xoá file video khỏi tab Video (clear trường) — nếu listing chưa published thì có thể xoá luôn cả Listing row.
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip (nếu không có file video sẵn)
+
+---
+
+## TC-017 — Chọn Etsy Category per-listing — fallback chain (P-LIST-CATEGORY)
+
+> Mới từ 2026-06-06 (P-LIST-CATEGORY, Jira ESTY-189).
+
+**Pre-condition**
+- Đã rsync + `-u multichannel_hub_core,etsy_integration` trên Staging.
+- Tài khoản Marketing + Admin login.
+
+**Bước 1 — Sync taxonomy (Admin login lần đầu)**
+
+1. Vào form Etsy Shop nào đó (Settings → Etsy Shops) → bấm **Sync Etsy Taxonomy** (hoặc đợi cron hàng tuần).
+2. Đợi sync xong → thông báo `Etsy taxonomy synced: N new, 0 updated`.
+3. Vào **Operations → Etsy Taxonomy** → thấy danh sách hàng nghìn nodes với cột `full_path` đầy đủ.
+
+**Bước 2 — Marketing chọn category per-listing**
+
+4. Login Marketing. Vào **Operations → Listings** → mở 1 dòng.
+5. Tab **Etsy** → trường **Etsy Category** → gõ "Cookware" → autocomplete hiển thị `Home & Living / Kitchen / Cookware [#1234]` chẳng hạn → chọn.
+6. Save.
+
+**Bước 3 — BA publish và verify category override**
+
+7. Login BA Lead. Mở SP master → Publish to Etsy với shop tương ứng.
+8. Trên chatter / log: tìm dòng `Etsy createListing payload taxonomy_id=...` (hoặc xem Etsy Shop Manager).
+9. Verify: listing được tạo với category Marketing đã chọn ở Listing layer (KHÔNG dùng category cũ ở Sản phẩm).
+
+**Bước 4 — Negative: clear listing override → fallback về shop default**
+
+10. Marketing vào Listing → clear trường **Etsy Category** → Save.
+11. BA publish lại → verify category dùng `etsy.shop.default_taxonomy_id` (shop default).
+
+**Pass / Fail:** ☐ Pass  ☐ Fail  ☐ Skip
+
+---
+
 ## Tổng kết UAT
 
 | TC | Mô tả ngắn | Pass | Fail | Skip | Note |
@@ -357,11 +585,23 @@
 | TC-010 | SKU Builder APR-TX-AM | ☐ | ☐ | ☐ | |
 | TC-011 | SKU Builder DMT-TX-R30X18 | ☐ | ☐ | ☐ | |
 | TC-012 | FR-017 non-BA blocked | ☐ | ☐ | ☐ | OK skip + cite unit test |
+| TC-013 | Publish USD→VND không lỗi `price_too_low` | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá hôm nay |
+| TC-014 | Publish SP nhiều size: SKU/giá/hình riêng (per-variant) | ☐ | ☐ | ☐ | Cần shop VND + tỷ giá; cleanup Etsy Draft sau |
+| TC-015 | Tách lớp Sản phẩm/Listing — backfill day-1 + override title | ☐ | ☐ | ☐ | Marketing menu mới; SP đã đăng vẫn publish được không gián đoạn |
+| TC-016 | Upload video lên Etsy listing (1 video/listing) | ☐ | ☐ | ☐ | Cần file .mp4 ≤ 100MB; cleanup video sau |
+| TC-017 | Chọn Etsy Category per-listing — fallback chain | ☐ | ☐ | ☐ | Sync taxonomy trước nếu cache rỗng |
+| TC-018 | Chọn Shipping Profile per-listing — fallback chain | ☐ | ☐ | ☐ | Sync shipping profiles trước; per-shop scope |
+| TC-019 | "How it's made" per-listing — who/when/is_supply chain | ☐ | ☐ | ☐ | 3-tier listing → product → shop |
+| TC-020 | Attribute mapping per-listing override — 3-tier chain | ☐ | ☐ | ☐ | Marketing override; blank row falls through |
+| TC-021 | Shop attribute defaults — tier-2 fallback | ☐ | ☐ | ☐ | Etsy Shop Settings; pairs with TC-020 |
+| TC-022 | Bulk Mark Ready + Reset to Draft + state-lock | ☐ | ☐ | ☐ | Operations → Listings list-view server actions |
+| TC-023 | Shop Currency Preview hiển thị đúng số tiền VND | ☐ | ☐ | ☐ | Listing form → Shipping & Variations → Shop Currency Preview. Chọn shop VND, đảm bảo `res.currency.rate` USD→VND có sẵn, kiểm tra giá hiện ≠ 0.00 và bằng `list_price × rate`. Bỏ chọn shop → giá về 0.00, không crash. |
+| TC-024 | Shop Brand-Voice Defaults — fallback chain | ☐ | ☐ | ☐ | Operations → Channels → Etsy Shops → mở shop → Publisher Defaults → Shop Brand-Voice Defaults. Set `default_title='Shop Title Test'`. Tạo sản phẩm KHÔNG có tiêu đề listing riêng, KHÔNG đổi product name → publish → kiểm tra payload Etsy (audit log) carry `title='Product Name'` (product layer wins, không xuống shop). Sau đó tạo product với name='' (test ORM-level — skip nếu khó) → kiểm tra shop default fires. Bỏ trống shop default → fallback về product name. |
 
 **Người chạy:** ________________  **Ngày:** ____________  **Môi trường:** Staging / Production?
 
 **Kết luận:**
-- ☐ 11+/12 Pass → Approve.
+- ☐ 12+/13 Pass → Approve.
 - ☐ Có Fail → ghi chi tiết vào `docs/owner/UAT_FINDINGS_<date>.md` → tạo Jira ticket.
 
 ---

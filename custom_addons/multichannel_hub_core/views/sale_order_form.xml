@@ -54,6 +54,37 @@
                     </field>
                 </page>
             </xpath>
+
+            <!-- P-D3-PIPELINE-UI (Flow 3a #3 / Flow 4 #3) — Pipeline tab:
+                 current stage (read-only; transitions go through the wizard so
+                 each change is audited) + the transition history. -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Pipeline" name="pipeline"
+                      invisible="not x_pipeline_id">
+                    <header>
+                        <button name="action_open_pipeline_transition_wizard"
+                                type="object"
+                                string="Change State"
+                                class="btn-primary"
+                                icon="fa-exchange"/>
+                    </header>
+                    <group>
+                        <field name="x_pipeline_id" readonly="1"/>
+                        <field name="x_pipeline_state_id" readonly="1"/>
+                    </group>
+                    <separator string="Transition history"/>
+                    <field name="pipeline_transition_log_ids" readonly="1">
+                        <list>
+                            <field name="create_date" string="When"/>
+                            <field name="from_state_id"/>
+                            <field name="to_state_id"/>
+                            <field name="change_type"/>
+                            <field name="create_uid" string="By"/>
+                            <field name="note"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
         </field>
     </record>
 </odoo>

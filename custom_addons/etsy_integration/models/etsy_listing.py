@@ -174,9 +174,17 @@ class EtsyListing(models.Model):
             soft_deleted = self._soft_delete_absent(shop, seen)
         except Exception as exc:  # noqa: BLE001 — recorded then re-raised
             error_message = str(exc)
-            self._write_audit(shop, created, updated, 0, error_message)
+            # P-UAT-FIX-API-LOG-HTTP-STATUS: surface the last HTTP status
+            # the client saw (set even on HTTP-error before raise_for_status).
+            self._write_audit(
+                shop, created, updated, 0, error_message,
+                http_status=getattr(adapter._client, 'last_http_status', 0),
+            )
             raise
-        self._write_audit(shop, created, updated, soft_deleted, None)
+        self._write_audit(
+            shop, created, updated, soft_deleted, None,
+            http_status=getattr(adapter._client, 'last_http_status', 0),
+        )
         return {
             'created': created, 'updated': updated,
             'soft_deleted': soft_deleted,
@@ -224,7 +232,8 @@ class EtsyListing(models.Model):
             'last_synced_at': fields.Datetime.now(),
         }
 
-    def _write_audit(self, shop, created, updated, soft_deleted, error):
+    def _write_audit(self, shop, created, updated, soft_deleted, error,
+                     http_status=0):
         """One `etsy.api.log` row per shop sync. sudo(): the log model
         is system-create-only; the cron is already `__system__` so this
         is defensive redundancy that also lets a manual admin trigger
@@ -235,13 +244,18 @@ class EtsyListing(models.Model):
         re-raise → no Odoo job-runner rollback), so the row persists on
         the cron's normal commit. (Defect-05's fresh-cursor durability
         applied to a controller that returns 400 and rolls back; this
-        cron does not.)"""
+        cron does not.)
+
+        `http_status` is sourced from the adapter's client by the caller;
+        per P-UAT-FIX-API-LOG-HTTP-STATUS it must be > 0 when the row
+        carries no error_message, so Flow-2 TC-003 can converge."""
         self.env['etsy.api.log'].sudo().create({
             'shop_id': shop.id,
             'endpoint': 'GET /v3/application/shops/%s/listings' % (
                 shop.sudo().etsy_api_shop_id or shop.id,
             ),
             'source': 'listing_pull',
+            'http_status': http_status,
             'response_summary': (
                 'listing_pull: created=%d updated=%d soft_deleted=%d'
                 % (created, updated, soft_deleted)

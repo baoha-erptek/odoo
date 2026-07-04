@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Mockup procedure — `product.template` form</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ink: #1a1814;
+  --paper: #faf8f3;
+  --rule: #d8d2c5;
+  --accent: #8b3a1f;
+  --muted: #6b665c;
+  --code-bg: #f1ede4;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  margin: 0;
+  padding: 2.5rem 1.5rem 4rem;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  line-height: 1.25;
+}
+h1 { font-size: 2.2rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+h2 { font-size: 1.6rem; color: var(--accent); }
+h3 { font-size: 1.25rem; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1.2rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 58, 31, 0.04);
+  color: var(--muted);
+}
+blockquote img { border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+img { max-width: 100%; height: auto; }
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+pre code { background: transparent; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+th, td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 600; color: var(--accent); }
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="mockup-procedure-producttemplate-form">Mockup procedure — <code>product.template</code> form</h1>
+<blockquote>
+<p>Output of <code>odoo-functional-mockup</code> skill 2026-06-07. Drives Phase 2.5 XML edits.</p>
+</blockquote>
+<hr>
+<h2 id="step-1-baseline-standard-odoo-view-to-inherit">Step 1 — Baseline (standard Odoo view to inherit)</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>XML ID</strong></td>
+<td><code>product.product_template_form_view</code></td>
+</tr>
+<tr>
+<td><strong>File</strong></td>
+<td><code>addons/product/views/product_views.xml:5</code></td>
+</tr>
+<tr>
+<td><strong>Edition</strong></td>
+<td><code>[CE]</code></td>
+</tr>
+<tr>
+<td><strong>Shape</strong></td>
+<td><code>&lt;sheet&gt;</code> + 1 page "General Information" (groups: group_general, group_standard_price, internal_notes) + (Sales page invisible-by-default) + smart-button row</td>
+</tr>
+</tbody>
+</table>
+<h3 id="inheritance-chain-already-in-tree-before-our-backport">Inheritance chain (already in tree, before our backport)</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Inheriting view</th>
+<th>What it adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[CE]</code> base</td>
+<td><code>product.product_template_form_view</code></td>
+<td>name, type, list_price, standard_price, categ_id, uom, description, internal_notes, company_id, smart buttons</td>
+</tr>
+<tr>
+<td><code>[CE]</code> sale</td>
+<td><code>addons/sale/views/product_template_views.xml</code> + <code>addons/sale/views/product_views.xml</code></td>
+<td>"Sales" page content (description_sale, taxes, invoicing settings)</td>
+</tr>
+<tr>
+<td><code>[CE]</code> stock</td>
+<td><code>addons/stock/views/product_views.xml</code></td>
+<td>"Inventory" page (route_ids, weight, volume, responsible_id, tracking, customer_lead_time) — <strong>the biggest source of clutter per audit</strong></td>
+</tr>
+<tr>
+<td><code>[CE]</code> purchase</td>
+<td><code>addons/purchase/views/product_views.xml</code></td>
+<td>"Purchase" page (vendors, taxes, description_purchase, produce_delay)</td>
+</tr>
+<tr>
+<td><code>[CE]</code> mrp</td>
+<td><code>addons/mrp/views/...</code></td>
+<td>"Bill of Materials" smart button</td>
+</tr>
+<tr>
+<td><strong>Custom</strong> mhc</td>
+<td><code>custom_addons/multichannel_hub_core/views/product_template_views.xml</code></td>
+<td><strong>6 tabs</strong>: Channels / SKU Drift / Listing Tags / Listing Options / Listing Defaults / Extra Images</td>
+</tr>
+<tr>
+<td><strong>Custom</strong> etsy</td>
+<td><code>custom_addons/etsy_integration/views/product_views.xml:11</code></td>
+<td>inherits <code>product.product_template_only_form_view</code> (sibling, not parent) — Etsy-specific overrides</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-this-means-for-phase-2">What this means for Phase 2</h3>
+<ul>
+<li>We inherit at the <code>mhc</code> level (already shipping). One more inherit doesn't add complexity.</li>
+<li>Most "clutter" comes from CE inherits (sale + stock + purchase + mrp). We hide them via <code>groups=</code> / <code>position="attributes"</code> on the inherited fields — not by removing the inherits.</li>
+<li>6 mhc tabs are already there. We don't add/remove tabs in Phase 2; we just reorder + apply tier-based visibility.</li>
+</ul>
+<hr>
+<h2 id="step-2-taste-overlay">Step 2 — Taste overlay</h2>
+<p>Per <code>taste-skill</code> brief inference for Odoo back-office:</p>
+<table>
+<thead>
+<tr>
+<th>Dial</th>
+<th>Setting</th>
+<th>Reasoning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DESIGN_VARIANCE</td>
+<td>low</td>
+<td>B2B back-office productivity surface; data-driven workflow</td>
+</tr>
+<tr>
+<td>MOTION_INTENSITY</td>
+<td>low</td>
+<td>No marketing animations; transitions only on state change</td>
+</tr>
+<tr>
+<td>VISUAL_DENSITY</td>
+<td>high</td>
+<td>BA Lead opens 50+ products/day; tight spacing &gt; whitespace</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Direction statement:</strong> "Functional clarity over visual delight. Every visible field earns its place by being used in the Etsy publish narrative. The form should let a BA Lead scan-and-fill a new product in under 2 minutes. Purple (#714B67) accents only on workflow-state indicators (status bar, active tab, SKU mono badge) — everywhere else is default Odoo grey/white. No drop shadows, no gradients, no icon decoration."</p>
+<hr>
+<h2 id="step-3-craft-check-od-design-craft-rules-applied">Step 3 — Craft check (<code>od-design-craft</code> rules applied)</h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Applied?</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anti-AI-slop typography</td>
+<td>✓</td>
+<td>Use Odoo default fonts; only add <code>.mu-mono</code> for SKU/listing_id</td>
+</tr>
+<tr>
+<td>Color discipline</td>
+<td>✓</td>
+<td>Purple #714B67 only on workflow-state surfaces (statusbar active step + active notebook tab); no neon</td>
+</tr>
+<tr>
+<td>State coverage — empty</td>
+<td>✓</td>
+<td>New-product form shows placeholder text + auto-SKU pill = "—"</td>
+</tr>
+<tr>
+<td>State coverage — loading</td>
+<td>n/a</td>
+<td>Odoo handles loading at view level (<code>.o_view_loading</code>)</td>
+</tr>
+<tr>
+<td>State coverage — error</td>
+<td>✓</td>
+<td>Validation messages already standard via Odoo (<code>&lt;field invalid /&gt;</code>)</td>
+</tr>
+<tr>
+<td>State coverage — multi-record</td>
+<td>n/a</td>
+<td>This is a form view</td>
+</tr>
+<tr>
+<td>State coverage — permission-denied</td>
+<td>✓</td>
+<td>Tier 3 fields hidden via <code>groups=</code> — no permission error UI needed</td>
+</tr>
+<tr>
+<td>a11y — label association</td>
+<td>✓</td>
+<td>All fields keep their auto-rendered <code>&lt;label for=&gt;</code></td>
+</tr>
+<tr>
+<td>a11y — keyboard nav</td>
+<td>✓</td>
+<td>Tab order preserved; no custom focus traps</td>
+</tr>
+<tr>
+<td>a11y — contrast</td>
+<td>✓</td>
+<td>Purple #714B67 on white = 7.1:1 (AAA); on mu-brand-50 = 4.6:1 (AA)</td>
+</tr>
+<tr>
+<td>Form validation patterns</td>
+<td>✓</td>
+<td>Use Odoo's built-in <code>required</code> attribute + <code>@api.constrains</code> server-side</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="step-4-diff-vs-mockup-screen-1-flow-1-form-san-pham-chuan-auto-sku">Step 4 — Diff vs mockup screen 1 (Flow 1, "Form Sản phẩm chuẩn — Auto-SKU")</h2>
+<h3 id="tier-1-always-visible-top-of-general-information-page">Tier 1 — Always visible (top of General Information page)</h3>
+<p>Cap at 10 fields. Must include everything in the mockup's left + right column.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Field</th>
+<th>Source</th>
+<th>Mockup shows?</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>name</code></td>
+<td>CE base</td>
+<td>✓</td>
+<td>Keep visible</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>categ_id</code></td>
+<td>CE base</td>
+<td>✓ "Danh mục"</td>
+<td>Keep visible (drives auto-SKU)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>list_price</code></td>
+<td>CE base</td>
+<td>✓ "Giá bán (USD)"</td>
+<td>Keep visible</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>default_code</code></td>
+<td>CE base</td>
+<td>✓ "Mã SKU" + <code>auto</code> pill</td>
+<td>Keep visible + add <code>class="mu-mono"</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>image_1920</code></td>
+<td>CE base</td>
+<td>✓ (implicit — top-right thumbnail)</td>
+<td>Keep visible</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>x_channel_applicability_ids</code></td>
+<td>mhc</td>
+<td>✓ "Các kênh áp dụng"</td>
+<td><strong>Promote</strong> from Channels tab into General header (mockup priority)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>attribute_line_ids</code></td>
+<td>CE base (Variants)</td>
+<td>✓ Material+Size+Color table on Biến thể tab</td>
+<td>Keep on Variants tab (Tier 2) but show count widget on General</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>state</code> (workflow)</td>
+<td>TBD — does product.template have a state?</td>
+<td>✓ "Draft → Published → Archived" pipeline</td>
+<td><strong>Custom field needed</strong> — see escalation below</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>x_sku_auto_status</code></td>
+<td>etsy_integration</td>
+<td>✓ "BA-edited" pill</td>
+<td>Already exists; keep visible</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>display_name</code> (computed)</td>
+<td>CE base</td>
+<td>✓ Used in title</td>
+<td>Already part of form title</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-2-notebook-tabs-secondary-in-notebook">Tier 2 — Notebook tabs (secondary, in <code>&lt;notebook&gt;</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Source</th>
+<th>Content</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Channels</td>
+<td>mhc</td>
+<td>x_channel_applicability_ids list + per-channel sync state</td>
+<td>Per-channel detail</td>
+</tr>
+<tr>
+<td>Variants</td>
+<td>CE base</td>
+<td>attribute_line_ids one2many</td>
+<td>Already there</td>
+</tr>
+<tr>
+<td>Listing Defaults</td>
+<td>mhc</td>
+<td>Default override values</td>
+<td>Already there</td>
+</tr>
+<tr>
+<td>Listing Tags</td>
+<td>mhc</td>
+<td>Etsy tags</td>
+<td>Already there</td>
+</tr>
+<tr>
+<td>Personalization</td>
+<td>custom</td>
+<td>x_personalization_* fields</td>
+<td>Etsy personalization opt-in</td>
+</tr>
+<tr>
+<td>Override Etsy</td>
+<td>custom</td>
+<td>Per-product Etsy field overrides</td>
+<td>Advanced override</td>
+</tr>
+<tr>
+<td>Sales</td>
+<td>CE sale</td>
+<td>description_sale, taxes_id, public_description</td>
+<td>Hide entirely if module not used; otherwise Tier 2</td>
+</tr>
+<tr>
+<td>Internal Notes</td>
+<td>CE base</td>
+<td>description (textarea)</td>
+<td>Keep — useful for internal QA notes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-3-hidden-behind-groups-developer-mode-or-sys-admin">Tier 3 — Hidden behind <code>groups=</code> (developer mode or sys-admin)</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Where</th>
+<th>Hide-via</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code> (Goods/Service/Combo)</td>
+<td>CE base General</td>
+<td><code>groups="base.group_no_one"</code></td>
+<td>POD always Goods; admin doesn't toggle this per product</td>
+</tr>
+<tr>
+<td><code>combo_ids</code></td>
+<td>CE base General</td>
+<td>already <code>invisible="type != 'combo'"</code></td>
+<td>Standard already hides; verify still works</td>
+</tr>
+<tr>
+<td><code>service_tracking</code></td>
+<td>CE base General</td>
+<td>already <code>invisible="type != 'service'"</code></td>
+<td>Standard already hides; verify still works</td>
+</tr>
+<tr>
+<td><code>product_tooltip</code></td>
+<td>CE base General</td>
+<td><code>groups="base.group_no_one"</code></td>
+<td>UI hint rarely used</td>
+</tr>
+<tr>
+<td><code>standard_price</code></td>
+<td>CE base General</td>
+<td><code>groups="base.group_system"</code></td>
+<td>Cost is sensitive; admin only</td>
+</tr>
+<tr>
+<td><code>barcode</code></td>
+<td>CE base header</td>
+<td><code>groups="base.group_no_one"</code></td>
+<td>POD products aren't scanned</td>
+</tr>
+<tr>
+<td><code>company_id</code></td>
+<td>CE base General</td>
+<td>already <code>groups="base.group_multi_company"</code></td>
+<td>Standard already hides; ok</td>
+</tr>
+<tr>
+<td><strong>Operations group</strong> (route_ids, MTO, dropship buy/sell)</td>
+<td>CE sale + stock</td>
+<td><code>groups="base.group_no_one"</code> on the whole <code>&lt;group name="operations"&gt;</code></td>
+<td>Routes/MTO config is per-module setup, not per-product editing</td>
+</tr>
+<tr>
+<td><strong>Logistics group</strong> (weight, volume, customer_lead_time, responsible_id)</td>
+<td>CE stock</td>
+<td>Keep weight + volume (Etsy uses them); hide responsible_id + customer_lead_time via <code>groups="base.group_no_one"</code></td>
+<td>Etsy needs physical dimensions</td>
+</tr>
+<tr>
+<td><strong>Description blocks</strong> (description_purchase, description_pickingin, description_pickingout)</td>
+<td>CE base + stock</td>
+<td><code>groups="base.group_no_one"</code></td>
+<td>Internal warehouse notes, not Etsy-relevant</td>
+</tr>
+<tr>
+<td>Smart buttons: Bill of Materials, Documents, Purchased, Sold Units</td>
+<td>CE mrp + purchase + sale</td>
+<td>already <code>invisible="..."</code> on count being 0</td>
+<td>Standard hides empties; OK</td>
+</tr>
+<tr>
+<td><code>produce_delay</code></td>
+<td>CE mrp</td>
+<td>already gated on mrp module</td>
+<td>OK</td>
+</tr>
+</tbody>
+</table>
+<h3 id="custom-field-escalation-workflow-state-field">Custom-field escalation: workflow <code>state</code> field</h3>
+<p><strong>Mockup shows:</strong> Top-of-form statusbar <code>Draft → Published → Archived</code> (stage pipeline) for the product.</p>
+<p><strong>Standard Odoo:</strong> <code>product.template</code> has NO <code>state</code> field by default. It's a configuration master, not a workflow object.</p>
+<p><strong>Where workflow state actually lives:</strong>
+- <code>multichannel.listing.state</code> (Draft / Ready / Published / Error) — per-listing-per-shop
+- <code>product.channel.status.state</code> (Pending / Synced / Error) — per-channel sync state</p>
+<p><strong>Decision:</strong> the statusbar in the mockup at the product.template form is <strong>misleading</strong>. Real workflow is per-listing, not per-product. <strong>Don't add <code>state</code> to product.template</strong> — instead, show a kanban-style summary widget that aggregates per-channel publish state.</p>
+<p><strong>Phase 2 action:</strong> Drop the statusbar at product.template form level. Add a small read-only computed badge <code>x_publish_state_summary</code> (Char) showing "3/5 published, 1 error" — compute from <code>multichannel.listing</code> rows. Mockup divergence documented as intentional (Standard-Odoo-First + ADR-008 separation between product master + channel listing).</p>
+<hr>
+<h2 id="step-5-deliverables">Step 5 — Deliverables</h2>
+<h3 id="5a-ascii-mockup-post-backport">5.a — ASCII mockup (post-backport)</h3>
+<pre><code>┌───────────────────────────────────────────────────────────────────────────────┐
+│ Sales ▸ Products ▸ Custom Coffee Mug 11oz                          ba.lead@hatafa │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ ⓘ Draft │  3/5 published · 1 error              [ Save ] [ Discard ]  ⋮ Actions │
+│ ───────────────────────────────────────────────────────────────────────── │
+│                                                                              │
+│  ╭─ image ────╮   Custom Coffee Mug 11oz                       [UNSAVED]    │
+│  │            │                                                              │
+│  │  [picture] │   Category    [ Mug                            ]            │
+│  │            │   Sales Price [ 14.50  USD                     ]            │
+│  ╰────────────╯   SKU         [MUG-CR-F11]  ⌧ auto                          │
+│                   Channels    [ Etsy × ]  ⊕ add                              │
+│                                                                              │
+│  ─── Variants ── Internal Notes ── Channels ── Listing Tags ── Listing Defaults ── Override Etsy │
+│                                                                              │
+│  Variants:                                                                    │
+│   Attribute            Value                Auto SKU segment                  │
+│   Material             Ceramic + Chrome     CR                                │
+│   Fluid oz             11 oz                F11                               │
+│                                                                              │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+Hidden (groups=&quot;base.group_no_one&quot;): type, combo_ids, product_tooltip, barcode,
+  produce_delay, route_ids, responsible_id, customer_lead_time, description_*,
+  Operations &amp; Logistics groups, Bill of Materials smart button
+Hidden (groups=&quot;base.group_system&quot;): standard_price
+Hidden (groups=&quot;base.group_multi_company&quot;): company_id (already standard)
+</code></pre>
+<h3 id="5b-xml-pseudo-diff-phase-25-implementation-guide">5.b — XML pseudo-diff (Phase 2.5 implementation guide)</h3>
+<pre><code class="language-xml">&lt;!-- custom_addons/multichannel_hub_core/views/product_template_views.xml --&gt;
+&lt;!-- ADD: Tier-3 hiding via xpath position=&quot;attributes&quot; --&gt;
+
+&lt;xpath expr=&quot;//group[@name='group_general']/field[@name='type']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='product_tooltip']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='standard_price']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_system&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='barcode']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Hide whole Operations group (Routes/MTO/Dropship setup) --&gt;
+&lt;xpath expr=&quot;//group[@name='operations']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Hide responsible_id + customer_lead_time inside Logistics; keep weight + volume --&gt;
+&lt;xpath expr=&quot;//field[@name='responsible_id']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='customer_lead_time']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Hide description_purchase / description_pickingin / description_pickingout --&gt;
+&lt;xpath expr=&quot;//field[@name='description_purchase']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='description_pickingin']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;xpath expr=&quot;//field[@name='description_pickingout']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;groups&quot;&gt;base.group_no_one&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Promote x_channel_applicability_ids into General Information header --&gt;
+&lt;xpath expr=&quot;//group[@name='group_standard_price']/field[@name='categ_id']&quot; position=&quot;after&quot;&gt;
+    &lt;field name=&quot;x_channel_applicability_ids&quot; widget=&quot;many2many_tags&quot;
+           options=&quot;{'no_create': True}&quot;/&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Add .mu-mono class to default_code wherever it appears --&gt;
+&lt;xpath expr=&quot;//field[@name='default_code']&quot; position=&quot;attributes&quot;&gt;
+    &lt;attribute name=&quot;class&quot;&gt;mu-mono&lt;/attribute&gt;
+&lt;/xpath&gt;
+
+&lt;!-- Add computed x_publish_state_summary badge near save buttons (header) --&gt;
+&lt;!-- (requires field definition in models/product_template.py — see model PR) --&gt;
+&lt;xpath expr=&quot;//header&quot; position=&quot;inside&quot;&gt;
+    &lt;field name=&quot;x_publish_state_summary&quot; widget=&quot;badge&quot;
+           decoration-success=&quot;x_publish_state_summary == 'all_published'&quot;
+           decoration-info=&quot;x_publish_state_summary == 'draft'&quot;
+           decoration-warning=&quot;x_publish_state_summary == 'partial'&quot;
+           decoration-danger=&quot;x_publish_state_summary == 'error'&quot;/&gt;
+&lt;/xpath&gt;
+</code></pre>
+<h3 id="5c-diff-against-mockup-intentional-vs-fixable-divergence">5.c — Diff against mockup (intentional vs fixable divergence)</h3>
+<table>
+<thead>
+<tr>
+<th>Mockup element</th>
+<th>Real Odoo after Phase 2.5</th>
+<th>Divergence type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Top stage pipeline "Draft → Published → Archived"</td>
+<td>Badge "3/5 published, 1 error" instead</td>
+<td><strong>Intentional</strong> — Standard-Odoo-First + ADR-008 (workflow lives in multichannel.listing)</td>
+</tr>
+<tr>
+<td>Chrome bar "Bán hàng › Sản phẩm › Sản phẩm"</td>
+<td>Odoo default breadcrumb</td>
+<td><strong>Intentional</strong> — keep default Odoo navbar</td>
+</tr>
+<tr>
+<td>Form title with "UNSAVED" yellow pill</td>
+<td>Odoo's default "Modified" indicator (light grey "Unsaved Changes")</td>
+<td><strong>Fixable</strong> — could add <code>widget="modified_state"</code> if exists, otherwise leave</td>
+</tr>
+<tr>
+<td>2-column field layout in General</td>
+<td>Achievable via <code>&lt;group&gt;&lt;group&gt;...&lt;/group&gt;&lt;group&gt;...&lt;/group&gt;&lt;/group&gt;</code> — already used by standard <code>group_general</code> + <code>group_standard_price</code></td>
+<td><strong>Match</strong> — no change needed</td>
+</tr>
+<tr>
+<td>Variants tab table with "Auto SKU segment" column</td>
+<td>Already in <code>mhc.view_product_sku_drift_list</code> reachable from kanban menu; not on this form tab</td>
+<td><strong>Intentional</strong> — keep separate (per ADR-013)</td>
+</tr>
+<tr>
+<td>Purple Etsy pill on "Các kênh áp dụng" row</td>
+<td><code>widget="many2many_tags"</code> with color_field — needs <code>color</code> field on <code>x_channel_applicability_ids</code> to source colors per channel</td>
+<td><strong>Fixable</strong> — add color mapping in mhc model (separate slice if scope grows)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="summary-for-phase-25-implementation">Summary for Phase 2.5 implementation</h2>
+<p><strong>XML edit estimate:</strong> ~15 <code>&lt;xpath&gt;</code> blocks in <code>multichannel_hub_core/views/product_template_views.xml</code>. ~30 lines added.</p>
+<p><strong>Model edit estimate:</strong> 1 new computed field <code>x_publish_state_summary</code> on <code>product.template</code> (Char, compute from <code>multichannel.listing</code> aggregates). ~15 LOC.</p>
+<p><strong>SCSS edit estimate:</strong> ~50 LOC for <code>.mu-mono</code> styling + <code>.o_statusbar_status .btn-primary</code> purple tint + <code>.o_notebook .nav-link.active</code> purple bottom-border. New file <code>multichannel_hub_core/static/src/scss/mu_tokens.scss</code>.</p>
+<p><strong>Manifest:</strong> add <code>'web.assets_backend': ['multichannel_hub_core/static/src/scss/mu_tokens.scss']</code> to mhc manifest's assets dict.</p>
+<p><strong>Expected effort:</strong> 1 dev day total for product.template form (vs prior estimate 1.5-2 days — clarified scope drops the OWL component work).</p></main></body></html>

@@ -1,12 +1,16 @@
 # Hướng dẫn sử dụng — Tạo sản phẩm mới
 
-**Phiên bản:** 1.2 · **Ngày:** 2026-05-28 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.4 · **Ngày:** 2026-06-11 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
 
 > Hướng dẫn từng bước cho việc thêm sản phẩm mới vào hệ thống và đăng lên Etsy. Không yêu cầu kiến thức kỹ thuật — chỉ cần biết dùng trình duyệt web.
 
 > **Cập nhật v1.2 (2026-05-28):** Đổi cách tạo sản phẩm — dùng **form Sản phẩm chuẩn** thay cho các Wizard riêng. Mã SKU **tự sinh** từ Danh mục + Biến thể (BA không phải gõ tay đúng format nữa). Bổ sung mục mới **"Thông tin bổ sung khi đăng Etsy"** với 7 nhóm trường: Tags, Cá nhân hoá, Vật liệu, Ảnh phụ (mini gallery), Override Etsy (Danh mục Etsy / Ai làm / Khi nào làm), Cân nặng & Kích thước, Thuộc tính biến thể. Cập nhật checklist UAT (TC-001..TC-007 đổi sang form chuẩn; TC-008..TC-015 mới cho các nhóm trường).
+
+> **Cập nhật v1.3 (2026-06-08):** Thêm nút **Publish to Etsy** ngay trên form **Listing** (Operations → Listings). Marketing không phải nhảy giữa form Listing và form Sản phẩm nữa — bấm nút trên Listing, hệ thống tự chọn shop từ Listing và mở Wizard publish đã điền sẵn. Form Sản phẩm vẫn giữ nút Publish cũ (dành cho BA). Xem mục 7.2.
+
+> **Cập nhật v1.4 (2026-06-11):** Thêm **Phụ lục A — Từ điển các ô nhập trong chức năng Listing** (giải thích chi tiết TỪNG ô trên form Listing, form Sản phẩm, cài đặt Shop và Wizard publish, kèm **ảnh chụp màn hình thật** từ hệ thống). Đây là tài liệu trả lời câu hỏi "ô này là gì, điền gì vào đây?". Đồng thời chốt 3 tính năng listing mới: đặt **thời gian xử lý / phí vận chuyển** (qua Shipping Profile), **Matching Attribute** (ánh xạ thuộc tính sang Etsy), và **xem trước giá quy đổi theo tiền tệ của shop**. Xem Phụ lục A.
 
 ---
 
@@ -22,6 +26,7 @@
 8. [Câu hỏi thường gặp](#8-câu-hỏi-thường-gặp)
 9. [Checklist kiểm thử UAT](#9-checklist-kiểm-thử-uat)
 10. [Báo lỗi cho ai](#10-báo-lỗi-cho-ai)
+11. [Phụ lục A — Từ điển các ô nhập trong chức năng Listing](#phụ-lục-a--từ-điển-các-ô-nhập-trong-chức-năng-listing)
 
 ---
 
@@ -71,11 +76,21 @@
 | **Danh mục sản phẩm** | ✅ | `Mug` | Chọn từ dropdown — quyết định Mã SKU |
 | **Biến thể** | _tuỳ sản phẩm_ | Chất liệu = `Ceramic + Chrome`, Size = `11 oz` | Thêm dòng biến thể nếu sản phẩm có nhiều phiên bản |
 | **Mã SKU (Internal Reference)** | _tự sinh_ | `MUG-CR-F11` | Hệ thống tự điền sau khi chọn Danh mục + Biến thể |
-| **Giá bán (Sales Price USD)** | ✅ | `19.99` | Giá Etsy; phải `> 0` |
+| **Giá bán (Sales Price USD)** | ✅ | `19.99` | Giá Etsy; phải `> 0`. **BA chỉ điền giá USD** — hệ thống tự đổi sang đơn vị tiền của shop Etsy (ví dụ VND) khi đăng listing. Xem mục 3.5. |
 | **Mã SKU Gearment** | ❌ | `GEAR-MUG-11OZ-BL` | Có giá trị → bật chế độ Dropship tự động |
 | **Mô tả** | ❌ | _free text_ | Hiển thị trên Etsy |
 | **Ảnh sản phẩm chính** | ❌ | _upload_ | Có thể upload sau; ảnh phụ nằm ở mục 4.4 |
 | **Các kênh áp dụng** | ✅ | ☑ Etsy | Mặc định Etsy |
+
+> **Về giá USD và đơn vị tiền của shop Etsy**
+>
+> - BA **chỉ điền giá USD** trong ô **Giá bán (Sales Price USD)**. Không cần và không nên nhập giá VND.
+> - Mỗi shop Etsy có **đơn vị tiền riêng** do Etsy quy định (ví dụ shop *JaHandmadeArt* dùng VND). Hệ thống tự đổi giá USD sang đơn vị tiền của shop khi đăng listing — BA không cần làm gì thêm.
+> - Etsy yêu cầu giá đăng listing **lớn hơn giá tối thiểu** theo từng đơn vị tiền (ví dụ với VND tối thiểu khoảng **5.040 ₫**). Vì giá USD thường tương đương vài chục nghìn VND → hệ thống đảm bảo qua được mức này một cách tự nhiên.
+> - Điều kiện hoạt động (Admin set 1 lần khi cài shop):
+>   1. Shop Etsy phải có ô **Listing Currency** (Đơn vị tiền listing) — hệ thống tự lấy từ Etsy khi BA bấm Connect Etsy lần đầu.
+>   2. Phải có **tỷ giá USD ↔ đơn vị tiền của shop** trong menu *Cài đặt → Đơn vị tiền tệ → Tỷ giá*. Admin cập nhật khi tỷ giá thị trường thay đổi nhiều.
+> - Nếu thiếu 1 trong 2 điều trên → khi BA bấm **Publish to Etsy** sẽ hiện thông báo lỗi rõ ràng (không publish thầm sai giá).
 
 ### 3.3 Mã SKU tự sinh — chuyện thực sự xảy ra
 
@@ -286,6 +301,38 @@ SKU gợi ý mới:  MUG-CR-F11
 
 ---
 
+## 6.5 Sản phẩm vs Listing — hai lớp riêng biệt
+
+> Từ 2026-06-06 (ADR-015). Để mở đường cho việc bán cùng 1 sản phẩm trên nhiều shop Etsy + Amazon + website với câu chữ marketing khác nhau, hệ thống tách 2 khái niệm:
+
+| Lớp | Menu | Người sở hữu | Chứa gì |
+|---|---|---|---|
+| **Sản phẩm** (`product.template`) | Sản phẩm → Tất cả Sản phẩm | **BA / PD** | "Sản phẩm là gì": tên kỹ thuật, SKU, kích thước/khối lượng, danh mục nội bộ, giá gốc, biến thể size/màu |
+| **Listing** (`multichannel.listing`) | Operations → Listings | **Marketing** | "Ta muốn đăng nó như thế nào, ở đâu": tên rao bán, mô tả marketing, ảnh hero, category Etsy, shipping profile, who_made / when_made, video, ... — riêng cho từng shop |
+
+**Quy tắc đọc của hệ thống khi publish:**
+
+1. Đọc `Listing.<field>` trước (override của Marketing).
+2. Nếu trống → fall back vào `Sản phẩm.<field>` (BA nhập).
+3. Nếu vẫn trống → fall back vào shop default (Admin cấu hình).
+4. Vẫn không có → báo lỗi rõ ràng, KHÔNG gọi Etsy.
+
+**Ví dụ thực tế.** SP "Personalized Leather Tray":
+- BA nhập tên kỹ thuật `Personalized Coordinates Leather Tray` ở Sản phẩm.
+- Marketing tạo 2 dòng Listing — một cho `JaHandmadeArt` (title rao bán `Custom GPS Coordinates Leather Tray — Anniversary Gift`), một cho `NamcoHome` (title rao bán `Engraved Map Tray for Couples`). Cùng SP, hai shop, hai phong cách marketing.
+- Khi publish, hệ thống lấy title của Listing tương ứng từng shop.
+
+**Migration day-1 — không gián đoạn:** sau khi cài bản mới, hệ thống tự tạo 1 dòng Listing rỗng cho mỗi SP đã từng đăng Etsy. Override fields đều null → behaviour publish hệt như trước. Marketing chỉ điền khi nào muốn override.
+
+**Phân quyền:**
+- **BA Lead / BA User:** RW trên Sản phẩm, **read-only** trên Listing (BA chỉ xem được Marketing đã nhập gì).
+- **Marketing:** RW trên Listing, **read-only** trên Sản phẩm (Marketing không sửa kích thước/SKU).
+- **Admin:** RW cả hai.
+
+> Câu hỏi thường gặp: "Tôi nên sửa cái gì ở Sản phẩm, cái gì ở Listing?" → Nếu thay đổi liên quan đến *bản thân sản phẩm* (size, vật liệu, SKU, giá gốc) — sửa ở Sản phẩm. Nếu thay đổi liên quan đến *cách bán nó trên một shop cụ thể* (tên rao bán, mô tả marketing, category Etsy, ảnh đẹp hơn) — sửa ở Listing.
+
+---
+
 ## 7. Đăng sản phẩm lên Etsy
 
 ### 7.1 Điều kiện trước khi đăng
@@ -298,12 +345,29 @@ SKU gợi ý mới:  MUG-CR-F11
 
 ### 7.2 Bấm "Publish to Etsy"
 
+Có **hai cách** mở Wizard publish, chọn cách phù hợp:
+
+**Cách 1 — từ form Listing (mới từ v1.3, khuyên dùng cho Marketing):**
+
+1. Mở menu **Operations → Listings**, mở dòng Listing tương ứng SP × shop.
+2. Nhấn nút **"Publish to Etsy"** ở góc trên bên trái header form (cạnh statusbar Draft / Ready / Published).
+3. Wizard publish mở ra với **shop đã được tự chọn** theo Listing → bỏ qua bước chọn shop.
+4. Khi state của Listing = **Error**, nút đổi tên thành **"Resume Publish"** (chạy lại đoạn còn dang dở).
+
+Nút chỉ hiện khi: kênh của Listing là Etsy + Listing đã có Etsy Shop được phân giải + state chưa phải Published.
+
+**Cách 2 — từ form Sản phẩm (cách cũ, dành cho BA):**
+
 1. Mở form sản phẩm.
 2. Nhấn nút **"Publish to Etsy"** ở header form (mọi BA tier đều thấy).
-3. Wizard publish mở ra:
-   - **Action: Run Publish (full)** — tạo draft → upload ảnh → push tồn kho → đăng active.
-   - **Action: Run Publish Draft Only** — dừng ở Draft, không phát sinh phí Etsy $0.20.
-4. Nhấn nút tương ứng.
+3. Wizard publish mở ra — **BA chọn shop trong Wizard** (vì SP có thể đăng nhiều shop).
+
+**Sau khi Wizard mở (cả 2 cách):**
+
+- **Action: Run Publish (full)** — tạo draft → upload ảnh → push tồn kho → đăng active.
+- **Action: Run Publish Draft Only** — dừng ở Draft, không phát sinh phí Etsy $0.20.
+
+Nhấn nút tương ứng.
 
 Hệ thống làm các bước:
 
@@ -326,6 +390,136 @@ Hệ thống làm các bước:
 | `A readiness_state_id is required for physical listings.` | Shop Etsy nguồn chưa cấu hình Readiness State | Admin vào Etsy → Shop Settings → Publisher Defaults |
 | `All offerings need readiness state` | Push inventory: từng phiên bản chưa carry Readiness State | Hệ thống đã fix; nếu vẫn lỗi → báo Đội Kỹ thuật |
 | `int exceeds XML-RPC limits` | Listing ID > 2.1B chưa cast về dạng chuỗi | Hệ thống đã fix; báo nếu tái phát |
+| `Cannot resolve a positive starting price …` | Giá sản phẩm `= 0` VÀ không size nào có "Price Extra" → Etsy sẽ trả `price empty`. Hệ thống chặn trước khi gọi Etsy. | Điền **List Price** trên form sản phẩm HOẶC **Price Extra** trên ít nhất 1 dòng Size/Color ở tab *Attributes & Variants*. |
+
+### 7.4a Chọn Etsy Category (taxonomy) cho listing
+
+> Mới từ 2026-06-06 (P-LIST-CATEGORY). Trước đây Etsy Category chỉ có ở cấp Sản phẩm hoặc shop default. Giờ Marketing chọn được theo từng Listing × shop.
+
+**Đồng bộ taxonomy từ Etsy:**
+- Hệ thống tự đồng bộ cây taxonomy Etsy hàng tuần (cron `Etsy: Taxonomy Cache Sync`).
+- Admin có thể bấm thủ công nút **Sync Etsy Taxonomy** trên form Etsy Shop nếu cần refresh ngay.
+- Toàn bộ cây hiển thị ở menu **Operations → Etsy Taxonomy** (chỉ Admin).
+
+**Cách chọn category cho 1 listing:**
+1. Vào **Operations → Listings**, mở Listing tương ứng SP × shop.
+2. Sang tab **Etsy** (mới).
+3. Trường **Etsy Category** → gõ tên ngách (vd "Cookware", "Throw Pillows") → autocomplete sẽ hiển thị các taxonomy đầy đủ đường dẫn (`Home & Living / Kitchen / Cookware`).
+4. Chọn → Save.
+
+**Thứ tự ưu tiên khi publish (publisher đọc):**
+1. **Listing.Etsy Category** (override Marketing nhập)
+2. → **Sản phẩm.x_taxonomy_id** (giá trị BA nhập ở Sản phẩm cũ)
+3. → **Etsy Shop.Default Taxonomy ID** (Admin set ở shop)
+4. → Nếu không có gì cả: Etsy trả 400. Hệ thống sẽ siết thành lỗi rõ ràng ở slice hardening sau này — hiện vẫn fall-through để không gãy fixture cũ.
+
+### 7.4a-ship Chọn Shipping Profile cho listing
+
+> Mới từ 2026-06-06 (P-LIST-SHIPPING). Tương tự Etsy Category nhưng theo từng shop.
+
+**Đồng bộ:**
+- Cron `Etsy: Shipping Profile Cache Sync` chạy hàng ngày.
+- Admin có thể bấm thủ công nút **Sync Etsy Shipping Profiles** trên form shop.
+- Operations → Etsy Shipping Profiles (Admin) — xem cache.
+
+**Chọn per-listing:** Operations → Listings → tab Etsy → trường **Etsy Shipping Profile** (autocomplete chỉ hiển thị profile của shop đó).
+
+**Thứ tự ưu tiên:** Listing override → Etsy Shop default → 0 (Etsy 400 — sẽ hardening sau).
+
+### 7.4b-defaults Cài đặt Title / Description / Image mặc định theo từng shop
+
+Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chung tiêu đề / mô tả / hình thương hiệu (brand voice) — ví dụ JaHandmadeArt luôn dùng "Handmade Ceramic by JaHandmadeArt", còn namcohome dùng "Durable Office Ceramic" — không cần sửa từng listing.
+
+- **Vị trí**: vào menu *Operations → Channels → Etsy Shops*, mở shop cần cài đặt → tab **Publisher Defaults** → group **Shop Brand-Voice Defaults**.
+- **3 trường mới**:
+  - *Default Listing Title* (≤140 ký tự) — tiêu đề mặc định nếu listing không override và sản phẩm không có tên riêng.
+  - *Default Listing Description* (text dài) — mô tả mặc định.
+  - *Default Listing Image* (upload ảnh) — hình mặc định, dùng khi sản phẩm chưa có ảnh chính.
+- **Thứ tự fallback** (hệ thống tự chọn): per-listing override → product canonical → shop default → để trống. Ô shop default chỉ kích hoạt khi cả 2 tầng trên đều rỗng.
+- **Khi nào nên dùng**: lập shop mới chưa đủ ảnh/mô tả cho từng sản phẩm, hoặc muốn unify brand voice. Để trống = inherit product canonical (mặc định cũ).
+- **Permission**: nhóm Marketing user trở lên có quyền edit (cùng nhóm chỉnh listing).
+
+### 7.4c "How it's made" per-listing (who_made / when_made / is_supply)
+
+> Mới từ 2026-06-06 (P-LIST-HOW-ITS-MADE). 3 trường Etsy bắt buộc giờ có override theo từng listing.
+
+**Operations → Listings → tab Etsy:** 3 trường mới ngay dưới Etsy Category + Shipping Profile:
+- **Who made it** — Selection (I did / Someone else / A member of my shop)
+- **When made** — Selection (Made to order / 2020-2026 / 1990s / ... / before_1700)
+- **Is supply** — Boolean (raw materials, tools)
+
+**Thứ tự ưu tiên publisher đọc:**
+1. Listing override (Marketing nhập ở Listing)
+2. → Sản phẩm (BA nhập `x_who_made` / `x_when_made`)
+3. → Etsy Shop default (Admin set)
+4. → Hard-coded `'i_did'` / `'made_to_order'` / `False` (last-resort)
+
+(Lưu ý: `is_supply` không có lớp Sản phẩm — chỉ Listing → Shop. Vì Etsy ít khi override per-product.)
+
+### 7.4e Bulk-action trên list Listings (P-LIST-SHOP-BULK)
+
+> Mới từ 2026-06-06 (Jira ESTY-197).
+
+**Menu Operations → Listings** giờ:
+- Mặc định lọc theo **state ∈ {Draft, Ready}** (= những row còn editable). Filter "Published" / "Error" để xem khác.
+- Mặc định nhóm theo **Shop** — Marketing nhanh chóng tách listings của từng shop.
+
+**2 server action mới** (tick N row → Action):
+- **Mark Ready for Publish** — flip Draft → Ready để BA review. Row không phải Draft bị bỏ qua, hệ thống báo skipped count.
+- **Reset to Draft** — flip Ready/Error → Draft (Published KHÔNG bị reset; Marketing không tự ý gỡ listing đã đăng).
+
+### 7.4d Attribute Mapping per-listing (P-LIST-ATTRIBUTES)
+
+> Mới từ 2026-06-06 (Jira ESTY-192). Khi 1 listing cần ánh xạ thuộc tính (Size / Color / Material) khác với mapping chung của Sản phẩm hoặc Shop, Marketing nhập override theo từng dòng ở đây.
+
+**Vào tab "Shipping & Variations"** (mới — gom shipping profile + taxonomy + attribute mapping vào 1 tab cho đồng bộ với flow đăng listing Etsy).
+
+**Thứ tự ưu tiên publisher đọc** (3 tầng):
+
+1. **Per-listing row** — mỗi dòng có "Product Attribute" + "Etsy Property ID Override" + "Etsy Property Name Override". Marketing nhập ở đây.
+2. → **Shop default mapping** (sẽ ship ở slice tiếp theo P-LIST-ATTR-CONFIG).
+3. → **Product global** — giá trị mặc định ở `product.attribute.x_etsy_property_id` (Admin set 1 lần cho toàn hệ thống).
+
+**Quy tắc**: để trống cả 2 trường override trong 1 dòng → fall through xuống tầng tiếp theo. KHÔNG cần xoá dòng để fall through.
+
+### 7.4b Upload video cho listing (1 video / shop)
+
+> Mới từ 2026-06-06 (P-LIST-VIDEO). Etsy cho phép tối đa 1 video / listing.
+
+**Cách upload:**
+1. Vào **Operations → Listings**, mở Listing tương ứng SP × shop.
+2. Sang tab **Video** (tab mới).
+3. Bấm vào **Video** → chọn file `.mp4` từ máy (cỡ file < ~100MB; Etsy có giới hạn riêng).
+4. Save.
+5. Quay lại form **Sản phẩm** (menu **Products** → mở SP tương ứng).
+6. Bấm nút **Publish to Etsy** ở header form (nút màu vàng, chỉ hiện với BA) → chọn shop → Confirm.
+7. Hệ thống tự upload video qua `POST /shops/.../listings/.../videos` sau khi tạo listing + push tồn kho.
+
+**Nguyên tắc:**
+- Video nằm ở Listing layer (theo từng shop) — KHÔNG nằm ở Sản phẩm master. Cùng 1 SP nhưng JaHandmadeArt và NamcoHome có thể dùng video khác nhau.
+- Nếu upload thất bại (rate-limit Etsy, file lỗi format), listing vẫn được publish — hệ thống chỉ log WARNING. BA xem chatter / log để biết.
+- Nếu không upload video, Etsy đăng listing không video — không lỗi.
+
+### 7.5b Xem trước giá quy đổi sang tiền tệ shop
+
+Khi shop Etsy bán bằng VND nhưng Odoo đang để giá USD, listing trên Etsy hiện giá VND cho khách. Trước khi bấm *Publish*, Marketing có thể xem **số VND** mà khách sẽ thực sự thấy — ngay trên form Listing.
+
+- **Vị trí**: form Listing → tab *Shipping & Variations* → group **Shop Currency Preview** ở đầu trang.
+- **Hai trường**:
+  - *Etsy Shop* (dropdown) — chọn shop sẽ đăng. Hệ thống dùng tiền tệ của shop này để quy đổi.
+  - *Price (shop currency)* (chỉ đọc) — giá đã quy đổi theo tỷ giá hôm nay.
+- **Khi hiện `0.00`**: có 1 trong 3 lý do — (1) chưa chọn Etsy Shop, (2) shop chưa cấu hình tiền tệ niêm yết (gửi yêu cầu hệ thống set `listing_currency_id`), (3) chưa có tỷ giá hôm nay trong Odoo. Mọi trường hợp đều không crash form; trường vẫn cho lưu bình thường.
+- **Cập nhật tỷ giá**: hiện tại tỷ giá `res.currency.rate` nhập tay bởi Kế toán. Cron *Etsy: Refresh Shop Currency Rates* chạy 05:00 UTC hàng ngày nhưng đang ở chế độ skeleton — log WARNING và không ghi gì. Nhà cung cấp tỷ giá tự động (ECB / OpenExchangeRates) sẽ thêm ở slice tiếp theo.
+- **Mẹo**: nếu thấy giá hiển thị thấp bất thường (ví dụ 100 VND thay vì 1,000,000 VND), Marketing có thể là tỷ giá Odoo sai. Báo Kế toán cập nhật rồi reload trang.
+
+### 7.5 Sản phẩm có nhiều size / màu (per-variant)
+
+Khi sản phẩm có nhiều biến thể (ví dụ Mug 4" / 6" / 8") với giá khác nhau:
+
+- **Cách thiết lập**: ở tab *Attributes & Variants*, mỗi giá trị Size có ô **Price Extra** — điền chênh lệch giá so với giá gốc. Ví dụ List Price `0` + Price Extra `10 / 20 / 30` → 3 size có giá `10 / 20 / 30` USD.
+- **Hình theo size**: vào menu **Sản phẩm → Variants** (Biến thể), mở từng variant → upload ảnh ở trường **Variant Image**. Mỗi biến thể có thể có hình riêng; không có cũng được — Etsy dùng hình chính của listing.
+- **Khi đăng**: hệ thống tự gửi từng size sang Etsy với SKU + giá + tồn riêng. Listing trên Etsy hiển thị giá "từ XXX ₫" (lấy size rẻ nhất). Người mua chọn size → Etsy đổi sang giá / hình của size đó.
+- **Lưu ý SKU**: nếu Variant không có SKU riêng (Default Code), hệ thống tự sinh `{SKU template}-{slug size}` (ví dụ `LT-4IN`, `LT-6IN`, `LT-8IN`). Tối đa 32 ký tự, cắt ở đuôi nếu dài hơn.
 
 ---
 
@@ -508,6 +702,224 @@ A: Kiểm tra (1) đã bấm **Lưu** chưa, (2) đã chạy "Publish to Etsy" h
 | Quyền truy cập / role | Admin |
 | Mã SKU validator báo lỗi | BA Manager (quyết định chế độ mềm/chặt) |
 | Cài đặt mặc định shop Etsy (taxonomy / readiness / shipping / return) | Admin |
+
+---
+
+## Phụ lục A — Từ điển các ô nhập trong chức năng Listing
+
+> **Mục đích:** Trả lời đúng một câu hỏi — *"Ô này là gì, tôi điền gì vào đây?"*. Phần này liệt kê **từng ô** Anh/Chị nhìn thấy khi tạo và đăng một listing, kèm **ảnh chụp màn hình thật** từ hệ thống (shop JaHandmadeArt). Đọc một lần để hiểu, sau đó dùng như tra từ điển.
+
+### A.0 Nguyên tắc 3 lớp — hiểu cái này trước, mọi thứ sau dễ hết
+
+Một listing lấy thông tin từ **3 lớp**, ưu tiên từ trên xuống. Lớp nào có giá trị thì hệ thống dùng lớp đó; lớp đó để trống thì rớt xuống lớp dưới:
+
+1. **Lớp Listing** (cụ thể nhất) — giá trị Anh/Chị điền ngay trên form Listing, chỉ áp cho **đúng listing này, đúng shop này**.
+2. **Lớp Sản phẩm** — giá trị trên form Sản phẩm, áp cho **mọi listing của sản phẩm đó** (mọi shop).
+3. **Lớp Shop** (mặc định chung) — Admin cài một lần trong **Cài đặt Shop Etsy → Publisher Defaults**, áp cho **mọi listing của shop** khi 2 lớp trên đều trống.
+
+> **Vì sao nhiều ô để trống mà vẫn đăng được?** Vì ô trống nghĩa là "dùng giá trị của lớp dưới". Để trống KHÔNG phải là thiếu thông tin — đó là cách nói "lấy mặc định". Anh/Chị chỉ điền khi muốn listing này KHÁC với mặc định.
+
+---
+
+### A.1 Form LISTING — màn hình chính (Operations → Listings)
+
+Đây là màn hình Marketing dùng nhiều nhất. Mở: menu **Operations → Listings → chọn 1 listing**.
+
+![Toàn cảnh form Listing — thanh trạng thái Draft/Ready, nút Publish to Etsy, tiêu đề, ảnh đại diện và 5 thẻ](img/listing-form-overview.png)
+
+**Phần đầu form (luôn hiện):**
+
+| Ô trên màn hình | Là gì | Điền gì / Ý nghĩa | Nếu để trống |
+|---|---|---|---|
+| Thanh trạng thái **Draft → Ready for Publish** | Vòng đời của listing | Bấm để chuyển **Draft** (đang soạn, sửa được) ↔ **Ready** (chốt, BA duyệt). Sau khi đăng, hệ thống tự đặt **Published** | — |
+| Nút **Publish to Etsy** | Đăng listing này lên Etsy | Bấm để mở Wizard đăng (xem A.4). Hệ thống tự chọn shop của listing | — |
+| **Title** (tiêu đề lớn) | Tên hiển thị trên Etsy của riêng listing này | Gõ tiêu đề bán hàng cho listing | Lấy tên Sản phẩm → rồi tới tiêu đề mặc định của Shop |
+| **Ảnh đại diện** (góc phải) | Ảnh chính (ảnh đầu tiên) của listing | Upload ảnh hero riêng cho listing | Lấy ảnh chính của Sản phẩm → rồi ảnh mặc định của Shop |
+| **External Reference** | Mã listing bên Etsy, hệ thống tự ghi sau khi đăng thành công | Chỉ đọc — không gõ tay | Trống = chưa từng đăng |
+| **Last Synced At** | Lần cuối đồng bộ/đăng thành công | Chỉ đọc | Trống = chưa đồng bộ |
+
+#### Thẻ "Listing Basics" — nội dung bán hàng
+
+![Thẻ Listing Basics — tiêu đề và mô tả của listing](img/listing-tab-basics.png)
+
+| Ô | Là gì | Điền gì | Nếu để trống |
+|---|---|---|---|
+| **Title** | Tiêu đề listing (giống ô tiêu đề lớn ở đầu form) | Tiêu đề bán hàng | Tên Sản phẩm → tiêu đề mặc định Shop |
+| **Description** | Mô tả listing trên Etsy | Đoạn mô tả bán hàng cho riêng listing | Mô tả bán hàng của Sản phẩm → mô tả mặc định Shop |
+
+#### Thẻ "How It's Made" — Etsy bắt buộc 3 ô này
+
+![Thẻ How It's Made — Who made it, When made, Is supply](img/listing-tab-howmade.png)
+
+Etsy **bắt buộc** mọi listing phải khai 3 thông tin: ai làm, làm khi nào, có phải nguyên vật liệu không.
+
+| Ô | Là gì | Chọn gì | Nếu để trống |
+|---|---|---|---|
+| **Who made it** | Ai làm ra sản phẩm | *I did* (tôi tự làm) / *Someone else* (người khác) / *A member of my shop* (thành viên shop) | Lấy của Sản phẩm → mặc định Shop |
+| **When made** | Làm vào thời điểm nào | Ví dụ *Made to order* (làm theo đơn), *2020–2026*, hoặc mốc năm cũ hơn | Lấy của Sản phẩm → mặc định Shop |
+| **Is supply** | Đây có phải nguyên vật liệu / dụng cụ không | Tích nếu bán nguyên liệu thô (chỉ, vải, hạt...); để trống nếu là thành phẩm | Dùng mặc định Shop |
+
+#### Thẻ "Shipping & Variations" — vận chuyển, giá quy đổi, danh mục, thuộc tính
+
+![Thẻ Shipping & Variations — xem trước giá theo tiền tệ shop, danh mục Etsy, hồ sơ vận chuyển và ánh xạ thuộc tính](img/listing-tab-shipping.png)
+
+Đây là thẻ gom 3 tính năng listing mới (thời gian xử lý/phí ship, giá quy đổi, ánh xạ thuộc tính).
+
+**Nhóm "Shop Currency Preview" (xem trước giá theo tiền tệ shop):**
+
+| Ô | Là gì | Ý nghĩa |
+|---|---|---|
+| **Etsy Shop** | Shop mà listing này sẽ đăng lên | Chọn shop. Ô này quyết định tiền tệ hiển thị và các giá trị mặc định theo shop |
+| **Price (shop currency)** | Giá listing **đã quy đổi** sang tiền tệ của shop (ví dụ **254.000 ₫**) | Chỉ xem. Hệ thống lấy giá gốc của sản phẩm × tỷ giá hôm nay. Bằng 0 nghĩa là chưa cài shop/tiền tệ/tỷ giá. *(Đây là tính năng ESTY-195: tỷ giá USD/EUR/CAD/VND tự quy đổi theo đơn vị của shop Etsy.)* |
+| **Etsy Category** | Danh mục Etsy của listing (ví dụ *Home & Living / Kitchen & Dining / Trays & Platters*) | Chọn danh mục Etsy. Để trống → lấy của Sản phẩm → mặc định Shop |
+| **Etsy Shipping Profile** | Hồ sơ vận chuyển Etsy — **chứa thời gian xử lý, thời gian giao và phí ship** | Chọn 1 hồ sơ đã đồng bộ từ Etsy. Để trống → dùng hồ sơ mặc định của Shop. *(Đây là tính năng ESTY-191: nơi đặt processing time / shipping time / giá ship — Etsy quản các giá trị này theo "Shipping Profile" chứ không nhập rời từng ô.)* |
+
+> **Lưu ý ESTY-191:** Processing time, shipping time và phí ship trên Etsy **không** là 3 ô rời — Etsy gom chúng vào một **Shipping Profile**. Anh/Chị tạo/sửa hồ sơ này một lần bên Etsy (hoặc trong **Cài đặt Shop → Default Etsy Shipping Profile ID**), rồi chỉ việc **chọn** hồ sơ ở ô này. Đổi phí ship = đổi hồ sơ, không sửa từng listing.
+
+**Nhóm "Attribute mapping overrides" (ánh xạ thuộc tính — Matching Attribute):**
+
+Bảng này map thuộc tính Odoo (Size, Color, Material...) sang **property** tương ứng bên Etsy, để Etsy hiểu "ô Size của tôi = ô Size của Etsy".
+
+| Cột | Là gì | Điền gì | Nếu để trống |
+|---|---|---|---|
+| **Product Attribute** | Thuộc tính Odoo (ví dụ *Size*) | Chọn thuộc tính cần ánh xạ | — |
+| **Etsy Property ID Override** | Số ID property bên Etsy cho riêng listing này | Gõ ID property Etsy (số) nếu muốn ép cho listing này | Rớt xuống mặc định Shop → rồi giá trị toàn cục trên Product Attribute |
+| **Etsy Property Name Override** | Tên property Etsy (chuỗi chữ) | Gõ tên nếu muốn ghi đè nhãn | Lấy tên toàn cục của Product Attribute |
+
+> **Lưu ý ESTY-192 (Matching Attribute):** Để một dòng trống (chỉ chọn Product Attribute, không điền override) nghĩa là *"tôi đã cân nhắc, dùng mặc định"* — hệ thống tự lấy ID Etsy ở lớp Shop hoặc toàn cục. Anh/Chị **chỉ** điền override khi muốn listing này ánh xạ khác mặc định.
+
+#### Thẻ "Images" — ảnh phụ (gallery)
+
+![Thẻ Images — danh sách ảnh phụ, kéo thả sắp thứ tự](img/listing-tab-images.png)
+
+| Ô | Là gì | Ghi chú |
+|---|---|---|
+| **Extra Images** | Bộ ảnh phụ ngoài ảnh chính | Etsy đăng ảnh chính trước, rồi tới các ảnh này, **tối đa 10 ảnh**. Kéo thả tay nắm để sắp thứ tự. Ảnh dùng chung với Sản phẩm trên mọi kênh bán |
+
+#### Thẻ "Video" — 1 video / listing
+
+![Thẻ Video — chọn 1 tệp video cho listing](img/listing-tab-video.png)
+
+| Ô | Là gì | Ghi chú |
+|---|---|---|
+| **Video** | Tệp video của listing | Etsy cho **tối đa 1 video** mỗi listing. Để trống = đăng không kèm video |
+
+---
+
+### A.2 Form SẢN PHẨM — các thẻ liên quan listing (lớp mặc định cấp Sản phẩm)
+
+Các ô dưới đây nằm trên **form Sản phẩm** và đóng vai trò **lớp 2** (mặc định khi form Listing để trống). Mở: **Sản phẩm → chọn 1 sản phẩm**.
+
+![Nút "Publish to Etsy" trên form Sản phẩm (đầu form)](img/product-form-header.png)
+
+Nút **Publish to Etsy** ở đầu form Sản phẩm dành cho BA đăng trực tiếp từ sản phẩm (mở cùng Wizard ở A.4).
+
+#### Thẻ "Listing Defaults"
+
+![Thẻ Listing Defaults trên form Sản phẩm — Etsy Taxonomy ID, Who made it, When was it made](img/product-tab-listing-defaults.png)
+
+| Ô | Là gì | Điền gì | Nếu để trống |
+|---|---|---|---|
+| **Etsy Taxonomy ID** | Danh mục Etsy mặc định của sản phẩm | Để trống để dùng mặc định Shop, hoặc gõ ID danh mục | Dùng mặc định Shop |
+| **Who made it** | "Ai làm" mặc định cho sản phẩm | Như ô cùng tên ở Listing | Dùng mặc định Shop |
+| **When was it made** | "Làm khi nào" mặc định cho sản phẩm | Như ô cùng tên ở Listing | Dùng mặc định Shop |
+
+#### Thẻ "Listing Options" — cá nhân hoá
+
+![Thẻ Listing Options — các ô cá nhân hoá (personalization)](img/product-tab-listing-options.png)
+
+| Ô | Là gì | Ghi chú |
+|---|---|---|
+| **Is personalizable** | Cho phép khách cá nhân hoá (khắc tên...) | Tích để bật các ô bên dưới |
+| **Personalization required** | Bắt buộc khách nhập nội dung cá nhân hoá | Chỉ có nghĩa khi đã bật cá nhân hoá |
+| **Personalization char count** | Số ký tự tối đa khách được nhập | Dải hợp lệ 1–1024 (mặc định 256) |
+| **Personalization instructions** | Hướng dẫn cho khách (ví dụ "Nhập tên cần khắc") | Văn bản tự do |
+
+> **Lưu ý:** Etsy đã đổi cách nhận thông tin cá nhân hoá (2026). Các ô này hiện được **lưu** trong hệ thống nhưng tạm thời chưa gửi thẳng lên Etsy — chờ phần kết nối endpoint cá nhân hoá riêng. Cứ điền đầy đủ để dữ liệu sẵn sàng.
+
+#### Thẻ "Listing Tags" — từ khoá tìm kiếm
+
+![Thẻ Listing Tags — tối đa 13 tag](img/product-tab-listing-tags.png)
+
+| Ô | Là gì | Quy tắc |
+|---|---|---|
+| **Listing Tags** | Từ khoá giúp khách tìm thấy sản phẩm trên Etsy | **Tối đa 13 tag**, mỗi tag **≤ 20 ký tự**, chỉ chữ/số/khoảng trắng/gạch nối/dấu nháy |
+
+Ngoài ra thẻ **Extra Images** trên form Sản phẩm chứa bộ ảnh phụ dùng chung (Listing kế thừa bộ này).
+
+---
+
+### A.3 Cài đặt SHOP ETSY — Publisher Defaults (lớp mặc định chung)
+
+Admin cài **một lần** cho mỗi shop. Đây là **lớp 3** — giá trị áp cho mọi listing của shop khi 2 lớp trên trống. Mở: **Etsy → Shops → chọn shop → thẻ Publisher Defaults**.
+
+![Cài đặt Shop Etsy — Publisher Defaults của JaHandmadeArt: tiền tệ, ID shop, taxonomy/shipping/return/readiness, who/when/is_supply, đơn vị cân nặng & kích thước](img/shop-publisher-defaults.png)
+
+**Định danh shop (đầu form):**
+
+| Ô | Là gì | Ghi chú |
+|---|---|---|
+| **Etsy Listing Currency** | Tiền tệ niêm yết của shop trên Etsy (ví dụ **VND**) | Hệ thống dùng để quy đổi giá khi đăng. Thiếu ô này → Etsy báo lỗi "giá quá thấp" khi tiền tệ công ty khác tiền tệ shop *(nền tảng của ESTY-195)* |
+| **Etsy Shop ID** | Số shop_id do Etsy cấp (ví dụ 60752333) | Phải có trước khi bật nguồn "Etsy API" |
+| **Active Source** | Nguồn dữ liệu đang dùng (Etsy API / Email) | Chỉ Admin đổi |
+
+**Nhóm "Etsy Publisher Defaults":**
+
+| Ô | Là gì |
+|---|---|
+| **Default Etsy Taxonomy ID** | Danh mục Etsy mặc định khi tạo listing nháp |
+| **Default Etsy Shipping Profile ID** | Hồ sơ vận chuyển mặc định (thời gian xử lý + phí ship) — *gốc của ESTY-191* |
+| **Default Etsy Return Policy ID** | Chính sách đổi trả mặc định |
+| **Default Etsy Readiness State ID** | Hồ sơ thời gian xử lý Etsy bắt buộc cho hàng vật lý |
+| **Default "Who made it" / "When was it made" / "Is Supply"** | 3 mặc định cho thẻ How It's Made |
+| **Weight Unit Preference** | Đơn vị cân nặng gửi Etsy (oz hoặc g) |
+| **Dimensions Unit Preference** | Đơn vị kích thước (cm hoặc in) |
+
+**Nhóm "Shop Brand-Voice Defaults" (Marketing sở hữu):**
+
+| Ô | Là gì |
+|---|---|
+| **Default Listing Title / Description / Image** | Tiêu đề / mô tả / ảnh mặc định theo "giọng thương hiệu" của shop, dùng khi cả Listing lẫn Sản phẩm đều để trống |
+
+**Nhóm "Attribute Mapping Defaults":** bảng ánh xạ thuộc tính mặc định cho toàn shop (lớp giữa của ESTY-192).
+
+---
+
+### A.4 Wizard "Publish to Etsy" — hộp thoại khi bấm đăng
+
+Hiện ra khi bấm **Publish to Etsy** (trên form Listing hoặc form Sản phẩm).
+
+![Wizard Publish to Etsy — chọn Sản phẩm + Shop, 3 nút đăng](img/publish-wizard.png)
+
+| Thành phần | Là gì |
+|---|---|
+| **Product Tmpl** | Sản phẩm sẽ đăng (đã điền sẵn) |
+| **Shop** | Shop đích (tự điền nếu mở từ Listing) |
+| Nút **Publish (full)** | Đăng đầy đủ: tạo listing + đẩy tồn kho/biến thể + xuất bản |
+| Nút **Publish Draft Only** | Chỉ tạo bản nháp trên Etsy (chưa public) |
+| Nút **Re-push Inventory Only** | Chỉ đẩy lại tồn kho/giá/biến thể cho listing đã có |
+| Nút **Cancel** | Đóng, không đăng |
+
+> Chỉ **BA** mới bấm được 3 nút đăng (phân quyền). Người không phải BA mở wizard sẽ bị chặn ở bước bấm đăng.
+
+---
+
+### A.5 Bảng tra cứu nhanh — lớp nào thắng lớp nào
+
+| Thông tin gửi Etsy | Lớp 1 (Listing) | Lớp 2 (Sản phẩm) | Lớp 3 (Shop) |
+|---|---|---|---|
+| Danh mục (taxonomy) | Etsy Category trên Listing | Etsy Taxonomy ID của SP | Default Etsy Taxonomy ID |
+| Hồ sơ vận chuyển (ESTY-191) | Etsy Shipping Profile trên Listing | — | Default Etsy Shipping Profile ID |
+| Who made / When made | trên Listing | trên SP | Default tương ứng |
+| Is supply | trên Listing | — | Default "Is Supply" |
+| Tiêu đề | Title trên Listing | Tên SP | Default Listing Title |
+| Mô tả | Description trên Listing | Mô tả bán hàng SP | Default Listing Description |
+| Ảnh chính | Ảnh đại diện Listing | Ảnh chính SP | Default Listing Image |
+| Tags | — | Listing Tags trên SP | — |
+| Ánh xạ thuộc tính (ESTY-192) | dòng trên Listing | toàn cục Product Attribute | Attribute Mapping Defaults của Shop |
+| Giá quy đổi tiền tệ (ESTY-195) | tự tính từ giá SP × tỷ giá → theo Etsy Listing Currency của Shop | | |
+
+> **Quy tắc vàng:** điền ở lớp càng cao (Listing) thì càng cụ thể và thắng. Để trống = nhường cho lớp dưới. Không có gì "bắt buộc phải điền" ở Listing nếu Shop đã cài mặc định đầy đủ.
 
 ---
 

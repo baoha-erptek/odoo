@@ -85,6 +85,9 @@ _INLINE_CODE = re.compile(r"`([^`]+)`")
 _BOLD = re.compile(r"\*\*([^*]+)\*\*")
 _ITALIC = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
 _LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+# Standalone image line: ![alt text](path-or-url)
+_IMAGE = re.compile(r"^\s*!\[(.*?)\]\(([^)]+)\)\s*$")
+_IMAGE_ANY = re.compile(r"!\[.*?\]\(([^)]+)\)")
 
 
 def _inline(text: str) -> str:
@@ -119,6 +122,26 @@ def md_to_storage(md: str) -> str:
         # Horizontal rule
         if re.fullmatch(r"-{3,}|\*{3,}|_{3,}", stripped):
             out.append("<hr/>")
+            i += 1
+            continue
+
+        # Standalone image line -> Confluence image macro
+        mimg = _IMAGE.match(stripped)
+        if mimg:
+            alt = mimg.group(1).strip()
+            src = mimg.group(2).strip()
+            if src.startswith("http://") or src.startswith("https://"):
+                out.append(
+                    f'<p><ac:image ac:align="center"><ri:url ri:value="{html.escape(src)}"/></ac:image></p>'
+                )
+            else:
+                fn = html.escape(os.path.basename(src))
+                out.append(
+                    f'<p><ac:image ac:align="center" ac:width="780">'
+                    f'<ri:attachment ri:filename="{fn}"/></ac:image></p>'
+                )
+            if alt:
+                out.append(f"<p><em>{_inline(alt)}</em></p>")
             i += 1
             continue
 
@@ -210,6 +233,8 @@ def md_to_storage(md: str) -> str:
                 break
             if s.startswith("```") or s.startswith(">"):
                 break
+            if _IMAGE.match(s):
+                break
             if re.match(r"^\s*[-*+]\s+", ln) or re.match(r"^\s*\d+\.\s+", ln):
                 break
             if "|" in s and i + 1 < n and re.match(r"^\s*\|?[\s\-:|]+\|?\s*$", lines[i + 1]):
@@ -221,6 +246,65 @@ def md_to_storage(md: str) -> str:
         out.append(f"<p>{_inline(' '.join(para))}</p>")
 
     return "\n".join(out)
+
+
+# ----- Attachments -----
+
+_MP_BOUNDARY = "----confluenceOwnerSyncBoundary7MA4YWxkTrZu0gW"
+
+
+def collect_images(md: str, base_dir: Path) -> list[Path]:
+    """Return existing local image paths referenced by ![](...) in `md`."""
+    seen: dict[str, Path] = {}
+    for m in _IMAGE_ANY.finditer(md):
+        rel = m.group(1).strip()
+        if rel.startswith("http://") or rel.startswith("https://"):
+            continue
+        p = (base_dir / rel).resolve()
+        if p.exists() and p.name not in seen:
+            seen[p.name] = p
+    return list(seen.values())
+
+
+def upload_attachment(page_id: str, filepath: Path) -> tuple[int, str]:
+    """Upload (or update) a file as a page attachment via the v1 REST API.
+
+    Confluence keys attachments by filename within a page, so re-posting the
+    same filename creates a new version rather than a duplicate (idempotent).
+    """
+    import mimetypes
+
+    fname = filepath.name
+    ctype = mimetypes.guess_type(fname)[0] or "application/octet-stream"
+    data = filepath.read_bytes()
+    pre = (
+        f"--{_MP_BOUNDARY}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{fname}"\r\n'
+        f"Content-Type: {ctype}\r\n\r\n"
+    ).encode()
+    mid = (
+        f"\r\n--{_MP_BOUNDARY}\r\n"
+        'Content-Disposition: form-data; name="minorEdit"\r\n\r\ntrue\r\n'
+        f"--{_MP_BOUNDARY}--\r\n"
+    ).encode()
+    body = pre + data + mid
+    url = f"{CONFLUENCE_BASE}/rest/api/content/{page_id}/child/attachment"
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={
+            "Authorization": AUTH,
+            "X-Atlassian-Token": "no-check",
+            "Content-Type": f"multipart/form-data; boundary={_MP_BOUNDARY}",
+            "Accept": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return resp.status, "ok"
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()[:300]
 
 
 # ----- Confluence operations -----
@@ -297,6 +381,15 @@ PAGES = [
     ("HUONG_DAN_HAU_MAI_VN.md", "Hướng dẫn sử dụng — Hậu mãi", False),
     # Engineering planning (NOT end-user; for Architect + Dev team reference on Confluence)
     ("SKU_GRAMMAR.md", "SKU Grammar — Canonical Specification", False),
+    # UAT walkthroughs (v1.2 covers Wave 2/3 ESTY-187..199; v1.0 retained for TC-006..TC-012)
+    ("UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md", "UAT Walkthrough — Tạo sản phẩm v1.2 (Wave 2/3)", False),
+    # Business-flows companions (added 2026-06-07 alongside Figma HTML exports)
+    ("business-flows/README.md", "Business Flows — Sơ đồ + ảnh chụp UAT", False),
+    ("business-flows/flow-1-tao-san-pham.md", "Flow 1 — Tạo sản phẩm + publish Etsy", False),
+    ("business-flows/flow-2-nhan-don-hang-etsy.md", "Flow 2 — Tiếp nhận đơn hàng Etsy", False),
+    ("business-flows/flow-3a-giao-hang-in-noi-bo.md", "Flow 3a — Giao hàng (In nội bộ)", False),
+    ("business-flows/flow-3b-giao-hang-gearment-dropship.md", "Flow 3b — Giao hàng (Gearment dropship)", False),
+    ("business-flows/flow-4-hau-mai.md", "Flow 4 — Hậu mãi (đổi/trả/refund)", False),
 ]
 
 
@@ -380,6 +473,7 @@ def main():
             continue
 
         print(f"\n--- {fname} → '{title}'  ({len(xhtml)} bytes XHTML) ---")
+        page_id = None
         existing = find_page(space_id, title)
         if existing:
             page_id = existing["id"]
@@ -407,6 +501,14 @@ def main():
                     "version": 1, "action": "created", "hash": new_hash,
                     "url": f"{CONFLUENCE_BASE}/spaces/{SPACE_KEY}/pages/{page_id}",
                 })
+
+        # Upload referenced local images as page attachments (idempotent).
+        if page_id:
+            imgs = collect_images(md, path.parent)
+            for ip in imgs:
+                sc, msg = upload_attachment(page_id, ip)
+                flag = "ok" if sc in (200, 201) else f"FAIL {sc}: {msg}"
+                print(f"    attach {ip.name} → {flag}")
         time.sleep(0.3)
 
     MAPPING_FILE.parent.mkdir(parents=True, exist_ok=True)

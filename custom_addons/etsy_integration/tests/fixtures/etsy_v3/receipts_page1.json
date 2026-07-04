@@ -29,7 +29,8 @@
             "divisor": 100,
             "currency_code": "USD"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-1001/inline.jpg"
         }
       ],
       "first_line": "123 Main St",
@@ -71,7 +72,8 @@
             "divisor": 100,
             "currency_code": "USD"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-1002/inline.jpg"
         }
       ],
       "first_line": "456 Oak Ave",
@@ -113,7 +115,8 @@
             "divisor": 100,
             "currency_code": "USD"
           },
-          "variations": []
+          "variations": [],
+          "image_url": "https://i.etsystatic.com/L-1003/inline.jpg"
         }
       ],
       "first_line": "789 Maple Rd",

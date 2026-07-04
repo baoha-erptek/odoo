@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luồng 2: Nhận đơn hàng từ Etsy về Odoo — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-list .mu-text-danger{color:#b91c1c;font-weight:500}
+  .mu-banner{background:#fef3c7;border-left:3px solid #ca8a04;padding:10px 12px;border-radius:4px;font-size:12.5px;color:#92400e;margin-bottom:14px;line-height:1.55}
+  .mu-banner b{color:#78350f;font-weight:600}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Luồng 2 · Nhận đơn hàng từ Etsy về Odoo</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">LUỒNG 2 · ĐỌC ~6 PHÚT</div>
+    <h2>Nhận đơn hàng từ Etsy về Odoo</h2>
+    <p class="lede">Từ lúc khách Etsy bấm mua đến lúc đơn vào hệ thống quản lý Odoo. Khách đặt trên Etsy, hệ thống tự động lấy đơn mỗi 5 phút qua API (hoặc mỗi 10 phút đọc email khi đang chạy chế độ dự phòng). Sau khi nhận đơn + ghi nhật ký, hệ thống tự đối chiếu khách theo email — đúng 1 khách: tự tạo; 0 hoặc nhiều hơn 1: BA duyệt. Cuối cùng tạo đơn hàng với trạng thái "Mới nhận" và định tuyến theo sản phẩm (MTO in nội bộ hoặc Dropship Gearment).</p>
+    <div class="pills">
+      <span class="pill green">Hoạt động 95%</span>
+      <span class="pill blue">API pilot live 2026-05-12</span>
+      <span class="pill grey">Nguồn: FLOW_DON_HANG_ETSY_VN · HUONG_DAN_DON_HANG_ETSY_VN</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Ai làm gì — sơ đồ vai trò</h3>
+    <p>Luồng tiếp nhận đơn liên kết 5 vai trò: khách Etsy, Etsy API, hệ thống Odoo, BA, Marketing. Bảng dưới đọc từ trái qua phải: mỗi cột là một vai trò, mỗi hàng là một mốc chính.</p>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Khách Etsy</div>
+      <div class="swim-head">Etsy API</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+      <div class="swim-head">BA</div>
+      <div class="swim-head">Marketing</div>
+
+      <div class="swim-row-lbl">1. Đặt hàng</div>
+      <div class="swim-cell done">Bấm "Buy Now", Etsy gán receipt_id</div>
+      <div class="swim-cell">Ghi nhận đơn</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">2. Cron 5 phút</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Sẵn sàng lấy đơn</div>
+      <div class="swim-cell done">GET /shops/{shop_id}/orders mỗi 5 phút</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">3. Ingest + log</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Bóc tách đơn (mã đơn, khách, sản phẩm, địa chỉ); ghi nhật ký Etsy</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">4. Match khách</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell pending">Tìm khách hàng theo email: trùng 1 → tự tạo. 0 hoặc 2+ → BA duyệt</div>
+      <div class="swim-cell pending">Nếu cần: duyệt khách hàng mới</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">5. Sinh SO</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Tạo đơn hàng với trạng thái "Mới nhận", lưu mốc thời gian Etsy sửa lần cuối</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">6. Định tuyến</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Kiểm tra Gearment SKU: có → Luồng 3B, không → Luồng 3A</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell blocked">Xem thông tin theo routing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Các bước chi tiết (8 bước)</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">Khách Etsy</div>
+        <div class="title">Khách bấm "Buy Now" trên Etsy</div>
+        <div class="desc">Khách chọn sản phẩm, nhập thông tin giao hàng (tên, địa chỉ, email), xác nhận thanh toán. Etsy gán mã receipt_id cho đơn và ghi nhận tình trạng thanh toán (paid / pending / refunded).</div>
+      </div></li>
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">Hệ thống Odoo · mỗi 5 phút</div>
+        <div class="title">Cron tự động pull (GET /shops/{shop_id}/orders)</div>
+        <div class="desc">Hệ thống chạy lịch Cron theo định kỳ 5 phút. Lần đầu: lấy hết các đơn chưa có trong Odoo. Lần sau: chỉ lấy đơn có thay đổi từ timestamp cuối cùng (incremental, tiết kiệm bandwidth).</div>
+        <div class="sys"><b>Cấu hình:</b> Lịch tự động "Cập nhật đơn hàng Etsy" (mã kỹ thuật: <code>etsy_integration.cron_etsy_order_sync</code>) chạy cứ 5 phút = 288 lần/ngày. Công suất: 50-100 đơn/ngày với thời gian lấy đơn ≤ 4.3 giây.</div>
+      </div></li>
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">Etsy API</div>
+        <div class="title">Etsy trả danh sách đơn</div>
+        <div class="desc">API /shops/{shop_id}/orders trả JSON với mảng transactions — mỗi transaction = một dòng sản phẩm. Dữ liệu bao gồm: receipt_id, buyer_user_id, buyer_email, shipping_address, price, payment_status, shipping_status, etsy_last_modified.</div>
+      </div></li>
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">Hệ thống Odoo</div>
+        <div class="title">Bóc tách đơn + ghi nhật ký Etsy + bật nhật ký email dự phòng nếu cần</div>
+        <div class="desc">Hệ thống đọc dữ liệu từ Etsy, kiểm tra xem đơn này đã tồn tại chưa (theo mã đơn Etsy). Nếu đơn mới → tạo dòng nhật ký Etsy ghi chi tiết (đường gọi, mã trạng thái, thời điểm). Nếu đơn cũ mà trạng thái đã thay đổi → cập nhật nhật ký. Dự phòng: nếu API lỗi 3 lần liền → chuyển sang đọc email (chế độ dự phòng).</div>
+        <div class="sys"><b>Chi tiết:</b> mỗi dòng nhật ký Etsy lưu thời điểm, mã shop, mã HTTP, đường gọi, đối tượng, kết quả. Ví dụ: "2026-05-28 14:03 | shop 60752333 | 200 | /shops/60752333/orders | received 14 orders | success". Đường email chỉ kích hoạt khi API hỏng 3 lần → gửi cảnh báo cho BA.</div>
+      </div></li>
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">Hệ thống Odoo</div>
+        <div class="title">Tìm hoặc tạo khách hàng dựa trên email</div>
+        <div class="desc">Hệ thống tìm khách hàng theo email Etsy. Nếu đúng 1 kết quả → tự liên kết (không cần BA duyệt). Nếu 0 kết quả → hệ thống tự tạo khách hàng mới với tên từ Etsy. Nếu nhiều hơn 1 kết quả → BA Lead phải duyệt chọn cái nào (qua hàng chờ "Nhật ký email Etsy — chưa xử lý" — xem màn hình 4).</div>
+        <div class="sys"><b>Ngoại lệ:</b> nếu email chứa ký tự đặc biệt hoặc trống → BA chấp nhận thủ công qua giao diện "Nhật ký email Etsy — chưa xử lý" (cùng màn hình 4). <b>Cơ chế chọn khách hàng trùng</b> dựa trên hộp thoại tìm kiếm chuẩn của Odoo trên mô hình khách hàng — không có wizard riêng cho việc này.</div>
+      </div></li>
+      <li class="step"><div class="n">6</div><div class="body">
+        <div class="who">Hệ thống Odoo</div>
+        <div class="title">Tạo đơn hàng với trạng thái thanh toán + địa chỉ giao + mốc Etsy sửa lần cuối</div>
+        <div class="desc">Hệ thống tạo đơn hàng với các trường: khách (từ bước 5), dòng sản phẩm (mỗi giao dịch → 1 dòng), địa chỉ giao (từ dữ liệu Etsy), trạng thái thanh toán (đã trả / chờ), trạng thái = "Mới nhận" (mặc định). Lưu thêm mốc Etsy sửa đơn lần cuối để biết khi nào khách chỉnh sửa trên Etsy.</div>
+        <div class="sys"><b>Chi tiết:</b> dòng sản phẩm lưu {sản phẩm, số lượng, đơn giá = giá Etsy / qty, nội dung cá nhân hoá / khắc chữ}. Mốc thời gian Etsy sửa lần cuối — nếu Etsy có cập nhật mà Odoo chưa lấy → lượt chạy lịch sau sẽ lấy lại và cập nhật đơn.</div>
+      </div></li>
+      <li class="step"><div class="n">7</div><div class="body">
+        <div class="who">Hệ thống Odoo</div>
+        <div class="title">Định tuyến: sản phẩm có SKU Gearment → Luồng 3B dropship; không có → Luồng 3A MTO</div>
+        <div class="desc">Hệ thống kiểm tra từng dòng sản phẩm trong đơn: nếu trường "SKU Gearment" có giá trị → gắn cờ "Dropship", đơn hàng sẽ theo Luồng 3B (gửi sang Gearment). Nếu trống → gắn cờ "MTO", đơn sẽ theo Luồng 3A (in nội bộ). Một đơn có thể có cả dòng MTO lẫn Dropship → hệ thống tách thành 2 hướng giao.</div>
+      </div></li>
+      <li class="step"><div class="n">8</div><div class="body">
+        <div class="who">Hệ thống Odoo · fallback</div>
+        <div class="title">Khi API hỏng 3 lần liền: chuyển sang email parser (dự phòng)</div>
+        <div class="desc">Nếu Cron API gặp lỗi 3 lần liên tiếp (ví dụ 401 token hết, 429 rate limit, 5xx Etsy down) → hệ thống tự chuyển sang chế độ "Email Fallback": Cron đọc email 10 phút một lần thay vì API. BA được alert để authorize Etsy lại hoặc kiểm tra kết nối. Sau khi fix → bấm "Test Connection" để quay lại API.</div>
+        <div class="sys"><b>Lý do hai đường:</b> Email chậm hơn (có thể trễ vài phút so với Etsy) và định dạng email có thể lạ → cần parser robust. Nhưng nó được để dưới dạng fallback để shop không mất đơn khi API tạm thời down.</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo trong luồng này</h3>
+    <div class="mu-lede">4 màn hình mô phỏng. Cuộn xuống để xem chi tiết: Dashboard Vận hành với KPI và bảng đơn mới, form đơn hàng tab Etsy, Nhật ký Etsy, và Nhật ký email Etsy (dự phòng).</div>
+
+    <!-- MOCKUP 1: Operations Dashboard -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Operations Dashboard — KPI và danh sách đơn mới 24 giờ</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Operations › Dashboard</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Vận hành<span class="mu-sep">›</span><strong>Operations Dashboard</strong> <span class="mu-pill mu-pill-neutral" style="margin-left:8px">2026-06-03</span></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Đơn hôm nay</button>
+        <button class="mu-btn">Nhóm: Pipeline state</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn">Làm mới</button>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;margin-bottom:4px">Đơn hôm nay</div>
+            <div style="font-size:24px;font-weight:700;color:#1f2937">23</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:3px">↑ 12% so với hôm qua</div>
+          </div>
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;margin-bottom:4px">API success (5 phút trước)</div>
+            <div style="font-size:24px;font-weight:700;color:#15803d">14 đơn</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:3px">200 — kết nối tốt</div>
+          </div>
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;margin-bottom:4px">Email fallback</div>
+            <div style="font-size:24px;font-weight:700;color:#16a34a">OFF</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:3px">API hoạt động bình thường</div>
+          </div>
+        </div>
+        <table class="mu-list">
+          <thead><tr><th>Thời gian</th><th>Order #</th><th>Etsy receipt_id</th><th>Khách hàng</th><th>Tổng tiền</th><th>Pipeline state</th><th>Đến lúc</th></tr></thead>
+          <tbody>
+            <tr><td>14:03</td><td><span class="mu-mono">SO-2026-0445</span></td><td><span class="mu-mono">3094521…</span></td><td>Jane Smith</td><td><span style="font-weight:600">$45.50</span></td><td><span class="mu-pill mu-pill-neutral">Mới nhận</span></td><td>3 giờ</td></tr>
+            <tr><td>13:42</td><td><span class="mu-mono">SO-2026-0444</span></td><td><span class="mu-mono">3094502…</span></td><td>John Doe</td><td><span style="font-weight:600">$28.00</span></td><td><span class="mu-pill mu-pill-neutral">Mới nhận</span></td><td>3 giờ 20 phút</td></tr>
+            <tr><td>12:15</td><td><span class="mu-mono">SO-2026-0443</span></td><td><span class="mu-mono">3094488…</span></td><td>Alice Johnson</td><td><span style="font-weight:600">$62.99</span></td><td><span class="mu-pill mu-pill-success">Đã xác nhận</span></td><td>4 giờ 48 phút</td></tr>
+            <tr><td>11:30</td><td><span class="mu-mono">SO-2026-0442</span></td><td><span class="mu-mono">3094471…</span></td><td>Bob Wilson</td><td><span style="font-weight:600">$33.75</span></td><td><span class="mu-pill mu-pill-success">Đang sản xuất</span></td><td>5 giờ 33 phút</td></tr>
+            <tr><td>10:05</td><td><span class="mu-mono">SO-2026-0441</span></td><td><span class="mu-mono">3094452…</span></td><td>Emma Brown</td><td><span style="font-weight:600">$51.20</span></td><td><span class="mu-pill mu-pill-success">Sẵn sàng giao</span></td><td>6 giờ 58 phút</td></tr>
+            <tr><td>09:47</td><td><span class="mu-mono">SO-2026-0440</span></td><td><span class="mu-mono">3094431…</span></td><td>Michael Chen</td><td><span style="font-weight:600">$19.99</span></td><td><span class="mu-pill mu-pill-success">Đã giao</span></td><td>7 giờ 16 phút</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mu-caption">Operations Dashboard hiển thị <b>toàn bộ dòng sản phẩm mới</b> (không phải toàn bộ đơn). KPI trên cùng cho thấy tình hình API + fallback. Cron pull 14 đơn (23 dòng sản phẩm) trong 4.3 giây lúc 14:03.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.operations_dashboard_list_view</code> @ <code>multichannel_hub_core/views/operations_dashboard_views.xml</code>) — dựng trên <code>sale.order.line</code> với 34 cột lấy từ Excel "Esty main 2 - 15h VN.xlsx" (P1-01b). KPI ở trên cùng là phần thêm bên ngoài standard list view.</i></div>
+    </div>
+
+    <!-- MOCKUP 2: Sale Order form, Etsy tab -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Sale Order form — Tab Etsy hiển thị receipt_id, payment_status, shipping_address</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Đơn bán › SO-2026-0445</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn bán<span class="mu-sep">›</span><strong>SO-2026-0445</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Discard</button>
+        <button class="mu-btn mu-btn-primary">Save</button>
+        <div class="mu-stage-pipe"><span class="mu-stage active">Mới nhận</span><span>›</span><span class="mu-stage">Xác nhận</span><span>›</span><span class="mu-stage">Sản xuất</span><span>›</span><span class="mu-stage">Đã giao</span></div>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">SO-2026-0445 · Jane Smith</div>
+        <div class="mu-tabs"><span class="mu-tab">Order Info</span><span class="mu-tab active">Etsy</span><span class="mu-tab">Order Lines</span><span class="mu-tab">Other Info</span></div>
+        <div style="padding:14px 0">
+          <div class="mu-grid2">
+            <div>
+              <div class="mu-field"><div class="mu-field-label">Etsy receipt_id</div><div class="mu-field-value"><span class="mu-mono">3094521840162</span></div></div>
+              <div class="mu-field"><div class="mu-field-label">Buyer alias</div><div class="mu-field-value">jane.smith.etsy</div></div>
+              <div class="mu-field"><div class="mu-field-label">Etsy last modified</div><div class="mu-field-value">2026-06-03 14:02:51 UTC</div></div>
+            </div>
+            <div>
+              <div class="mu-field"><div class="mu-field-label">Payment status</div><div class="mu-field-value"><span class="mu-pill mu-pill-success">paid</span></div></div>
+              <div class="mu-field"><div class="mu-field-label">Shipping status</div><div class="mu-field-value"><span class="mu-pill mu-pill-neutral">not_shipped</span></div></div>
+              <div class="mu-field"><div class="mu-field-label">Shop</div><div class="mu-field-value">JaHandmadeArt (shop_id 60752333)</div></div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f3f4f6">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;margin-bottom:8px">Shipping address (từ Etsy)</div>
+            <div class="mu-field"><div class="mu-field-label">Tên</div><div class="mu-field-value">Jane Smith</div></div>
+            <div class="mu-field"><div class="mu-field-label">Địa chỉ</div><div class="mu-field-value">123 Maple Street, Springfield, IL 62701, USA</div></div>
+            <div class="mu-field"><div class="mu-field-label">Email</div><div class="mu-field-value"><span class="mu-mono">jane.smith@example.com</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">Phone</div><div class="mu-field-value">+1 (217) 555-0101</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Tab <b>Etsy</b> hiển thị toàn bộ metadata từ Etsy API: receipt_id (mã gọi tiền), payment_status ("paid" = đã thanh toán), shipping_status, etsy_last_modified (timestamp — để track update). Nếu khách sửa địa chỉ trên Etsy, BA Lead bấm <b>"Yêu cầu đổi địa chỉ"</b> — xem Luồng 2 chi tiết.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn của Odoo (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: tab "Etsy" mở rộng + các trường receipt_id / payment_status / shipping_address / etsy_last_modified trong <code>etsy_integration/views/sale_order_views.xml</code>.</i></div>
+    </div>
+
+    <!-- MOCKUP 3: Etsy API Log -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Etsy API Log — lịch sử gọi API mỗi 5 phút</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span><span class="mu-menu">API › Logs</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Etsy<span class="mu-sep">›</span><strong>API Logs</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: 24 giờ qua</button>
+        <button class="mu-btn">Shop: JaHandmadeArt</button>
+        <span class="mu-spacer" style="flex:1"></span>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Thời gian</th><th>Shop</th><th>HTTP</th><th>Endpoint</th><th>Kết quả</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>2026-06-03 14:03</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>14 đơn, 4.3s</td></tr>
+          <tr><td>2026-06-03 13:58</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>0 đơn (no changes), 0.8s</td></tr>
+          <tr><td>2026-06-03 13:53</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>2 đơn, 1.2s</td></tr>
+          <tr><td>2026-06-03 13:48</td><td>JaHandmadeArt</td><td><span style="color:#b45309;font-weight:600">429</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-warn">rate_limit</span></td><td>Etsy rate limit exceeded (retry 60s)</td></tr>
+          <tr><td>2026-06-03 13:43</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>5 đơn, 2.1s</td></tr>
+          <tr><td>2026-06-03 13:38</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>1 đơn, 0.9s</td></tr>
+          <tr><td>2026-06-03 13:33</td><td>JaHandmadeArt</td><td><span style="color:#b91c1c;font-weight:600">500</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-danger">server_error</span></td><td>Etsy server error — API tạm down</td></tr>
+          <tr><td>2026-06-03 13:28</td><td>JaHandmadeArt</td><td><span style="color:#15803d;font-weight:600">200</span></td><td><span class="mu-mono">/shops/60752333/orders</span></td><td><span class="mu-pill mu-pill-success">success</span></td><td>3 đơn, 1.5s</td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Etsy API Log ghi mỗi cuộc gọi cron: thời điểm, HTTP status, số đơn được kéo, thời gian response. <b>200</b> = thành công; <b>429</b> = rate limit (hệ thống tự retry); <b>500</b> = Etsy down (trigger Email fallback nếu xảy ra 3 lần liền). Cron pull 14 đơn (23 dòng) trong 4.3 giây lúc 14:03.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list + form tuỳ biến (<code>etsy_integration.view_etsy_api_log_tree</code> / <code>view_etsy_api_log_search</code> @ <code>etsy_integration/views/etsy_api_log_views.xml</code>) — không có view chuẩn Odoo cho nhật ký API; đây là mô hình tuỳ biến cho Etsy.</i></div>
+    </div>
+
+    <!-- MOCKUP 4: Email Fallback Log -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Etsy Email Log (fallback) — khi API hỏng 3 lần liền</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span><span class="mu-menu">Email › Logs</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Etsy<span class="mu-sep">›</span><strong>Email Logs</strong></div>
+      <div class="mu-banner"><b>Email parser ở chế độ DỰ PHÒNG</b> — chỉ chạy khi API hỏng 3 lần liền. Hôm nay không có email nào được parse vì API hoạt động bình thường.</div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Tất cả</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280">5 dòng · 0 lỗi</span>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Email date</th><th>Subject</th><th>Parsed</th><th>Sale.order tạo</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>2026-05-15 11:23</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-success">yes</span></td><td><span class="mu-mono">SO-2026-0382</span></td><td>parsed via email, 2 items</td></tr>
+          <tr><td>2026-05-14 09:47</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-danger">failed</span></td><td>—</td><td>ký tự lạ trong tên khách (emoji) — đợi parser update</td></tr>
+          <tr><td>2026-05-13 14:15</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-success">yes</span></td><td><span class="mu-mono">SO-2026-0378</span></td><td>parsed via email, 1 item</td></tr>
+          <tr><td>2026-05-12 16:33</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-neutral">duplicate</span></td><td>—</td><td>đơn đã tạo trước đó qua API, email this là resend từ Etsy</td></tr>
+          <tr><td>2026-05-11 10:05</td><td>New order from JaHandmadeArt</td><td><span class="mu-pill mu-pill-success">yes</span></td><td><span class="mu-mono">SO-2026-0375</span></td><td>parsed via email, 3 items, cá nhân hoá đầy đủ</td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Email Log chỉ hoạt động khi API hỏng liên tục. Khi API quay lại bình thường, email log vẫn chạy trong nền để fallback nếu cần. Các trạng thái: <b>yes</b> = parse thành công, <b>failed</b> = không bóc được (BA cần xem thủ công), <b>duplicate</b> = đơn đã có (từ API), <b>pending</b> = chờ xử lý. Khi API tạm xuống, BA được alert để bấm "Test Connection" authorize lại.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view tuỳ biến trong <code>etsy_integration/views/etsy_email_log_views.xml</code> — không có view chuẩn Odoo; mô hình email-fallback chuyên biệt cho Etsy (kích hoạt khi API hỏng 3 lần liền).</i></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Tiêu chí thành công</h3>
+    <ul class="kpi-list">
+      <li><b>Thời gian Etsy → Odoo</b>≤ 5 phút (cron chạy 5 phút, trong 95% lần lấy được data)</li>
+      <li><b>Tỉ lệ ingest thành công</b>≥ 99% đơn parse đúng (hôm nay: 99.2%)</li>
+      <li><b>Tỉ lệ auto-merge khách hàng</b>≥ 90% khách match auto, không cần BA duyệt (hôm nay: 91%)</li>
+      <li><b>Capacity</b>50-100 đơn/ngày bình thường, API time &lt; 5 giây mỗi lần</li>
+      <li><b>Fallback failover time</b>≤ 30 phút từ lúc API hỏng đến khi email parser chạy</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Liên kết với các luồng khác</h3>
+    <div class="crosslink-grid">
+      <a href="flow-1-tao-san-pham.html"><b>Trước</b>Luồng 1 — Tạo sản phẩm POD và đăng lên Etsy</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Sau MTO</b>Luồng 3A — Sản phẩm in nội bộ sau khi nhận đơn</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Sau Dropship</b>Luồng 3B — Sản phẩm có SKU Gearment → dropship</a>
+      <a href="flow-4-hau-mai.html"><b>Hậu mãi</b>Luồng 4 — Xử lý khiếu nại, hoàn tiền, thay thế</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — quản lý toàn bộ đơn hàng</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Lưu ý và câu hỏi mở</h3>
+    <p><b>Hai con đường vào hệ thống:</b> JaHandmadeArt đã chuyển sang API (chính thức 2026-05-12); 18 shop còn lại vẫn dùng email parser. Lộ trình P1-13 sẽ cutover shop thứ hai vào API vào tuần W7. Email parser vẫn chạy như fallback — khi API hỏng 3 lần liền, hệ thống tự chuyển sang email 10 phút một lần cho đến khi API fix.</p>
+    <p><b>Etsy shop_id là số thực, không phải Odoo PK:</b> JaHandmadeArt có etsy_api_shop_id = <span class="mu-mono">60752333</span> (Etsy gán). Trước đó dùng Odoo ID (Sandbox test) nhưng đã deprecated. Tất cả URL /shops/{shop_id}/* phải dùng etsy_api_shop_id, không dùng Odoo record ID.</p>
+    <p><b>Etsy app scope approved cho 4 scopes:</b> transactions_r/w (đọc-ghi đơn), listings_r/w (đọc-ghi sản phẩm), shops_r (đọc info shop), email_r (đọc email báo đơn). Scope conversations_r (buyer messaging) chưa approved — cần re-submit với Etsy khi feature buyer-msg phát triển.</p>
+  </div>
+
+  <footer>Luồng 2 · cập nhật 2026-06-03 · nguồn: FLOW_DON_HANG_ETSY_VN · HUONG_DAN_DON_HANG_ETSY_VN · ADR-008 · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

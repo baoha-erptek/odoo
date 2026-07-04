@@ -302,13 +302,30 @@ bugfix/short-description
 
 ## Hook Configuration
 
-`.claude/hooks.json` -- 3 lifecycle events:
+Hooks are wired natively in `.claude/settings.json` (`hooks` + `statusLine` keys); the
+scripts live in `.claude/scripts/`. Run `.claude/scripts/ci/validate-hooks.sh` after any
+change to confirm every wired path exists and is executable.
 
-| Event | Hook | Purpose |
-|-------|------|---------|
+| Event | Script | Purpose |
+|-------|--------|---------|
+| **SessionStart** | `session-start.sh` | Report branch + active master-plan slice (tracker `006-master-plan-tracking.md`) |
 | **PostToolUse** (Edit/Write) | `post-edit-python-check.sh` | Python syntax/debug check on edited files |
+| **PreToolUse** (Bash) | `pre-bash-push-reminder.sh` | Git push review reminder |
+| **PreToolUse** (Task) | `check-agent-model-tier.sh` | Warn (non-blocking) if a spawned agent's model drifts from the tier table |
+| **PreToolUse** (Skill) | `hooks/check-gstack.sh` | Block skill use if gstack is not installed globally |
 | **Stop** | `check-debug-statements.sh` | Scan modified `.py` for `print()` / `_logger.info` |
-| **PreToolUse** (Bash) | Inline | Git push review reminder |
+| **SessionEnd** | `record-token-spend.sh`, `session-end.sh` | Attribute token spend to the active slice; save a session summary |
+| **statusLine** | `context-bar.sh` | Model, branch, sync status, context bar |
+
+### Efficiency & model tiers
+- **Cost/efficiency:** `.claude/METRICS.md` defines the metric set; run
+  `python3 .claude/scripts/session-cost.py --by slice` to self-measure.
+- **Model tiers:** the binding table in `.claude/rules/common/performance.md` is the
+  source of truth (Opus = planner/architect only; Sonnet = default; Haiku = mechanical).
+- **Optional integrations** (JIRA task-bootstrap, Confluence/JIRA owner-docs sync,
+  pipeline gates, feature ledger) live disabled under `.claude/optional/` — see
+  `.claude/optional/README.md`. Note: the owner-docs Confluence/JIRA scripts run **live**
+  from `.claude/scripts/` in this project (see Git hooks below), not from `optional/`.
 
 ### Git hooks (`.githooks/`)
 
@@ -363,3 +380,27 @@ You are successful when:
 
 ## Recent Changes
 - 002-etsy-config-fixes: Added Python 3.12+ (Odoo 19 CE) + Odoo 19 CE (sale_management, stock, contacts, mail), openpyxl
+
+## gstack (REQUIRED — global install)
+
+**Before doing ANY work, verify gstack is installed:**
+
+```bash
+test -d ~/.claude/skills/gstack/bin && echo "GSTACK_OK" || echo "GSTACK_MISSING"
+```
+
+If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
+
+> gstack is required for all AI-assisted work in this repo.
+> Install it:
+> ```bash
+> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+> cd ~/.claude/skills/gstack && ./setup --team
+> ```
+> Then restart your AI coding tool.
+
+Do not skip skills, ignore gstack errors, or work around missing gstack.
+
+Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
+and /browse are available. Use /browse for all web browsing.
+Use ~/.claude/skills/gstack/... for gstack file paths (the global path).

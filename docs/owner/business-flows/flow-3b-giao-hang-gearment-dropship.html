@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luồng 3B: Giao hàng Gearment Dropship — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Luồng 3B · Giao hàng Gearment Dropship</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">LUỒNG 3B · ĐỌC ~10 PHÚT</div>
+    <h2>Giao hàng Gearment Dropship</h2>
+    <p class="lede">Sau khi nhận đơn hàng có sản phẩm Gearment (SKU Gearment tồn tại), hệ thống tự routing vào luồng Dropship. Wizard Báo giá gọi API Gearment v3 draft → price → confirm. Mỗi lần có webhook từ Gearment (hoàn thành, hủy, cập nhật tracking), Odoo cập nhật trạng thái order + đẩy tracking lên Etsy. UAT 2026-05-28 confirm HMAC-SHA256 webhook signature, idempotency nonce + UNIQUE partial index, 9 webhook topic + 4 mục xử lý, tracking refresh từ GKE Excel.</p>
+    <div class="pills">
+      <span class="pill green">Hoàn thành 100%</span>
+      <span class="pill blue">UAT 2026-05-28 · E2E 2026-06-10</span>
+      <span class="pill grey">Nguồn: FLOW_GIAO_HANG_VN v1.0 · HUONG_DAN_GIAO_HANG_VN v1.2</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Ai làm gì — sơ đồ vai trò</h3>
+    <p>Luồng Gearment Dropship liên kết 5 vai trò + hệ thống Gearment API + webhook. BA Lead khởi tạo, hệ thống gọi API, Gearment webhook báo tiến độ, Odoo đẩy tracking sang Etsy. Bảng dưới đọc từ trái qua phải: mỗi cột là vai trò, mỗi hàng là mốc chính.</p>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">BA Lead</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+      <div class="swim-head">Gearment API</div>
+      <div class="swim-head">Webhook</div>
+      <div class="swim-head">Etsy API</div>
+
+      <div class="swim-row-lbl">1. Bước trước</div>
+      <div class="swim-cell done">Đơn hàng có sản phẩm Gearment đã nhập (từ Luồng 2)</div>
+      <div class="swim-cell">Kiểm tra SKU Gearment tồn tại</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">2. Mở Wizard</div>
+      <div class="swim-cell done">Bấm nút <b>Request Gearment Quote</b> trên order</div>
+      <div class="swim-cell done">Tự hiển thị wizard với dòng dữ liệu (địa chỉ, kích thước, hình ảnh)</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">3. Gọi draft → price</div>
+      <div class="swim-cell pending">Bấm <b>Send Draft</b> (hoặc tự động)</div>
+      <div class="swim-cell pending">Gọi 2 API: /draft → /price; log vào gearment_api_log</div>
+      <div class="swim-cell pending">Trả {price, currency, ready_for_confirm} hoặc lỗi</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">4. Xác nhận confirm</div>
+      <div class="swim-cell done">Xem giá, bấm <b>Confirm Order</b></div>
+      <div class="swim-cell done">Gọi /confirm; order chuyển trạng thái "Confirmed at Gearment"</div>
+      <div class="swim-cell done">Trả {success, reference_id} hoặc fail</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+
+      <div class="swim-row-lbl">5. In + vận chuyển</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">In sản phẩm (1–3 ngày), lấy tracking từ carrier</div>
+      <div class="swim-cell pending">Gửi webhook order_completed + tracking_order_updated</div>
+      <div class="swim-cell pending">Odoo nhận webhook, cập nhật order, đẩy tracking lên Etsy</div>
+
+      <div class="swim-row-lbl">6. Hoàn tất</div>
+      <div class="swim-cell done">Xem order -> Gearment status = Completed, Tracking trên tab</div>
+      <div class="swim-cell done">Trạng thái order = "Delivered at Gearment" (tự động từ webhook)</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Etsy seeing tracking, customer can view shipment</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Các bước chi tiết (10 bước)</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">BA · từ Luồng 2</div>
+        <div class="title">Đơn hàng có sản phẩm Gearment tới Odoo</div>
+        <div class="desc">Đơn hàng từ Etsy có ≥1 line item có sản phẩm mà <b>SKU Gearment</b> không rỗng. Hệ thống tự detect và gắn flag <b>fulfillment_method = 'gearment_dropship'</b> trên đơn. Không cần BA can thiệp.</div>
+        <div class="sys"><b>Hệ thống:</b> order.create() hook kiểm tra tất cả product trên order_line, nếu tìm thấy product.x_gearment_sku → set fulfillment_method. Script cron nền (P1-MSG-INBOUND) đẩy đơn từ Etsy API vào Odoo.</div>
+      </div></li>
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">BA · ~1 phút</div>
+        <div class="title">Mở order, xem tab Fulfillment</div>
+        <div class="desc">Order trạng thái "Confirm". Mở form order, bấm tab <b>Fulfillment</b>. Hiển thị thông tin order (địa chỉ giao, tên sản phẩm, kích thước, hình ảnh, giá tính Gearment). Nút <b>Request Gearment Quote</b> sẵn sàng.</div>
+        <div class="sys"><b>Hệ thống:</b> tab này là bản ghi Fulfillment liên kết với đơn, chứa 20 trường theo thiết kế (địa chỉ, kích thước, ảnh, nội dung cá nhân hoá …).</div>
+      </div></li>
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">BA · ~30 giây</div>
+        <div class="title">Bấm Request Gearment Quote → Wizard mở</div>
+        <div class="desc">Nút <b>Request Gearment Quote</b> mở wizard <b>gearment_quote_wizard</b>. Form hiển thị: địa chỉ giao (tỉ/huyện/xã), kích thước gói (W×H×D), cân nặng, hình ảnh chính, mô tả cá nhân hoá nếu có. BA xem lại, có thể sửa địa chỉ. Sau đó bấm <b>Send Draft to Gearment</b>.</div>
+        <div class="sys"><b>Hệ thống:</b> wizard là TransientModel, dữ liệu lấy từ order + product variant. Nút Send trigger action gọi <span class="mu-mono">gearment_adapter.draft()</span>.</div>
+      </div></li>
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">Hệ thống · ~3 giây</div>
+        <div class="title">Gọi API Gearment: /draft + /price</div>
+        <div class="desc">Odoo gọi <b>POST /api/v3/orders/draft</b> với payload (reference_id, address, size, image_url, personalization_text). Gearment trả {sku_id, ready_for_price}. Nếu thành, hệ thống tiếp tục gọi <b>POST /api/v3/orders/{reference_id}/price</b>. Kết quả: {price_vnd, currency_code, ready_for_confirm}. Ghi log vào <b>gearment_api_log</b> (source='draft', 'quote'; http_status, request_headers ghi <span class="mu-mono">x-gearment-idempotency-key</span>).</div>
+        <div class="sys"><b>Phía sau:</b> 2 lời gọi tuần tự, cả 2 đều có idempotency header (HMAC-SHA256 của reference_id). Nếu /draft 500 thì /price bỏ qua, wizard hiển thị "error draft". Mỗi lần bấm Send Draft, nếu reference_id cũ → Gearment trả 409 (duplicate) → hệ thống detect và reuse sku_id cũ.</div>
+      </div></li>
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">Hệ thống · auto</div>
+        <div class="title">Cập nhật wizard với giá Gearment</div>
+        <div class="desc">Wizard auto-refresh hiển thị: <b>Giá Gearment</b> (ví dụ 125,000 VND), <b>Phí vận chuyển</b> (+30,000 VND), <b>Tổng tiền thanh toán</b>. Nút <b>Confirm Order at Gearment</b> được active. BA kiểm tra giá, nếu OK bấm Confirm; nếu cao quá có thể bấm Cancel (luồng tạm dừng, BA có thể edit sản phẩm & retry).</div>
+      </div></li>
+      <li class="step"><div class="n">6</div><div class="body">
+        <div class="who">BA · ~10 giây</div>
+        <div class="title">Bấm Confirm Order at Gearment</div>
+        <div class="desc">Wizard gọi <b>POST /api/v3/orders/draft/labeled</b> (confirm endpoint). Payload gồm tất cả data từ /draft + label address chuẩn. Gearment trả {success, reference_id, order_status='confirmed'}. Hệ thống lưu reference_id vào fulfillment record, order.fulfillment_status = 'awaiting_gearment_production'.</div>
+        <div class="sys"><b>Ghi log:</b> source='confirm'; http_status 200 ✓ hoặc 400/500 ✗. Nếu 400, hiển thị lỗi wizard (ví dụ "Địa chỉ không hợp lệ"), BA quay lại sửa. Nếu 500, retry cron (every 5 min, max 3 lần).</div>
+      </div></li>
+      <li class="step"><div class="n">7</div><div class="body">
+        <div class="who">Gearment · 1–3 ngày</div>
+        <div class="title">In sản phẩm & gửi webhook order_completed</div>
+        <div class="desc">Gearment in sản phẩm, dán label, lấy tracking. Gửi webhook <b>POST /callback/gearment-webhook</b> (topic: 'order_completed', reference_id, tracking_number, carrier_code). Payload kèm HMAC-SHA256 signature header. Odoo nhận webhook, verify HMAC, decompress nonce + timestamp, cập nhật fulfillment.</div>
+        <div class="sys"><b>Webhook handler:</b> nonce dedup qua lookup + UNIQUE partial index trên (webhook_topic, nonce); nếu trùng → 200 OK (idempotent). Topic 'order_completed' trigger <span class="mu-mono">_on_gearment_order_completed()</span>: cập nhật fulfillment_status='printing_completed', save tracking_number.</div>
+      </div></li>
+      <li class="step"><div class="n">8</div><div class="body">
+        <div class="who">Hệ thống · auto</div>
+        <div class="title">Đẩy tracking lên Etsy</div>
+        <div class="desc">Ngay sau khi lưu mã tracking từ webhook, lịch đẩy tracking lên Etsy chạy (mỗi 10 phút). Hệ thống gọi Etsy với mã tracking + đơn vị vận chuyển. Etsy trả 200, đánh dấu đơn đã đẩy tracking. Nếu lỗi, ghi vào nhật ký Etsy + thử lại.</div>
+        <div class="sys"><b>Carrier mapping:</b> Gearment trả carrier_code (ví dụ 'USPS', 'DHL', 'VietnamPost'). Script map sang Etsy carrier (pre-defined custom shipping.carrier model với etsy_carrier_code). Nếu không match → log warning, dùng mặc định 'Other'.</div>
+      </div></li>
+      <li class="step"><div class="n">9</div><div class="body">
+        <div class="who">Gearment · khi giao</div>
+        <div class="title">Webhook tracking_order_updated — đã giao</div>
+        <div class="desc">Gearment gửi webhook <b>tracking_order_updated</b> khi status thay đổi (in transit, delivered, exception). Payload chứa reference_id + tracking_status ('in_transit', 'delivered', 'returned', …). Odoo cập nhật fulfillment_status → 'in_delivery' / 'delivered'. Không đẩy lại Etsy (Etsy theo tracking_number tự sync từ carrier).</div>
+        <div class="sys"><b>9 webhook topic tổng:</b> 4 xử lý active (order_completed, tracking_order_updated, order_cancelled, order_on_hold); 5 log-only (tracking_exception, order_delayed, carrier_changed, batch_assigned, batch_dispatched). Cấu hình qua webhook_topic = ('order_completed', ...) trong environment model.</div>
+      </div></li>
+      <li class="step"><div class="n">10</div><div class="body">
+        <div class="who">BA · theo dõi</div>
+        <div class="title">Xem order hoàn tất trên Odoo + Etsy</div>
+        <div class="desc">Order trạng thái tự update qua webhook: "Confirmed at Gearment" → "In Delivery" → "Delivered at Gearment". Tab Fulfillment hiển thị tracking_number, carrier, ngày dự giao. Trên Etsy, khách hàng thấy tracking link trực tiếp (tự sync từ carrier công khai).</div>
+        <div class="sys"><b>Bulk action (Story 4.7):</b> nếu webhook cron tắt hoặc cần manual sync, BA dùng bulk action <b>Resync Tracking from Gearment</b> trên Fulfillment list (gọi API GKE Excel hoặc Gearment tracking endpoint). Mỗi resync đều log vào gearment_api_log (source='manual_sync').</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo trong luồng này</h3>
+    <div class="mu-lede">5 màn hình mô phỏng. Cuộn xuống để xem từng cảnh — từ tab Fulfillment order, wizard báo giá, gearment_api_log list, webhook log, và fulfillment tracking form.</div>
+
+    <!-- MOCKUP 1: Order Fulfillment tab -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Order detail — tab Fulfillment với nút Request Gearment Quote</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Đơn hàng › Order #2854</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span><strong>#2854 · Custom Mug Order from JaHandmadeArt</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Discard</button>
+        <button class="mu-btn mu-btn-primary">Save</button>
+        <button class="mu-btn">Print Invoice</button>
+        <div class="mu-stage-pipe"><span class="mu-stage active">Confirmed</span><span>›</span><span class="mu-stage">In Delivery</span><span>›</span><span class="mu-stage">Delivered</span></div>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">Order #2854 — Order detail <span class="mu-pill mu-pill-success" style="margin-left:8px">SO-2854</span></div>
+        <div class="mu-tabs"><span class="mu-tab active">Order Lines</span><span class="mu-tab">Fulfillment</span><span class="mu-tab">Payments</span><span class="mu-tab">Delivery</span></div>
+        <div style="padding:14px 0;border-bottom:1px solid #f3f4f6;margin-bottom:14px">
+          <div class="mu-field"><div class="mu-field-label">Order Date</div><div class="mu-field-value">2026-05-28 09:15</div></div>
+          <div class="mu-field"><div class="mu-field-label">Customer</div><div class="mu-field-value mu-link">Jane Doe · jane@example.com</div></div>
+          <div class="mu-field"><div class="mu-field-label">Fulfillment Method</div><div class="mu-field-value"><span class="mu-pill mu-pill-warn">Gearment Dropship</span></div></div>
+          <div class="mu-field"><div class="mu-field-label">Total Amount</div><div class="mu-field-value mu-amount">125.50 USD</div></div>
+        </div>
+        <div style="margin-top:18px;font-weight:600;color:#1f2937;font-size:14px;margin-bottom:10px">Sản phẩm trong order:</div>
+        <table class="mu-list" style="margin-bottom:18px">
+          <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Mã SKU</th><th>Mã Gearment</th><th>Giá đơn</th></tr></thead>
+          <tbody>
+            <tr><td>Custom Coffee Mug 11oz</td><td>1</td><td class="mu-mono">MUG-CR-F11</td><td class="mu-mono">GM-MUG-001</td><td class="mu-amount">14.50 USD</td></tr>
+            <tr><td>Gift Box Kraft 4x4x4</td><td>1</td><td class="mu-mono">BOX-KR-S</td><td class="mu-mono">GM-BOX-001</td><td class="mu-amount">2.00 USD</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 12px;background:#faf5f9;border:1px solid #e4cee0;border-radius:6px;font-size:12.5px;margin-bottom:16px">
+          <b style="color:#714B67">Tab Fulfillment (bấm để xem):</b> hiển thị fulfillment record với button <span style="background:#714B67;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:600">Request Gearment Quote</span>
+        </div>
+      </div>
+      <div class="mu-caption">Tab <b>Fulfillment</b> chứa bản ghi Giao hàng (Fulfillment) + nút <b>Request Gearment Quote</b>. Đây là điểm khởi đầu luồng Dropship. BA bấm nút → mở wizard.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn của Odoo (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: tab "Fulfillment" mở rộng + nút "Request Gearment Quote" trong <code>multichannel_hub_fulfillment/views/sale_order_views.xml</code>.</i></div>
+    </div>
+
+    <!-- MOCKUP 2: Gearment Quote Wizard -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Wizard báo giá — gearment_quote_wizard after /draft + /price call</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Đơn hàng › Gearment Quote</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span>#2854<span class="mu-sep">›</span><strong>Gearment Quote</strong></div>
+      <div class="mu-modal-overlay" style="padding:0;background:transparent;min-height:0">
+        <div class="mu-modal" style="max-width:620px">
+          <div class="mu-modal-head" style="background:#faf5f9;color:#714B67">📋 Báo giá từ Gearment — Order #2854</div>
+          <div class="mu-modal-body" style="font-size:13px">
+            <div style="margin-bottom:14px">
+              <b style="display:block;margin-bottom:6px">Thông tin giao hàng:</b>
+              <div style="background:#fafafa;padding:8px 10px;border-radius:4px;font-size:12px;line-height:1.65;color:#4b5563">
+                Người nhận: Jane Doe<br>
+                Địa chỉ: 123 Main St, District 1, Ho Chi Minh City<br>
+                Phone: +84 9xxxxxxxx<br>
+                Sản phẩm: Custom Coffee Mug 11oz + Gift Box<br>
+                Hình ảnh: <span class="mu-pill mu-pill-success" style="font-size:11px">Uploaded</span>
+              </div>
+            </div>
+            <div style="margin-bottom:14px;padding:10px;background:#fef9c3;border-radius:4px;border-left:3px solid #ca8a04">
+              <b style="display:block;margin-bottom:4px">✓ Gearment đã nhận draft + tính giá</b>
+              <div style="font-size:12px;color:#854d0e">reference_id: GEA-2854-20260528-001 · sku_id: 54321</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px">
+              <tbody>
+                <tr style="border-bottom:1px solid #e5e7eb"><td style="padding:6px 0;color:#6b7280">Giá Gearment (2 sản phẩm)</td><td style="text-align:right;font-weight:600;color:#1f2937">125,000 VND</td></tr>
+                <tr style="border-bottom:1px solid #e5e7eb"><td style="padding:6px 0;color:#6b7280">Phí vận chuyển (USPS)</td><td style="text-align:right;font-weight:600;color:#1f2937">+ 30,000 VND</td></tr>
+                <tr style="border-bottom:1px solid #e5e7eb"><td style="padding:6px 0;color:#6b7280">Phí xử lý</td><td style="text-align:right;font-weight:600;color:#1f2937">+ 5,000 VND</td></tr>
+                <tr style="border-bottom:2px solid #714B67"><td style="padding:6px 0;color:#1f2937;font-weight:600">Tổng chi phí giao hàng</td><td style="text-align:right;font-weight:700;color:#714B67;font-size:15px">160,000 VND</td></tr>
+              </tbody>
+            </table>
+            <div style="padding:8px 10px;background:#f9fafb;border-radius:4px;font-size:12px;color:#4b5563">
+              Khách hàng sẽ thanh toán trên Etsy: <b style="color:#1f2937">125.50 USD</b> (giá sản phẩm) · Gearment cost: <b style="color:#1f2937">160,000 VND ≈ 6.40 USD</b> · Lợi nhuận: <b style="color:#15803d">+119.10 USD</b>
+            </div>
+          </div>
+          <div class="mu-modal-foot">
+            <button class="mu-btn">Cancel</button>
+            <button class="mu-btn mu-btn-primary">Confirm Order at Gearment</button>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Wizard hiển thị giá Gearment sau khi gọi /draft + /price API. BA xem lại địa chỉ (có thể sửa nếu cần), kiểm tra giá, rồi bấm <b>Confirm Order at Gearment</b> để gọi endpoint /draft/labeled.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: TransientModel + view tuỳ biến cho wizard báo giá Gearment trong <code>multichannel_hub_fulfillment</code> (cộng đồng "Gearment adapter" trong graphify); không có view chuẩn Odoo cho wizard báo giá nhà cung cấp dropship.</i></div>
+    </div>
+
+    <!-- MOCKUP 3: gearment_api_log list -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Nhật ký API Gearment — gearment_api_log list với filter</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Gearment › API Logs</span>
+        <span class="mu-spacer"></span><span class="mu-user">tech.support@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Gearment<span class="mu-sep">›</span><strong>API Logs</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Lỗi (http_status ≠ 200)</button>
+        <button class="mu-btn">Sắp xếp: Mới nhất</button>
+        <button class="mu-btn">Order #2854</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280"><b style="color:#15803d">8 log hôm nay</b> · 6 OK · 2 lỗi</span>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Thời gian</th><th>Order</th><th>Endpoint</th><th>Source</th><th>HTTP Status</th><th>Thời gian (ms)</th><th>Lỗi</th></tr></thead>
+        <tbody>
+          <tr><td>2026-05-28 10:38</td><td>#2854</td><td>/price</td><td class="mu-mono">quote</td><td><span class="mu-pill mu-pill-success">200</span></td><td>847</td><td>—</td></tr>
+          <tr><td>2026-05-28 10:38</td><td>#2854</td><td>/draft</td><td class="mu-mono">draft</td><td><span class="mu-pill mu-pill-success">200</span></td><td>1123</td><td>—</td></tr>
+          <tr><td>2026-05-28 10:42</td><td>#2854</td><td>/draft/labeled</td><td class="mu-mono">confirm</td><td><span class="mu-pill mu-pill-success">200</span></td><td>756</td><td>—</td></tr>
+          <tr><td>2026-05-28 14:15</td><td>#2851</td><td>/draft</td><td class="mu-mono">draft</td><td><span class="mu-pill mu-pill-danger">500</span></td><td>5042</td><td>Server error · retry queued</td></tr>
+          <tr><td>2026-05-28 14:20</td><td>#2851</td><td>/draft</td><td class="mu-mono">draft_retry_1</td><td><span class="mu-pill mu-pill-success">200</span></td><td>892</td><td>—</td></tr>
+          <tr><td>2026-05-28 15:01</td><td>#2852</td><td>/price</td><td class="mu-mono">quote</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>234</td><td>Invalid address · BA to verify</td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Nhật ký API Gearment ghi tất cả lời gọi: draft, quote, confirm, cron sync, webhook. Tech support dùng để debug. Cột <b>Source</b> = draft/quote/confirm/callback/health_check/inbound_webhook. <b>Direction</b> = outbound (Odoo→Gearment) hoặc inbound (webhook incoming). Phía sau: request_body/response_summary truncate ≤4KB, PII scrubbed (first_name, address, email, phone).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list + form tuỳ biến cho mô hình <code>gearment.api.log</code> trong <code>multichannel_hub_fulfillment</code>; không có view chuẩn Odoo cho nhật ký API vendor.</i></div>
+    </div>
+
+    <!-- MOCKUP 4: Webhook log list -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Webhook log — gearment.webhook.log list với nonce dedup status</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Gearment › Webhook Logs</span>
+        <span class="mu-spacer"></span><span class="mu-user">tech.support@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Gearment<span class="mu-sep">›</span><strong>Webhook Logs</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Processed (topic_handled=True)</button>
+        <button class="mu-btn">Topic: order_completed</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <span style="font-size:12px;color:#6b7280"><b style="color:#15803d">124 webhook hôm nay</b></span>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Thời gian</th><th>Topic</th><th>Order Ref</th><th>Nonce</th><th>Nonce Dup?</th><th>Signature OK?</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>2026-05-28 11:15</td><td>order_completed</td><td>GEA-2854-001</td><td class="mu-mono">no-2854-…</td><td><span class="mu-pill mu-pill-success">New</span></td><td><span class="mu-pill mu-pill-success">✓ SHA256</span></td><td><span class="mu-pill mu-pill-success">Processed</span></td><td><span class="mu-pill mu-pill-neutral">tracking saved</span></td></tr>
+          <tr><td>2026-05-28 11:16</td><td>order_completed</td><td>GEA-2854-001</td><td class="mu-mono">no-2854-…</td><td><span class="mu-pill mu-pill-success">Dup (OK)</span></td><td><span class="mu-pill mu-pill-success">✓ SHA256</span></td><td><span class="mu-pill mu-pill-success">Idempotent</span></td><td><span class="mu-pill mu-pill-neutral">200 OK</span></td></tr>
+          <tr><td>2026-05-28 12:30</td><td>tracking_order_updated</td><td>GEA-2854-001</td><td class="mu-mono">tu-2854-…</td><td><span class="mu-pill mu-pill-success">New</span></td><td><span class="mu-pill mu-pill-success">✓ SHA256</span></td><td><span class="mu-pill mu-pill-success">Processed</span></td><td><span class="mu-pill mu-pill-neutral">status=in_transit</span></td></tr>
+          <tr><td>2026-05-28 13:00</td><td>batch_dispatched</td><td>GEA-2854-001</td><td class="mu-mono">bd-2854-…</td><td><span class="mu-pill mu-pill-success">New</span></td><td><span class="mu-pill mu-pill-success">✓ SHA256</span></td><td><span class="mu-pill mu-pill-neutral">Log only</span></td><td><span class="mu-pill mu-pill-neutral">archived</span></td></tr>
+          <tr><td>2026-05-28 16:45</td><td>tracking_order_updated</td><td>GEA-2854-001</td><td class="mu-mono">tu-2854-b</td><td><span class="mu-pill mu-pill-success">New</span></td><td><span class="mu-pill mu-pill-success">✓ SHA256</span></td><td><span class="mu-pill mu-pill-success">Processed</span></td><td><span class="mu-pill mu-pill-neutral">status=delivered</span></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Webhook log ghi nhận mỗi webhook từ Gearment. <b>Nonce Dup?</b> = "New" hoặc "Dup (OK)" (tìm thấy trong UNIQUE partial index). <b>Signature OK?</b> = verify HMAC-SHA256 header. <b>Status</b> = "Processed" (4 topic active) hoặc "Log only" (5 topic tracked nhưng không hành động). <b>Action</b> = ghi result (tracking saved, status=in_transit, …). Nếu topic='order_completed' thì auto-push tracking sang Etsy qua P1-TRK-PUSH-ETSY cron.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến cho mô hình <code>gearment.webhook.log</code> trong <code>multichannel_hub_fulfillment</code> (cộng đồng "Gearment adapter" + dispatcher trong graphify); không có view chuẩn Odoo cho nhật ký webhook.</i></div>
+    </div>
+
+    <!-- MOCKUP 5: Fulfillment tracking form -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 5 · <strong>Sale Order Fulfillment detail — tab Tracking with Gearment status</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Đơn hàng › Fulfillment › #2854</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Fulfillment<span class="mu-sep">›</span><strong>#2854 · Gearment Tracking</strong></div>
+      <div class="mu-statusbar">
+        <span style="font-size:12px;color:#6b7280">Status: <b style="color:#15803d">Delivered at Gearment</b></span>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn">Edit Address</button>
+        <button class="mu-btn">Resync from Gearment</button>
+      </div>
+      <div class="mu-form">
+        <div style="margin-bottom:16px;padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">
+          <b style="color:#15803d;display:block;margin-bottom:4px">✓ Giarment đã hoàn thành</b>
+          <div style="font-size:12px;color:#4b5563">Đơn hàng được xác nhận, in xong, đang giao hoặc đã giao.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px 32px;margin-bottom:14px">
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Gearment Order Ref</div><div class="mu-field-value mu-mono">GEA-2854-20260528-001</div></div>
+            <div class="mu-field"><div class="mu-field-label">Gearment Status</div><div class="mu-field-value"><span class="mu-pill mu-pill-success">Delivered</span></div></div>
+            <div class="mu-field"><div class="mu-field-label">Tracking Number</div><div class="mu-field-value mu-link">1Z999AA10123456784 (USPS)</div></div>
+            <div class="mu-field"><div class="mu-field-label">Carrier</div><div class="mu-field-value">United States Postal Service (USPS)</div></div>
+          </div>
+          <div>
+            <div class="mu-field"><div class="mu-field-label">Date Confirmed at Gearment</div><div class="mu-field-value">2026-05-28 10:45</div></div>
+            <div class="mu-field"><div class="mu-field-label">Date Printing Completed</div><div class="mu-field-value">2026-05-28 12:30 (webhook)</div></div>
+            <div class="mu-field"><div class="mu-field-label">Date In Transit</div><div class="mu-field-value">2026-05-28 12:45 (webhook)</div></div>
+            <div class="mu-field"><div class="mu-field-label">Date Delivered</div><div class="mu-field-value">2026-05-28 16:45 (webhook)</div></div>
+          </div>
+        </div>
+        <div style="margin-top:18px;font-weight:600;color:#1f2937;font-size:14px;margin-bottom:10px">Trạng thái Etsy:</div>
+        <div class="mu-field"><div class="mu-field-label">Etsy Tracking Pushed?</div><div class="mu-field-value"><span class="mu-pill mu-pill-success">Yes · 2026-05-28 16:50</span></div></div>
+        <div class="mu-field"><div class="mu-field-label">Etsy Shipment ID</div><div class="mu-field-value mu-mono">etsy-ship-54321</div></div>
+        <div class="mu-field"><div class="mu-field-label">Customer Can Track?</div><div class="mu-field-value"><span class="mu-pill mu-pill-success">Yes (public carrier link)</span></div></div>
+      </div>
+      <div class="mu-caption">Fulfillment detail hiển thị toàn bộ quá trình Gearment: reference_id, tracking_number, carrier, 4 mốc thời gian (confirm/print done/in transit/delivered từ webhook). <b>Etsy Tracking Pushed</b> = Yes nghĩa là khách hàng trên Etsy có thể click link tracking trực tiếp. Nó P1-TRK-PUSH-ETSY cron gọi API shipping-fulfillments, Etsy tự sync tracking từ carrier (USPS, DHL, …). Button <b>Resync from Gearment</b> dùng khi cron tắt (Story 4.7).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng (<code>sale.view_order_form</code>) + view tuỳ biến @ <code>multichannel_hub_fulfillment/views/logistics_partner_views.xml</code> và <code>tracking_import_views.xml</code> cho chi tiết Fulfillment.</i></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Tiêu chí thành công</h3>
+    <ul class="kpi-list">
+      <li><b>Tỉ lệ quote thành công</b>≥ 99% lời gọi /draft + /price không lỗi (UAT 2026-05-28: 98/98 ✓)</li>
+      <li><b>Thời gian quote-to-ship</b>≤ 3 ngày trung bình từ confirm đến webhook order_completed (UAT: 2.1 ngày)</li>
+      <li><b>Webhook signature verify</b>≥ 99.9% HMAC-SHA256 verify pass (tất cả test webhook đều pass, no forgery)</li>
+      <li><b>Tracking push success</b>≥ 95% cron P1-TRK-PUSH-ETSY push tracking lên Etsy không lỗi (10x test: 10/10 pass)</li>
+      <li><b>Nonce dedup UNIQUE index</b>Partial index on (webhook_topic, nonce) prevent duplicate processing (load test: 1K webhook replay = 1K rejected + 1 processed)</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Liên kết với các luồng khác</h3>
+    <div class="crosslink-grid">
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Trước</b>Luồng 2 — Đơn hàng Etsy về Odoo (điều kiện tiên quyết)</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Song song</b>Luồng 3A — Giao hàng MTO in nội bộ (sản phẩm không có SKU Gearment)</a>
+      <a href="flow-4-hau-mai.html"><b>Tiếp theo</b>Luồng 4 — After-sales (return, refund, dispute)</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — quản lý order và gọi wizard báo giá</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>Tech Support — monitor API logs + webhook + debug</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Lưu ý và câu hỏi mở</h3>
+    <p><b>Story 4.7 bulk-send:</b> Nếu cron P1-TRK-PUSH-ETSY tắt hoặc bị backlog, BA dùng bulk action <b>Resync Tracking from Gearment</b> trên Fulfillment list để manual resync. Mỗi resync log vào gearment_api_log (source='manual_sync'), không ghi đè nếu Etsy đã có tracking.</p>
+    <p><b>Dual-use GEARMENT_API_SECRET:</b> Cả 2 API call (/draft, /price) và webhook HMAC verify dùng chung 1 key từ environment. Thay đổi key trên Gearment dashboard cần cập nhật .env và restart container (P1-11-SHOPID-BOOTSTRAP xử lý on-the-fly reload).</p>
+    <p><b>9 webhook topic + 4 xử lý + 5 log-only:</b> Gearment hỗ trợ: order_completed, order_cancelled, order_on_hold (active); tracking_order_updated (active); tracking_exception, order_delayed, carrier_changed, batch_assigned, batch_dispatched (log-only). Cấu hình topic via webhook_topic field trên environment model. Thêm topic mới không cần code, chỉ cần cấu hình.</p>
+    <p><b>Custom shipping.carrier model:</b> Gearment trả carrier_code (USPS, DHL, VietnamPost, …). Script map sang shipping.carrier với field etsy_carrier_code pre-defined. Nếu không match → log warning, dùng mặc định 'Other'. Thêm carrier mới vào setup data (P1-SETUP-CARRIERS).</p>
+    <p><b>tracking_order_updated refresh behavior:</b> Webhook này không đẩy lại Etsy (vì Etsy tự fetch từ carrier link tracking_number). Chỉ cập nhật fulfillment_status trên Odoo. Ngoại lệ: nếu tracking_order_updated chứa tracking_status='returned' → auto-gọi API Etsy create return request (P1-TRK-AUTO-RETURN).</p>
+    <p><b>Webhook retry:</b> Nếu Odoo không 200 OK webhook, Gearment retry (exponential backoff, max 3 attempts). Nếu Odoo 500 Server Error, log vào gearment_api_log (source='webhook_failed'), tech support có thể manual replay qua button Resend trên log record.</p>
+    <p><b>GEARMENT_WEBHOOK_SECRET từ ADR-009:</b> Bây giờ không còn dùng (bị gộp vào GEARMENT_API_SECRET). Nếu có cấu hình cũ .env, hệ thống ignore + log warning.</p>
+  </div>
+
+  <footer>Luồng 3B · cập nhật 2026-06-03 · nguồn: FLOW_GIAO_HANG_VN v1.0 · HUONG_DAN_GIAO_HANG_VN v1.2 · ADR-010 · UAT 2026-05-28 · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

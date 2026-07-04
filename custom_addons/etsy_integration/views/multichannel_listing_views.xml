@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        P-LIST-PUBLISH-FROM-LISTING — header buttons on the multichannel
+        listing form so Marketing can publish without bouncing to the
+        product form. Two button variants (Publish to Etsy / Resume
+        Publish) share the same action method; the label flips by state
+        because Odoo XML buttons don't support computed `string=`.
+
+        Defense in depth:
+          - groups= mirrors the wizard's FR-017 method-top gate
+          - invisible= hides for unresolved shops + irrelevant states
+          - bridge method raises UserError on non-Etsy channels and
+            NULL etsy_shop_id, covering the RPC path
+
+        Note: the channel-Etsy check is enforced at the bridge method
+        (raises UserError "This listing is not bound to the Etsy channel.")
+        rather than via the view's invisible= predicate, because the
+        OWL form renderer does not auto-load nested Many2one fields
+        (`channel_id.code` resolves to undefined for non-system users
+        and silently hides the button). Today all listings use channel
+        = etsy per mhc seed; future Amazon/Website listings would see
+        the button briefly and get the clear UserError on click.
+        Force-load etsy_shop_id via invisible field so it's available
+        for the `not etsy_shop_id` predicate even when the Shipping &
+        Variations tab is collapsed.
+    -->
+    <record id="view_multichannel_listing_form_etsy_publish_button"
+            model="ir.ui.view">
+        <field name="name">multichannel.listing.form.etsy.publish.button</field>
+        <field name="model">multichannel.listing</field>
+        <field name="inherit_id"
+               ref="multichannel_hub_core.view_multichannel_listing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_open_in_etsy_shop_manager']"
+                   position="before">
+                <field name="etsy_shop_id" invisible="1"/>
+                <button name="action_open_etsy_publish_wizard"
+                        type="object"
+                        string="Publish to Etsy"
+                        class="oe_highlight"
+                        groups="multichannel_hub_core.group_ba_user"
+                        invisible="state in ('error', 'published') or not etsy_shop_id"/>
+                <button name="action_open_etsy_publish_wizard"
+                        type="object"
+                        string="Resume Publish"
+                        class="oe_highlight"
+                        groups="multichannel_hub_core.group_ba_user"
+                        invisible="state != 'error' or not etsy_shop_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

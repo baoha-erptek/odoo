@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- P-ENH-ESTY-195 / ADR-016 — selects the currency-rate provider
+             the daily cron drives. 'manual' is the safe default; future
+             values: 'ecb', 'openexchangerates'. -->
+        <record id="config_param_currency_rate_provider" model="ir.config_parameter">
+            <field name="key">etsy_integration.currency_rate_provider</field>
+            <field name="value">manual</field>
+        </record>
+    </data>
+</odoo>

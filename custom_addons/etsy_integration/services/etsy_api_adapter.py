@@ -47,6 +47,10 @@ class EtsyApiAdapter:
         for the shop being synced. The adapter does not own auth — that's
         the orchestrator's responsibility."""
         self._client = client
+        # P1-ORD-IMG-URL — per-pass cache of listing_id -> primary image URL.
+        # Etsy receipt transactions usually omit image fields, so we fetch the
+        # listing's image once and reuse it for every line on the same listing.
+        self._listing_image_cache = {}
 
     def fetch_new_orders(
         self, shop_id: int, since: datetime | None,
@@ -170,6 +174,16 @@ class EtsyApiAdapter:
                 self._money_amount(receipt.get('grandtotal'))
                 - self._money_amount(receipt.get('total_shipping_cost'))
             ),
+            tax_total=(
+                self._money_amount(receipt.get('total_tax_cost'))
+                + self._money_amount(receipt.get('total_vat_cost'))
+            ),
+            receipt_status=receipt.get('status') or None,
+            is_shipped=receipt.get('is_shipped'),
+            discount_amount=self._first_money_amount(
+                receipt, ('discount_amt', 'total_discount_cost', 'discount_amount')),
+            needs_gift_wrap=receipt.get('needs_gift_wrap'),
+            gift_wrap_price=self._money_amount(receipt.get('gift_wrap_price')),
         )
 
     @staticmethod
@@ -197,7 +211,69 @@ class EtsyApiAdapter:
             unit_price=self._money_amount(txn.get('price')),
             variations=self._variations_to_dict(txn.get('variations')),
             personalisation=txn.get('personalization') or None,
+            image_url=self._resolve_image_url(txn),
         )
+
+    def _resolve_image_url(self, txn: dict) -> str:
+        """Resolve a product image URL for a transaction line.
+
+        Etsy `getShopReceipt` transactions usually omit image fields, so when
+        the inline lookup misses we fetch the listing's primary image once per
+        `listing_id` (cached for this pass). Best-effort: any failure leaves the
+        URL empty and never breaks ingest.
+        """
+        url = self._transaction_image_url(txn)
+        if url:
+            return url
+        listing_id = txn.get('listing_id')
+        if not listing_id:
+            return ''
+        return self._listing_image_url(str(listing_id))
+
+    def _listing_image_url(self, listing_id: str) -> str:
+        if listing_id in self._listing_image_cache:
+            return self._listing_image_cache[listing_id]
+        url = ''
+        try:
+            resp = self._client.get(f'listings/{listing_id}/images')
+            results = (resp or {}).get('results') or []
+            if results:
+                first = results[0] or {}
+                url = (first.get('url_570xN') or first.get('url_fullxfull')
+                       or first.get('url_170x135') or first.get('url_75x75')
+                       or '')
+        # Best-effort enrichment — a missing/blocked image must never wedge the
+        # sync, so we catch broadly, warn, and fall through to an empty URL.
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning(
+                'Etsy: could not fetch images for listing %s: %s',
+                listing_id, exc)
+        self._listing_image_cache[listing_id] = url
+        return url
+
+    def _first_money_amount(self, data: dict, keys: tuple[str, ...]) -> float:
+        for key in keys:
+            if key in data:
+                return self._money_amount(data.get(key))
+        return 0.0
+
+    @staticmethod
+    def _transaction_image_url(txn: dict) -> str:
+        for key in (
+            'image_url',
+            'listing_image_url',
+            'image_url_75x75',
+            'image_url_170x135',
+            'image_url_570xN',
+        ):
+            if txn.get(key):
+                return txn[key]
+        for nested_key in ('image', 'listing_image'):
+            image = txn.get(nested_key) or {}
+            for key in ('url_fullxfull', 'url_570xN', 'url_170x135', 'url_75x75'):
+                if image.get(key):
+                    return image[key]
+        return ''
 
     @staticmethod
     def _money_amount(money: dict | None) -> float:

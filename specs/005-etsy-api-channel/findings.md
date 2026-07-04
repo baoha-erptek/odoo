@@ -2,6 +2,130 @@
 
 Per `.claude/plans/006-implementation-playbook.md` Phase 7. Surprises, blockers, and deferred decisions discovered during implementation. Each entry stands on its own; do not delete entries — supersede them with new ones.
 
+## 2026-06-23 — ESTY-207 button-placement RESOLVED (OWL control-panel patch)
+
+Owner chose the OWL control-panel patch (always-visible button next to "New").
+Implemented as a minimal list-view extension (commit fbd89832464):
+- `static/src/views/etsy_pull_list/`: js_class `etsy_pull_list` spreading
+  `sale_onboarding_list` (preserves onboarding + file-upload), controller method
+  `onPullEtsyOrders` (orm.call → doAction notification), buttons template
+  inheriting `account.FileuploadListView.Buttons` to append into
+  `web.ListView.Buttons` (the always-visible CP slot).
+- `sale_order_views.xml`: inheriting view swaps `js_class` instead of injecting
+  a `<header>` button. Manifest registers the 3 files in `web.assets_backend`.
+- `test_manual_pull_button` Phase 1 now asserts the js_class swap.
+
+Verified on staging after redeploy (`-u etsy_integration` clean + restart):
+- /browse as admin, Sales → Quotations list: control panel shows
+  `New | Pull Etsy Orders` with NO row selected (was previously only in the
+  selection action bar). Screenshot `pull_btn_always_visible.png`.
+- Real click → `POST .../sale.order/action_pull_etsy_orders → 200` → success
+  toast "Pulled Etsy orders: 1 ingested, 0 audited, 0 errors."
+- Local targeted tests (manual-pull + scoping, both phases): 0 failed of 9.
+
+GATE STATUS: all four staging-E2E items now PASS for ESTY-205/206/207. Remaining
+before close: run the full etsy_integration regression once more, then JIRA
+transitions (ESTY-205/206/207 → In Review, transition 31, ADF evidence) and
+tracker rows → done with commit shas.
+
+## 2026-06-23 — Staging deploy + E2E (3 of 4 gate items PASS; 1 HIGH UX gap blocks sign-off)
+
+Deployed the 4 feature commits to staging (`esty_odoo19`, container `esty19_odoo`):
+rsync etsy_integration → `-u etsy_integration --stop-after-init` (clean) → restart.
+Branch pushed to `namco/feature/006-master-plan-coding` (HEAD 161302044bf).
+
+Ran the review-plan staging E2E in an odoo shell (sections rolled back unless noted):
+
+- **[A1 reconcile-after-fix] PASS** — dry-create from the REAL receipt 3818231452
+  through the live `order_creator` path: `amount_total = 411708.00` exactly
+  (= grandtotal 494050 − tax 82342), `etsy_total_mismatch = False`, lines =
+  product 538677 + shipping 196237 − discount 323206; tax stays informational.
+  Rolled back.
+- **[Per-user scoping] PASS** — mirrored the unit-test setup live (scoped =
+  base.group_user + sales_team.group_sale_salesman): scoped salesperson sees
+  own-shop etsy + non-etsy, NOT other-shop etsy; sale-manager sees all;
+  non-manager base.group_system admin (id≠1) sees all. Rolled back.
+  - NOTE: a plain `base.group_user` with NO sales group cannot read sale.order
+    at all (standard Odoo ACL) — the rule layers on top of a sales group. The
+    review-plan's "plain base.group_user" wording means "a salesperson", as the
+    unit test encodes.
+- **[Pull button — function] PASS** — scoped user with no shops → clean warning
+  "No Etsy shops assigned to you." (no traceback); admin path → 1 api shop →
+  success "Pulled Etsy orders: 1 ingested, 0 audited, 0 errors." (this DID
+  ingest 1 real receipt on staging via the new hybrid path — expected).
+- **[Pull button — render] HIGH / FAIL-FOR-INTENT** — live browser check (gstack
+  /browse, logged in as admin, Sales → Quotations list). The `Pull Etsy Orders`
+  button renders ONLY in the list **selection action bar** (visible after
+  selecting ≥1 row), next to `Create Invoices | Pull Etsy Orders | Print |
+  Actions`. With zero rows selected it is absent from the control panel.
+  Root cause: the button was added via `<xpath expr="//header" position="inside">`
+  on `sale.view_quotation_tree_with_onboarding`; Odoo renders list-view
+  `<header>` buttons in the multi-select bar, NOT as always-visible CP buttons.
+  Why this is a problem for THIS action: "pull new orders from Etsy" is a global
+  operation that ignores selection, yet it (a) sits among record-scoped actions
+  implying it acts on the selected rows, and (b) is unreachable on an empty
+  quotation list — exactly when you'd pull. Resolved arch test passed (button
+  node present), so XML/arch checks alone miss this — the live render check is
+  what caught it, as the review-plan anticipated.
+  Evidence screenshot: `pull_btn_selection_bar.png` (session scratchpad).
+
+Decision needed (escalated; NOT signing off ESTY-207 until resolved). Candidate
+standard-Odoo fixes for an always-available global pull entry point:
+  1. Dedicated menu item under Sales → Orders bound to an `ir.actions.server`
+     (always visible, selection-independent) — cleanest standard pattern.
+  2. `ir.actions.server` with `binding_model_id` on sale.order surfaced in the
+     cog "Actions" menu (still tends to be selection-scoped in list view).
+  3. OWL control-panel patch to inject an always-visible CP button (heaviest).
+  4. Accept current selection-bar placement (weak — fails the empty-list case).
+
+GATE STATUS: ESTY-205 (scoping) and ESTY-206 (coverage + reconciliation) pass
+their staging E2E. ESTY-207 (manual pull) is functionally correct but BLOCKED on
+the button-placement UX decision above. No JIRA transition / tracker `done` until
+resolved.
+
+---
+
+## 2026-05-30 — P1-11-SHOPID-BOOTSTRAP landed (`f6b96fe2eb6`)
+
+**Slice scope (final)**:
+- `controllers/etsy_oauth.py` — new block at end of `callback()`: after token persist + before final redirect, call `EtsyApiClient(shop).fetch_users_me_shop_id()` → `shop.sudo().write({'etsy_api_shop_id': api_shop_id})`. `BLE001` swallow (with noqa explanation) so `/users/me` failures never break OAuth — tokens are valid; operator can re-Authorize or set field manually; **C-ESY-003 is the safety net** that blocks the eventual `active_source='api'` flip until shop_id lands.
+- `services/etsy_api_client.py` — new `fetch_users_me_shop_id() → str | None`. Wraps the existing `_request('GET', 'users/me')` (gets the 401-refresh + 429-retry + 4xx-body-capture behavior for free). `str(shop_id)` cast at the boundary per gotcha #144.
+- `models/etsy_shop.py` — new `_check_api_source_has_shop_id` `@api.constrains` (C-ESY-003).
+- `migrations/19.0.2.31.0/post-migrate.py` — raw-SQL `SELECT id, name FROM etsy_shop WHERE active_source='api' AND (etsy_api_shop_id IS NULL OR etsy_api_shop_id='')` → if any rows, raise `Exception` listing them (operator must fix and re-run `-u`).
+- Two new test files: `test_p1_11_shopid_bootstrap_phase1_db.py` (DB schema) + `test_p1_11_shopid_bootstrap_phase2_orm.py` (constraint + helper + live `_probe_api` canary + service guards + migration). 20 tests, all GREEN.
+- Manifest 19.0.2.30.0 → **19.0.2.31.0**.
+
+**Surprises (resolved before commit)**:
+
+1. **C-ESY-003 must be gated on tokens-present.** First implementation made it unconditional (`if active_source=='api' and not etsy_api_shop_id: raise`). Result: 7 pre-existing C-ESY-001 / SourceChangeLog tests in `test_p1_11a_phase2_orm.py` + `test_etsy_order_syncer.py` started failing because their fixtures created `active_source='api'` shops without shop_id — and Odoo's constraint dispatch order is not deterministic. C-ESY-003 raced ahead and raised about etsy_api_shop_id, masking the C-ESY-001 "tokens required" message the tests asserted on. Fix: gate C-ESY-003 on `etsy_oauth_access_token AND etsy_oauth_refresh_token` so C-ESY-001 owns the "totally unconfigured" path and C-ESY-003 owns only the "post-authorization gap". This is also semantically cleaner — the two constraints cover disjoint failure modes. Companion fixture parity: 7 pre-existing test writes now also set `'etsy_api_shop_id': '60752333'` so they survive C-ESY-003 (no semantic change to those tests; they target other concerns).
+
+2. **OAuth callback `sudo()` write is unavoidable for an `auth='public'` route.** The callback runs with no logged-in user; writing `etsy_api_shop_id` (which has `groups='base.group_system'`) requires `sudo()`. State-param validation upstream pins `shop.id`, so there's no shop-hijack surface. The shop_id content is fully owner-controlled (Etsy returns the OAuth user's shop_id). Inline rationale comment added per project rule. security-reviewer confirmed PASS.
+
+3. **`EtsyApiClient.__init__` reads credentials from disk via `_read_credentials()`.** New tests must `patch.object(eac_module, '_read_credentials', return_value=_FAKE_CREDS)` in setUpClass — same pattern as existing `test_phase2_pub_client_orm.py`. Without the patch, the constructor raises before the test method body runs and the test ERRORs on setup rather than running the assertion. Caught by orchestrator's own test-run (per memory `feedback_tdd_guide_init_py_imports.md`: orchestrator MUST run the suite itself, not trust tdd-guide's "RED confirmed" claim).
+
+4. **Raw-SQL fixture bypass needed to exercise the constraint guards.** The 3 caller-site service guards (`etsy_order_syncer`, `etsy_tracking_pusher`, `etsy_listing_publisher`) all check `if not shop.sudo().etsy_api_shop_id: refuse`. To unit-test those guards we need a shop in the very state C-ESY-003 refuses. Raw SQL inside the test savepoint (no `cr.commit()` — per gotcha #33 forbidden in TransactionCase) is the only valid path. Helper function `_bypass_c_esy_003_create_api_shop(env, name, with_tokens, with_shop_id)` encapsulates this and is reusable.
+
+5. **Migration test cannot call `cr.commit()`** (gotcha #33). First version of `test_migration_refuses_email_to_api_flip_without_shop_id` tried it and ERRORed with `Cannot commit or rollback a cursor from inside a test`. Fix: raw SQL within the savepoint (visible to the same cursor), then `importlib.util.spec_from_file_location` to load the migration module and call its `migrate(cr, version)` function directly. Clean RED → GREEN.
+
+6. **Vacuous-pass test trap from tdd-guide.** The first iteration of the OAuth callback tests was `try: shop.sudo().write({'etsy_api_shop_id': '...'}); assert ...; except ValueError: pass` — the test manually wrote the field it was asserting about, with a broad except swallowing the contract failure. Caught by orchestrator review. Rewrote as a service-helper unit test (test the helper that the controller calls), which is cheaper than spinning up `HttpCase` and exercises the actual contract.
+
+**Verification**:
+- 20/20 P1-11-SHOPID tests GREEN (Phase 1 DB schema + Phase 2 constraint/helper/probe/guards/migration).
+- Full `etsy_integration` suite: 18 failed + 5 errored of 664 tests; **zero NEW regressions** vs baseline (post-slice failures all pre-existing — `test_p1_12_orm`, `test_p_list_pull_phase2_orm`, `test_phase2_*` work outside this scope).
+- Module installs cleanly (`-u etsy_integration --stop-after-init` exit 0).
+- code-reviewer: 0 CRITICAL / 0 HIGH / 3 MEDIUM applied (dead `isinstance(dict)` guard removed; `sudo()` inline comment at callback write site; migration raw-SQL rationale comment) / 1 LOW deferred.
+- security-reviewer: 0 CRITICAL / 0 HIGH / APPROVED.
+
+**Branch + commit**: `feature/006-master-plan-coding` `f6b96fe2eb6`. 10 files (+831/-1).
+
+**Deferred (not scope creep)**:
+- Deprecated `check_access_rights()` / `check_access_rule()` at `controllers/etsy_oauth.py:176-177` (planner OQ3 default: defer; still works in Odoo 19; cosmetic DeprecationWarning surfaced during P1-11-WIRE-LIVE).
+- Multi-shop owners (Etsy supports it; we don't have any today; `/users/me` returns one `shop_id`, multi-shop case would need `/users/{user_id}/shops`).
+
+**Unblocks**: Future Etsy shop OAuth flips never need manual `UPDATE etsy_shop SET etsy_api_shop_id=...` SQL backfill again. Next-shop cutover runbook can drop that step.
+
+---
+
 ---
 
 ## 2026-04-28 — P0-17 etsy.api.log model + audit retrofit + retention cron landed
@@ -948,3 +1072,243 @@ the slice but useful to capture):
   Pairs nicely with the SHOPID-BOOTSTRAP slice if the same author
   touches the file.
 
+
+---
+
+## 2026-06-23 — Review of Codex ESTY-205/206/207 (working tree, NOT yet committed) — BLOCKED
+
+Reviewed Codex's implementation of the three stories per `codex/review-plan.md`.
+Tests GREEN (`0 failed, 0 error(s) of 856`), module upgrades clean, parallel
+`code-reviewer` + `security-reviewer` run. Two blockers prevent sign-off.
+
+### CRITICAL — `_check_etsy_total_reconciles` is self-contradictory; blocks real-order ingest
+`services/order_creator.py:701,713-722`. The gate raises `UserError` when Odoo
+`order.amount_total` != Etsy `grandtotal` (>0.01). Adapter sets
+`payload.amount_total = grandtotal` (`etsy_api_adapter.py:132`). But Odoo
+`amount_total` = product lines (`total_price`) + shipping line ONLY — the new
+tax/discount/gift-wrap fields are written informational-only (brief A2 says "do
+NOT overwrite computed pricing").
+
+Etsy schema (authoritative, `getShopReceipt`):
+`grandtotal = total_price − coupon discount + tax + shipping`.
+So for ANY receipt with sales tax, a coupon, or gift wrap,
+`grandtotal != total_price + shipping` → gate raises → ingest aborts. In the
+cron path the syncer catches the exception and `break`s WITHOUT advancing the
+cursor (`etsy_order_syncer.py:95-103`) → the shop's sync wedges permanently on
+its first taxed order. US shops collect sales tax on most orders ⇒ near-total
+production breakage.
+
+The synthetic fixture `tests/fixtures/receipt_3818231452.json` hides this: its
+`grandtotal`=110.00 = subtotal(100)+shipping(10), which CONTRADICTS Etsy's own
+definition (should be 100 − 2.5 + 5 + 3 + 10 = 115.5). The test passes only
+because the fixture is constructed wrong.
+
+Fix options: (a) reconcile against `subtotal + total_shipping_cost` (= what Odoo
+actually builds), or (b) make the check a non-fatal `_logger.warning` + set an
+`etsy_needs_review`-style flag, or (c) model tax/discount/gift-wrap as real Odoo
+lines so amount_total genuinely equals grandtotal. (a)+(b) recommended; the brief's
+"amount_total must equal grandtotal" requirement is itself wrong vs the schema.
+
+### HIGH — A1 live diff never run against real staging data (process gap)
+Brief §A1 made the staging diff on real receipt 3818231452 the FIRST step ("the
+diff output drives which candidate fields are real; prune the rest"). The script
+`scripts/etsy_receipt_diff.py` exists but the saved fixture is synthetic ("Alice
+Buyer", round numbers, schema-violating grandtotal) — A1 was clearly not executed.
+Consequence: the field set in A2 and the reconciliation target are unvalidated
+guesses. Pull the real receipt before sign-off.
+
+### Confirmed GOOD (no action)
+- Per-user shop scoping record rules: restrictive(base.group_user) +
+  permissive(group_sale_manager+group_system) OR-combine correctly. Proven by
+  `test_shop_user_scoping.py` with_user tests (scoped sees own+non-Etsy only;
+  manager & non-manager system admin see all). `user_id` ondelete='set null'.
+- Manual pull button FR-017 write-defense: allowed-shop set computed from
+  env.user BEFORE sudo(); sudo never applied to a user-supplied shop id; inline
+  justification present.
+- `_resolve_line_product` tiers 1-2 never auto-create; duplicate-SKU first-by-id
+  determinism; create+flag sets `etsy_needs_product_review`. All tier tests pass.
+- `_variation_line_vals` maps known axes + text fallback into etsy_option; writes
+  the mhc `*_manual` override fields (multichannel_hub_core is a manifest dep).
+- No new model ⇒ no missing ACL. No raw SQL. No print()/_logger.info-as-debug.
+
+### MEDIUM (non-blocking, fix if cheap)
+- `action_pull_etsy_orders` bare `except Exception` masks programming errors;
+  notification gives only an error count (no "check logs" hint).
+- `_variation_line_vals` unmapped-axis concat into etsy_option has no length cap.
+
+---
+
+## 2026-06-23 — Hybrid reconciliation fix applied (resolves the CRITICAL above)
+
+Owner chose the hybrid (Standard-Odoo-First). Grounded in Odoo 19 source:
+everything the buyer pays is an order LINE except tax, which is an engine-computed
+attribute of lines (`sale/models/sale_order_line.py:_compute_tax_ids`). Etsy is a
+marketplace facilitator that remits tax (`fiscal_pos_etsy_marketplace` note), so
+tax stays informational; booking it as `account.tax` would create a liability the
+seller does not owe.
+
+Changes (working tree, on top of Codex's):
+- `data/etsy_marketplace_adjustment_products.xml` (new) — `product_etsy_gift_wrap`
+  (ETSY-GIFTWRAP) + `product_etsy_discount` (ETSY-DISCOUNT) service products,
+  mirroring the existing shipping product. Added to manifest before fiscal data.
+- `order_creator._append_adjustment_lines` — shipping (+), gift-wrap (+) and
+  discount (−) each become an order line, so `amount_total` reflects the buyer-paid
+  figure minus the marketplace-remitted tax.
+- `order_creator._check_etsy_total_reconciles(order, payload)` — now reconciles
+  `amount_total` against `grandtotal − tax_total` and, on mismatch, sets
+  `sale.order.etsy_total_mismatch = True` + `_logger.warning` instead of raising
+  `UserError`. This removes the production blocker (a raise wedged the sync cursor
+  on the first taxed order — syncer breaks without advancing). Removed the unused
+  `UserError` import.
+- `sale_order.etsy_total_mismatch` Boolean (indexed, readonly) + surfaced in the
+  Receipt Status group of the Etsy tab.
+- Fixture `receipt_3818231452.json` corrected to satisfy Etsy's schema formula
+  (grandtotal 115.50 = total_price 100 − discount 2.50 + tax 5 + shipping 10 +
+  giftwrap 3). NOTE: still SYNTHETIC — the real-receipt A1 staging diff + staging
+  E2E remain a prerequisite before JIRA transition / `done`.
+- Tests: `test_receipt_fixture_maps_full_order_coverage` asserts amount_total=110.5,
+  `amount_total + etsy_tax_total == grandtotal`, gift/discount lines present, no
+  mismatch. New `test_total_mismatch_flags_order_without_raising` proves an
+  unreconcilable grandtotal flags (not raises).
+
+Verify: `-u etsy_integration --test-enable` → **0 failed, 0 error(s) of 857 tests**;
+module upgrades clean. ruff not installed on host (skipped per review-plan "if
+available"); `py_compile` clean.
+
+STILL OPEN before sign-off: real-receipt A1 diff on staging (esty_odoo19) + the
+review-plan staging E2E (scoped-user visibility, admin-sees-all, Pull button counts).
+
+## 2026-06-23 — Real-receipt A1 diff on staging (validates the hybrid fix)
+
+Ran a read-only probe against staging `esty_odoo19` (`esty19_odoo` container) via
+the existing deployed `EtsyApiClient` — live GET of receipt 3818231452, no deploy,
+no writes. Figures (shop-currency, divisor applied; values only, buyer PII omitted):
+
+| Etsy field                      | value      |
+|---------------------------------|------------|
+| grandtotal                      | 494050.00  |
+| subtotal                        | 215471.00  |
+| total_price                     | 538677.00  |
+| total_shipping_cost             | 196237.00  |
+| total_tax_cost + total_vat_cost | 82342.00   |
+| discount_amt                    | 323206.00  |
+| gift_wrap_price                 | 0.00       |
+| status                          | Completed  |
+
+Formula confirmed exactly: `subtotal + shipping + tax + giftwrap = grandtotal`
+(494050.00 = 494050.00, diff 0.00), and `subtotal = total_price − discount_amt`
+(215471 = 538677 − 323206). Real data exercises a LARGE discount and material tax;
+no gift wrap. Matches the Etsy `ShopReceipt` schema we coded to.
+
+Fix validation (arithmetic on real figures):
+- Expected `amount_total` = grandtotal − tax = 494050 − 82342 = **411708.00**.
+- New code: product line(s) = total_price 538677 (txn price is pre-discount) +
+  shipping 196237 + giftwrap 0 − discount 323206 = **411708.00** → matches;
+  `etsy_total_mismatch` would be **False**. Adapter picks `discount_amt` first, so
+  the negative discount line is created correctly.
+- CURRENT deployed order S00007 (old code) `amount_total = 734914.00`, off by
+  **+323206.00 = exactly the discount** (product line booked at pre-discount
+  total_price 538677 + shipping, with NO discount line). The old code mis-states
+  this real order by the full discount; the hybrid fix corrects it.
+
+Conclusion: the hybrid reconciliation is correct on real production data. The
+committed test fixture stays SYNTHETIC (no buyer PII in repo); these real figures
+are the validation evidence.
+
+STILL OPEN before sign-off: this was a read-only A1 (arithmetic proof). Proving the
+ingested order equals 411708.00 end-to-end requires deploying the 4 commits to
+staging + re-ingesting S00007 (mutates staging data) — not done without explicit
+go-ahead. Plus the review-plan staging E2E (scoped-user visibility, admin-sees-all,
+Pull button counts).
+
+---
+
+## 2026-06-24 — Owner-requested order-pull fixes (image / discount / currency)
+
+Owner reviewed pulled orders on staging (S03337 VND vs S03332 USD) and asked for
+three changes. Two REVERSE earlier decisions — recorded here as the decision log.
+Slices: `P1-ORD-IMG-URL`, `P1-ORD-DISCOUNT-PCT`, `P1-ORD-CURRENCY-NORMALIZE`.
+All on `feature/006-master-plan-coding`. Verify: `-u etsy_integration,multichannel_hub_core`
+clean; **0 failed, 0 error(s) of 1554 tests**.
+
+### P1-ORD-IMG-URL — images were blank because the URL was never populated
+Root cause was twofold: (1) the line list rendered `product_image_thumb` (a Binary
+computed from `product_id…image_128`) that only fills after the 30-min download
+cron; (2) more fundamentally, Etsy `getShopReceipt` transactions do NOT carry image
+URLs, so `image_url`/`etsy_image_url` were empty — nothing to download or render.
+Fix: `etsy_api_adapter._resolve_image_url` now falls back to
+`client.get('listings/{listing_id}/images')` (primary image, `url_570xN`/`url_fullxfull`),
+cached per sync pass; views render the channel `image_url` Char with
+`widget="image_url"` (verified to exist in CE core at
+`addons/web/static/src/views/fields/image_url/image_url_field.js:68` — renders a
+remote URL as `<img>`, no async download needed). `product_image_thumb` kept as an
+optional fallback column for manual orders. NOTE: a security-reviewer pass claimed
+the widget doesn't exist — FALSE POSITIVE (it searched only custom_addons/); the
+core registration was confirmed before keeping the change.
+
+### P1-ORD-DISCOUNT-PCT — coupon now a per-line discount % (SUPERSEDES 2026-06-23)
+**Reverses** the 2026-06-23 hybrid negative-`ETSY-DISCOUNT`-line decision. Etsy
+sends an order-level coupon AMOUNT, not a per-line %. Allocated proportionally to
+line value it collapses to ONE uniform percentage
+`pct = discount_amount / pre_discount_product_total * 100` (rounded to 4 dp for
+reconciliation precision), booked on `sale.order.line.discount`. `_append_adjustment_lines`
+no longer adds a discount line (shipping/gift-wrap stay as lines); the orphaned
+`_get_discount_product` + `_XMLID_DISCOUNT_PRODUCT` were removed (the
+`product_etsy_discount` data record is LEFT for back-compat with already-ingested
+orders). Reconciliation math is unchanged: `amount_total = subtotal + shipping +
+gift_wrap = grandtotal − tax`; `etsy_total_mismatch` flag retained as the non-fatal
+safety net. Owner-approved 2026-06-24.
+
+### P1-ORD-CURRENCY-NORMALIZE — book in company currency (AMENDS Spec 005)
+**Amends** Spec 005 "respect the receipt's currency" (spec.md:184). `res.company.currency_id`
+is the consolidation currency; previously each pulled order kept its receipt currency
+(VND), so VND and USD orders coexisted and the resolver even assigned a VND order the
+EUR pricelist (only EUR/USD/GBP pricelists exist). Now every money field is converted
+to the company currency at ingest via new `order_creator._company_converter` (delegates
+to `res.currency._convert`, which RAISES on a missing rate — deliberate, a silent 1.0
+would mis-state the order). Order `currency_id` + pricelist are the company's; raw Etsy
+figures stay on `etsy_*` fields in original currency for audit. Discount % is computed
+on raw receipt amounts (currency-invariant ratio) before conversion. **Load-bearing
+precondition:** an active exchange rate must exist for every shop currency (VND etc.)
+or ingest raises — verify rates on staging/prod before relying on this.
+
+### Migration / open items
+- Already-ingested orders (S00007, S03337) were created under the old rules and do
+  NOT retro-convert — left as historical. Re-ingest requires a controlled delete.
+- Tests: existing `test_receipt_fixture_maps_full_order_coverage` updated (no discount
+  line; product-line `discount==2.5`; currency=company); new
+  `test_foreign_currency_normalized_to_company` (VND→company with seeded rate) +
+  3 adapter listing-image fallback tests. etsy_v3 syncer fixtures gained inline
+  `image_url` so the real-adapter pagination tests don't consume mocked pages on
+  image fetches.
+- Follow-up (MEDIUM, deferred): add an explicit missing-rate test asserting the
+  fail-loud path; consider a domain allowlist on the rendered image URL if stricter
+  hardening is wanted (internal back-office view, low risk today).
+
+### 2026-06-24 — Staging deploy + re-ingest evidence (esty_odoo19)
+Deployed commit 8adaea956da to staging (rsync etsy_integration + multichannel_hub_core,
+`-u` clean, container restart). Pre-deploy DB backup at
+`/odoo/esty19/backup_pre_reingest_20260624_074323.sql.gz` (verified gzip, 3.8M).
+
+Staging state before: ONE api order S03337 (receipt 3818231452), currency **EUR**
+(inactive!) holding VND-magnitude amounts (amount_total 411708.00), with a negative
+`ETSY-DISCOUNT` line and no image — the exact misalignment the owner reported.
+Company currency = USD; VND active, single rate 25400 dated 2026-06-06.
+
+Gotcha hit: the order date is 2024-04-28 but the only VND rate was 2026-06-06, so
+`_convert` would `COALESCE(...,1.0)` → silently no-op. Backfilled a VND rate dated
+2020-01-01 = 25400 (matches the owner's configured rate) so the historical order
+converts. Both rates now present.
+
+Targeted re-ingest (live GET of receipt 3818231452, delete old, recreate; fetch done
+BEFORE delete so a failure can't orphan the order). Result **S03338**:
+- currency **USD**, amount_total **16.21** (= 411708 VND / 25400 = grandtotal − tax),
+  `etsy_total_mismatch = False`.
+- product line: price_unit 21.21 (538677/25400), **discount 60.00 %**, image_url
+  populated from the live `listings/{id}/images` fetch
+  (`i.etsystatic.com/60752333/.../il_570xN...jpg`) — proves the listing-image
+  fallback works against real Etsy data.
+- shipping line 7.73, discount 0; **no ETSY-DISCOUNT line**.
+- old S03337 deleted (count 0).
+
+All three fixes validated end-to-end on real production data.

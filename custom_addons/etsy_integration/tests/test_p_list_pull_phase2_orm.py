@@ -42,6 +42,9 @@ class _FakeAdapter:
 
     def __init__(self, pages):
         self._pages = pages  # list of lists of raw dicts
+        # Provide a mock _client with last_http_status for audit logging
+        self._client = mock.MagicMock()
+        self._client.last_http_status = 200
 
     def fetch_listings(self, shop_id, since=None):
         for page in self._pages:
@@ -61,6 +64,7 @@ class TestPListPullIngest(TransactionCase):
             'active_source': 'api',
             'etsy_oauth_access_token': 'tok-access',
             'etsy_oauth_refresh_token': 'tok-refresh',
+            'etsy_api_shop_id': '60752333',
         })
         cls.Listing = cls.env['etsy.listing']
 

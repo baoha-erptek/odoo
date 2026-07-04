@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# post-commit — auto-push docs/owner/*.md changes to Confluence space HEP.
+#
+# Activation (per repo clone, one-time):
+#   git config core.hooksPath .githooks
+#   chmod +x .githooks/post-commit
+#
+# Behaviour:
+#   - Detects whether the just-landed commit touched docs/owner/**/*.md
+#   - If yes, launches push_owner_confluence.py in background (non-blocking)
+#   - Push script hash-skips unchanged pages, so cost is bounded
+#   - Logs to .docs/tasks/_post_commit_confluence.log so failures are visible
+#
+# Skip when:
+#   - Commit message contains [skip-confluence]
+#   - SKIP_CONFLUENCE_SYNC=1 in env
+#   - .env missing required JIRA_API_KEY (push script needs Atlassian creds)
+
+set -euo pipefail
+
+if [[ "${SKIP_CONFLUENCE_SYNC:-}" == "1" ]]; then
+  exit 0
+fi
+
+# Repo root (works whether invoked from worktree or hooks dir)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Skip marker in commit message
+COMMIT_MSG="$(git log -1 --format=%B HEAD)"
+if echo "$COMMIT_MSG" | grep -qi '\[skip-confluence\]'; then
+  exit 0
+fi
+
+# Check if commit touched docs/owner/*.md
+CHANGED="$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E '^docs/owner/.*\.md$' || true)"
+if [[ -z "$CHANGED" ]]; then
+  exit 0
+fi
+
+# Skip if .env credentials missing
+if [[ ! -f "$REPO_ROOT/.env" ]] || ! grep -q '^JIRA_API_KEY=' "$REPO_ROOT/.env"; then
+  echo "[post-commit] .env or JIRA_API_KEY missing — skipping Confluence sync" >&2
+  exit 0
+fi
+
+LOG_DIR="$REPO_ROOT/.docs/tasks"
+mkdir -p "$LOG_DIR"
+LOG="$LOG_DIR/_post_commit_confluence.log"
+
+# Run in background — don't block git
+{
+  echo "===== post-commit Confluence sync $(date -Iseconds) ====="
+  echo "Commit: $(git rev-parse --short HEAD)"
+  echo "Changed docs/owner:"
+  echo "$CHANGED" | sed 's/^/  /'
+  echo
+  python3 "$REPO_ROOT/.claude/scripts/push_owner_confluence.py" 2>&1
+  echo "===== exit=$? ====="
+} >> "$LOG" 2>&1 &
+
+disown
+echo "[post-commit] Confluence sync running in background → tail $LOG"
+exit 0

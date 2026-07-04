@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--
+    ESTY-246 — "Request Gearment Quote" button on the dropship PO form header.
+    Visible only for a Gearment dropship PO in draft/RFQ state; access limited to
+    purchasing or BA-shipping users. The action binds the Gearment quote to the
+    PO cost (see purchase_order.action_request_gearment_quote).
+  -->
+  <record id="view_purchase_order_form_gearment_quote" model="ir.ui.view">
+    <field name="name">purchase.order.form.gearment.quote</field>
+    <field name="model">purchase.order</field>
+    <field name="inherit_id" ref="purchase.purchase_order_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//header" position="inside">
+        <field name="is_gearment_dropship_po" invisible="1"/>
+        <button name="action_request_gearment_quote" type="object"
+                string="Request Gearment Quote"
+                groups="purchase.group_purchase_user,multichannel_hub_fulfillment.group_ba_shipping"
+                invisible="not is_gearment_dropship_po or state not in ('draft', 'sent')"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>

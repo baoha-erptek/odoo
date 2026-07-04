@@ -131,6 +131,30 @@ Update in the same checkpoint commit (or the next one if it would balloon):
 - `specs/<spec>/quickstart.md` — only if env vars / setup steps changed
 - `custom_addons/<module>/static/description/USER_GUIDE.md` — only if user-facing flow changed
 - `specs/<spec>/findings.md` — append surprises, blockers, deferred decisions (create file if absent)
+- **Owner-facing guides + manual UAT** (mandatory when an owner-visible flow / pipeline / form / behavior changes — see "User-facing change → owner docs" below):
+  - `docs/owner/HUONG_DAN_<flow>_VN.md` — operator's daily guide. Update the affected step in plain Vietnamese business language (no module names, no field IDs, no "vs prior version" framing — per memory `feedback_end_user_docs_plain_view.md`).
+  - `docs/owner/UAT_WALKTHROUGH_<flow>_VN.md` — append a new `TC-NNN` row in the Tổng kết table + a corresponding test-case section in the walkthrough body. The TC must be runnable by a non-technical operator and have a single Pass/Fail observable outcome.
+  - `docs/owner/FLOW_<flow>_VN.md` — only if the end-to-end flow diagram itself changed (rare).
+  - These files auto-sync to Confluence space HEP via `.githooks/post-commit` (memory `reference_confluence_sync_pipeline.md`); commit them in the same Phase 7 commit so Confluence and code never drift.
+
+#### User-facing change → owner docs (binding rule, 2026-06-06)
+
+Whenever a slice changes any of the following, the Phase 7 commit MUST update at least one `docs/owner/HUONG_DAN_*.md` AND add at least one new `TC-NNN` row to the matching `docs/owner/UAT_WALKTHROUGH_*.md`:
+
+- A field the operator sees or fills (label, validation, default).
+- A button the operator presses (visibility, label, action effect).
+- A flow the operator follows (order/payment/publish/dropship/shipping/tracking/inventory).
+- An automation behaviour the operator can observe (auto-publish, auto-status, auto-currency-convert, auto-tracking-pull, etc).
+- A new precondition or prerequisite (e.g., "operator must set X before doing Y").
+- A failure mode the operator might hit (new error message, new "publish blocked" reason).
+
+Slices that change ONLY internal services, migrations with no operator-visible effect, build/test infra, or refactors with no behaviour change are exempt — but the slice exit-criteria checklist must explicitly say `docs/owner: n/a (internal-only)` so the audit trail records the deliberate omission. Auditors should reject silent omissions.
+
+The UAT TC must:
+1. Live in the `Tổng kết UAT` table as a new row (next sequential TC number).
+2. Have a numbered procedure in the walkthrough body — including environment (Staging / Production / Local), preconditions, exact click path, and observable outcome.
+3. Be executable manually by a BA or operator (not require Python / psql / SSH unless the test specifically exercises a deploy path).
+4. Cite the slice ID in the test rationale (e.g., "P-BUG-ESTY-188 iter2 — kiểm tra publish giá USD lên shop VND không lỗi `price_too_low`").
 
 **Doc-drift rule**: if you can't summarize the slice in one MASTER_PLAN line, the slice is too vague — document the gap in `findings.md` instead and note `MASTER_PLAN n/a (architectural-only)` in the tracker.
 
@@ -161,6 +185,7 @@ A slice is **done** only when **all** are true:
 - [ ] ACLs defined for any new model; sudo() commented; raw SQL commented
 - [ ] At least one `/learn` insight (or explicit "none" note)
 - [ ] `findings.md` updated if anything surprised us
+- [ ] **Owner-facing docs** updated when the slice changes an owner-visible flow / field / button / automation / precondition / failure mode: `docs/owner/HUONG_DAN_*_VN.md` step revised + `docs/owner/UAT_WALKTHROUGH_*_VN.md` new TC. If genuinely no operator-visible change, the slice commit body must say `docs/owner: n/a (internal-only)` so the audit trail is explicit. Per Phase 7 "User-facing change → owner docs" rule (added 2026-06-06).
 - [ ] **Frontend view sanity (Odoo 19 OWL)**: every `decoration-*` and dynamic
   attribute (`invisible=`, `readonly=`, `column_invisible=`) referencing a
   non-trivial expression has its referenced fields **explicitly loaded** in
@@ -261,6 +286,7 @@ Net: **playbook + tracker + auto-memory + `/dispatch-slice` skill IS the PM**. N
 |---|---|
 | Slice landed | tasks.md `[X]`, tracker `state→done` + change-log entry, **MASTER_PLAN.md Phase status snapshot** |
 | New behavior visible to user | tasks.md `[X]`, USER_GUIDE.md, CHANGELOG via `/ship` |
+| **Owner-visible flow / field / button / automation / precondition / failure-mode change** | **`docs/owner/HUONG_DAN_*_VN.md` step update + `docs/owner/UAT_WALKTHROUGH_*_VN.md` new TC row + walkthrough body. Binding per Phase 7 "User-facing change → owner docs" rule. Slice exit-criteria checklist must say either "owner docs updated" or "`docs/owner: n/a (internal-only)`".** |
 | Plan deviation | tracker Notes column + spec `findings.md` |
 | Architecture decision | new ADR in `specs/006-master-plan/adrs/` (numbered next), tracker Decision-log pointer updated, MASTER_PLAN.md banner if it shifts the roadmap |
 | Surprise / pattern worth re-using | `/learn` → memory |
@@ -378,3 +404,4 @@ The post-slice flow above covers the *fix mechanics*. This subsection defines th
 - **2026-04-29 (revision 3)**: Operating-model additions in response to owner's parallel-execution + Telegram-dispatch + persistent-PM questions. (1) Codified "Parallelism modes" subsection (Mode 1 in-slice agents / Mode 2 disjoint-module worktrees / Mode 3 hotfix). (2) Phase 0 references new `/dispatch-slice` skill (Telegram-trigger compatible). (3) Phase 6 adds explicit WIP-commit rule for mid-slice exits. (4) New "Why no persistent PM agent" section locks in the stateless-PM design (bloat / drift / concurrency / ROI). No code changed; doc-only revision.
 - **2026-05-10 (revision 5)**: Added "E2E run defect intake" subsection under "Bug surfaces post-slice (or during E2E)". Defines run-time defect capture rules, severity tags, routing table, regression-test contract, ADR-contradiction escape hatch, and section-isolated re-verification path. Companion artifacts: `docs/E2E_DEFECTS_<date>.md` template + new tracker subsection "E2E Defects in Flight" + per-spec `findings.md` "E2E surfacing (live)" subsection. Owner directive 2026-05-10: "E2E test process can introduce bugs, make sure we have a way to track and flow to handle them in playbook." No code changed; doc-only revision.
 - **2026-05-03 (revision 4)**: Aligned playbook to E2 v1.2 Owner red-feedback (`.0temp/E2_Quy_trinh_san_xuat_edit.pdf`). Added "Owner voice" traceability section with 12-row red-theme → slice mapping. Three uncovered surfaces surfaced for Owner: (1) **P1-02d (PD A4 batch)** re-prioritize from "not critical" to W4; (2) **propose new slice P1-11** for auto status transitions on `mrp.workorder.button_finish` (currently no P-task ID despite living in `D2_production_flow.md` design notes); (3) **Customer Message Hub (B13)** still architectural-only — needs Owner scope decision (export-only vs full inbox) before slice spawn. No code changed; doc-only revision. Companion deliverable: `.0temp/E2_Quy_trinh_san_xuat-v2.docx` sent to Owner for red-feedback re-confirmation. Tracker NOT mutated this revision — tracker edits wait for Owner answers on B8/B9/B13.
+- **2026-06-06 (revision 6)**: Added binding "User-facing change → owner docs" rule to Phase 7 + Document update matrix + slice exit-criteria checklist. Whenever a slice changes an owner-visible flow, field, button, automation, precondition, or failure mode, the same Phase 7 commit MUST update `docs/owner/HUONG_DAN_*_VN.md` AND add a new TC row to `docs/owner/UAT_WALKTHROUGH_*_VN.md`. Internal-only slices are exempt but the commit body must say `docs/owner: n/a (internal-only)` so the omission is auditable. Owner directive 2026-06-06: "make sure that when we complete a feature or have some change in existing feature or flow/pipeline, we'll update them accordingly" — triggered by P-BUG-ESTY-188 iter2 ship surfacing that owner docs hadn't been updated alongside code. No code changed; doc-only revision.

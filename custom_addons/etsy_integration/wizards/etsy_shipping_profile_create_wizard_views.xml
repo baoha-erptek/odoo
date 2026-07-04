@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_etsy_shipping_profile_create_wizard_form" model="ir.ui.view">
+        <field name="name">etsy.shipping.profile.create.wizard.form</field>
+        <field name="model">etsy.shipping.profile.create.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Etsy Shipping Profile">
+                <div class="alert alert-info" role="alert">
+                    Creates a <strong>manual flat-rate</strong> shipping profile
+                    on Etsy. Calculated (carrier-rate) profiles must be created
+                    in Etsy's web UI and are pulled by the daily sync.
+                </div>
+                <group>
+                    <group string="Profile">
+                        <field name="shop_id"
+                               options="{'no_create': True, 'no_open': True}"
+                               readonly="context.get('default_shop_id')"/>
+                        <field name="title"/>
+                        <field name="set_as_shop_default"/>
+                        <field name="set_on_listing_id" invisible="1"/>
+                    </group>
+                    <group string="Origin">
+                        <field name="origin_country_id"
+                               options="{'no_create': True}"/>
+                        <field name="origin_postal_code"/>
+                    </group>
+                    <group string="Cost">
+                        <field name="primary_cost"/>
+                        <field name="secondary_cost"/>
+                    </group>
+                    <group string="Delivery &amp; Processing">
+                        <label for="min_delivery_days" string="Delivery Days"/>
+                        <div class="o_row">
+                            <field name="min_delivery_days" class="oe_inline"/>
+                            <span class="mx-2">to</span>
+                            <field name="max_delivery_days" class="oe_inline"/>
+                        </div>
+                        <label for="min_processing_time" string="Processing Time"/>
+                        <div class="o_row">
+                            <field name="min_processing_time" class="oe_inline"/>
+                            <span class="mx-2">to</span>
+                            <field name="max_processing_time" class="oe_inline"/>
+                            <field name="processing_time_unit" class="oe_inline"/>
+                        </div>
+                    </group>
+                    <group string="Destination">
+                        <field name="destination_kind" widget="radio"/>
+                        <field name="destination_country_id"
+                               options="{'no_create': True}"
+                               invisible="destination_kind != 'country'"
+                               required="destination_kind == 'country'"/>
+                        <field name="destination_region"
+                               invisible="destination_kind != 'region'"
+                               required="destination_kind == 'region'"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_create_profile" type="object"
+                            string="Create On Etsy" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_etsy_shipping_profile_create_wizard" model="ir.actions.act_window">
+        <field name="name">Create Etsy Shipping Profile</field>
+        <field name="res_model">etsy.shipping.profile.create.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

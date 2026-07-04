@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_etsy_order_ticket_list" model="ir.ui.view">
+    <field name="name">etsy.order.ticket.list</field>
+    <field name="model">etsy.order.ticket</field>
+    <field name="arch" type="xml">
+      <list string="After-Sales Tickets"
+            decoration-success="state == 'refunded'"
+            decoration-info="state == 'approved'"
+            decoration-muted="state == 'rejected'">
+        <field name="name"/>
+        <field name="order_id"/>
+        <field name="ticket_type"/>
+        <field name="refund_amount" optional="show"/>
+        <field name="currency_id" column_invisible="1"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'refunded'"
+               decoration-info="state == 'approved'"
+               decoration-danger="state == 'rejected'"/>
+        <field name="requested_by" optional="show"/>
+        <field name="create_date" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_etsy_order_ticket_form" model="ir.ui.view">
+    <field name="name">etsy.order.ticket.form</field>
+    <field name="model">etsy.order.ticket</field>
+    <field name="arch" type="xml">
+      <form string="After-Sales Ticket">
+        <header>
+          <button name="action_approve" type="object" string="Approve"
+                  class="btn-primary" invisible="state != 'draft'"
+                  groups="multichannel_hub_core.group_ba_lead"/>
+          <button name="action_reject" type="object" string="Reject"
+                  invisible="state != 'draft'"
+                  groups="multichannel_hub_core.group_ba_lead"/>
+          <button name="action_mark_refunded" type="object"
+                  string="Mark Refunded / Done" class="btn-primary"
+                  invisible="state != 'approved'"
+                  groups="multichannel_hub_core.group_ba_lead"/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="draft,approved,refunded"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="name" readonly="1"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="order_id"/>
+              <field name="ticket_type"/>
+              <field name="refund_amount"/>
+              <field name="currency_id" invisible="1"/>
+            </group>
+            <group>
+              <field name="requested_by"/>
+              <field name="approved_by"/>
+            </group>
+          </group>
+          <group string="Reason">
+            <field name="reason" nolabel="1"/>
+          </group>
+          <group string="Internal Note">
+            <field name="note" nolabel="1"/>
+          </group>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_etsy_order_ticket" model="ir.actions.act_window">
+    <field name="name">After-Sales Tickets</field>
+    <field name="res_model">etsy.order.ticket</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_etsy_order_ticket"
+            name="After-Sales"
+            parent="etsy_integration.menu_etsy_root"
+            action="action_etsy_order_ticket"
+            sequence="45"/>
+
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_order_pipeline_transition_wizard_form" model="ir.ui.view">
+    <field name="name">order.pipeline.transition.wizard.form</field>
+    <field name="model">order.pipeline.transition.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Change Pipeline State">
+        <group>
+          <field name="pipeline_id"/>
+          <field name="current_state_id"/>
+          <field name="new_state_id"/>
+          <field name="note" placeholder="Reason for this transition (recorded in the audit log)"/>
+        </group>
+        <footer>
+          <button name="action_confirm" type="object" string="Confirm" class="btn-primary"/>
+          <button string="Cancel" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+</odoo>

@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub - Fulfillment',
-    'version': '19.0.1.0.21',
+    'version': '19.0.1.0.24',
     'category': 'Sales/Fulfillment',
     'summary': 'Fulfillment integration service for multichannel operations',
     'author': 'Etsy Migration Team',
@@ -15,10 +15,15 @@
         'data/tracking_import_data.xml',
         'data/production_locations_data.xml',
         'data/logistics_partner_data.xml',
+        'data/gearment_fees_product.xml',
         'views/product_template_views.xml',
+        'views/purchase_order_views.xml',
         'views/tracking_import_views.xml',
         'views/logistics_partner_views.xml',
         'views/sale_order_views.xml',
+        'views/gearment_api_log_views.xml',
+        'views/sale_order_fulfillment_views.xml',
+        'views/stock_picking_views.xml',
         'wizards/gearment_quote_wizard_views.xml',
     ],
     'external_dependencies': {

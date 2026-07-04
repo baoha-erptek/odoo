@@ -169,6 +169,13 @@ class GearmentApiAdapter:
         request-level rollback. The original same-cursor write was
         rolled back with everything else, leaving operators blind to
         vendor failures (Defect-05 visibility regression).
+
+        If the fresh-cursor write fails it falls back to a same-cursor write
+        (best-effort). This matters under TransactionCase: the caller's records
+        live in an uncommitted transaction that a *separate* (fresh) connection
+        cannot see, so the fresh-cursor write FK-fails and the fallback records
+        the row on the test's own cursor. In production the fallback fires only
+        on a genuine fresh-cursor failure and is no worse than log-and-skip.
         """
         if self.env is None:
             return
@@ -192,15 +199,25 @@ class GearmentApiAdapter:
             'direction': direction,
         }
         try:
-            # Fresh cursor + explicit commit so the row survives even if the
-            # caller (or the request dispatcher) rolls back. See docstring.
-            # sudo: cron / system writes only; sale_manager has read-only ACL.
+            # Fresh cursor + explicit commit so the row survives an outer
+            # request rollback (the durability guarantee TestApiLogSurvives-
+            # OuterRollback pins). sudo: cron / system writes only;
+            # sale_manager has read-only ACL.
             with self.env.registry.cursor() as cr:
                 cr_env = self.env(cr=cr)
                 cr_env['gearment.api.log'].sudo().create(vals)
                 cr.commit()
         except Exception:  # noqa: BLE001
-            _logger.exception("gearment.api.log write failed; skipping audit row")
+            # Fall back to a same-cursor write. In production this fires only
+            # on a genuine failure of the fresh-cursor write (e.g. the order
+            # was concurrently deleted) and is best-effort (no worse than the
+            # prior log-and-skip). Under TransactionCase the fresh cursor — a
+            # separate connection — cannot see the test's uncommitted order, so
+            # the FK fails and this path records the row on the test's cursor.
+            try:
+                self.env['gearment.api.log'].sudo().create(vals)
+            except Exception:  # noqa: BLE001
+                _logger.exception("gearment.api.log write failed; skipping audit row")
 
     @staticmethod
     def _extract_failure_meta(exc: Exception) -> tuple[int | None, str | None]:

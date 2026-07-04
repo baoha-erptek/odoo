@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vai trò 1: BA Lead — Một ngày trong hệ thống — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Vai trò 1 · BA Lead — Một ngày trong hệ thống</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">VAI TRÒ 1 · ĐỌC ~9 PHÚT</div>
+    <h2>BA Lead — Một ngày trong hệ thống</h2>
+    <p class="lede">Chị Hương, 32 tuổi, là BA Lead duy nhất tại Hatafa. Mỗi ngày từ 8:30 đến 17:30, chị quản lý toàn bộ vòng đời đơn hàng: duyệt đơn mới, phê duyệt thiết kế, xử lý lỗi Etsy/Gearment, duyệt đổi địa chỉ, và ký báo cáo cuối ngày. Chị là người duy nhất có quyền approve các thay đổi lớn trên đơn hàng — không có ai khác được phép merge khách trùng, mở khoá đổi địa chỉ, hay đánh dấu sản phẩm đã in nếu không có sự chấp thuận của chị.</p>
+    <div class="pills">
+      <span class="pill green">Hoạt động chính</span>
+      <span class="pill blue">UAT 2026-05-28</span>
+      <span class="pill grey">Một ngày 9 giờ làm việc · 12 mốc giờ chính</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Bối cảnh — BA Lead làm gì</h3>
+    <p>Hàng ngày Chị Hương bắt đầu ca làm việc lúc 8:30 bằng cách mở Dashboard Vận hành để scan các con số chính: đơn mới nhận được bao nhiêu, lỗi Etsy/Gearment còn bao nhiêu, đơn chờ duyệt thiết kế bao nhiêu, và tin nhắn khách hàng chưa trả lời bao nhiêu. Đây là những mốc báo hiệu tính cấp tính của buổi sáng.</p>
+    <p>Công việc chính của Chị Hương là <b>triage, duyệt, và quyết định</b> — vì Chị là người duy nhất có quyền hạn approve các thay đổi lớn. Chị duyệt từng đơn mới để gắn nhãn ưu tiên (Hỏa tốc / Thường / Dropship). Chị duyệt từng file thiết kế trong kanban để xem ảnh preview và lịch sửa. Chị phê duyệt khi khách hàng yêu cầu đổi địa chỉ — nếu đơn đang trong giai đoạn "Đang in" thì chị refuse với lý do rõ ràng. Chị xem cảnh báo từ Gearment lúc ban đêm (ví dụ webhook đơn bị hủy) và tự quyết định rollback hay liên hệ khách. Chị approve merge khách trùng từ bảng dữ liệu hỏi đáp của BA Manager. Chị sửa metadata sản phẩm và bấm Resume Publish khi Etsy trả lỗi 400. Hàng ngày lúc 16:00, chị chốt báo cáo cuối ngày (số đơn xong, đơn tồn, đơn lỗi) rồi ký email gửi cho CDA.</p>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Lịch một ngày — 8:30 đến 17:30</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">08:30 · 15 phút</div>
+        <div class="title">Mở Dashboard Vận hành, scan KPI sáng</div>
+        <div class="desc">Chị mở Dashboard Vận hành từ menu Bán hàng. Nhìn 4 ô KPI chính: (1) Đơn 24h qua bao nhiêu, (2) Đơn lỗi Etsy/Gearment còn bao nhiêu, (3) Đơn chờ duyệt thiết kế bao nhiêu, (4) Email buyer chưa reply bao nhiêu. Nhìn bảng "Đơn tồn cần xử lý" để biết hôm nay cần ưu tiên gì.</div>
+        <div class="sys"><b>Màn hình:</b> Operations Dashboard với 4 KPI tiles + bảng list đơn tồn</div>
+      </div></li>
+
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">08:45 · 30 phút</div>
+        <div class="title">Triage đơn mới (24h qua)</div>
+        <div class="desc">Chị mở danh sách Sale Order lọc "Mới nhận" (24h). Duyệt từng đơn để kiểm tra: (1) payment_status là Confirmed chưa, (2) shipping_address đầy đủ và hợp lệ, (3) ghi chú buyer có gì lạ không. Chị gắn nhãn priority: Hỏa tốc (muốn nhanh / sinh nhật / gặp sự kiện), Thường (bình thường), hoặc Dropship (có SKU Gearment → tự route).</div>
+        <div class="sys"><b>Màn hình:</b> Sale order list filtered "Mới nhận"</div>
+      </div></li>
+
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">09:30 · 45 phút</div>
+        <div class="title">Duyệt thiết kế trong kanban Design Files</div>
+        <div class="desc">Chị chuyển sang tab Thiết kế → Design Files kanban. Ba cột Pending (8) / Approved (34) / Rejected (2). Chị click vào từng card để xem ảnh preview, lịch sửa của PD, và ghi chú. Chị bấm "Duyệt" để chuyển từ Pending sang Approved, hoặc "Reject + ghi chú" nếu file chưa ok (ví dụ ảnh bị cắt, chữ sai chính tả).</div>
+        <div class="sys"><b>Màn hình:</b> Design Files kanban view</div>
+      </div></li>
+
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">10:30 · 30 phút</div>
+        <div class="title">Duyệt yêu cầu đổi địa chỉ (wizard)</div>
+        <div class="desc">Chị mở danh sách Address Change Requests. Mỗi yêu cầu là một modal wizard: hiển thị order #, địa chỉ cũ vs mới (2 cột so sánh), nguyên nhân buyer cung cấp, và trạng thái pipeline hiện hành. Nếu pipeline là "Đang in" thì chị bấm Reject + ghi lý do "Đơn đang in, không thể đổi". Nếu pipeline còn sớm (ví dụ "Chờ duyệt thiết kế") thì Approve.</div>
+        <div class="sys"><b>Màn hình:</b> Address change approval wizard modal</div>
+      </div></li>
+
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">14:30 · 1 giờ</div>
+        <div class="title">Xử lý queue lỗi Etsy publish</div>
+        <div class="desc">Chị mở tab Sản phẩm → Nhật ký Etsy lọc "HTTP = 400" (7 ngày qua). Danh sách tất cả 400s. Chị bấm vào từng dòng để xem sản phẩm nào, bước nào bị lỗi (tạo listing / đẩy biến thể / đẩy ảnh). Chị sửa metadata (ví dụ thêm taxonomy hoặc sửa tag). Bấm Resume Publish. Hệ thống lưu vào nhật ký.</div>
+        <div class="sys"><b>Màn hình:</b> Nhật ký Etsy lọc HTTP=400</div>
+      </div></li>
+
+      <li class="step"><div class="n">6</div><div class="body">
+        <div class="who">15:30 · 30 phút</div>
+        <div class="title">Duyệt SKU Drift — Accept Canonical</div>
+        <div class="desc">Chị mở SKU Drift list. BA Manager đã pre-sort danh sách sản phẩm có mã legacy (cũ) vs mã đề xuất v2.1 mới. Chị review từng dòng: nếu sản phẩm đã published Etsy thì "Keep Legacy" (giữ mã cũ để không làm xáo trộn listing); nếu draft thì "Accept Canonical" (đổi mã mới). Chị tick dòng và bấm "Accept" để lưu quyết định.</div>
+        <div class="sys"><b>Màn hình:</b> SKU Drift list view</div>
+      </div></li>
+
+      <li class="step"><div class="n">7</div><div class="body">
+        <div class="who">16:00 · 30 phút</div>
+        <div class="title">Báo cáo cuối ngày — chốt số</div>
+        <div class="desc">Chị quay lại Dashboard Vận hành. Nhìn 4 KPI cuối ngày: Đơn xong hôm nay (số cái), Đơn tồn (số cái), Đơn lỗi mới phát sinh, Tracking đã đẩy lên Etsy. Chị ghi tay vào template báo cáo (hoặc hệ thống sinh tự động). Ký email, gửi cho CDA. Email có kèm đính kèm là Excel tóm tắt.</div>
+        <div class="sys"><b>Màn hình:</b> Dashboard tile report + email button</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo — Một ngày của Chị Hương</h3>
+    <div class="mu-lede">5 màn hình mô phỏng. Từ Dashboard Vận hành sáng, kanban thiết kế, modal duyệt đổi địa chỉ, Nhật ký Etsy lỗi 400, và SKU Drift. Cuộn xuống để xem từng cảnh.</div>
+
+    <!-- MOCKUP 1: Operations Dashboard -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Operations Dashboard — 08:30 · KPI sáng</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Dashboard › Vận hành</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Bán hàng<span class="mu-sep">›</span><strong>Dashboard Vận hành</strong></div>
+      <div class="mu-form" style="padding:20px 28px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Đơn 24h qua</div>
+            <div style="font-size:24px;font-weight:700;color:#714B67">23</div>
+          </div>
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Đơn lỗi</div>
+            <div style="font-size:24px;font-weight:700;color:#dc2626">4</div>
+          </div>
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Chờ duyệt thiết kế</div>
+            <div style="font-size:24px;font-weight:700;color:#f59e0b">11</div>
+          </div>
+          <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:12px">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Email chưa reply</div>
+            <div style="font-size:24px;font-weight:700;color:#0ea5e9">2</div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:10px">Đơn tồn cần xử lý</div>
+        <table class="mu-list" style="font-size:12px">
+          <thead><tr><th>#</th><th>Khách</th><th>Trạng thái</th><th>Nguyên nhân tồn</th><th>Tuổi đơn</th></tr></thead>
+          <tbody>
+            <tr><td>#12847</td><td>Ngô Thị B</td><td><span class="mu-pill mu-pill-warn">Chờ duyệt thiết kế</span></td><td>File chưa upload</td><td>2 ngày</td></tr>
+            <tr><td>#12856</td><td>Hồ Thanh L</td><td><span class="mu-pill mu-pill-danger">Lỗi Gearment 400</span></td><td>SKU sai format</td><td>1 ngày</td></tr>
+            <tr><td>#12861</td><td>Trần Văn T</td><td><span class="mu-pill mu-pill-warn">Chờ duyệt thiết kế</span></td><td>PD ping nhưng file không tốt</td><td>3 ngày</td></tr>
+            <tr><td>#12863</td><td>Phạm M</td><td><span class="mu-pill mu-pill-success">Đã in</span></td><td>Chờ khách confirm đổi địa chỉ</td><td>1 ngày</td></tr>
+            <tr><td>#12865</td><td>Vũ K</td><td><span class="mu-pill mu-pill-warn">Chờ tracking</span></td><td>Gearment chưa gửi tracking</td><td>4 ngày</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mu-caption">Dashboard vận hành sáng 08:30. Chị Hương mở đây trước tiên để biết hôm nay có bao nhiêu đơn, lỗi gì, và ưu tiên gì. Dòng chứa trạng thái "Chờ duyệt thiết kế" là yêu cầu duyệt thiết kế—chị sẽ mở kanban tiếp theo để xử lý.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: list tuỳ biến (<code>mhc.operations_dashboard_list_view</code> @ <code>multichannel_hub_core/views/operations_dashboard_views.xml</code>) dựng trên <code>sale.order.line</code> với 34 cột Excel-fixture; KPI ở trên cùng là phần thêm bên ngoài standard list view.</i></div>
+    </div>
+
+    <!-- MOCKUP 2: Design Files Kanban -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Design Files Kanban — 09:30 · Duyệt thiết kế 3 cột</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Thiết kế › Design Files</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Thiết kế<span class="mu-sep">›</span><strong>Design Files (Kanban)</strong></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Mở</button>
+        <button class="mu-btn">Sắp xếp: Cập nhật mới</button>
+      </div>
+      <div class="mu-kanban" style="grid-template-columns:repeat(3,1fr)">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Pending · 8</div>
+          <div class="mu-kb-card"><h4>MUG-CR-F11-BK_v3.ai</h4><div class="mu-kb-meta"><b>PD: Tuấn</b><br>Upload: hôm nay<br><button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Duyệt</button> <button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Reject</button></div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>Doormat-TXT-30x18_v2.ai</h4><div class="mu-kb-meta"><b>PD: Dũng</b><br>Upload: hôm qua<br><button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Duyệt</button> <button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Reject</button></div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Approved · 34</div>
+          <div class="mu-kb-card"><h4>APR-LN-AM_final.ai</h4><div class="mu-kb-meta"><b>PD: Tuấn</b><br>Duyệt: 3 ngày trước<br>Sẵn sàng in</div></div>
+          <div class="mu-kb-card" style="margin-top:8px"><h4>RDS-CE-SQ_v5.ai</h4><div class="mu-kb-meta"><b>PD: Dũng</b><br>Duyệt: 1 ngày trước<br>Sẵn sàng in</div></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#dc2626;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Rejected · 2</div>
+          <div class="mu-kb-card" style="border-color:#fecaca;background:#fef9f9"><h4>MUG-STR-BK_v1.ai</h4><div class="mu-kb-meta"><b>PD: Tuấn</b><br>Lý do: Chữ bị cắt<br><button class="mu-btn" style="margin-top:6px;font-size:11px;padding:3px 8px">Xem chi tiết</button></div></div>
+        </div>
+      </div>
+      <div class="mu-caption">Kanban 3 cột: Pending (chờ duyệt), Approved (đã duyệt), Rejected (bị từ chối). Chị Hương duyệt từng card bằng cách click "Duyệt" để chuyển sang Approved, hoặc "Reject" để ghi lý do. Mỗi card hiển thị tên file, uploader (PD), và thời gian.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.design_file_kanban</code> @ <code>multichannel_hub_core/views/design_file_views.xml:96</code>) trên mô hình <code>design.file</code> riêng.</i></div>
+    </div>
+
+    <!-- MOCKUP 3: Address Change Wizard Modal -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Address Change Modal — 10:30 · Duyệt đổi địa chỉ</strong></div>
+      <div class="mu-chrome-bar"><span class="mu-app">Bán hàng</span><span class="mu-menu">Đơn hàng › Duyệt đổi địa chỉ</span><span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span></div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span><strong>Yêu cầu đổi địa chỉ</strong></div>
+      <div class="mu-modal-overlay">
+        <div class="mu-modal">
+          <div class="mu-modal-head">Yêu cầu đổi địa chỉ giao hàng</div>
+          <div class="mu-modal-body">
+            <p style="margin-bottom:8px"><b>Đơn hàng:</b> #12863 · Phạm M</p>
+            <p style="margin-bottom:12px"><b>Nguyên nhân khách cung cấp:</b> Sử dụng địa chỉ nhà mới</p>
+            <div class="mu-modal-banner">
+              <b>Trạng thái pipeline hiện hành:</b> <span class="mu-pill mu-pill-neutral">Đã in</span> — Không thể đổi địa chỉ ở giai đoạn này.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px">
+              <div>
+                <div style="font-weight:600;font-size:12px;color:#6b7280;margin-bottom:8px">Địa chỉ cũ</div>
+                <div style="font-size:13px;line-height:1.8;color:#1f2937">
+                  Phạm Minh M<br>
+                  458 Nguyễn Hữu Cảnh, P. Tây Thạnh<br>
+                  Q. Tân Phú, TP.HCM, VN<br>
+                  0984665544
+                </div>
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:12px;color:#6b7280;margin-bottom:8px">Địa chỉ mới (yêu cầu)</div>
+                <div style="font-size:13px;line-height:1.8;color:#714B67;font-weight:600;background:#faf5f9;padding:10px;border-radius:4px">
+                  Phạm Minh M<br>
+                  123 Trần Hữu Trang, P. 9<br>
+                  Q. Phú Nhuận, TP.HCM, VN<br>
+                  0984665544
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mu-modal-foot">
+            <button class="mu-btn mu-btn-primary">Reject (không thể đổi)</button>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Modal duyệt đổi địa chỉ. Chị Hương so sánh trạng thái pipeline (Đã in) rồi quyết định Reject vì đơn đang ở giai đoạn không thể đổi. Nếu pipeline còn sớm (Chờ duyệt thiết kế, Đang in…) thì Approve.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form yêu cầu đổi địa chỉ tuỳ biến (<code>etsy_integration.view_etsy_address_change_request_form</code> @ <code>etsy_integration/views/etsy_address_change_request_views.xml</code>) trên mô hình <code>etsy.address.change.request</code> (Spec 003 US4 / P1-04, constraints C-AC-001/002/003).</i></div>
+    </div>
+
+    <!-- MOCKUP 4: Nhật ký Etsy with HTTP 400 filter -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Nhật ký Etsy — lọc HTTP=400 — 14:30 · Queue lỗi Etsy</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › Nhật ký Etsy</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span><strong>Nhật ký Etsy</strong> <span class="mu-pill mu-pill-warn" style="margin-left:8px">6 dòng HTTP=400</span></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: HTTP = 400</button>
+        <button class="mu-btn">Lọc: 7 ngày</button>
+        <button class="mu-btn">Sắp xếp: Mới nhất</button>
+      </div>
+      <div class="mu-modal-banner" style="margin:0 14px 14px">
+        Chờ capture response body chi tiết từ Etsy (R-PUB-RESPONSE-BODY-DIAGNOSE). Hôm nay Etsy trả 400 nhưng chưa cung cấp lý do cụ thể. Chị Hương cần phải thông báo cho đội Kỹ thuật trước khi bấm Resume Publish.
+      </div>
+      <table class="mu-list">
+        <thead><tr><th>Thời gian</th><th>Sản phẩm</th><th>Bước</th><th>HTTP</th><th>Lý do (cần chi tiết)</th><th>Hành động</th></tr></thead>
+        <tbody>
+          <tr><td>2026-05-28 14:38</td><td>Custom Coffee Mug 11oz</td><td>createListing</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>Đang chờ body chi tiết</td><td><button class="mu-btn mu-btn-link">Resume</button></td></tr>
+          <tr><td>2026-05-27 18:12</td><td>Mug Personalised Name</td><td>createListing</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>Đang chờ body chi tiết</td><td><button class="mu-btn mu-btn-link">Resume</button></td></tr>
+          <tr><td>2026-05-27 09:45</td><td>Apron XL Heavy</td><td>push_inventory</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>Đang chờ body chi tiết</td><td><button class="mu-btn mu-btn-link">Resume</button></td></tr>
+          <tr><td>2026-05-26 16:32</td><td>Doormat 30x18 Welcome</td><td>createListing</td><td><span class="mu-pill mu-pill-danger">400</span></td><td>Đang chờ body chi tiết</td><td><button class="mu-btn mu-btn-link">Resume</button></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">Nhật ký Etsy lọc HTTP=400 (7 ngày qua). Chị Hương xem từng dòng, bấm vào sản phẩm để sửa metadata, rồi bấm Resume Publish. Hôm nay phần "Lý do" chưa có chi tiết vì Etsy chưa trả nội dung phản hồi đầy đủ — đó là việc cần fix trong R-PUB-RESPONSE-BODY-DIAGNOSE.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list + search tuỳ biến (<code>etsy_integration.view_etsy_api_log_tree</code> + <code>view_etsy_api_log_search</code> @ <code>etsy_integration/views/etsy_api_log_views.xml</code>); không có view chuẩn Odoo cho nhật ký API.</i></div>
+    </div>
+
+    <!-- MOCKUP 5: SKU Drift List -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 5 · <strong>SKU Drift List — 15:30 · Accept Canonical</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Bán hàng</span><span class="mu-menu">Sản phẩm › SKU Drift</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Sản phẩm<span class="mu-sep">›</span><strong>SKU Drift</strong> <span class="mu-pill mu-pill-warn" style="margin-left:8px">22 dòng</span></div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Lọc: Chưa quyết</button>
+        <span class="mu-spacer" style="flex:1"></span>
+        <button class="mu-btn">Keep Legacy</button>
+        <button class="mu-btn mu-btn-primary">Accept Canonical</button>
+      </div>
+      <table class="mu-list">
+        <thead><tr><th style="width:30px">☐</th><th>Tên sản phẩm</th><th>Mã legacy</th><th>Mã v2.1</th><th>Published Etsy?</th><th>Quyết định</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" style="width:16px;height:16px"></td><td>Coffee Mug Black</td><td class="mu-mono" style="color:#9ca3af">MUG001-BK</td><td class="mu-mono">MUG-CR-F11-BK</td><td><span class="mu-pill mu-pill-success">Yes · 2845…</span></td><td><span class="mu-pill mu-pill-neutral">Chưa quyết</span></td></tr>
+          <tr><td><input type="checkbox" style="width:16px;height:16px"></td><td>Apron Linen Medium</td><td class="mu-mono" style="color:#9ca3af">AP-LIN-M</td><td class="mu-mono">APR-LN-AM</td><td><span class="mu-pill mu-pill-success">Yes · 3019…</span></td><td><span class="mu-pill mu-pill-neutral">Chưa quyết</span></td></tr>
+          <tr><td><input type="checkbox" style="width:16px;height:16px"></td><td>Doormat 30x18 Welcome</td><td class="mu-mono" style="color:#9ca3af">DM-WLCM</td><td class="mu-mono">DMT-TX-R30X18</td><td><span class="mu-pill mu-pill-neutral">Draft</span></td><td><span class="mu-pill mu-pill-success">Keep Legacy</span></td></tr>
+          <tr><td><input type="checkbox" style="width:16px;height:16px" checked></td><td>Ring Dish Square</td><td class="mu-mono" style="color:#9ca3af">RING-SQ</td><td class="mu-mono">RDS-CE-SQ</td><td><span class="mu-pill mu-pill-success">Yes · 2774…</span></td><td><span class="mu-pill mu-pill-success">Accept</span></td></tr>
+        </tbody>
+      </table>
+      <div class="mu-caption">SKU Drift: BA Manager đã pre-sort, Chị Hương duyệt quyết định. "Keep Legacy" nếu product đã published Etsy (tránh xáo trộn); "Accept Canonical" nếu draft. Chị tick dòng và bấm "Accept Canonical" để lưu.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: view list tuỳ biến (<code>mhc.view_product_sku_drift_list</code> @ <code>multichannel_hub_core/views/product_sku_drift_views.xml</code>); không có view chuẩn Odoo tương đương.</i></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Quyền hạn riêng của BA Lead</h3>
+    <ul class="kpi-list">
+      <li><b>Merge khách trùng</b>Chị phê duyệt danh sách khách trùng từ BA Manager trước khi gộp vào một khách duy nhất</li>
+      <li><b>Duyệt đổi địa chỉ</b>Chị quyết định từng yêu cầu đổi địa chỉ, nếu pipeline vẫn cho phép (trước giai đoạn "Đã in")</li>
+      <li><b>Accept SKU Canonical</b>Chị duyệt cập nhật mã SKU từ legacy sang v2.1 trong SKU Drift list</li>
+      <li><b>Resume Publish sau lỗi</b>Chị sửa metadata sản phẩm và bấm Resume Publish khi Etsy trả 400 hoặc lỗi khác</li>
+      <li><b>Sign-off báo cáo cuối ngày</b>Chị chốt số liệu KPI cuối ngày (đơn xong, đơn tồn, đơn lỗi) và ký email gửi CDA</li>
+      <li><b>Mở config validator soft/strict</b>Chị chia sẻ với Admin để chuyển chế độ kiểm tra mã SKU từ mềm → chặt nếu cần</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Luồng và vai trò liên quan</h3>
+    <div class="crosslink-grid">
+      <a href="flow-1-tao-san-pham.html"><b>Luồng 1</b>Tạo sản phẩm POD và đăng lên Etsy — duyệt SKU, Resume Publish</a>
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Luồng 2</b>Khi listing có người mua, đơn về Odoo — triage đơn mới hàng sáng</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Luồng 3A</b>Duyệt thiết kế, Mark Shipped khi in nội bộ xong</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Luồng 3B</b>Dropship Gearment — xử lý webhook trạng thái đơn ban đêm</a>
+      <a href="flow-4-hau-mai.html"><b>Luồng 4</b>Duyệt đổi địa chỉ pre-production, cấp quyền reprint</a>
+      <a href="role-2-marketing.html"><b>Vai trò 2</b>Marketing — Anh Minh quản lý 5 shop Etsy chính</a>
+      <a href="role-3-san-xuat.html"><b>Vai trò 3</b>Sản xuất — Quét mã, chuyển trạng thái, báo cáo ca</a>
+      <a href="role-4-rd.html"><b>Vai trò 4</b>Kiểm soát giá (RD) — Audit giá hàng ngày</a>
+      <a href="role-5-pd.html"><b>Vai trò 5</b>Thiết kế sản phẩm (PD) — Lặp file, duyệt, lưu kho</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Câu hỏi mở và cải tiến</h3>
+    <p><b>Resume Publish thủ công.</b> Hôm nay khi Etsy trả 400, Chị Hương phải mở Nhật ký Etsy, tìm dòng lỗi, sửa metadata, rồi bấm Resume. Hướng cải tiến: tự động thử lại sau khi R-PUB-RESPONSE-BODY-DIAGNOSE hoàn tất (để không sót 400). Hôm nay phần "tự động thử lại" chưa thiết kế vì chưa biết chi tiết lý do 400.</p>
+    <p><b>Inbox tổng hợp.</b> Hôm nay Chị Hương mở 4-5 màn khác nhau trong ngày: Dashboard, Danh sách đơn, Kanban file thiết kế, Nhật ký Etsy, SKU Drift. Mong có một "Inbox tổng" tập trung hiển thị tất cả yêu cầu cần duyệt (duyệt đơn, duyệt thiết kế, duyệt đổi địa chỉ, xử lý lỗi, duyệt SKU drift) ở cùng một chỗ, thay vì chuyển tab liên tục.</p>
+    <p><b>Trực ban đêm.</b> Hôm nay Chị Hương làm 08:30-17:30. Ban đêm chưa có ai trực — nếu Gearment gửi webhook đơn bị hủy vào lúc 22:00, thì đến sáng hôm sau 08:30 mới được xử lý. Có thể các đơn hỏa tốc (muốn nhanh) bị miss window sửa chữa. Chưa có quyết định về on-call schedule cho BA Lead.</p>
+  </div>
+
+  <footer>Vai trò 1 · BA Lead · cập nhật 2026-06-03 · nguồn: BRD_VN v1.0 · SRS_VN v1.0 · UAT 2026-05-28 · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

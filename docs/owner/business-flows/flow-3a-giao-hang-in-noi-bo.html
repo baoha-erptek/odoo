@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luồng 3a: Giao hàng MTO (in nội bộ) — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(5,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-kanban{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px;background:#f3f4f6}
+  .mu-kb-card{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 14px}
+  .mu-kb-card h4{font-size:13px;font-weight:600;color:#1f2937;margin-bottom:6px}
+  .mu-kb-meta{font-size:12px;color:#6b7280;line-height:1.65}
+  .mu-kb-meta b{color:#1f2937;font-weight:500}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Luồng 3a · Giao hàng MTO (in nội bộ)</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+<div class="page-head">
+  <div class="crumbs">QUYỀN HẠN &amp; VÁN ĐỀ → GIAO HÀNG</div>
+  <h2>Quy trình giao hàng in nội bộ (MTO)</h2>
+  <p class="lede">Đơn Etsy chứa sản phẩm in nội bộ chạy qua một chuỗi trạng thái MTO: từ nhận đơn đến hoàn tất giao hàng. Vai trò BA, Marketing, Sản xuất, QC, Shipping tham gia tuần tự. <b>Lưu ý hiện trạng:</b> hôm nay hệ thống mới khai báo 5 trạng thái gọn; bộ 17 trạng thái dưới đây là <b>kế hoạch chi tiết</b> (P1-PIPELINE-FULL chưa khởi công). BA hiện thay đổi trạng thái thủ công.</p>
+  <div class="pills">
+    <span class="pill yellow">⏳ Dành cho: BA, Marketing, Sản xuất</span>
+    <span class="pill green">✓ Trạng thái: 17 bước</span>
+    <span class="pill blue">Đặc điểm: Design Files + QC</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3><span class="num">A</span> Vai trò tham gia</h3>
+  <div class="swim">
+    <div class="swim-head">Giai đoạn</div>
+    <div class="swim-head">BA Lead</div>
+    <div class="swim-head">Marketing/PD</div>
+    <div class="swim-head">Sản xuất</div>
+    <div class="swim-head">QC + Đóng gói</div>
+    <div class="swim-head">Shipping</div>
+    <div class="swim-row-lbl">Nhận</div>
+    <div class="swim-cell done">✓ Kiểm tra</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-row-lbl">Thiết kế</div>
+    <div class="swim-cell done">✓ Duyệt</div>
+    <div class="swim-cell done">✓ Upload</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-row-lbl">Sản xuất</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell done">✓ In / Khắc</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-row-lbl">QC</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell done">✓ Kiểm tra</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-row-lbl">Đóng gói</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell done">✓ Chuẩn bị</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-row-lbl">Vận chuyển</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell">—</div>
+    <div class="swim-cell done">✓ In nhãn</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3><span class="num">B</span> 17 trạng thái pipeline <span style="color:#dc2626;font-weight:700;font-size:13px">(kế hoạch — hôm nay mới có 5 trạng thái gọn)</span></h3>
+  <p style="background:#fef2f2;border-left:3px solid #dc2626;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7f1d1d">Hệ thống hiện vận hành 5 trạng thái cơ bản (xem <code>mhc.order_pipeline_state_seed</code>). Bộ 17 trạng thái dưới đây là thiết kế chi tiết của P1-PIPELINE-FULL — chưa khởi công. Khi đọc các bước dưới, hãy hiểu là "sẽ có khi P1-PIPELINE-FULL hoàn tất".</p>
+  <ul class="steps">
+    <li class="step">
+      <div class="n">1</div>
+      <div class="body">
+        <div class="title">Mới nhận</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">Đơn vừa vào hệ thống, chờ BA kiểm tra thông tin khách hàng.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">2</div>
+      <div class="body">
+        <div class="title">BA kiểm tra</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">Xác minh thông tin gửi hàng, cá nhân hoá yêu cầu. BA thay đổi trạng thái thủ công trong form đơn.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">3</div>
+      <div class="body">
+        <div class="title">Thiết kế</div>
+        <div class="who">MARKETING/PD</div>
+        <div class="desc">Đội thiết kế upload file in (đặc điểm từng sản phẩm) vào tab Design Files. Hỗ trợ mặt trước, mặt sau, ảnh tham chiếu.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">4</div>
+      <div class="body">
+        <div class="title">Chờ duyệt thiết kế</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">BA hoặc khách (nếu yêu cầu) duyệt file thiết kế trước sản xuất. Từ chối → thông báo Marketing via chatter.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">5</div>
+      <div class="body">
+        <div class="title">Đã duyệt</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">File thiết kế đã được duyệt, sẵn sàng chuyển sang sản xuất.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">6</div>
+      <div class="body">
+        <div class="title">Sản xuất</div>
+        <div class="who">SẢN XUẤT</div>
+        <div class="desc">Đội xưởng in hoặc khắc sản phẩm theo file thiết kế đã duyệt. Tạo work order trong MRP nếu cần.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">7</div>
+      <div class="body">
+        <div class="title">QC</div>
+        <div class="who">QC TEAM</div>
+        <div class="desc">Kiểm tra chất lượng sản phẩm in trước đóng gói. Sử dụng QC checklist nội bộ (tích từng item). Lỗi → chuyển "In lại".</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">8</div>
+      <div class="body">
+        <div class="title">Đóng gói</div>
+        <div class="who">QC + SHIPPING</div>
+        <div class="desc">Chuẩn bị bưu kiện: dán nhãn nội bộ, kiểm tra hộp, cân nặng, đo size. Lưu trữ tại khu vực Chờ nhãn vận chuyển.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">9</div>
+      <div class="body">
+        <div class="title">Chờ nhãn vận chuyển<br><span style="font-weight:400;font-size:12px;color:#714B67;font-style:italic">Màn hình in nhãn vận chuyển xem ở mockup #6 ("Mark Shipped + Push Tracking to Etsy") cùng luồng này.</span></div>
+        <div class="who">SHIPPING</div>
+        <div class="desc">Bưu kiện đã đóng, chờ in nhãn vận chuyển (USPS / UniUni / YunExpress) từ hệ thống.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">10</div>
+      <div class="body">
+        <div class="title">Đã in nhãn</div>
+        <div class="who">SHIPPING</div>
+        <div class="desc">Nhãn vận chuyển đã in, dán lên bưu kiện, sẵn sàng bàn giao cho đối tác vận chuyển.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">11</div>
+      <div class="body">
+        <div class="title">Giao bưu vận</div>
+        <div class="who">SHIPPING</div>
+        <div class="desc">Đối tác vận chuyển đã nhận bưu kiện. Hệ thống tự động cập nhật trạng thái khi API phản hồi.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">12</div>
+      <div class="body">
+        <div class="title">Đang vận chuyển</div>
+        <div class="who">—</div>
+        <div class="desc">Bưu kiện đang trên đường, có tracking. Theo dõi qua URL carrier (USPS / UniUni / YunExpress).</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">13</div>
+      <div class="body">
+        <div class="title">Đã giao</div>
+        <div class="who">—</div>
+        <div class="desc">Khách đã nhận hàng, tracking báo Delivered. Hệ thống tự động cập nhật từ API carrier khi có webhook.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">14</div>
+      <div class="body">
+        <div class="title">Có vấn đề</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">Khách báo lỗi hoặc yêu cầu hậu mãi (sai size, hư hỏng, v.v.). BA ghi lý do trong chatter, quy trình hậu mãi bắt đầu.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">15</div>
+      <div class="body">
+        <div class="title">Hoàn trả</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">Quy trình xử lý hậu mãi đang chạy: chuẩn bị thay thế, hoàn tiền, hoặc hỗ trợ khác.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">16</div>
+      <div class="body">
+        <div class="title">In lại</div>
+        <div class="who">SẢN XUẤT</div>
+        <div class="desc">Phát hiện lỗi sản xuất → quy trình in lại. BA tạo phiếu in mới, Sản xuất thực hiện, QC kiểm tra lại, giao hàng mới.</div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="n">17</div>
+      <div class="body">
+        <div class="title">Hoàn tất</div>
+        <div class="who">BA LEAD</div>
+        <div class="desc">Đơn đã hoàn toàn kết thúc: khách nhận hàng, không vấn đề, hoặc hậu mãi đã xử lý. Đóng đơn.</div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="section">
+  <div class="mu-screens">
+    <h3>📋 Giao diện chính</h3>
+    <p class="mu-lede">6 màn hình minh hoạ quy trình MTO từ pipeline kanban đến QC checklist và push tracking Etsy.</p>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>1. Pipeline Kanban — 17 trạng thái</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">Đơn hàng</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">BA</span>
+      </div>
+      <div class="mu-breadcrumb">
+        Etsy <span class="mu-sep">/</span> Sales <span class="mu-sep">/</span> <strong>Orders by Pipeline</strong>
+      </div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Filter by State</button>
+        <span style="color:#9ca3af">|</span>
+        <span style="font-size:12px;color:#6b7280">Showing 12 orders</span>
+      </div>
+      <div style="padding:16px;background:#f9fafb;font-size:12px;color:#4b5563;line-height:1.6">
+        <div style="margin-bottom:10px"><strong>Mới nhận</strong> (2)</div>
+        <div style="margin-left:12px;padding:8px;background:#fff;border-left:3px solid #fef9c3;margin-bottom:8px">Order #1234 — Jane Smith</div>
+        <div style="margin-left:12px;padding:8px;background:#fff;border-left:3px solid #fef9c3">Order #1235 — John Doe</div>
+        <div style="margin-top:12px;margin-bottom:10px"><strong>BA kiểm tra</strong> (3)</div>
+        <div style="margin-left:12px;padding:8px;background:#fff;border-left:3px solid #fef3c7">Order #1236, #1237, #1238</div>
+        <div style="margin-top:12px;margin-bottom:10px"><strong>Thiết kế</strong> (1)</div>
+        <div style="margin-left:12px;padding:8px;background:#fff;border-left:3px solid #fee2e2">Order #1239 — ⚠ Sẽ hết hạn 2 ngày</div>
+        <div style="margin-top:12px">... 6 trạng thái khác (Chờ duyệt, Đã duyệt, Sản xuất, QC, Đóng gói, ...)</div>
+      </div>
+      <div class="mu-caption">Kanban view hiển thị các cột tương ứng 17 trạng thái. Kéo thả để cập nhật (hoặc form đơn nút dropdown).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.order_pipeline_views</code> @ <code>multichannel_hub_core/views/order_pipeline_views.xml</code>) trên mô hình pipeline riêng; hôm nay seed 5 trạng thái gọn — P1-PIPELINE-FULL sẽ mở rộng đủ 17. Không kế thừa <code>sale.view_order_kanban</code> vì các cột là pipeline state, không phải state chuẩn của sale.order.</i></div>
+    </div>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>2. Design Files Kanban — Pending / Approved / Rejected</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">Đơn hàng</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">Marketing</span>
+      </div>
+      <div class="mu-breadcrumb">
+        Etsy <span class="mu-sep">/</span> <strong>Design Files Board</strong> <span class="mu-sep">/</span> Order #1240
+      </div>
+      <div style="padding:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12px">
+          <div style="border:1px solid #e5e7eb;border-radius:4px;padding:12px;background:#f9fafb">
+            <div style="font-weight:600;color:#1f2937;margin-bottom:8px">Pending (1)</div>
+            <div style="background:#fff;border:1px solid #fef9c3;border-radius:3px;padding:8px;margin-bottom:8px">
+              <div style="font-size:11px;color:#6b7280">SKU: TSH-M</div>
+              <div style="font-weight:500;color:#1f2937">Front Design.pdf</div>
+              <div style="font-size:11px;color:#a16207;margin-top:4px">Cần duyệt</div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:4px;padding:12px;background:#f9fafb">
+            <div style="font-weight:600;color:#1f2937;margin-bottom:8px">Approved (1)</div>
+            <div style="background:#fff;border:1px solid #dcfce7;border-radius:3px;padding:8px;margin-bottom:8px">
+              <div style="font-size:11px;color:#6b7280">SKU: CAP-M</div>
+              <div style="font-weight:500;color:#1f2937">Cap Design.pdf</div>
+              <div style="font-size:11px;color:#16a34a;margin-top:4px">✓ Đã duyệt</div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:4px;padding:12px;background:#f9fafb">
+            <div style="font-weight:600;color:#1f2937;margin-bottom:8px">Rejected (0)</div>
+            <div style="color:#9ca3af;font-size:12px">Không có</div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">3 cột: Pending (chờ BA duyệt), Approved (sẵn sàng in), Rejected (Marketing cần sửa).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: kanban tuỳ biến (<code>mhc.design_file_kanban</code> @ <code>multichannel_hub_core/views/design_file_views.xml:96</code>) trên mô hình <code>design.file</code> riêng — không có view chuẩn Odoo cho file thiết kế POD.</i></div>
+    </div>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>3. Sale Order Form — Tab Pipeline + Chatter</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">Sales</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">BA Lead</span>
+      </div>
+      <div class="mu-breadcrumb">
+        Sales <span class="mu-sep">/</span> Orders <span class="mu-sep">/</span> <strong>Order #1241</strong>
+      </div>
+      <div class="mu-statusbar">
+        <button class="mu-btn">Confirm</button>
+        <button class="mu-btn-primary" style="padding:5px 12px">Save</button>
+        <span style="margin-left:auto;color:#9ca3af;font-size:12px">Last edited: 2026-06-03 10:45</span>
+      </div>
+      <div class="mu-form">
+        <div class="mu-tabs">
+          <div class="mu-tab active">Thông tin</div>
+          <div class="mu-tab">Pipeline</div>
+          <div class="mu-tab">Design Files</div>
+          <div class="mu-tab">Chatter</div>
+        </div>
+        <div style="margin-top:16px;background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px">
+          <div style="margin-bottom:10px"><strong>Pipeline Status:</strong></div>
+          <div style="display:flex;gap:8px;align-items:center;margin-left:12px">
+            <select style="padding:6px 8px;border:1px solid #d1d5db;border-radius:3px;font-size:12px">
+              <option>Mới nhận</option>
+              <option>BA kiểm tra</option>
+              <option selected>Thiết kế</option>
+              <option>Chờ duyệt thiết kế</option>
+              <option>Đã duyệt</option>
+            </select>
+            <button class="mu-btn-primary" style="padding:5px 10px">Update</button>
+          </div>
+          <div style="margin-top:14px;background:#faf5f9;border-left:3px solid #714B67;padding:8px 12px;font-size:11px;color:#4b5563">
+            <b>Lưu ý:</b> Thay đổi trạng thái tại đây sẽ cập nhật kanban và gửi thông báo cho các đội liên quan.
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Tab Pipeline cho phép BA chọn trạng thái mới từ dropdown. Chatter ghi lại tất cả thay đổi + ghi chú của đội.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn của Odoo (<code>sale.view_order_form</code> @ <code>addons/sale/views/sale_order_views.xml</code>); chỗ khác biệt: thêm tab "Pipeline" với dropdown trạng thái MTO trong <code>multichannel_hub_core/views/sale_order_form.xml</code>. Chatter là mặc định từ <code>mail.thread</code>.</i></div>
+    </div>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>4. Production Scan View (Mobile) — QR & Barcode</strong> <span style="color:#dc2626;font-weight:700">(thiết kế — chưa có trong hệ thống, Standard-Odoo-First chưa chạy: cân nhắc dùng module barcode chuẩn của Odoo)</span></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">Production</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">Factory</span>
+      </div>
+      <div style="padding:16px;background:#f3f4f6;text-align:center">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px">Quét mã sản phẩm hoặc nhập SKU</div>
+        <div style="background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:20px;margin-bottom:12px">
+          <div style="font-size:36px;color:#714B67;font-weight:700;font-family:monospace">TSH-M-01</div>
+        </div>
+        <div style="background:#dcfce7;border:1px solid #86efac;border-radius:4px;padding:12px;margin-bottom:12px;color:#16a34a">
+          ✓ Sản phẩm #1241–1 tìm thấy. Trạng thái: Sản xuất.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <button style="padding:8px 12px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-weight:600;border-radius:3px;cursor:pointer">✓ Hoàn thành in</button>
+          <button style="padding:8px 12px;background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;font-weight:600;border-radius:3px;cursor:pointer">⚠ Lỗi sản xuất</button>
+        </div>
+      </div>
+      <div class="mu-caption">Scan view trên di động giúp xưởng nhanh chóng cập nhật tiến độ sản xuất và báo lỗi.</div>
+    </div>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>5. QC Checklist — Hình ảnh + Tick items</strong> <span style="color:#dc2626;font-weight:700">(thiết kế — chưa có trong hệ thống, Standard-Odoo-First chưa chạy: cân nhắc module quality_control)</span></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">QC</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">QC Team</span>
+      </div>
+      <div class="mu-breadcrumb">
+        QC <span class="mu-sep">/</span> Checklist <span class="mu-sep">/</span> <strong>Order #1241–1</strong>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">QC Checklist — T-Shirt Size M</div>
+        <div style="margin-top:14px;font-size:12px;line-height:1.6">
+          <div style="margin-bottom:10px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="checkbox" checked />
+              <span>Kiểm tra kích thước hộp (27x35x5 cm)</span>
+            </label>
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="checkbox" checked />
+              <span>Kiểm tra trong lượng sản phẩm (không bị cong, nhăn)</span>
+            </label>
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="checkbox" checked />
+              <span>In ấn rõ ràng, không bị smear hoặc mờ</span>
+            </label>
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="checkbox" />
+              <span>Màu sắc khớp với mẫu tham chiếu</span>
+            </label>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="checkbox" />
+              <span>Không có vết bẩn, xước hay vết bút</span>
+            </label>
+          </div>
+          <div style="background:#fef9c3;border-left:3px solid #ca8a04;padding:8px 12px;font-size:11px;color:#854d0e;border-radius:3px">
+            <b>Lưu ý:</b> Nếu phát hiện lỗi, chuyển trạng thái đơn sang "In lại" và ghi chi tiết lỗi trong chatter.
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">QC team sử dụng checklist để xác minh từng sản phẩm trước khi gửi đóng gói. Lỗi tương ứng với "In lại".</div>
+    </div>
+
+    <div class="mu-screen">
+      <div class="mu-screen-title"><strong>6. Mark Shipped + Push Tracking to Etsy</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Etsy</span>
+        <span class="mu-menu">Shipping</span>
+        <span class="mu-spacer"></span>
+        <span class="mu-user">BA Shipping</span>
+      </div>
+      <div class="mu-breadcrumb">
+        Shipping <span class="mu-sep">/</span> <strong>Order #1241</strong>
+      </div>
+      <div class="mu-form">
+        <div class="mu-form-title">Mark Shipped</div>
+        <div class="mu-grid2" style="margin-top:16px">
+          <div class="mu-field">
+            <span class="mu-field-label">Tracking Number</span>
+            <span class="mu-field-value mu-mono">1Z999AA10123456784</span>
+          </div>
+          <div class="mu-field">
+            <span class="mu-field-label">Carrier</span>
+            <span class="mu-field-value">USPS</span>
+          </div>
+          <div class="mu-field">
+            <span class="mu-field-label">Push to Etsy</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="mu-pill mu-pill-neutral">pending</span>
+              <button class="mu-btn-primary" style="padding:5px 10px">Push now</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;background:#f0fdf4;border-left:3px solid #16a34a;padding:8px 12px;font-size:11px;color:#16a34a;border-radius:3px">
+          <b>✓ Thành công:</b> Tracking đã được gửi lên Etsy vào 2026-06-03 14:22. Khách hàng sẽ nhận email "Đơn đã giao".
+        </div>
+      </div>
+      <div class="mu-caption">Shipping team nhập tracking, chọn carrier, bấm "Push now" để gửi lên Etsy. Trạng thái: pending → pushed (hoặc failed).<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn (<code>sale.view_order_form</code>) + nút Mark Shipped tuỳ biến; cơ chế đẩy tracking lên Etsy chạy qua <code>P1-TRK-PUSH-ETSY</code> cron + service <code>carrier_detector</code> trong <code>multichannel_hub_fulfillment</code>.</i></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3><span class="num">C</span> Tiêu chí thành công</h3>
+  <ul class="kpi-list">
+    <li><b>Thời gian xử lý</b><br>Trung bình 12 ngày (từ Mới nhận → Đã giao). SLA: ≤15 ngày cho 95% đơn.</li>
+    <li><b>Tỉ lệ QC pass</b><br>≥98% đơn qua QC lần đầu mà không phát hiện lỗi. Giảm "In lại".</li>
+    <li><b>Tracking push success</b><br>100% đơn gửi tracking lên Etsy. Không để tắc ở "Chờ nhãn vận chuyển" >3 ngày.</li>
+    <li><b>On-time delivery</b><br>≥95% khách hàng nhận hàng theo cam kết. Theo dõi carrier API và webhook.</li>
+    <li><b>Khách hàng hài lòng</b><br>Tỉ lệ "Có vấn đề" <5% toàn bộ đơn MTO. Tỉ lệ hoàn trả / in lại <2%.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h3><span class="num">D</span> Liên kết đến luồng khác</h3>
+  <div class="crosslink-grid">
+    <a href="flow-1-tao-san-pham.html">
+      <b>Luồng 1</b>
+      Tạo &amp; Đăng sản phẩm
+    </a>
+    <a href="flow-2-nhan-don-hang-etsy.html">
+      <b>Luồng 2</b>
+      Nhận đơn Etsy
+    </a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">
+      <b>Luồng 3b</b>
+      Giao hàng Gearment (Dropship)
+    </a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">
+      <b>Luồng 4</b>
+      Theo dõi Tracking
+    </a>
+    <a href="role-1-ba-lead.html">
+      <b>Vai trò</b>
+      BA Lead
+    </a>
+    <a href="role-3-san-xuat.html">
+      <b>Vai trò</b>
+      Shipping Manager
+    </a>
+  </div>
+</div>
+
+<div class="section">
+  <h3><span class="num">E</span> Lưu ý &amp; Phát triển</h3>
+  <p><b>🔄 Tự động hóa trạng thái (sắp ra):</b> Khi sản xuất hoàn thành work order trong MRP, trạng thái pipeline sẽ tự động chuyển từ "Sản xuất" → "QC". Hiện tại BA thay đổi thủ công.</p>
+  <p><b>📊 Reporting dashboard (sắp ra):</b> Dashboard "Tiến độ MTO" sẽ hiển thị số đơn ở từng trạng thái, thời gian dừng trung bình, và phát hiện bottleneck (ví dụ: 5 đơn kẹt ở "Chờ duyệt thiết kế" >1 tuần).</p>
+  <p><b>⚠️ Excel GKE tracking import:</b> Shipping team có thể nhập tracking hàng loạt từ file Excel GKE qua wizard "Nhập tracking GKE". Hệ thống tự động lập ánh xạ SKU → tracking và cập nhật pipeline sang "Đã in nhãn" + "Giao bưu vận".</p>
+  <p><b>💬 Hậu mãi workflow (sắp ra):</b> Tài liệu chi tiết xem `FLOW_HAU_MAI_VN.md` (hỗ trợ hoàn trả, in lại, hoàn tiền).</p>
+</div>
+
+</div>
+
+<footer>
+Cập nhật: 2026-06-03 · Phiên bản 1.0 · <a href="index.html" style="color:#714B67">← Quay lại tổng quan</a>
+</footer>
+
+</body>
+</html>

@@ -17,3 +17,9 @@ from . import multichannel_enquiry_etsy
 from . import etsy_listing
 from . import etsy_listing_product
 from . import product_attribute
+from . import etsy_taxonomy_node
+from . import multichannel_listing
+from . import etsy_shipping_profile
+from . import multichannel_listing_attribute_mapping
+from . import etsy_shop_attribute_mapping
+from . import etsy_order_ticket

@@ -29,7 +29,21 @@ class SaleOrder(models.Model):
     etsy_processing_time = fields.Char(string='Processing Time')
     etsy_shipping_cost = fields.Float(string='Etsy Shipping Cost', digits=(12, 2))
     etsy_discount_code = fields.Char(string='Discount Code')
+    etsy_discount_amount = fields.Float(
+        string='Etsy Discount Amount', digits=(12, 2), readonly=True)
     etsy_subtotal = fields.Float(string='Etsy Subtotal', digits=(12, 2))
+    etsy_tax_total = fields.Float(
+        string='Etsy Tax Total', digits=(12, 2), readonly=True)
+    etsy_receipt_status = fields.Char(string='Etsy Receipt Status', readonly=True)
+    etsy_is_shipped = fields.Boolean(string='Etsy Shipped', readonly=True)
+    etsy_needs_gift_wrap = fields.Boolean(string='Needs Gift Wrap', readonly=True)
+    etsy_gift_wrap_price = fields.Float(
+        string='Etsy Gift Wrap Price', digits=(12, 2), readonly=True)
+    etsy_total_mismatch = fields.Boolean(
+        string='Etsy Total Mismatch', readonly=True, index=True,
+        help='Set when Odoo amount_total did not reconcile with the Etsy '
+             'buyer-paid total (grandtotal minus marketplace-remitted tax). '
+             'Review pricing/line mapping for this order.')
     etsy_email_log_id = fields.Many2one(
         'etsy.email.log', string='Source Email', ondelete='set null')
     # Spec 005 P0-16b1 — provenance for orders ingested via canonical
@@ -167,6 +181,26 @@ class SaleOrder(models.Model):
                 for req in order.address_change_request_ids
             )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Flow 4 #1 — surface the Etsy buyer note in the order chatter.
+
+        The note is stored in ``etsy_note_from_buyer`` by every ingestion
+        path (email parser, API ingestor, import wizard). Posting it to the
+        chatter on create lets Marketing see the buyer's message in the
+        conversation thread instead of only as a read-only field. Posting
+        from ``create`` (not the service) covers all three paths at once.
+        """
+        orders = super().create(vals_list)
+        for order in orders:
+            note = (order.etsy_note_from_buyer or '').strip()
+            if order.etsy_order_id and note:
+                order.message_post(
+                    subject=_('Note from buyer (Etsy)'),
+                    body=tools.plaintext2html(note),
+                )
+        return orders
+
     def write(self, vals):
         """C-SO-001: block destination-field writes while a request is pending.
 
@@ -200,6 +234,68 @@ class SaleOrder(models.Model):
             'target': 'new',
             'context': {
                 'default_order_id': self.id,
+            },
+        }
+
+    def action_pull_etsy_orders(self):
+        """Manual Etsy API receipt pull scoped to the caller's shops."""
+        Shop = self.env['etsy.shop']
+        if (
+            self.env.user.has_group('base.group_system')
+            or self.env.user.has_group('sales_team.group_sale_manager')
+        ):
+            shops = Shop.search([('active_source', '=', 'api')])
+        else:
+            shops = Shop.search([
+                ('active_source', '=', 'api'),
+                ('user_id', '=', self.env.user.id),
+            ])
+        if not shops:
+            return self._etsy_pull_notification(
+                _('Pull Etsy Orders'),
+                _('No Etsy shops assigned to you.'),
+                'warning',
+            )
+
+        from ..services.etsy_order_syncer import EtsyOrderSyncer
+        # sudo(): OAuth tokens and etsy_api_shop_id are system-only fields.
+        # The user->shop search above is the authorization gate; elevation is
+        # applied only after computing the allowed shops from env.user.
+        syncer = EtsyOrderSyncer(self.sudo().env)
+        totals = {'ingested': 0, 'audited': 0, 'errors': 0}
+        for shop in shops:
+            try:
+                result = syncer.sync_shop_orders(shop.sudo())
+            except Exception:
+                totals['errors'] += 1
+                _logger.exception(
+                    'Manual Etsy pull failed for shop %s (id=%s)',
+                    shop.name, shop.id,
+                )
+                continue
+            for key in totals:
+                totals[key] += int((result or {}).get(key, 0) or 0)
+        message = _(
+            'Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, '
+            '%(errors)s errors.'
+        ) % {
+            'ingested': totals['ingested'],
+            'audited': totals['audited'],
+            'errors': totals['errors'],
+        }
+        level = 'warning' if totals['errors'] else 'success'
+        return self._etsy_pull_notification(_('Pull Etsy Orders'), message, level)
+
+    @staticmethod
+    def _etsy_pull_notification(title, message, notification_type):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notification_type,
+                'sticky': False,
             },
         }
 

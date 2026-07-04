@@ -11,6 +11,7 @@
         <field name="arch" type="xml">
             <list string="Etsy Shops">
                 <field name="name"/>
+                <field name="user_id"/>
                 <field name="order_count"/>
                 <field name="revenue_total" widget="monetary"/>
                 <field name="active"/>
@@ -64,23 +65,38 @@
                             <field name="name" placeholder="Shop Name"/>
                         </h1>
                     </div>
+                    <!-- P-DS-3a — Tier 1 essentials: shop identity + active
+                         adapter + listing currency. Visible to anyone with
+                         etsy.shop read ACL (sales + system). -->
                     <group>
                         <group>
                             <field name="active" invisible="1"/>
+                            <field name="user_id"/>
                             <field name="revenue_total" widget="monetary"/>
+                            <field name="listing_currency_id"/>
                         </group>
-                        <group string="Etsy API Configuration"
-                               groups="base.group_system">
+                        <group string="Etsy API Identity">
                             <field name="etsy_api_shop_id"
+                                   class="mu-mono"
                                    placeholder="e.g. 60752333"/>
-                            <field name="active_source"/>
-                            <field name="auto_recovery"/>
-                            <field name="active_source_changed_at" readonly="1"/>
-                            <field name="health_check_consecutive_failures"
-                                   readonly="1"/>
-                            <field name="recovery_probe_consecutive_successes"
-                                   readonly="1"/>
+                            <field name="active_source"
+                                   widget="badge"
+                                   decoration-success="active_source == 'api'"
+                                   decoration-warning="active_source == 'email'"/>
                         </group>
+                    </group>
+                    <!-- P-DS-3a — Tier 3 (dev-only) diagnostics. Hidden
+                         behind base.group_no_one per PHASE_3_SCOPE.md and
+                         owner gate (2026-06-07). Probe counters + audit
+                         timestamp + auto-recovery toggle live here. -->
+                    <group string="Advanced Diagnostics"
+                           groups="base.group_no_one">
+                        <field name="auto_recovery"/>
+                        <field name="active_source_changed_at" readonly="1"/>
+                        <field name="health_check_consecutive_failures"
+                               readonly="1"/>
+                        <field name="recovery_probe_consecutive_successes"
+                               readonly="1"/>
                     </group>
                     <notebook>
                         <page string="Publisher Defaults" name="publisher_defaults">
@@ -95,12 +111,53 @@
                                 <field name="default_who_made"/>
                                 <field name="default_when_made"/>
                                 <field name="default_is_supply"/>
+                                <button name="action_open_shipping_profile_create_wizard"
+                                        type="object"
+                                        string="Create shipping profile"
+                                        icon="fa-plus"
+                                        class="btn-link"
+                                        groups="multichannel_hub_core.group_ba_user"/>
+                            </group>
+                            <!-- P-ENH-ESTY-190 / ADR-017 — shop-level
+                                 brand-voice defaults. 3rd tier of the
+                                 listing → product → shop chain. Empty
+                                 fields continue the chain. -->
+                            <group string="Shop Brand-Voice Defaults"
+                                   groups="multichannel_hub_core.group_marketing_user">
+                                <field name="default_title"
+                                       placeholder="e.g. Handmade Ceramic by JaHandmadeArt"/>
+                                <field name="default_description"
+                                       placeholder="Per-shop fallback description; empty → product description_sale"/>
+                                <field name="default_image_1920"
+                                       widget="image"
+                                       options="{'preview_image': 'default_image_1920'}"/>
                             </group>
                             <group string="Etsy Publisher Unit Preferences"
                                    groups="base.group_system">
                                 <field name="weight_unit_pref"/>
                                 <field name="dimensions_unit_pref"/>
                             </group>
+                            <!-- P-LIST-ATTR-CONFIG / UX HIGH #4 — shop
+                                 layer for attribute mapping. Tier-2 of the
+                                 3-tier fallback chain. -->
+                            <div class="alert alert-info" role="alert">
+                                <strong>Attribute mapping priority:</strong>
+                                Per-listing rows (on the Listing form) →
+                                These shop defaults → Product global
+                                (Product Attribute). Leave a row's override
+                                empty to fall through to the next tier.
+                            </div>
+                            <field name="default_attribute_mapping_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_attribute_id"
+                                           options="{'no_create': True}"/>
+                                    <field name="etsy_property_id_override"
+                                           placeholder="Numeric Etsy property_id"/>
+                                    <field name="etsy_property_name_override"
+                                           placeholder="Etsy property_name string"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Orders" name="orders">
                             <field name="order_ids" readonly="1">

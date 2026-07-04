@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luồng 4: Chăm sóc sau bán — Tin nhắn, Đổi địa chỉ, In lại, Hoàn tiền — Hatafa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.55}
+  .topbar{position:sticky;top:0;background:#ffffff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar a{color:#714B67;text-decoration:none;font-size:14px}
+  .container{max-width:1180px;margin:0 auto;padding:30px 28px 72px}
+  .page-head{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:28px 32px;margin-bottom:28px}
+  .page-head .crumbs{font-size:12px;color:#9ca3af;letter-spacing:0.5px;margin-bottom:8px}
+  .page-head h2{font-size:26px;font-weight:700;margin-bottom:10px;color:#1a1a1a}
+  .page-head .lede{color:#666;font-size:15px;max-width:780px;margin-bottom:14px}
+  .page-head .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .green{background:#dcfce7;color:#16a34a}
+  .yellow{background:#fef9c3;color:#a16207}
+  .red{background:#fee2e2;color:#dc2626}
+  .grey{background:#f3f4f6;color:#6b7280}
+  .blue{background:#dbeafe;color:#1d4ed8}
+  .section{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:24px 28px;margin-bottom:22px}
+  .section h3{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section h3 .num{display:inline-flex;width:28px;height:28px;background:#714B67;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .section p{color:#444;font-size:14.5px;margin-bottom:10px;line-height:1.65}
+  .section p:last-child{margin-bottom:0}
+
+  /* Swimlane */
+  .swim{display:grid;grid-template-columns:130px repeat(4,1fr);gap:1px;background:#e5e7eb;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:12.5px;margin:10px 0}
+  .swim>div{background:#fff;padding:10px 12px}
+  .swim-head{background:#faf5f9 !important;font-weight:600;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px}
+  .swim-row-lbl{background:#fafafa !important;color:#6b7280;font-weight:500;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}
+  .swim-cell.done{background:#f0fdf4 !important}
+  .swim-cell.pending{background:#fffbeb !important;color:#a16207}
+  .swim-cell.blocked{background:#fef2f2 !important;color:#b91c1c}
+
+  /* Steps */
+  .steps{list-style:none;margin-top:6px}
+  .step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f3f4f6}
+  .step:last-child{border-bottom:none}
+  .step .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:#714B67;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .step .body{flex:1}
+  .step .title{font-weight:600;color:#1f2937;font-size:14.5px;margin-bottom:3px}
+  .step .who{font-size:12px;color:#714B67;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+  .step .desc{color:#555;font-size:13.5px;line-height:1.6}
+  .step .sys{margin-top:6px;background:#f9fafb;border-left:3px solid #714B67;padding:8px 12px;font-size:12.5px;color:#4b5563;line-height:1.55}
+  .step .sys b{color:#1f2937}
+  .step .badge{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Mockups (mu-*) */
+  .mu-screens{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:26px 24px 22px;margin-top:14px}
+  .mu-screens>h3{color:#1f2937;font-size:20px;margin:0 0 4px;font-weight:700;display:block}
+  .mu-screens>.mu-lede{color:#6b7280;font-size:13.5px;margin-bottom:18px;max-width:780px}
+  .mu-screen{background:#fff;border:1px solid #d1d5db;border-radius:4px;margin-bottom:22px;overflow:hidden;font:13px/1.4 -apple-system,"Segoe UI",system-ui,sans-serif;color:#1f2937}
+  .mu-screen-title{padding:10px 16px;font-size:13px;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-weight:500}
+  .mu-screen-title strong{color:#1f2937;font-weight:600}
+  .mu-caption{padding:10px 16px;font-size:12px;color:#6b7280;background:#fafafa;border-top:1px solid #e5e7eb;line-height:1.55}
+  .mu-caption b{color:#1f2937;font-weight:600}
+  .mu-chrome-bar{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#714B67;color:#fff;font-size:13px}
+  .mu-chrome-bar .mu-app{font-weight:600}
+  .mu-chrome-bar .mu-menu{color:rgba(255,255,255,0.85)}
+  .mu-chrome-bar .mu-spacer{flex:1}
+  .mu-chrome-bar .mu-user{color:rgba(255,255,255,0.85);font-size:12px}
+  .mu-breadcrumb{padding:8px 14px;background:#fff;border-bottom:1px solid #e5e7eb;font-size:13px;color:#4b5563}
+  .mu-breadcrumb .mu-sep{color:#9ca3af;padding:0 6px}
+  .mu-breadcrumb strong{color:#1f2937;font-weight:600}
+  .mu-statusbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fafafa;flex-wrap:wrap}
+  .mu-btn{padding:5px 12px;font-size:12px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:3px;font-weight:500}
+  .mu-btn-primary{border-color:#714B67;background:#714B67;color:#fff}
+  .mu-btn-link{border:none;background:transparent;color:#714B67;padding:5px 6px}
+  .mu-stage-pipe{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af}
+  .mu-stage{padding:4px 10px;border:1px solid #e5e7eb;border-radius:999px;color:#6b7280}
+  .mu-stage.active{border-color:#714B67;color:#714B67;background:#faf5f9;font-weight:600}
+  .mu-form{padding:16px 18px}
+  .mu-form-title{font-size:20px;font-weight:600;color:#111827;margin-bottom:12px}
+  .mu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px}
+  .mu-field{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .mu-field-label{color:#6b7280;font-size:12px}
+  .mu-field-value{color:#1f2937;font-size:13px}
+  .mu-field-value.mu-amount{font-variant-numeric:tabular-nums;font-weight:600}
+  .mu-field-value.mu-link{color:#714B67;text-decoration:underline}
+  .mu-field-value.mu-mono{font-family:"SF Mono",Menlo,Consolas,monospace;background:#faf5f9;padding:2px 6px;border-radius:3px;font-size:12.5px;color:#714B67;font-weight:600}
+  .mu-pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .mu-pill-success{background:#dcfce7;color:#15803d}
+  .mu-pill-warn{background:#fef3c7;color:#b45309}
+  .mu-pill-danger{background:#fee2e2;color:#b91c1c}
+  .mu-pill-neutral{background:#f3f4f6;color:#4b5563}
+  .mu-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin:18px -18px 0;padding:0 18px;overflow-x:auto}
+  .mu-tab{padding:9px 14px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap}
+  .mu-tab.active{color:#714B67;border-bottom-color:#714B67;font-weight:600}
+  .mu-list{width:100%;border-collapse:collapse;font-size:13px}
+  .mu-list thead th{background:#f9fafb;padding:9px 12px;text-align:left;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb}
+  .mu-list tbody td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1f2937}
+  .mu-list tbody tr:last-child td{border-bottom:0}
+  .mu-list .mu-mono{font-family:"SF Mono",Menlo,monospace;color:#714B67;font-weight:600}
+  .mu-modal-overlay{padding:30px 28px;background:rgba(31,19,32,0.6);min-height:340px;display:flex;align-items:flex-start;justify-content:center}
+  .mu-modal{background:#fff;border-radius:6px;max-width:520px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.18);overflow:hidden}
+  .mu-modal-head{background:#fef2f2;color:#b91c1c;padding:12px 18px;font-weight:600;font-size:14px;border-bottom:1px solid #fecaca}
+  .mu-modal-body{padding:18px}
+  .mu-modal-banner{background:#fef9c3;color:#854d0e;padding:8px 12px;border-radius:4px;font-size:12.5px;margin:10px 0;line-height:1.5;border-left:3px solid #ca8a04}
+  .mu-modal-foot{padding:12px 18px;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:flex-end;gap:8px}
+  .mu-modal-design{background:#e5e5e5;color:#4b5563;padding:30px 28px;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative}
+  .mu-modal-design::before{content:'Trong thiết kế — Story 4.8 etsy.order.ticket. Hôm nay BA Lead refund thủ công trên Etsy site và viết note vào chatter.';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;text-align:center;background:rgba(255,255,255,0.9);padding:20px;border-radius:6px;border:1px solid #d1d5db}
+
+  /* KPI + cross-link */
+  .kpi-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .kpi-list li{background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:13px;color:#374151}
+  .kpi-list li b{color:#714B67;display:block;font-size:12px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .crosslink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+  .crosslink-grid a{display:block;background:#fafafa;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;text-decoration:none;color:inherit;font-size:13px;transition:border-color 0.15s}
+  .crosslink-grid a:hover{border-color:#714B67}
+  .crosslink-grid a b{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
+  footer{text-align:center;color:#9ca3af;font-size:12.5px;padding:32px;border-top:1px solid #e5e5e5;margin-top:24px}
+  @media (max-width:760px){.mu-grid2{grid-template-columns:1fr}.swim{grid-template-columns:1fr;gap:0}.swim-head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Luồng 4 · Chăm sóc sau bán — Tin nhắn, Đổi địa chỉ, In lại, Hoàn tiền</h1>
+  <a href="index.html">← Tổng quan</a>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="crumbs">LUỒNG 4 · ĐỌC ~7 PHÚT</div>
+    <h2>Chăm sóc sau bán — Tin nhắn, Đổi địa chỉ, In lại, Hoàn tiền</h2>
+    <p class="lede">Bốn quy trình hậu mãi (sau khi đơn giao đến khách): (a) tin nhắn từ khách qua Etsy → đường email dự phòng (kênh chính cần Etsy duyệt quyền đọc tin nhắn — đang chờ); (b) yêu cầu đổi địa chỉ → wizard BA Lead duyệt qua FR-017 gate (đã có trong hệ thống — mô hình "Address Change Request" trong `etsy_integration`); (c) in lại nếu sản phẩm lỗi → tái sử dụng file thiết kế, đặt lại trạng thái "Chờ in"; (d) hoàn tiền &amp; hoàn trả → hôm nay BA xử lý thủ công trên Etsy site + ghi chú vào trao đổi đơn, hệ thống tự động <b>đang thiết kế</b> (Story 4.8 — chưa khởi công).</p>
+    <div class="pills">
+      <span class="pill yellow">Đang xây dựng 60%</span>
+      <span class="pill red">Hoàn tiền — trong thiết kế</span>
+      <span class="pill grey">Nguồn: FLOW_HAU_MAI_VN · HUONG_DAN_HAU_MAI_VN</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">A</span>Ai làm gì — sơ đồ vai trò</h3>
+    <p>Bốn luồng hậu mãi liên kết Marketing/BA/Shipping, Etsy, và hệ thống nền. Bảng dưới đọc từ trái qua phải: mỗi cột là một vai trò, mỗi hàng là một mốc trong 4 luồng chính.</p>
+    <div class="swim">
+      <div class="swim-head"></div>
+      <div class="swim-head">Khách Etsy</div>
+      <div class="swim-head">BA Marketing</div>
+      <div class="swim-head">BA Lead</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+
+      <div class="swim-row-lbl">1. Tin nhắn</div>
+      <div class="swim-cell done">Gửi tin hỏi tình trạng / lỗi sản phẩm qua Etsy</div>
+      <div class="swim-cell pending">Email parser nhận + post vào chatter đơn</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell pending">Cron Gmail 10 phút, khử trùng email — API chưa duyệt</div>
+
+      <div class="swim-row-lbl">2. Đổi địa chỉ</div>
+      <div class="swim-cell done">Yêu cầu sửa địa chỉ qua tin nhắn hoặc đơn hàng</div>
+      <div class="swim-cell done">Bấm wizard "Yêu cầu đổi địa chỉ" + điền địa chỉ mới</div>
+      <div class="swim-cell done">Duyệt qua form, áp địa chỉ (chỉ pre-production)</div>
+      <div class="swim-cell done">FR-017 gate: khoá sau trạng thái "Đang in"</div>
+
+      <div class="swim-row-lbl">3. In lại</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell">—</div>
+      <div class="swim-cell done">Chuyển pipeline "In lại", tái sử dụng design file</div>
+      <div class="swim-cell done">Tạo phiếu MRP + đẩy tracking thứ hai lên Etsy</div>
+
+      <div class="swim-row-lbl">4. Hoàn tiền</div>
+      <div class="swim-cell done">Yêu cầu hoàn tiền qua tin nhắn</div>
+      <div class="swim-cell blocked">Refund thủ công trên Etsy site + note vào chatter</div>
+      <div class="swim-cell blocked">Duyệt quyết định + ghi log</div>
+      <div class="swim-cell blocked">Tự động hoá chờ Story 4.8 (P4-02)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">B</span>Các bước chi tiết (12 bước)</h3>
+    <ol class="steps">
+      <li class="step"><div class="n">1</div><div class="body">
+        <div class="who">Khách Etsy</div>
+        <div class="title">Gửi tin nhắn qua Etsy Messaging</div>
+        <div class="desc">Khách hỏi tình trạng đơn, báo lỗi sản phẩm, hoặc yêu cầu đổi địa chỉ. Tin nhắn gửi qua inbox Etsy.</div>
+      </div></li>
+
+      <li class="step"><div class="n">2</div><div class="body">
+        <div class="who">Hệ thống · 10 phút</div>
+        <div class="title">Cron email parser nhận tin từ Etsy Gmail</div>
+        <div class="desc">Mỗi 10 phút, cron chạy để kiểm tra email mới từ Etsy alias (vd. noreply@etsy.com). Hệ thống nhận diện email là tin khách (khác email báo đơn mới).</div>
+        <div class="sys"><b>Hệ thống:</b> Email được ghi vào log; hôm nay phụ thuộc đường email vì API <b>conversations_r</b> chưa được Etsy duyệt (E1 — cần P1-MSG-SCOPE re-submit). Khi API hoạt động, sẽ có thêm cron Conversations API chạy song song, tự khử trùng lặp.</div>
+      </div></li>
+
+      <li class="step"><div class="n">3</div><div class="body">
+        <div class="who">Email Parser</div>
+        <div class="title">Liên kết tin nhắn với đơn theo Receipt ID</div>
+        <div class="desc">Parser bóc nội dung email tìm Receipt ID. Nếu tìm thấy → post tin vào chatter của đơn tương ứng. Nếu không khớp → giữ trong Buffer 7 ngày để đối chiếu sau.</div>
+        <div class="sys"><b>Buffer workflow:</b> tin orphaned sau 7 ngày → trạng thái "orphaned" để BA review hàng tuần. BA Marketing copy nội dung vào chatter đơn đúng (nếu tìm được).</div>
+      </div></li>
+
+      <li class="step"><div class="n">4</div><div class="body">
+        <div class="who">BA Marketing</div>
+        <div class="title">Đọc tin + trả lời từ chatter đơn</div>
+        <div class="desc">Mở đơn → chatter → thấy tin từ buyer đã được post. BA đánh giá nội dung + bấm "Send message" để reply. Odoo gửi email ra qua mail server.</div>
+      </div></li>
+
+      <li class="step"><div class="n">5</div><div class="body">
+        <div class="who">BA Marketing</div>
+        <div class="title">Nếu khách yêu cầu đổi địa chỉ — bấm wizard</div>
+        <div class="desc">Mở đơn → bấm nút <b>"Yêu cầu đổi địa chỉ"</b>. Wizard hiển thị địa chỉ hiện tại + cho sửa từng trường. Điền địa chỉ mới + lý do (copy từ trao đổi đơn).</div>
+        <div class="sys"><b>Sau lưu:</b> trường địa chỉ trên form bị <b>khoá</b> — BA Marketing không sửa trực tiếp được. Hệ thống tạo bản ghi yêu cầu đổi địa chỉ chờ duyệt.<br><i>Mockup gốc: form chuẩn đơn hàng (sale.view_order_form @ addons/sale/views/sale_order_views.xml); wizard yêu cầu lấy từ etsy.address.change.request form view @ etsy_integration/views/etsy_address_change_request_views.xml.</i></div>
+      </div></li>
+
+      <li class="step"><div class="n">6</div><div class="body">
+        <div class="who">BA Lead</div>
+        <div class="title">Duyệt yêu cầu đổi địa chỉ</div>
+        <div class="desc">Menu Vận hành → Address Change Requests. Mở yêu cầu mới → kiểm tra đơn còn ở giai đoạn cho phép hay không (FR-017 gate: chỉ pre-production). Bấm <b>"Duyệt"</b> hoặc <b>"Từ chối"</b>.</div>
+        <div class="sys"><b>FR-017 guard:</b> Nếu đơn đã ở trạng thái "Đang in" trở đi, nút Duyệt bị vô hiệu hoá + thông báo "Đơn đã in nhãn, không cho đổi". Chỉ pre-production (Chờ duyệt thiết kế, Chờ in, v.v.) mới cho đổi. Ràng buộc đã codified — xem `etsy.address.change.request._check_pipeline_state` (C-AC-001/002/003).</div>
+      </div></li>
+
+      <li class="step"><div class="n">7</div><div class="body">
+        <div class="who">Hệ thống</div>
+        <div class="title">Áp địa chỉ mới + ghi trao đổi đơn</div>
+        <div class="desc">Nếu duyệt → địa chỉ mới được cập nhật vào đơn + trường mở khoá lại (`approve_address_change=True` trong context bypass lock). Trao đổi đơn tự ghi log: "BA Lead duyệt yêu cầu đổi địa chỉ từ BA Marketing — áp địa chỉ mới."</div>
+      </div></li>
+
+      <li class="step"><div class="n">8</div><div class="body">
+        <div class="who">BA Lead</div>
+        <div class="title">Nếu khách báo lỗi sản phẩm — mở wizard In lại</div>
+        <div class="desc">Từ chatter, BA Lead bấm nút <b>"Chuyển sang In lại"</b> ở tab Pipeline. Wizard hỏi lý do — ghi chi tiết (vd. "Khách báo in mờ").</div>
+        <div class="sys"><b>Sau lưu:</b> trạng thái pipeline từ (vd. "Hoàn tất") → "In lại" (trạng thái 16). Hệ thống lưu từng status change vào chatter với timestamp + user.</div>
+      </div></li>
+
+      <li class="step"><div class="n">9</div><div class="body">
+        <div class="who">Sản xuất</div>
+        <div class="title">Tạo phiếu MRP in mới</div>
+        <div class="desc">Nhận thông báo qua chatter mention hoặc Pipeline Transitions. Tạo phiếu sản xuất MRP mới → chọn đơn gốc làm tham chiếu. Tái sử dụng file thiết kế cũ (tab Design Files có sẵn).</div>
+      </div></li>
+
+      <li class="step"><div class="n">10</div><div class="body">
+        <div class="who">BA Shipping · MTO hoặc Dropship</div>
+        <div class="title">Áp tracking in lại lên đơn</div>
+        <div class="desc"><b>MTO:</b> in nhãn mới → nhập tracking mới qua wizard "Nhập tracking GKE". <b>Dropship:</b> bấm "Tạo phiếu Gearment in lại" — hệ thống tạo Gearment order mới, tracking mới về qua webhook sau khi Gearment in xong.</div>
+        <div class="sys"><b>Lịch sử tracking:</b> hệ thống lưu cả tracking gốc lẫn tracking in lại trong tab Etsy → "Lịch sử tracking" của đơn gốc (không tạo bản ghi đơn mới).</div>
+      </div></li>
+
+      <li class="step"><div class="n">11</div><div class="body">
+        <div class="who">Hệ thống · nền</div>
+        <div class="title">Push tracking thứ hai lên Etsy</div>
+        <div class="desc">Khi tracking mới được áp → hệ thống tự gọi Etsy push tracking API (cùng cơ chế đơn gốc). Etsy hiển thị 2 tracking trên cùng 1 receipt.</div>
+      </div></li>
+
+      <li class="step"><div class="n">12</div><div class="body">
+        <div class="who">BA Marketing · thủ công hôm nay</div>
+        <div class="title">Nếu khách yêu cầu hoàn tiền — refund qua Etsy + note chatter</div>
+        <div class="desc"><b>Hôm nay (v1 thủ công):</b> BA Marketing mở Etsy Shop Manager → tìm receipt → bấm "Refund buyer" → điền số tiền + lý do. Quay lại Odoo → ghi note vào chatter đơn: "Refunded $X.XX qua Etsy ngày YYYY-MM-DD".</div>
+        <div class="sys"><b>Kế hoạch tự động (P4-02):</b> model `etsy.order.ticket` theo dõi mỗi yêu cầu hậu mãi — ticket có loại (refund / return / reprint / other), workflow (open → in_progress → resolved). Sau khi resolved, ghi chi phí hoàn vào đơn → Dashboard Pricing Audit tính margin tự động.</div>
+        <div class="badge red">🟥 Hoàn tiền — trong thiết kế (Story 4.8, P4-02, Master Plan 007)</div>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="section mu-screens" id="mu-screens">
+    <h3 style="color:#1f2937">Màn hình Odoo trong luồng này</h3>
+    <div class="mu-lede">4 màn hình mô phỏng. Từ chatter tin nhắn buyer, wizard duyệt đổi địa chỉ, pipeline in lại, và placeholder refund (thiết kế).</div>
+
+    <!-- MOCKUP 1: Buyer message in chatter -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 1 · <strong>Chatter đơn hàng — Tin nhắn buyer tự động post</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Dashboard › Receipt #12345 · JaHandmadeArt</span>
+        <span class="mu-spacer"></span><span class="mu-user">marketing@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span><strong>#12345 · Coffee Mug Linen</strong></div>
+      <div style="padding:16px 18px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;gap:12px">
+        <div style="flex:1">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:3px">Trạng thái đơn</div>
+          <div style="font-size:13px;color:#1f2937;font-weight:600">Hoàn tất · Giao lại 2026-06-01</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:3px">Khách</div>
+          <div style="font-size:13px;color:#1f2937;font-weight:600">Sarah Miller · Milwaukee, WI</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:3px">Tổng giá</div>
+          <div style="font-size:13px;color:#1f2937;font-weight:600">$25.50</div>
+        </div>
+      </div>
+      <div style="padding:14px 18px;background:#fff;min-height:320px">
+        <div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:12px">Chatter · 3 bình luận</div>
+        <div style="margin-bottom:14px;padding:12px;background:#f0fdf4;border-left:3px solid #16a34a">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:2px">Email Parser · 2 giờ trước</div>
+          <div style="font-size:13px;color:#1f2937;margin-bottom:4px"><b>Buyer message:</b> "Hi, I love the mug! But I realized I need XL size instead of Medium. Can I change my order?"</div>
+          <div style="font-size:11px;color:#6b7280">Từ email: noreply@etsy.com</div>
+        </div>
+        <div style="margin-bottom:14px;padding:12px;background:#fef9c3;border-left:3px solid #ca8a04">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:2px">BA Marketing · 1 giờ trước</div>
+          <div style="font-size:13px;color:#1f2937;margin-bottom:4px">Hi Sarah, thanks for the feedback! Let me help you change the size. I'll create a request for our approval team — you should hear back within 2 hours.</div>
+          <span style="display:inline-block;padding:2px 9px;background:#f3f4f6;color:#4b5563;border-radius:6px;font-size:11px;font-weight:600">replied</span>
+        </div>
+        <div style="padding:12px;background:#e8f4f8;border-left:3px solid #0284c7">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:6px">BA Marketing mentioned #address-change-request</div>
+          <div style="font-size:13px;color:#1f2937">📝 Created address change request (from Medium → XL)</div>
+        </div>
+      </div>
+      <div class="mu-caption">Chatter là phần chuẩn của Odoo trên mọi mô hình kế thừa <code>mail.thread</code>. Tin nhắn buyer được parser từ email Etsy tự động post vào chatter của đơn hàng tương ứng.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: chatter chuẩn của Odoo (<code>mail.thread</code> mặc định trên <code>sale.order</code>); không có view tuỳ biến — email parser của <code>etsy_integration</code> tự post message vào chatter qua API.</i></div>
+    </div>
+
+    <!-- MOCKUP 2: Address change approval form -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 2 · <strong>Wizard duyệt đổi địa chỉ — BA Lead approval gate</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Address Change Requests › #RC-001</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-modal-overlay">
+        <div class="mu-modal">
+          <div class="mu-modal-head">Duyệt yêu cầu đổi địa chỉ</div>
+          <div class="mu-modal-body">
+            <div class="mu-modal-banner"><b>Lưu ý:</b> Đơn này đang ở trạng thái "Chờ duyệt thiết kế" — vẫn có thể đổi địa chỉ. Nếu đã chuyển sang "Đang in" trở đi thì không cho đổi (FR-017 lock).</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0">
+              <div>
+                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:4px">Đơn gốc</div>
+                <div style="font-size:13px;color:#1f2937;font-weight:600">#12345</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:4px">Yêu cầu từ</div>
+                <div style="font-size:13px;color:#1f2937;font-weight:600">BA Marketing · 1 giờ trước</div>
+              </div>
+            </div>
+            <div style="margin:14px 0">
+              <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:6px">Địa chỉ cũ</div>
+              <div style="font-size:13px;color:#1f2937;background:#fafafa;padding:10px;border-radius:4px">Sarah Miller<br>123 Main St, Apt 4B<br>Milwaukee, WI 53202, USA</div>
+            </div>
+            <div style="margin:14px 0">
+              <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:6px">Địa chỉ mới (đề xuất)</div>
+              <div style="font-size:13px;color:#1f2937;background:#fef9c3;padding:10px;border-radius:4px;border:1px solid #ca8a04">Sarah Miller<br>456 Oak Ave, Suite 12C<br>Milwaukee, WI 53205, USA</div>
+            </div>
+            <div style="margin:14px 0">
+              <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:6px">Lý do</div>
+              <div style="font-size:13px;color:#1f2937">Khách muốn giao đến nhà mới — đã dọn nhà tuần trước</div>
+            </div>
+            <div style="margin:14px 0">
+              <input type="checkbox" style="margin-right:6px"> <label style="font-size:12px;color:#6b7280">Đã xác nhận với khách qua chatter</label>
+            </div>
+          </div>
+          <div class="mu-modal-foot">
+            <button class="mu-btn">Từ chối</button>
+            <button class="mu-btn mu-btn-primary">Duyệt</button>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">BA Lead xem yêu cầu từ BA Marketing. Nếu đơn vẫn ở pre-production state, nút <b>Duyệt</b> sáng — bấm sẽ áp địa chỉ mới. Nếu đơn ở "Đang in" hay sau đó, nút bị vô hiệu + cảnh báo FR-017 lock. Sau duyệt, chatter tự ghi log.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form yêu cầu đổi địa chỉ tuỳ biến (<code>etsy_integration.view_etsy_address_change_request_form</code> @ <code>etsy_integration/views/etsy_address_change_request_views.xml</code>) trên mô hình <code>etsy.address.change.request</code> (constraints C-AC-001/002/003); modal là cách hiển thị standard của form trong Odoo.</i></div>
+    </div>
+
+    <!-- MOCKUP 3: Pipeline reprint state transition -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 3 · <strong>Pipeline tab — Chuyển sang In lại</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Dashboard › Receipt #12345</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.lead@hatafa</span>
+      </div>
+      <div class="mu-breadcrumb">Đơn hàng<span class="mu-sep">›</span>#12345<span class="mu-sep">›</span><strong>Pipeline</strong></div>
+      <div style="padding:14px 18px;background:#fafafa;border-bottom:1px solid #e5e7eb">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:6px">Trạng thái hiện tại · Pipeline State</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="font-size:13px;font-weight:600;color:#1f2937">Hoàn tất</div>
+          <div style="color:#9ca3af">›</div>
+          <button style="padding:6px 12px;border:none;background:#fef9c3;color:#854d0e;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">Chuyển sang In lại</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;background:#fff">
+        <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:8px">Pipeline states · Chuỗi trạng thái sản xuất</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <div style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;font-size:12px;color:#6b7280">Chờ duyệt</div>
+          <div style="color:#9ca3af;font-size:12px">›</div>
+          <div style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;font-size:12px;color:#6b7280">Chờ in</div>
+          <div style="color:#9ca3af;font-size:12px">›</div>
+          <div style="padding:6px 12px;border:1px solid #714B67;background:#faf5f9;border-radius:999px;font-size:12px;color:#714B67;font-weight:600">Đang in</div>
+          <div style="color:#9ca3af;font-size:12px">›</div>
+          <div style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;font-size:12px;color:#6b7280">Hoàn tất</div>
+          <div style="color:#9ca3af;font-size:12px">›</div>
+          <div style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;font-size:12px;color:#6b7280">Giao đối tác</div>
+        </div>
+      </div>
+      <div style="padding:14px 18px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;gap:8px;align-items:center">
+        <span style="display:inline-block;width:6px;height:6px;background:#15803d;border-radius:50%"></span>
+        <span style="font-size:12px;color:#6b7280"><b>State transition history:</b> Hoàn tất → In lại (2026-06-01 14:22 BA Lead)</span>
+      </div>
+      <div style="padding:14px 18px;background:#f0fdf4;border-left:3px solid #16a34a">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Design Files · Giữ nguyên</div>
+        <div style="font-size:13px;color:#1f2937"><b>design-coffee-mug-v1.pdf</b> — approved 2026-05-28, không đổi khi in lại</div>
+      </div>
+      <div class="mu-caption">Sau khi bấm <b>"Chuyển sang In lại"</b>, wizard hỏi lý do (ghi vào chatter). Pipeline state chuyển từ "Hoàn tất" về "Chờ in" (reset). Design Files giữ nguyên — sản xuất tái sử dụng file cũ. Chatter ghi log transition với timestamp + user.<br><i style="display:block;margin-top:8px;color:#714B67;font-size:11.5px">Mockup gốc: form đơn hàng chuẩn (<code>sale.view_order_form</code>) + tab Pipeline tuỳ biến @ <code>multichannel_hub_core/views/sale_order_form.xml</code>; reset trạng thái về "Chờ in" là action method trên <code>sale.order</code>.</i></div>
+    </div>
+
+    <!-- MOCKUP 4: Refund placeholder (design) -->
+    <div class="mu-screen">
+      <div class="mu-screen-title">Màn hình 4 · <strong>Placeholder refund — Story 4.8 etsy.order.ticket (design)</strong></div>
+      <div class="mu-chrome-bar">
+        <span class="mu-app">Vận hành</span><span class="mu-menu">Tickets › New</span>
+        <span class="mu-spacer"></span><span class="mu-user">ba.marketing@hatafa</span>
+      </div>
+      <div class="mu-modal-overlay">
+        <div class="mu-modal" style="max-width:540px">
+          <div style="height:240px;background:#e5e5e5;display:flex;align-items:center;justify-content:center;position:relative;border-radius:6px">
+            <div style="text-align:center;background:rgba(255,255,255,0.95);padding:30px;border-radius:6px;border:1px solid #d1d5db;max-width:80%">
+              <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:6px">Trong thiết kế</div>
+              <div style="font-size:12.5px;color:#6b7280;line-height:1.6">Story 4.8 · etsy.order.ticket model<br>Hôm nay BA Lead refund thủ công trên Etsy site và viết note vào chatter</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-caption">Hôm nay (v1 thủ công): BA Marketing refund qua Etsy Shop Manager + ghi note vào chatter Odoo. Kế hoạch (P4-02): model `etsy.order.ticket` để theo dõi hoàn tiền / hoàn trả. Loại: refund, return, reprint, other. Workflow: open → in_progress → resolved. Khi resolved, ghi chi phí vào đơn → Dashboard Pricing Audit tính margin tự động.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">C</span>Tiêu chí thành công</h3>
+    <ul class="kpi-list">
+      <li><b>Thời gian phản hồi buyer message</b>≤ 24 giờ từ khi tin nhắn được post vào chatter</li>
+      <li><b>Tỉ lệ tin nhắn orphan</b>≤ 5% — nằm trong Buffer quá 7 ngày mà không khớp đơn nào</li>
+      <li><b>Tỉ lệ đổi địa chỉ thành công</b>≥ 95% yêu cầu pre-production được duyệt (post-production bị FR-017 lock)</li>
+      <li><b>Tỉ lệ in lại do lỗi sản xuất</b>≤ 2% tổng số đơn hoàn tất / tháng</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">D</span>Liên kết với các luồng khác</h3>
+    <div class="crosslink-grid">
+      <a href="flow-2-nhan-don-hang-etsy.html"><b>Trước</b>Luồng 2 — Khi listing có người mua, đơn về Odoo</a>
+      <a href="flow-3a-giao-hang-in-noi-bo.html"><b>Liên quan</b>Luồng 3A — In MTO — in lại sử dụng cơ chế tương tự</a>
+      <a href="flow-3b-giao-hang-gearment-dropship.html"><b>Liên quan</b>Luồng 3B — Dropship — tạo phiếu in lại qua Gearment</a>
+      <a href="role-1-ba-lead.html"><b>Vai trò</b>BA Lead — duyệt đổi địa chỉ + chuyển trạng thái in lại</a>
+      <a href="role-2-marketing.html"><b>Vai trò</b>BA Marketing — xử lý tin nhắn + yêu cầu đổi địa chỉ</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">E</span>Lưu ý và câu hỏi mở</h3>
+    <p><b>Conversations API chưa được duyệt:</b> E1 — Etsy chưa duyệt scope `conversations_r` (P1-MSG-SCOPE cần re-submit). Hôm nay phụ thuộc đường email parser; khi API hoạt động, sẽ có cron Conversations chạy song song, tự khử trùng lặp theo `etsy.message.dedupe`.</p>
+    <p><b>FR-017 lock trên đổi địa chỉ:</b> Hệ thống chỉ cho phép đổi địa chỉ ở các trạng thái pre-production (≤ "Chờ in"). Sau khi in nhãn (state ≥ "Đang in"), không cho đổi. BA Marketing phải giải thích cho khách: đơn đã giao bưu tá, không thể đổi — xử lý qua hoàn trả nếu cần. Cơ chế lock được codified trong mô hình `etsy.address.change.request` (C-AC-001/002/003) — xem `etsy_integration/models/etsy_address_change_request.py`.</p>
+    <p><b>Story 4.8 etsy.order.ticket — chưa code:</b> Hôm nay (v1) hoàn tiền + hoàn trả là quy trình thủ công. Model `etsy.order.ticket` sẽ theo dõi mỗi yêu cầu (loại, trạng thái, chi phí). Nằm trong P4-02, Master Plan 007.</p>
+    <p><b>Tin nhắn buffer quá nhiều "orphaned":</b> Nếu parser yếu và không khớp được Receipt ID, có thể tin nằm buffer lâu. BA Marketing review hàng tuần → copy nội dung vào chatter đơn đúng hoặc đánh dấu `discarded` nếu spam.</p>
+  </div>
+
+  <footer>Luồng 4 · cập nhật 2026-06-03 · nguồn: FLOW_HAU_MAI_VN · HUONG_DAN_HAU_MAI_VN · <a href="index.html" style="color:#714B67">về Tổng quan</a></footer>
+
+</div>
+</body>
+</html>

@@ -81,7 +81,7 @@ class TestPipelineStateDatabase(TransactionCase):
         codes = set(vn.state_ids.mapped('code'))
         self.assertEqual(
             codes,
-            {'pending_file', 'in_production', 'packed', 'shipped', 'done'},
+            {'pending_file', 'in_production', 'packed', 'shipped', 'done', 'reprint'},
         )
         initial = vn.state_ids.filtered(lambda s: s.is_initial)
         self.assertEqual(len(initial), 1)

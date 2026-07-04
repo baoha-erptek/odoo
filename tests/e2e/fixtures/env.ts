@@ -40,24 +40,46 @@ const STATIC_CONFIG = {
   BA_USER_LOGIN: 'uat_ba_user@hatafax.demo',
 };
 
-// CONFIG uses getter for BA_USER_PASSWORD so that globalSetup (which sets
-// process.env.STAGING_BA_USER_PASSWORD after seed_ba_user.py runs) is observed
-// at the time the tests dereference it, not at module-load time.
+// CONFIG uses getters for *_PASSWORD so that globalSetup (which sets the
+// matching `process.env.STAGING_<ROLE>_PASSWORD` after seed_ba_user.py runs)
+// is observed at the time the tests dereference it, not at module-load time.
 export const CONFIG = {
   ...STATIC_CONFIG,
   get BA_USER_PASSWORD(): string {
-    return process.env.STAGING_BA_USER_PASSWORD || readSeedStateFile();
+    return process.env.STAGING_BA_USER_PASSWORD || readSeedStateField('ba_user_password');
+  },
+  get BA_LEAD_AUTO_PASSWORD(): string {
+    // Distinct from BA_LEAD_PASSWORD (which is the owner-provided pre-existing
+    // BA Lead in .env). This is the auto-seeded uat_ba_lead@hatafax.demo.
+    return process.env.STAGING_BA_LEAD_PASSWORD || readSeedStateField('ba_lead_password');
+  },
+  get BA_SHIPPING_PASSWORD(): string {
+    return process.env.STAGING_BA_SHIPPING_PASSWORD || readSeedStateField('ba_shipping_password');
+  },
+  get BA_SHIPPING_MGR_PASSWORD(): string {
+    return (
+      process.env.STAGING_BA_SHIPPING_MGR_PASSWORD ||
+      readSeedStateField('ba_shipping_mgr_password')
+    );
   },
 };
 
-function readSeedStateFile(): string {
+// Logins matching seed_ba_user.py ROLES table. Static — never rotated.
+export const UAT_ROLE_LOGINS = {
+  BA_USER: 'uat_ba_user@hatafax.demo',
+  BA_LEAD_AUTO: 'uat_ba_lead@hatafax.demo',
+  BA_SHIPPING: 'uat_ba_shipping@hatafax.demo',
+  BA_SHIPPING_MGR: 'uat_ba_shipping_mgr@hatafax.demo',
+} as const;
+
+function readSeedStateField(key: string): string {
   // Fallback: globalSetup persisted to artifacts/_seed_state.json — read it
   // if process.env didn't propagate (Playwright workers re-spawn the process).
   const stateFile = path.join(REPO_ROOT, 'tests', 'e2e', 'artifacts', '_seed_state.json');
   try {
     if (fs.existsSync(stateFile)) {
       const j = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-      return j.ba_user_password || '';
+      return j[key] || '';
     }
   } catch {
     /* ignore */

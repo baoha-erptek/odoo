@@ -38,6 +38,45 @@ _PRODUCTION_LOCATIONS_ICP = 'multichannel_hub_fulfillment.production_locations'
 class SaleOrderFulfillment(models.Model):
     _inherit = 'sale.order.fulfillment'
 
+    # D#8 — Gearment-specific provenance surfaced on the Fulfillment Tracking
+    # Detail form (Flow 3b screen 5). These live here, not in the vendor-
+    # agnostic core model, so the core stays free of Gearment references.
+    gearment_order_ref = fields.Char(
+        string='Gearment Order Ref',
+        related='order_id.x_gearment_outbound_ref',
+        readonly=True,
+        help="The order's Gearment outbound reference, stamped when the order "
+             "was pushed to Gearment (sale.order.x_gearment_outbound_ref).",
+    )
+    gearment_last_webhook_at = fields.Datetime(
+        string='Last Gearment Webhook',
+        readonly=True,
+        copy=False,
+        help="When the most recent inbound Gearment business webhook touched "
+             "this fulfillment.",
+    )
+    gearment_last_webhook_topic = fields.Char(
+        string='Last Webhook Topic',
+        readonly=True,
+        copy=False,
+        help="Topic of the most recent inbound Gearment business webhook "
+             "(order_completed / tracking_order_updated / order_cancelled / "
+             "order_on_hold).",
+    )
+    etsy_tracking_pushed = fields.Boolean(
+        string='Tracking Pushed to Etsy',
+        readonly=True,
+        copy=False,
+        default=False,
+        help="Set when the post-tracking push to Etsy (EtsyTrackingPusher) "
+             "succeeded for this fulfillment.",
+    )
+    etsy_tracking_pushed_at = fields.Datetime(
+        string='Etsy Tracking Pushed At',
+        readonly=True,
+        copy=False,
+    )
+
     def write(self, vals):
         """Detect fulfillment_status transition to 'produced' and dispatch hook.
 

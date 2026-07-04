@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!--
+    Phase D#4 (Flow 1 #5) — "Products by Channel Status" kanban.
+    product.channel.status already tracks state per (product, channel) but had
+    no UI. This adds a kanban grouped by state (Draft / Published / Archived /
+    Error) + list + search + action + menu. View-only over the existing model;
+    reuses the existing base.group_user read ACL.
+  -->
+
+  <record id="view_product_channel_status_search" model="ir.ui.view">
+    <field name="name">product.channel.status.search</field>
+    <field name="model">product.channel.status</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="product_tmpl_id"/>
+        <field name="channel_id"/>
+        <field name="external_ref"/>
+        <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+        <filter name="published" string="Published" domain="[('state', '=', 'published')]"/>
+        <filter name="error" string="Error" domain="[('state', '=', 'error')]"/>
+        <separator/>
+        <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+        <filter name="group_channel" string="Channel" context="{'group_by': 'channel_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_product_channel_status_kanban" model="ir.ui.view">
+    <field name="name">product.channel.status.kanban</field>
+    <field name="model">product.channel.status</field>
+    <field name="arch" type="xml">
+      <kanban default_group_by="state" group_create="false" create="false"
+              class="o_kanban_small_column">
+        <field name="state"/>
+        <field name="product_tmpl_id"/>
+        <field name="channel_id"/>
+        <field name="external_ref"/>
+        <field name="last_sync_error"/>
+        <templates>
+          <t t-name="card">
+            <div class="oe_kanban_global_click">
+              <div class="o_kanban_record_title">
+                <strong><field name="product_tmpl_id"/></strong>
+              </div>
+              <div class="o_kanban_record_subtitle text-muted">
+                <field name="channel_id"/>
+              </div>
+              <div t-if="record.external_ref.raw_value">
+                <span class="text-muted">Ref: </span>
+                <field name="external_ref"/>
+              </div>
+              <div t-if="record.state.raw_value == 'error'" class="text-danger mt-1">
+                <i class="fa fa-exclamation-triangle"/> <field name="last_sync_error"/>
+              </div>
+            </div>
+          </t>
+        </templates>
+      </kanban>
+    </field>
+  </record>
+
+  <record id="view_product_channel_status_list" model="ir.ui.view">
+    <field name="name">product.channel.status.list</field>
+    <field name="model">product.channel.status</field>
+    <field name="arch" type="xml">
+      <list string="Channel Status" create="false"
+            decoration-success="state == 'published'"
+            decoration-danger="state == 'error'"
+            decoration-muted="state == 'archived'">
+        <field name="product_tmpl_id"/>
+        <field name="channel_id"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'published'"
+               decoration-danger="state == 'error'"/>
+        <field name="external_ref"/>
+        <field name="last_sync_at"/>
+        <field name="last_sync_error" optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="action_product_channel_status" model="ir.actions.act_window">
+    <field name="name">Channel Status</field>
+    <field name="res_model">product.channel.status</field>
+    <field name="view_mode">kanban,list</field>
+    <field name="search_view_id" ref="view_product_channel_status_search"/>
+    <field name="context">{'search_default_group_state': 1}</field>
+  </record>
+
+  <menuitem id="menu_product_channel_status"
+            name="Channel Status"
+            parent="multichannel_hub_core.menu_operations_root"
+            action="action_product_channel_status"
+            sequence="27"/>
+
+</odoo>
