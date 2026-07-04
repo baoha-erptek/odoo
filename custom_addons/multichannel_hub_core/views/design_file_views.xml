@@ -59,7 +59,12 @@
                                 <field name="preview_file" widget="image" filename="file_name"/>
                             </group>
                         </page>
-                        <page string="Rejection" name="rejection" invisible="state != 'rejected'">
+                        <!-- MF-E2E-3a (2026-07-04): visible while PENDING too —
+                             action_reject requires rejection_reason to be set
+                             first, so hiding this page until state=='rejected'
+                             left the operator with no UI path to reject
+                             (Reject button always raised ValidationError). -->
+                        <page string="Rejection" name="rejection" invisible="state not in ('pending', 'rejected')">
                             <field name="rejection_reason"
                                    placeholder="Reason this file was rejected — visible to the designer."/>
                         </page>

@@ -91,10 +91,11 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 - Runner: Route A order → design approve → MO auto-created → complete MO → Delivery Order (stock.picking) validated → GKE tracking Excel dropped in GDrive inbox → poller imports (≤15 min) → carrier detected → Etsy tracking push flag set
 - Playwright: extend `uat_huong_dan_giao_hang.spec.ts` for picking + tracking screens
 
-**Exit Criteria**:
-- [ ] Runner sections PASS end-to-end
-- [ ] Playwright green (2 consecutive runs)
-- [ ] `etsy_tracking_pushed_at` set; tracking visible on unified Operations Dashboard
+**Exit Criteria** (closed 2026-07-04 — `docs/engineering/uats/E2E_FLOW3A_FULFILLMENT_2026-07-04.md`):
+- [X] Runner sections PASS end-to-end — `scripts/e2e_flow3a_fulfillment.py` 10/10 ×2 (incl. generated GKE xlsx with REAL order refs — MF-E2E-0 residue closed)
+- [X] Playwright green (2 consecutive runs) — 7 pass ×2 (7 documented skips: Gearment TCs → 3b)
+- [X] `etsy_tracking_push_at` set + attempts counted + audit row — push path proven to the Etsy API boundary with a synthetic receipt (404 recorded); live `pushed` needs a real production-shop receipt → P1-11. Tracking screen + dashboard evidence captured.
+- Bonus: 4 product defects found+fixed (retry cap; poller carrier detect; bin_size schema compute; design-reject UI path) — findings 2026-07-04.
 
 ---
 

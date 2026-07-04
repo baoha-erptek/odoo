@@ -67,7 +67,10 @@ GKE_HEADERS: tuple[str, ...] = (
 # carrier auto-detect prefix matching. Tracking-number prefixes are
 # realistic patterns; carrier seed regexes anchor on these.
 TRACKING_BY_CARRIER: dict[str, str] = {
-    "USPS": "9400111202555560000",
+    # 18 chars + 4-digit suffix = 22 total — the carrier-seed USPS regex
+    # ^(9[0-9]{15,21}|...)$ caps at 22 digits; 23 silently fails detection
+    # (MF-E2E-3a 2026-07-04).
+    "USPS": "940011120255556000",
     "UniUni": "UUS6482620070",
     "YunExpress": "YT24202000020",
     "4PX": "4PX2024020000",

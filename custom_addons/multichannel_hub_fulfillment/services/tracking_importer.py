@@ -144,6 +144,24 @@ def resolve_orders(env, lines):
     return counts
 
 
+def detect_carriers(env, lines):
+    """P2-02 carrier auto-detect for a batch of lines.
+
+    MF-E2E-3a (2026-07-04): this used to live only in the wizard's
+    action_preview, so the GDrive poller path imported trackings with no
+    carrier (fulfillment.shipping_carrier_id stayed empty and the Etsy
+    push fell back to 'other'). Shared here so every entry point detects.
+    """
+    from . import carrier_detector
+    compiled = carrier_detector._compiled_cache_for(env)
+    other = carrier_detector._other_carrier(env)
+    for line in lines:
+        carrier, needs_review = carrier_detector.detect_carrier(
+            env, line.raw_tracking_number, compiled=compiled, other=other)
+        line.detected_carrier_id = carrier.id if carrier else False
+        line.needs_review = needs_review
+
+
 def apply_to_fulfillment(env, lines):
     """Per-row savepoint: write tracking_number/date/state to fulfillment.
 
@@ -236,6 +254,7 @@ def import_log_from_bytes(env, file_bytes: bytes, filename: str,
         env['tracking.import.line'].sudo().create(payloads)
     line_recs = log.sudo().line_ids
     resolve_counts = resolve_orders(env, line_recs)
+    detect_carriers(env, line_recs)
     apply_counts = apply_to_fulfillment(env, line_recs)
     error_count = apply_counts.get('error', 0)
     imported = apply_counts.get('imported', 0)

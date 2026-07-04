@@ -5,6 +5,10 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+# Fallback-cron retry ceiling for tracking pushes (MF-E2E-3a). The manual
+# form button is exempt — operators can always retry.
+_MAX_TRACKING_PUSH_ATTEMPTS = 10
+
 # Spec 003 C-SO-001: shipping-destination fields locked while an
 # address-change request is pending. Keep this set in lock-step with
 # data-model.md §1.
@@ -124,6 +128,12 @@ class SaleOrder(models.Model):
         string='Etsy Tracking Push Error', copy=False,
         help='Error detail from the last failed tracking push; cleared '
              'on the next successful push.')
+    etsy_tracking_push_attempts = fields.Integer(
+        string='Etsy Tracking Push Attempts', default=0, copy=False,
+        help='Consecutive failed push attempts. The fallback cron stops '
+             'retrying at the cap (MF-E2E-3a 2026-07-04: a permanently '
+             'failing order was retried every 5 minutes forever); the '
+             'manual form button is never capped. Reset on success.')
 
     # P1-04 (Spec 003 US4): address-change approval workflow.
     address_change_request_ids = fields.One2many(
@@ -534,6 +544,10 @@ class SaleOrder(models.Model):
             ('etsy_order_id', '!=', False),
             ('etsy_shop_id', '!=', False),
             ('etsy_tracking_push_status', 'in', ('none', 'pending', 'failed')),
+            # MF-E2E-3a: retry ceiling — permanently-failing orders (e.g.
+            # legacy shop without etsy_api_shop_id) must not be re-pushed
+            # every 5 minutes forever.
+            ('etsy_tracking_push_attempts', '<', _MAX_TRACKING_PUSH_ATTEMPTS),
         ])
         if not candidates:
             return

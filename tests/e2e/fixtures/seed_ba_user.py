@@ -43,9 +43,11 @@ ROLES: list[tuple[str, str, str, list[str]]] = [
      ["multichannel_hub_core.group_ba_lead",
       "sales_team.group_sale_salesman_all_leads"]),
     ("BA_SHIPPING", "uat_ba_shipping@hatafax.demo", "UAT BA Shipping (auto-seeded)",
-     ["multichannel_hub_fulfillment.group_ba_shipping"]),
+     ["multichannel_hub_fulfillment.group_ba_shipping",
+      "sales_team.group_sale_salesman_all_leads"]),
     ("BA_SHIPPING_MGR", "uat_ba_shipping_mgr@hatafax.demo", "UAT BA Shipping Mgr (auto-seeded)",
-     ["multichannel_hub_fulfillment.group_ba_manager"]),
+     ["multichannel_hub_fulfillment.group_ba_manager",
+      "sales_team.group_sale_salesman_all_leads"]),
 ]
 
 

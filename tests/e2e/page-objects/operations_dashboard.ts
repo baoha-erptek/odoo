@@ -42,10 +42,21 @@ export class OperationsDashboardPage {
     await this.listView.waitFor({ state: 'visible', timeout: 15000 });
   }
 
-  /** Type into the search box and press Enter to apply a free-text filter. */
-  async search(term: string): Promise<void> {
+  /** Type into the search box and press Enter to apply a free-text filter.
+   *
+   * Plain Enter applies the FIRST searchable facet of the search view
+   * (transaction_id here). Pass `facetArrowDowns` to move down the facet
+   * dropdown before Enter — e.g. 3 selects the 4th facet (product_id) per
+   * the search-view field order transaction_id / channel_order_ref /
+   * partner_shipping_name / product_id (2026-07-04 MF-E2E-3a).
+   */
+  async search(term: string, facetArrowDowns = 0): Promise<void> {
     await this.searchInput.click();
     await this.searchInput.fill(term);
+    await this.page.waitForTimeout(300); // facet dropdown render
+    for (let i = 0; i < facetArrowDowns; i++) {
+      await this.searchInput.press('ArrowDown');
+    }
     await this.searchInput.press('Enter');
     await this.page.waitForTimeout(400); // server fetch
   }

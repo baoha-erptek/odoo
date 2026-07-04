@@ -134,3 +134,48 @@ Environment/test findings:
    email/address (address extraction is HTML-only), so per-order partners
    are the DESIGNED Tier-4 outcome. Partner dedupe is asserted on the API
    path (§A: re-ingest maps to existing partners, count unchanged).
+
+## 2026-07-04 — MF-E2E-3a flow-3a fulfillment gate (runner 10/10 ×2, Playwright ×2)
+
+Runner `scripts/e2e_flow3a_fulfillment.py`. FOUR product fixes (each
+RED→GREEN unit-tested; details in evidence doc E2E_FLOW3A_FULFILLMENT):
+
+1. **Tracking-push retry cap** (ei 19.0.3.18.0) — `_cron_push_tracking`
+   re-picked `failed` orders forever (flow-2's 5-min loop). New
+   `etsy_tracking_push_attempts` counter, cron ceiling 10, manual button
+   exempt, reset on success.
+2. **Carrier detection was wizard-only** (mhf 19.0.1.0.26) — the GDrive
+   poller path imported trackings with `shipping_carrier_id=False`
+   (apply_to_fulfillment docstring even said "we leave it None"); Etsy push
+   then degraded to carrier 'other'. `detect_carriers()` now shared in
+   tracking_importer.
+3. **Schema compute died under web `bin_size` reads** (mhf) — form reloads
+   recomputed `schema_hash/is_new_schema` with excel_file rendered as
+   "12.3 KB" → silent parse failure → New Schema flag + Approve Schema
+   button vanished; BA could not approve schemas in the UI at all (the
+   drop-ship runner had auto-approved via RPC, masking it).
+4. **No UI path to reject a design file** (mhc 19.0.1.0.76) — Rejection tab
+   (holding the required rejection_reason field) was only visible when
+   state=='rejected', but action_reject requires the reason BEFORE
+   rejecting. Tab now visible while pending.
+
+Env + test findings:
+
+5. gke logistics.partner had EMPTY `gdrive_inbox_folder_id` on esty_odoo19
+   — set to the owner "GKE" Shared-Drive folder (1-cY65RD…). SA access
+   verified for both candidate folders.
+6. Builder USPS tracking numbers were 23 digits; the carrier-seed regex
+   caps at 22 (`9[0-9]{15,21}`) — detection silently failed. Prefix
+   trimmed. Lesson: generated fixtures must satisfy the SEED regexes.
+7. Drive immediate-deletes 404 on this Shared Drive (known MF-E2E-0 trap)
+   — runner §7 keys on its own filename instead of "latest log row".
+8. MO first `button_mark_done` lands on `to_close` unless raw moves are
+   picked first; runner picks raw moves + double-calls.
+9. Playwright drift class of the day: lazy notebook tabs (Pipeline /
+   Rejection / Preview Lines), Odoo 19 `o_select_menu` replacing native
+   `<select>` in dialogs, free-text search applying the FIRST facet only,
+   role-gated buttons invisible to admin (production-team / BA-shipping),
+   wizard field renames (`name`→`file_name`). Page-objects updated.
+10. Local dev DB carries stale `design_ready` pipeline-state rows →
+    3 pre-existing `test_pipeline_state_db` failures (noupdate drift,
+    NOT this gate; staging clean).

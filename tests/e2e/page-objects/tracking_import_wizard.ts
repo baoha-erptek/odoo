@@ -75,11 +75,19 @@ export class TrackingImportWizardPage {
   /** Stage 2: click Preview → wizard transitions to 'previewed' (or errors). */
   async clickPreview(): Promise<void> {
     await this.previewButton.click();
-    // Either the wizard re-renders with preview lines, or the error modal opens.
+    // The post-preview notebook renders with "Headers" active; "Preview
+    // Lines" is a LAZY page — click its tab before waiting for the list
+    // (2026-07-04). An error modal is the alternate outcome.
+    const previewTab = this.page.locator('.modal-dialog .o_notebook .nav-link',
+      { hasText: /Preview Lines/ }).first();
     await Promise.race([
-      this.previewLinesList.waitFor({ state: 'visible', timeout: 30000 }),
+      previewTab.waitFor({ state: 'visible', timeout: 30000 }),
       this.errorModal.waitFor({ state: 'visible', timeout: 30000 }),
     ]);
+    if (await previewTab.isVisible().catch(() => false)) {
+      await previewTab.click();
+      await this.previewLinesList.waitFor({ state: 'visible', timeout: 10000 });
+    }
   }
 
   /**
@@ -120,6 +128,12 @@ export class TrackingImportWizardPage {
 
   /** Returns true if the wizard flagged the upload as a new schema fingerprint. */
   async isNewSchema(): Promise<boolean> {
+    // The readonly boolean renders as a non-checkable div in Odoo 19 —
+    // isChecked() lies. The warning alert ("New schema fingerprint
+    // detected...") is the reliable signal (2026-07-04).
+    const alert = this.page.locator('.modal-dialog .alert-warning',
+      { hasText: /new schema/i }).first();
+    if (await alert.isVisible().catch(() => false)) return true;
     if (await this.isNewSchemaField.count() === 0) return false;
     return await this.isNewSchemaField.isChecked().catch(() => false);
   }

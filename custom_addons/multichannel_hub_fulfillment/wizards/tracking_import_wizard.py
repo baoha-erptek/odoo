@@ -139,7 +139,12 @@ class TrackingImportWizard(models.TransientModel):
             if not wiz.excel_file:
                 continue
             try:
-                data = wiz.excel_file
+                # bin_size=False: the web client reads forms with
+                # bin_size=True, which renders Binary fields as a size
+                # string ("12.3 KB") — the parse then failed silently and
+                # the New Schema flag + Approve Schema button vanished
+                # from the UI (MF-E2E-3a 2026-07-04).
+                data = wiz.with_context(bin_size=False).excel_file
                 if isinstance(data, bytes) and data[:2] == b'PK':
                     file_bytes = data
                 else:

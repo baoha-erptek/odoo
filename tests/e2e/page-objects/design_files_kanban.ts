@@ -108,11 +108,32 @@ export class DesignFilesKanbanPage {
    * Returns the rejection-reason locator for the caller to fill.
    */
   async clickRejectAndAwaitReasonWizard(fileName: string): Promise<Locator> {
+    // Current flow (2026-07-04): there is NO reason wizard — action_reject
+    // reads `rejection_reason` from the record and raises a ValidationError
+    // when empty. The UI walk is: fill the form's rejection_reason field,
+    // then click Reject. Return the FORM field locator; the caller fills it
+    // and then presses the Reject button we leave un-clicked here.
     await this.openCard(fileName);
+    // rejection_reason lives in the lazy-rendered "Rejection" notebook tab.
+    const tab = this.page.locator('.o_notebook .nav-link', { hasText: /Rejection/ }).first();
+    await tab.waitFor({ state: 'visible', timeout: 10000 });
+    await tab.click();
+    await this.page.waitForTimeout(300);
+    const field = this.page.locator(
+      '[name="rejection_reason"] textarea, [name="rejection_reason"] input').first();
+    await field.waitFor({ state: 'visible', timeout: 10000 });
+    return field;
+  }
+
+  /** Click the form's Reject button (call after filling rejection_reason).
+   * The button carries a static confirm="..." dialog — acknowledge it. */
+  async clickRejectOnForm(): Promise<void> {
     await this.page.locator('button[name="action_reject"]').first().click();
-    const modal = this.page.locator('.modal-dialog').first();
-    await modal.waitFor({ state: 'visible', timeout: 10000 });
-    return modal.locator('[name="rejection_reason"] textarea, [name="rejection_reason"] input').first();
+    const confirmOk = this.page.locator('.modal-dialog .btn-primary', { hasText: /^Ok$/ }).first();
+    if (await confirmOk.count() > 0) {
+      await confirmOk.click();
+    }
+    await this.page.waitForTimeout(800);
   }
 
   // --- upload wizard ------------------------------------------------------
@@ -124,12 +145,20 @@ export class DesignFilesKanbanPage {
   async fillUploadWizardWithUrl(name: string, url: string): Promise<void> {
     const modal = this.page.locator('.modal-dialog').first();
     await modal.waitFor({ state: 'visible', timeout: 8000 });
-    await modal.locator('[name="name"] input').first().fill(name);
+    // Wizard fields (2026-07-04): file_name (NOT name); file_url only
+    // renders after storage_mode='url' is selected.
+    // Odoo 19 renders this selection as an o_select_menu (SelectMenu OWL
+    // component), not a native <select> — click the toggler, pick the item.
     const storageSelect = modal.locator('[name="storage_mode"] select').first();
     if (await storageSelect.count() > 0) {
       await storageSelect.selectOption('url').catch(() => storageSelect.selectOption({ label: 'URL' }));
+    } else {
+      await modal.locator('[name="storage_mode"] .o_select_menu_toggler').first().click();
+      await this.page.locator('.o_select_menu_item, .o-dropdown--menu .dropdown-item')
+        .filter({ hasText: /^URL$/ }).first().click();
     }
-    await modal.locator('[name="file_url"] input').first().fill(url);
+    await modal.locator('[name="file_name"] input').first().fill(name);
+    await modal.locator('[name="file_url"] input, [name="file_url"] textarea').first().fill(url);
   }
 
   /**
@@ -139,24 +168,40 @@ export class DesignFilesKanbanPage {
   async fillUploadWizardWithFile(name: string, localPath: string): Promise<void> {
     const modal = this.page.locator('.modal-dialog').first();
     await modal.waitFor({ state: 'visible', timeout: 8000 });
-    await modal.locator('[name="name"] input').first().fill(name);
-    const storageSelect = modal.locator('[name="storage_mode"] select').first();
-    if (await storageSelect.count() > 0) {
-      await storageSelect.selectOption('small').catch(() => storageSelect.selectOption({ label: /Small|Filestore/ }));
-    }
-    const fileInput = modal.locator('[name="design_file"] input[type="file"]').first();
+    // Wizard fields (2026-07-04): file_name (NOT name); storage_mode is an
+    // o_select_menu, defaulting to Small — only switch if needed; the binary
+    // field is file_blob.
+    await modal.locator('[name="file_name"] input').first().fill(name);
+    const fileInput = modal.locator(
+      '[name="file_blob"] input[type="file"], [name="design_file"] input[type="file"]').first();
     await fileInput.setInputFiles(localPath);
   }
 
   /** Confirm the upload wizard (button[name="action_upload"] or generic submit). */
   async submitUploadWizard(): Promise<string> {
     const modal = this.page.locator('.modal-dialog').first();
+    const wizardBody = (await modal.locator('.modal-body').first().textContent()) ?? '';
     const submit = modal.locator('.modal-footer button.btn-primary').first();
     await submit.click();
-    // 10MB cap rejections return a UserError modal — caller may catch this branch.
-    const result = this.page.locator('.o_notification_body, .modal-body').first();
-    await result.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-    return ((await result.textContent()) ?? '').trim();
+    // Poll for a REAL outcome — the wizard's own .modal-body matches
+    // immediately and races big uploads (12MB cap TC, 2026-07-04). Outcomes:
+    // toast notification, a NEW/changed dialog (UserError), or wizard close.
+    const deadline = Date.now() + 60_000;
+    while (Date.now() < deadline) {
+      const toast = this.page.locator('.o_notification_body, .o_notification_content').first();
+      if (await toast.isVisible().catch(() => false)) {
+        return ((await toast.textContent()) ?? '').trim();
+      }
+      const dialogs = this.page.locator('.modal-dialog:visible .modal-body');
+      const n = await dialogs.count();
+      for (let i = 0; i < n; i++) {
+        const text = ((await dialogs.nth(i).textContent()) ?? '').trim();
+        if (text && text !== wizardBody.trim()) return text;
+      }
+      if (n === 0) return 'uploaded'; // wizard closed, no error
+      await this.page.waitForTimeout(1000);
+    }
+    return '';
   }
 
   // --- internals ----------------------------------------------------------

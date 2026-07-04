@@ -109,6 +109,7 @@ class EtsyTrackingPusher:
             'etsy_tracking_push_status': 'pushed',
             'etsy_tracking_push_at': now,
             'etsy_tracking_push_error': False,
+            'etsy_tracking_push_attempts': 0,
         })
         fulfillment.write({'etsy_ship_notified_at': now})
         self._audit(
@@ -129,6 +130,7 @@ class EtsyTrackingPusher:
             'etsy_tracking_push_status': 'failed',
             'etsy_tracking_push_error': (message or '')[:_ERROR_TRUNCATE],
             'etsy_tracking_push_at': _fields.Datetime.now(),
+            'etsy_tracking_push_attempts': order.etsy_tracking_push_attempts + 1,
         })
         self._audit(
             shop,
