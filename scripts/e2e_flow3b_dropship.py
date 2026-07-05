@@ -108,6 +108,7 @@ class Context:
     pipeline_id: int | None = None
     confirmed_state_id: int | None = None
     catalog_legacy_id: str = ""
+    catalog_variant_id: str = ""
     catalog_name: str = ""
     artwork_url: str = ""
     product_id: int | None = None
@@ -257,10 +258,15 @@ def section_0_preflight(ctx: Context) -> StepResult:
                           f"live catalog fetch {r.status_code}: {r.text[:150]}")
     item = (r.json().get("data") or [{}])[0]
     ctx.catalog_legacy_id = str(item.get("legacy_product_id") or "")
+    # The draft line item is keyed by the GM-prefixed catalog variant_id
+    # (e.g. GM0249020374), NOT the legacy_product_id — pick the first in-stock
+    # variant. x_gearment_sku carries this value (Defect-2026-05-10-02).
+    variants = item.get("variants") or []
+    ctx.catalog_variant_id = str((variants[0] or {}).get("variant_id") or "") if variants else ""
     ctx.catalog_name = item.get("product_name") or "?"
     ctx.artwork_url = item.get("product_avatar_url") or ""
-    if not ctx.catalog_legacy_id or not ctx.artwork_url:
-        return StepResult("0", False, f"catalog item unusable: {item}")
+    if not ctx.catalog_variant_id or not ctx.artwork_url:
+        return StepResult("0", False, f"catalog item unusable (no variant_id): {item}")
 
     ctx.marker = uuid.uuid4().hex[:6]
     stale = rpc(ctx, "admin", "product.template", "search",
@@ -270,7 +276,7 @@ def section_0_preflight(ctx: Context) -> StepResult:
     return StepResult(
         "0", True,
         f"server {version}; pipeline OK; staging env OK; live catalog: "
-        f"{ctx.catalog_name!r} legacy_id={ctx.catalog_legacy_id}; "
+        f"{ctx.catalog_name!r} variant_id={ctx.catalog_variant_id}; "
         f"marker={ctx.marker}; archived {len(stale)}")
 
 
@@ -279,7 +285,7 @@ def section_1_fixtures(ctx: Context) -> StepResult:
         "name": f"{PRODUCT_PREFIX} POD {ctx.marker} ({ctx.catalog_name[:20]})",
         "is_storable": False,
         "list_price": 20.0,
-        "x_gearment_sku": ctx.catalog_legacy_id,
+        "x_gearment_sku": ctx.catalog_variant_id,
     }])
     ctx.product_id = rpc(ctx, "admin", "product.product", "search",
                          [[("product_tmpl_id", "=", tmpl)]])[0]
@@ -317,7 +323,7 @@ def section_1_fixtures(ctx: Context) -> StepResult:
     }])
     return StepResult(
         "1", True,
-        f"order {ctx.order_name}; POD product legacy_id={ctx.catalog_legacy_id}; "
+        f"order {ctx.order_name}; POD product variant_id={ctx.catalog_variant_id}; "
         f"approved URL design (artwork={ctx.artwork_url[:40]}…)")
 
 
@@ -438,9 +444,18 @@ def section_3_push_draft(ctx: Context) -> StepResult:
 
 
 def section_4_quote(ctx: Context) -> StepResult:
+    # LIVE price quote: POST /api/v3/orders/price advances draft -> quoted.
+    # (Fixed 2026-07-05 — the old GET /orders/{ref}/price route 404'd, so this
+    # leg used to be simulated.)
+    quote_err = ""
+    try:
+        rpc_void(ctx, "ba_shipping", "sale.order",
+                 "action_get_gearment_quote", [[ctx.order_id]])
+    except xmlrpc.client.Fault as exc:
+        quote_err = exc.faultString.splitlines()[-1][:160]
     fields_ = ["x_gearment_outbound_state", "x_gearment_outbound_ref"]
     probe = rpc(ctx, "admin", "sale.order", "fields_get", [], {})
-    for cand in ("x_gearment_quote_total", "x_gearment_quote_breakdown"):
+    for cand in ("x_gearment_quote_total", "x_gearment_quote_currency"):
         if cand in probe:
             fields_.append(cand)
     row = rpc(ctx, "admin", "sale.order", "read", [[ctx.order_id], fields_])[0]
@@ -449,7 +464,8 @@ def section_4_quote(ctx: Context) -> StepResult:
         total is None or total > 0)
     return StepResult(
         "4", ok,
-        f"quote state (simulated HTTP, real state machine): {row}")
+        f"LIVE quote (POST /orders/price): {row}"
+        + (f" err={quote_err!r}" if quote_err else ""))
 
 
 def section_5_tracking_webhook(ctx: Context) -> StepResult:

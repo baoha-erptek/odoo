@@ -3,14 +3,12 @@
 Pure function — no ORM mutation, no I/O.
 
 P4-01-B (2026-05-10) regen: legacy single-product schema replaced with the
-real `/api/v3/orders/draft` schema (reference_id + addresses[] + line_items[]).
-Buyer-supplied notes are HTML-escaped before going into the payload so the
-downstream Gearment API response cannot smuggle HTML/script content back into
-chatter rendering on the dashboard.
+real `/api/v3/orders/draft` schema. 2026-07-05: corrected to the proven-200
+shape (singular `address`, `platform`, `variant_id`, METHOD_STANDARD) — see
+`gearment_payload.py` for the wire example. `notes` is not part of the draft
+schema, so it is no longer built.
 """
 from __future__ import annotations
-
-from html import escape
 
 from .gearment_payload import (
     GearmentAddress,
@@ -29,6 +27,24 @@ from .gearment_payload import (
 # NOTE: the QUOTE endpoint uses a different shape (`print_locations: ["front"]`,
 # lowercase) — do not reuse these values there.
 _PRINT_LOCATIONS_DEFAULT = ('PRINT_LOCATION_CODE_FRONT', 'PRINT_LOCATION_CODE_BACK')
+
+# Draft `platform` enum. Only Etsy flows through this pipeline today; the draft
+# API 404s "marketplace not found" without it.
+# ponytail: hard-coded ETSY — add a channel->platform map when a 2nd channel ships.
+_PLATFORM_ETSY = 'MARKETPLACE_PLATFORM_ETSY'
+
+# Draft `shipping_method` enum (proto MethodType). Only STANDARD is proven live.
+# ponytail: single value — map carrier.gearment_carrier_name -> METHOD_* when
+# expedited/priority services are actually offered.
+_SHIPPING_METHOD_DEFAULT = 'METHOD_STANDARD'
+
+# The QUOTE endpoint (POST /api/v3/orders/price) uses a DIFFERENT, lowercase
+# vocabulary than the draft: `order_platform: "etsy"`, `print_locations: ["front"]`,
+# `shipping.address.method: "standard"`. Proven live 200 on 2026-07-05
+# (order_total returned). Do NOT reuse the draft's proto-enum constants here.
+_QUOTE_PLATFORM_ETSY = 'etsy'
+_QUOTE_SHIPPING_METHOD = 'standard'
+_PRINT_LOCATIONS_QUOTE = ('front', 'back')
 
 
 def build_payload(order, design_files) -> GearmentOrderPayload:
@@ -59,10 +75,10 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         street_1=partner.street or '',
         street_2=partner.street2 or None,
         city=partner.city or '',
-        state=(partner.state_id.code or partner.state_id.name) if partner.state_id else None,
+        state_code=(partner.state_id.code or partner.state_id.name) if partner.state_id else None,
         zip_code=partner.zip or '',
         country_code=(partner.country_id.code or '') if partner.country_id else '',
-        phone=partner.phone or getattr(partner, 'mobile', None) or None,
+        phone_no=partner.phone or getattr(partner, 'mobile', None) or None,
         email=partner.email or None,
     )
 
@@ -99,17 +115,13 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
             # gap on the dashboard's design_status indicator instead.
             continue
         line_items.append(GearmentLineItem(
-            legacy_id=_safe_int(sku),
+            # x_gearment_sku holds the GM-prefixed catalog variant_id
+            # (e.g. GM0249020374) — the draft's line-item key (Defect-05-10-02).
+            variant_id=sku,
             quantity=int(line.product_uom_qty or 0),
-            sku=sku,
             printing_options=printing_options,
             personalisation=getattr(line, 'etsy_personalisation', None) or None,
         ))
-
-    notes = escape((order.note or '').strip())[:1024] if order.note else None
-
-    carrier = order.fulfillment_id.shipping_carrier_id if order.fulfillment_id else None
-    shipping_method = (carrier.gearment_carrier_name if carrier else '') or 'standard'
 
     store_id = ''
     if 'etsy_shop_id' in order._fields and order.etsy_shop_id:
@@ -122,22 +134,53 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
     return GearmentOrderPayload(
         reference_id=order.channel_order_ref or order.name,
         store_id=store_id,
+        platform=_PLATFORM_ETSY,
         addresses=(address,),
         line_items=tuple(line_items),
-        shipping_method=shipping_method,
-        notes=notes,
+        shipping_method=_SHIPPING_METHOD_DEFAULT,
     )
 
 
-def _safe_int(sku: str) -> int:
-    """Gearment's `line_items[].legacy_id` is an integer (catalog legacy_product_id).
+def build_quote_body(order, design_files) -> dict:
+    """Build the `POST /api/v3/orders/price` body (pure, no I/O).
 
-    The merchant's x_gearment_sku is sometimes the raw int, sometimes a stringy
-    code. Coerce best-effort; non-numeric SKUs fall back to 0 which Gearment
-    will reject — the operator sees the validation error in chatter and fixes
-    the product master.
+    The price-quote endpoint is separate from the draft and uses a lowercase
+    vocabulary: `order_platform: "etsy"`, `shipping.address.{method,state_code,
+    country_code}`, and per-line `print_locations: ["front", ...]`. Only lines
+    with `x_gearment_sku` (the GM variant_id) and at least one design file are
+    quoted — mirroring `build_payload`. Proven live 200 on 2026-07-05.
     """
-    try:
-        return int(sku)
-    except (TypeError, ValueError):
-        return 0
+    order.ensure_one()
+    partner = order.partner_shipping_id or order.partner_id
+
+    designs_by_line: dict[int, int] = {}
+    for df in design_files:
+        line_id = df.order_line_id.id if df.order_line_id else None
+        if line_id and (df.file_url or df.gdrive_preview_url):
+            designs_by_line[line_id] = designs_by_line.get(line_id, 0) + 1
+
+    line_items: list[dict] = []
+    for line in order.order_line:
+        sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+        if not sku:
+            continue
+        design_count = min(designs_by_line.get(line.id, 0), len(_PRINT_LOCATIONS_QUOTE))
+        if not design_count:
+            continue
+        line_items.append({
+            'variant_id': sku,
+            'quantity': int(line.product_uom_qty or 0),
+            'print_locations': list(_PRINT_LOCATIONS_QUOTE[:design_count]),
+        })
+
+    return {
+        'order_platform': _QUOTE_PLATFORM_ETSY,
+        'shipping': {
+            'address': {
+                'method': _QUOTE_SHIPPING_METHOD,
+                'state_code': (partner.state_id.code or None) if partner.state_id else None,
+                'country_code': (partner.country_id.code or '') if partner.country_id else '',
+            },
+        },
+        'line_items': line_items,
+    }

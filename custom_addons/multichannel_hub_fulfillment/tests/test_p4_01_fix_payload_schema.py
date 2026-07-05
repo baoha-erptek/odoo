@@ -1,24 +1,19 @@
-"""P4-01-FIX-PAYLOAD-SCHEMA — RED tests for the line_items schema correction.
+"""P4-01-FIX-PAYLOAD-SCHEMA — line_items schema for the live /orders/draft.
 
-Spawned by Defect-2026-05-10-02. Live `/api/v3/orders/draft` rejects current
-payload with three errors:
-  - `Exactly one of 'variant_id' or 'legacy_id' must be set` (we send `product_id`)
-  - `A line item must include at least one printing option with location_code
-     front, pocket, back or whole` (we send flat `design_url_front/back`)
-  - `printing_options: value must contain at least 1 item(s)` (we don't send it)
+History:
+  - Spawned by Defect-2026-05-10-02: draft rejected `product_id` + flat
+    `design_url_front/back`; corrected to `printing_options[]`.
+  - 2026-07-05: the enum fix (Defect-05-10-05) unblocked the draft and the 400
+    moved to `some gm product variants not found`. The draft line-item key is the
+    GM-prefixed catalog `variant_id` (e.g. GM0249020374), NOT `legacy_id`. These
+    tests now pin `variant_id`. Proven live 200: draft 260705P-GM3MUJU-Y20XJXY6.
 
-Spec citations (predate P4-01-B drift):
-  - specs/004-fulfillment-routing/research.md:43 — "Design files: Passed as URLs
-    in `printing_options[].url`"
+Spec citations:
   - specs/004-fulfillment-routing/research.md:44 — "line items with `variant_id`,
     `quantity`, `printing_options` (location_code + design URL)"
-  - specs/004-fulfillment-routing/plan.md:145 — "design_files: list[dict]
-    [{role, url, print_location_code}, ...]"
-
-These tests fail on commit 8410d3274a7 (P4-01-D) and pass after the fix lands.
+  - docs/vendor/gearment/api_api.order.v1.vendororderapi.md — draft line_item
+    example carries `variant_id`.
 """
-
-from unittest import mock
 
 from odoo.tests.common import TransactionCase, tagged
 
@@ -34,24 +29,26 @@ def _payload_classes():
 
 
 @tagged('post_install', '-at_install', 'p4_01_fix_payload_schema')
-class TestLineItemUsesLegacyId(TransactionCase):
-    """`GearmentLineItem` carries `legacy_id` (Gearment catalog int), not `product_id`."""
+class TestLineItemUsesVariantId(TransactionCase):
+    """`GearmentLineItem` carries the GM catalog `variant_id`, not legacy_id/product_id."""
 
-    def test_line_item_has_legacy_id_field(self):
+    def test_line_item_has_variant_id_field(self):
         _, GearmentLineItem, _ = _payload_classes()
         line = GearmentLineItem(
-            legacy_id=1234, quantity=1, sku='MUG-001',
-            printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+            variant_id='GM0249020374', quantity=1,
+            printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                               'url': 'https://x/y.png'},),
         )
-        self.assertEqual(line.legacy_id, 1234)
+        self.assertEqual(line.variant_id, 'GM0249020374')
 
-    def test_line_item_does_not_have_product_id_field(self):
-        """Schema correction: `product_id` was rejected by Gearment — gone."""
+    def test_line_item_dropped_legacy_and_product_id_fields(self):
+        """Draft is keyed by variant_id — legacy_id/product_id are gone."""
         _, GearmentLineItem, _ = _payload_classes()
         from dataclasses import fields
         field_names = {f.name for f in fields(GearmentLineItem)}
         self.assertNotIn('product_id', field_names)
-        self.assertIn('legacy_id', field_names)
+        self.assertNotIn('legacy_id', field_names)
+        self.assertIn('variant_id', field_names)
 
 
 @tagged('post_install', '-at_install', 'p4_01_fix_payload_schema')
@@ -67,16 +64,16 @@ class TestLineItemPrintingOptions(TransactionCase):
     def test_line_item_printing_options_is_tuple_of_dicts(self):
         _, GearmentLineItem, _ = _payload_classes()
         line = GearmentLineItem(
-            legacy_id=1234, quantity=1, sku='MUG-001',
+            variant_id='GM0249020374', quantity=1,
             printing_options=(
-                {'location_code': 'front', 'url': 'https://x/front.png'},
-                {'location_code': 'back', 'url': 'https://x/back.png'},
+                {'location_code': 'PRINT_LOCATION_CODE_FRONT', 'url': 'https://x/front.png'},
+                {'location_code': 'PRINT_LOCATION_CODE_BACK', 'url': 'https://x/back.png'},
             ),
         )
         self.assertIsInstance(line.printing_options, tuple)
-        self.assertEqual(line.printing_options[0]['location_code'], 'front')
+        self.assertEqual(line.printing_options[0]['location_code'], 'PRINT_LOCATION_CODE_FRONT')
         self.assertEqual(line.printing_options[0]['url'], 'https://x/front.png')
-        self.assertEqual(line.printing_options[1]['location_code'], 'back')
+        self.assertEqual(line.printing_options[1]['location_code'], 'PRINT_LOCATION_CODE_BACK')
 
     def test_line_item_does_not_have_design_url_front_back_fields(self):
         """Flat `design_url_front`/`design_url_back` replaced by `printing_options[]`."""
@@ -89,78 +86,71 @@ class TestLineItemPrintingOptions(TransactionCase):
 
 @tagged('post_install', '-at_install', 'p4_01_fix_payload_schema')
 class TestSerializeLineItemsShape(TransactionCase):
-    """Wire-format `line_items[].legacy_id` + `line_items[].printing_options[]`."""
+    """Wire-format `line_items[].variant_id` + `line_items[].printing_options[]`."""
 
     def _make_payload(self, *, line_items):
         GearmentAddress, _, GearmentOrderPayload = _payload_classes()
         addr = GearmentAddress(
             first_name='Alice', last_name='Buyer',
             street_1='123 Main St', street_2=None,
-            city='Boston', state='MA', zip_code='02108', country_code='US',
+            city='Boston', state_code='MA', zip_code='02108', country_code='US',
         )
         return GearmentOrderPayload(
             reference_id='SO-2026-FIX-01', store_id='demo',
+            platform='MARKETPLACE_PLATFORM_ETSY',
             addresses=(addr,), line_items=line_items,
         )
 
-    def test_serialize_line_item_emits_legacy_id_not_product_id(self):
+    def test_serialize_line_item_emits_variant_id_not_product_id(self):
         _, GearmentLineItem, _ = _payload_classes()
         line = GearmentLineItem(
-            legacy_id=1234, quantity=2, sku='MUG-001',
-            printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+            variant_id='GM0249020374', quantity=2,
+            printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                               'url': 'https://x/y.png'},),
         )
         body = self._make_payload(line_items=(line,)).serialize()
         item = body['data']['line_items'][0]
-        self.assertEqual(item['legacy_id'], 1234)
+        self.assertEqual(item['variant_id'], 'GM0249020374')
         self.assertNotIn('product_id', item)
+        self.assertNotIn('legacy_id', item)
 
     def test_serialize_line_item_emits_printing_options_array(self):
         _, GearmentLineItem, _ = _payload_classes()
         line = GearmentLineItem(
-            legacy_id=1234, quantity=1, sku='MUG-001',
+            variant_id='GM0249020374', quantity=1,
             printing_options=(
-                {'location_code': 'front', 'url': 'https://x/front.png'},
-                {'location_code': 'back', 'url': 'https://x/back.png'},
+                {'location_code': 'PRINT_LOCATION_CODE_FRONT', 'url': 'https://x/front.png'},
+                {'location_code': 'PRINT_LOCATION_CODE_BACK', 'url': 'https://x/back.png'},
             ),
         )
         body = self._make_payload(line_items=(line,)).serialize()
         item = body['data']['line_items'][0]
         self.assertIn('printing_options', item)
         self.assertEqual(len(item['printing_options']), 2)
-        self.assertEqual(item['printing_options'][0]['location_code'], 'front')
+        self.assertEqual(item['printing_options'][0]['location_code'], 'PRINT_LOCATION_CODE_FRONT')
         self.assertEqual(item['printing_options'][0]['url'], 'https://x/front.png')
-        self.assertEqual(item['printing_options'][1]['location_code'], 'back')
-        # Flat `design_url_front`/`design_url_back` MUST NOT appear in wire body
+        self.assertEqual(item['printing_options'][1]['location_code'], 'PRINT_LOCATION_CODE_BACK')
         self.assertNotIn('design_url_front', item)
         self.assertNotIn('design_url_back', item)
 
-    def test_serialize_omits_printing_options_when_empty_tuple(self):
-        """An empty printing_options tuple should NOT emit the key (avoid '[]' which Gearment rejects).
-
-        Builder is responsible for not creating such line_items, but the serializer
-        is defensive — we exclude keys whose value is an empty tuple/list.
-        """
+    def test_serialize_emits_singular_address_and_platform(self):
+        """Envelope uses SINGULAR `address` + required `platform` (proven-200 shape)."""
         _, GearmentLineItem, _ = _payload_classes()
         line = GearmentLineItem(
-            legacy_id=1234, quantity=1, sku='MUG-001',
-            printing_options=(),
+            variant_id='GM0249020374', quantity=1,
+            printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                               'url': 'https://x/y.png'},),
         )
-        body = self._make_payload(line_items=(line,)).serialize()
-        item = body['data']['line_items'][0]
-        # When printing_options is empty, the key may be absent OR empty.
-        # Either is acceptable; what we forbid is sending `printing_options: null`
-        # (Gearment proto rejects null array). dataclasses.asdict preserves the
-        # original container type, so an empty tuple stays a tuple — JSON
-        # serialization (json.dumps) coerces tuples to lists transparently, so
-        # this is wire-format-correct as long as the value is empty.
-        if 'printing_options' in item:
-            self.assertEqual(len(item['printing_options']), 0)
-            self.assertIsNotNone(item['printing_options'])
+        data = self._make_payload(line_items=(line,)).serialize()['data']
+        self.assertIn('address', data)
+        self.assertNotIn('addresses', data)
+        self.assertEqual(data['address']['state_code'], 'MA')
+        self.assertEqual(data['platform'], 'MARKETPLACE_PLATFORM_ETSY')
 
 
 @tagged('post_install', '-at_install', 'p4_01_fix_payload_schema')
 class TestBuilderEmitsCorrectSchema(TransactionCase):
-    """`build_payload()` derives `legacy_id` from SKU + `printing_options` from design_files."""
+    """`build_payload()` derives `variant_id` from x_gearment_sku + printing_options."""
 
     def setUp(self):
         super().setUp()
@@ -183,7 +173,7 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
             'type': 'consu',
             'list_price': 5.0,
         })
-        product.product_tmpl_id.x_gearment_sku = '1234'  # numeric SKU → legacy_id=1234
+        product.product_tmpl_id.x_gearment_sku = 'GM0249020374'  # GM variant_id
         order = self.env['sale.order'].create({
             'partner_id': partner.id,
             'order_line': [(0, 0, {
@@ -193,38 +183,35 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         })
         return order, product
 
-    def test_builder_sets_legacy_id_from_numeric_sku(self):
-        order, product = self._make_minimal_order()
-        design = self.env['design.file'].create({
-            'name': 'front design',
+    def _approved_design(self, order, name, url):
+        return self.env['design.file'].create({
+            'name': name,
             'order_line_id': order.order_line[0].id,
-            'file_url': 'https://drive.example/front.png',
+            'file_url': url,
             'storage_mode': 'url',
             'state': 'approved',
         })
+
+    def test_builder_sets_variant_id_from_sku(self):
+        order, product = self._make_minimal_order()
+        design = self._approved_design(order, 'front design', 'https://drive.example/front.png')
         payload = self._build_payload(order, design)
-        self.assertEqual(payload.line_items[0].legacy_id, 1234)
+        self.assertEqual(payload.line_items[0].variant_id, 'GM0249020374')
+
+    def test_builder_sets_platform_and_shipping_method(self):
+        order, product = self._make_minimal_order()
+        design = self._approved_design(order, 'front design', 'https://drive.example/front.png')
+        payload = self._build_payload(order, design)
+        self.assertEqual(payload.platform, 'MARKETPLACE_PLATFORM_ETSY')
+        self.assertEqual(payload.shipping_method, 'METHOD_STANDARD')
 
     def test_builder_emits_printing_options_for_each_design(self):
         order, product = self._make_minimal_order()
-        design_front = self.env['design.file'].create({
-            'name': 'front design',
-            'order_line_id': order.order_line[0].id,
-            'file_url': 'https://drive.example/front.png',
-            'storage_mode': 'url',
-            'state': 'approved',
-        })
-        design_back = self.env['design.file'].create({
-            'name': 'back design',
-            'order_line_id': order.order_line[0].id,
-            'file_url': 'https://drive.example/back.png',
-            'storage_mode': 'url',
-            'state': 'approved',
-        })
+        design_front = self._approved_design(order, 'front design', 'https://drive.example/front.png')
+        design_back = self._approved_design(order, 'back design', 'https://drive.example/back.png')
         payload = self._build_payload(order, design_front | design_back)
         po = payload.line_items[0].printing_options
         self.assertEqual(len(po), 2)
-        # location_code is the proto3 enum PRINT_LOCATION_CODE_* (Defect-2026-05-10-05).
         location_codes = {entry['location_code'] for entry in po}
         self.assertIn('PRINT_LOCATION_CODE_FRONT', location_codes)
         self.assertIn('PRINT_LOCATION_CODE_BACK', location_codes)
@@ -233,28 +220,10 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         self.assertIn('https://drive.example/back.png', urls)
 
     def test_builder_first_design_gets_front_location(self):
-        """Heuristic: first approved design.file → FRONT; second → BACK.
-
-        Values are the proto3 enum `PRINT_LOCATION_CODE_*` (Defect-2026-05-10-05).
-        Production-grade per-file `location_code` is deferred to a separate
-        slice (P1-DESIGN-LOCATION-CODE). For now, ordering by id is the
-        deterministic positional assignment.
-        """
+        """Heuristic: first approved design.file → FRONT; second → BACK."""
         order, product = self._make_minimal_order()
-        design_a = self.env['design.file'].create({
-            'name': 'first',
-            'order_line_id': order.order_line[0].id,
-            'file_url': 'https://drive.example/a.png',
-            'storage_mode': 'url',
-            'state': 'approved',
-        })
-        design_b = self.env['design.file'].create({
-            'name': 'second',
-            'order_line_id': order.order_line[0].id,
-            'file_url': 'https://drive.example/b.png',
-            'storage_mode': 'url',
-            'state': 'approved',
-        })
+        design_a = self._approved_design(order, 'first', 'https://drive.example/a.png')
+        design_b = self._approved_design(order, 'second', 'https://drive.example/b.png')
         payload = self._build_payload(order, design_a | design_b)
         po = payload.line_items[0].printing_options
         self.assertEqual(po[0]['location_code'], 'PRINT_LOCATION_CODE_FRONT')
@@ -262,16 +231,9 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         self.assertEqual(po[1]['location_code'], 'PRINT_LOCATION_CODE_BACK')
 
     def test_builder_skips_line_with_no_designs_and_no_existing_options(self):
-        """A line item with zero design_files cannot ship — builder skips it.
-
-        Gearment requires at least 1 printing option per line. If all design
-        files for a line are missing, the builder must not emit the line —
-        Gearment would reject the whole order.
-        """
+        """A line item with zero design_files cannot ship — builder skips it."""
         order, product = self._make_minimal_order()
-        # No design.files created
         payload = self._build_payload(order, self.env['design.file'])
-        # Either no line_items at all, OR line_items with non-empty printing_options.
         for line in payload.line_items:
             self.assertGreaterEqual(len(line.printing_options), 1,
                 "every emitted line must have at least one printing_option")

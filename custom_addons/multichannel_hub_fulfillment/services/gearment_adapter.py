@@ -42,7 +42,10 @@ _logger = logging.getLogger(__name__)
 
 # URL constants — see findings.md 2026-05-09 for the probe evidence.
 _DRAFT_URL = 'api/v3/orders/draft'
-_PRICE_URL = 'api/v3/orders/{ref}/price'
+# Price quote is a POST to a fixed path (NOT GET /orders/{ref}/price — that route
+# 404s). Body carries order_platform + shipping.address + line_items. Proven live
+# 200 on 2026-07-05 (order_total returned). See gearment_payload_builder.build_quote_body.
+_PRICE_URL = 'api/v3/orders/price'
 _LABELED_URL = 'api/v3/orders/draft/labeled'
 
 # PII keys dropped from `gearment.api.log.request_payload_summary` (audit hygiene).
@@ -123,7 +126,7 @@ class GearmentAdapter(Protocol):
 
     def push_order(self, payload: GearmentOrderPayload) -> dict: ...
 
-    def get_quote(self, reference_id: str) -> dict: ...
+    def get_quote(self, quote_body: dict) -> dict: ...
 
     def confirm(self, reference_id: str, options: dict | None = None) -> dict: ...
 
@@ -290,23 +293,24 @@ class GearmentApiAdapter:
             )
             raise
 
-    def get_quote(self, reference_id: str) -> dict:
-        """GET /api/v3/orders/{reference_id}/price returns decoded quote.
+    def get_quote(self, quote_body: dict) -> dict:
+        """POST /api/v3/orders/price returns the decoded quote.
 
-        Returns dict with keys: currency, order_total, order_sub_total,
-        order_shipping_fee, order_tax, order_discount, order_handle_fee,
-        order_gift_message_fee, order_fee, raw_response.
+        `quote_body` is built by `gearment_payload_builder.build_quote_body`
+        (order_platform + shipping.address + line_items[]). Returns dict with
+        keys: currency, order_total, order_sub_total, order_shipping_fee,
+        order_tax, order_discount, order_handle_fee, order_gift_message_fee,
+        order_fee, raw_response.
         """
-        path = _PRICE_URL.format(ref=reference_id)
-        endpoint = f'GET /{path}'
+        endpoint = f'POST /{_PRICE_URL}'
         started = time.monotonic()
         try:
-            resp = self.client._request('GET', path)
+            resp = self.client._request('POST', _PRICE_URL, json=quote_body)
             duration_ms = int((time.monotonic() - started) * 1000)
             self._log_call(
                 endpoint=endpoint, source='quote',
                 http_status=200, duration_ms=duration_ms,
-                response_data=resp,
+                request_payload=quote_body, response_data=resp,
             )
             data = resp.get('data', {}) if isinstance(resp, dict) else {}
             currency = ''

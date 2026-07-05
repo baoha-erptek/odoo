@@ -325,9 +325,11 @@ class SaleOrder(models.Model):
                 "`x_gearment_sku` on at least one product before requesting "
                 "a quote."
             ))
-        reference_id = self.channel_order_ref or self.name
         adapter = gearment_adapter.GearmentApiAdapter(env=self.env)
-        quote = adapter.get_quote(reference_id)
+        files = self._all_design_files().filtered(
+            lambda f: f.state in _ACCEPTABLE_DESIGN_STATES)
+        quote_body = gearment_payload_builder.build_quote_body(self, files)
+        quote = adapter.get_quote(quote_body)
         # quote dict carries Decimal totals (P4-01-B). Convert to floats for
         # storage on the Float field; keep full precision in JSON breakdown.
         breakdown = {

@@ -51,14 +51,16 @@ class TestP401BAdapterUrls(TransactionCase):
         return GearmentOrderPayload(
             reference_id='SO-TEST-001',
             store_id='42',
+            platform='MARKETPLACE_PLATFORM_ETSY',
             addresses=(GearmentAddress(
                 first_name='A', last_name='B', street_1='123 Main',
-                street_2=None, city='Boston', state='MA', zip_code='02108',
-                country_code='US', phone=None, email=None,
+                street_2=None, city='Boston', state_code='MA', zip_code='02108',
+                country_code='US', phone_no=None, email=None,
             ),),
             line_items=(GearmentLineItem(
-                legacy_id=99, quantity=1, sku='TEST-SKU',
-                printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+                variant_id='GM0249020374', quantity=1,
+                printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                                   'url': 'https://x/y.png'},),
                 personalisation=None, custom_attributes=None,
             ),),
             shipping_method=None, notes=None, custom_attributes=None,
@@ -105,11 +107,12 @@ class TestP401BAdapterUrls(TransactionCase):
                 },
             )
             mock_session_factory.return_value = session
-            self.adapter.get_quote('SO-TEST-001')
+            self.adapter.get_quote({'order_platform': 'etsy', 'line_items': []})
             session.request.assert_called_once()
             call_args = session.request.call_args
-            self.assertEqual(call_args.args[0], 'GET')
-            self.assertIn('/api/v3/orders/SO-TEST-001/price', call_args.args[1])
+            self.assertEqual(call_args.args[0], 'POST')
+            self.assertTrue(call_args.args[1].endswith('/api/v3/orders/price'))
+            self.assertNotIn('{ref}', call_args.args[1])
 
     def test_get_quote_decodes_money_proto(self):
         from decimal import Decimal
@@ -135,7 +138,7 @@ class TestP401BAdapterUrls(TransactionCase):
                 },
             )
             mock_session_factory.return_value = session
-            quote = self.adapter.get_quote('SO-TEST-001')
+            quote = self.adapter.get_quote({'order_platform': 'etsy', 'line_items': []})
             # Quote dict carries decoded decimals + currency
             self.assertEqual(quote['currency'], 'USD')
             self.assertEqual(quote['order_total'], Decimal('45.990000000'))

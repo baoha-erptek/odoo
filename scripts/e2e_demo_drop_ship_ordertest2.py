@@ -694,6 +694,31 @@ def section_5_gdrive_promote(ctx: Context) -> StepResult:
 # ─── §6 routing — pipeline → gearment_pod/confirmed (auto-push to Gearment) ────
 
 
+def _fetch_gearment_variant_id() -> str:
+    """Pull a real in-stock catalog variant_id (GM-prefixed) for the fixture.
+
+    The draft/quote line item is keyed by variant_id, NOT the Odoo template id
+    (Defect-2026-05-10-02). Returns '' if the catalog is unreachable.
+    """
+    base = (os.environ.get("GEARMENT_API_BASE_URL") or "").rstrip("/")
+    key = os.environ.get("GEARMENT_API_KEY") or ""
+    secret = os.environ.get("GEARMENT_API_SECRET") or ""
+    if not (base and key and secret):
+        return ""
+    try:
+        r = requests.get(
+            base + "/api/v3/catalog", params={"limit": 1}, timeout=30,
+            headers={"X-Gearment-Client-Key": key,
+                     "X-Gearment-Client-Secret": secret})
+        if r.status_code != 200:
+            return ""
+        item = (r.json().get("data") or [{}])[0]
+        variants = item.get("variants") or []
+        return str((variants[0] or {}).get("variant_id") or "") if variants else ""
+    except requests.RequestException:
+        return ""
+
+
 def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
     if not ctx.sale_order_id:
         return StepResult("6", False, "skipped — no order from §1")
@@ -750,14 +775,15 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
     # Direct write with bypass_pipeline_state_guard skips the
     # _write_pipeline_state hook → auto-push doesn't fire. Two fixups
     # to demonstrate the doc's "Routing → Gearment" arrow:
-    #   (a) ensure each line's product has x_gearment_sku (gating field
-    #       used by _gearment_push_should_fire); demo backfill uses the
-    #       template id so _safe_int parses it (Gearment requires a
-    #       numeric catalog id in line_items[].legacy_id — non-numeric
-    #       strings coerce to 0 and trigger oneof_variant_id_legacy_id).
+    #   (a) ensure each line's product has x_gearment_sku set to a REAL
+    #       Gearment catalog variant_id (GM-prefixed) — the draft/quote
+    #       line item is keyed by variant_id (Defect-2026-05-10-02). The
+    #       old backfill used the Odoo template id, which the live validator
+    #       rejects with "some gm product variants not found".
     #   (b) explicitly call sale.order.action_push_to_gearment, which
     #       is the public RPC-friendly entry point bypassed by the
     #       guard-context write above.
+    variant_id = _fetch_gearment_variant_id()
     line_rows = rpc(
         ctx, "admin", "sale.order.line", "search_read",
         [[("order_id", "=", ctx.sale_order_id)], ["product_id"]],
@@ -770,11 +796,12 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
             ctx, "admin", "product.product", "read",
             [[pid], ["x_gearment_sku", "product_tmpl_id"]],
         )[0]
-        if not prod.get("x_gearment_sku") and prod.get("product_tmpl_id"):
-            tmpl_id = prod["product_tmpl_id"][0]
+        sku = prod.get("x_gearment_sku") or ""
+        # Backfill (or correct a stale non-GM value) with the live variant_id.
+        if variant_id and not sku.startswith("GM") and prod.get("product_tmpl_id"):
             rpc(
                 ctx, "admin", "product.template", "write",
-                [[tmpl_id], {"x_gearment_sku": str(tmpl_id)}],
+                [[prod["product_tmpl_id"][0]], {"x_gearment_sku": variant_id}],
             )
     try:
         rpc_void(
@@ -793,10 +820,24 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
         )
 
     time.sleep(2)
+    # LIVE quote: POST /api/v3/orders/price advances draft -> quoted
+    # (fixed 2026-07-05, was a dead GET route).
+    quote_err = ""
+    try:
+        rpc_void(
+            ctx, "admin", "sale.order", "action_get_gearment_quote",
+            [[ctx.sale_order_id]],
+        )
+    except xmlrpc.client.Fault as exc:
+        quote_err = exc.faultString.splitlines()[-1][:160]
+        _log.warning("action_get_gearment_quote fault: %s", quote_err)
+
     order = rpc(
         ctx, "admin", "sale.order", "read",
         [[ctx.sale_order_id],
-         ["x_pipeline_state_id", "x_gearment_outbound_ref"]],
+         ["x_pipeline_state_id", "x_gearment_outbound_ref",
+          "x_gearment_outbound_state", "x_gearment_quote_total",
+          "x_gearment_quote_currency"]],
     )[0]
     # Outbound rows have direction NULL on this build (only inbound webhook
     # rows set direction='inbound' explicitly). Filter by endpoint instead.
@@ -810,19 +851,21 @@ def section_6_pipeline_to_gearment(ctx: Context) -> StepResult:
         order["x_pipeline_state_id"][0]
         if order.get("x_pipeline_state_id") else None
     )
-    # Two acceptable end-states: 'confirmed' (push succeeded or in-flight)
-    # or any 'quoted'/'rolled back' state if the live Gearment API rejected
-    # us (404/auth/etc). Both prove the wiring fired.
-    push_attempted = bool(order.get("x_gearment_outbound_ref")) or bool(log_rows)
+    # DoD: live draft push → 200 (non-empty outbound_ref) AND the quote
+    # advanced the outbound state to 'quoted'.
+    outbound_ref = order.get("x_gearment_outbound_ref") or ""
+    outbound_state = order.get("x_gearment_outbound_state") or ""
+    ok = bool(outbound_ref) and outbound_state == "quoted"
     return StepResult(
-        "6", push_attempted,
+        "6", ok,
         f"pipeline_state_id={state_id} "
-        f"outbound_ref={order.get('x_gearment_outbound_ref') or '∅'} "
+        f"outbound_ref={outbound_ref or '∅'} "
+        f"outbound_state={outbound_state or '—'} "
+        f"quote_total={order.get('x_gearment_quote_total')} "
+        f"{order.get('x_gearment_quote_currency') or ''} "
         f"outbound_api_logs={len(log_rows)} "
-        f"latest_endpoint={log_rows[0]['endpoint'] if log_rows else '—'} "
-        f"http_status={log_rows[0]['http_status'] if log_rows else '—'} "
-        "(non-200 means live Gearment API rejected the synthetic order; "
-        "the wiring fired regardless — see chatter)",
+        f"latest_http={log_rows[0]['http_status'] if log_rows else '—'}"
+        + (f" quote_err={quote_err!r}" if quote_err else ""),
     )
 
 

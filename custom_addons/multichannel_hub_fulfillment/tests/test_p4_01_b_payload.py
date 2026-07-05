@@ -48,7 +48,7 @@ class TestP401BPayloadSchema(TransactionCase):
         line = _make_line_item()
         payload = _make_payload(line_items=(line,))
         self.assertIsInstance(payload.line_items, tuple)
-        self.assertEqual(payload.line_items[0].legacy_id, 1234)
+        self.assertEqual(payload.line_items[0].variant_id, 'GM0249020374')
         self.assertEqual(payload.line_items[0].quantity, 1)
 
     def test_payload_idempotency_key_is_sha256(self):
@@ -71,11 +71,13 @@ class TestP401BPayloadSchema(TransactionCase):
         body = payload.serialize()
         self.assertEqual(body['data']['reference_id'], 'SO-2026-00123')
 
-    def test_payload_serialize_addresses_use_real_field_names(self):
+    def test_payload_serialize_address_uses_real_field_names(self):
+        """Envelope carries the SINGULAR `address` (the plural was response-only)."""
         addr = _make_address()
         payload = _make_payload(addresses=(addr,))
         body = payload.serialize()
-        addr_dict = body['data']['addresses'][0]
+        addr_dict = body['data']['address']
+        self.assertNotIn('addresses', body['data'])
         self.assertEqual(addr_dict['first_name'], 'Alice')
         self.assertEqual(addr_dict['last_name'], 'Buyer')
         self.assertEqual(addr_dict['street_1'], '123 Main St')
@@ -83,16 +85,13 @@ class TestP401BPayloadSchema(TransactionCase):
         self.assertEqual(addr_dict['country_code'], 'US')
 
     def test_payload_serialize_line_items_uses_real_key(self):
-        """Probe G2: line items live under `line_items` not `items`.
-
-        Schema corrected by P4-01-FIX-PAYLOAD-SCHEMA: `legacy_id` not `product_id`.
-        """
+        """Line items live under `line_items` (not `items`), keyed by `variant_id`."""
         line = _make_line_item()
         payload = _make_payload(line_items=(line,))
         body = payload.serialize()
         self.assertIn('line_items', body['data'])
         self.assertNotIn('items', body['data'])
-        self.assertEqual(body['data']['line_items'][0]['legacy_id'], 1234)
+        self.assertEqual(body['data']['line_items'][0]['variant_id'], 'GM0249020374')
 
 
 @tagged('post_install', '-at_install', 'p4_01_b')
@@ -146,8 +145,8 @@ def _make_address(**overrides):
     defaults = dict(
         first_name='Alice', last_name='Buyer',
         street_1='123 Main St', street_2=None,
-        city='Boston', state='MA', zip_code='02108',
-        country_code='US', phone=None, email=None,
+        city='Boston', state_code='MA', zip_code='02108',
+        country_code='US', phone_no=None, email=None,
     )
     defaults.update(overrides)
     return GearmentAddress(**defaults)
@@ -156,8 +155,9 @@ def _make_address(**overrides):
 def _make_line_item(**overrides):
     _, GearmentLineItem, _ = _payload_classes()
     defaults = dict(
-        legacy_id=1234, quantity=1, sku='MUG-001',
-        printing_options=({'location_code': 'front', 'url': 'https://example/x.png'},),
+        variant_id='GM0249020374', quantity=1,
+        printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                           'url': 'https://example/x.png'},),
         personalisation=None, custom_attributes=None,
     )
     defaults.update(overrides)
@@ -169,6 +169,7 @@ def _make_payload(**overrides):
     defaults = dict(
         reference_id='SO-2026-00123',
         store_id='12345',
+        platform='MARKETPLACE_PLATFORM_ETSY',
         addresses=(_make_address(),),
         line_items=(_make_line_item(),),
         shipping_method=None,

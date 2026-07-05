@@ -5,24 +5,26 @@ Schema regenerated 2026-05-10 from the readiness probe in
 The legacy schema (external_order_id / address dict / quantity / product_id)
 is fully replaced.
 
-Wire shape (`/api/v3/orders/draft` POST body — schema-corrected 2026-05-10):
+Wire shape (`/api/v3/orders/draft` POST body — proven live 200 on 2026-07-05):
 
     {"data": {
         "reference_id": "SO-2026-00123",
-        "addresses": [{
+        "store_id": "JaHandmadeArt",
+        "platform": "MARKETPLACE_PLATFORM_ETSY",
+        "address": {
             "first_name": "Alice", "last_name": "Buyer",
-            "street_1": "123 Main St", "zip_code": "02108", "country_code": "US",
-            ...
-        }],
+            "street_1": "123 Main St", "city": "Boston",
+            "state_code": "MA", "zip_code": "02108", "country_code": "US",
+            "phone_no": "+1 555 0100", "email": "a@b.com",
+        },
+        "shipping_method": "METHOD_STANDARD",
         "line_items": [{
-            "legacy_id": 1234, "quantity": 1, "sku": "MUG-001",
+            "variant_id": "GM0249020374", "quantity": 1,
             "printing_options": [
                 {"location_code": "PRINT_LOCATION_CODE_FRONT", "url": "https://drive.../front.png"},
                 {"location_code": "PRINT_LOCATION_CODE_BACK", "url": "https://drive.../back.png"},
             ],
-            ...
         }],
-        ...
     }}
 
 Idempotency belt-and-braces:
@@ -38,17 +40,23 @@ from dataclasses import asdict, dataclass
 
 @dataclass(frozen=True)
 class GearmentAddress:
-    """Buyer's address per /orders/draft schema."""
+    """Buyer's address per /orders/draft schema.
+
+    Field names ARE the wire keys (via `asdict`). Corrected 2026-07-05 from the
+    live `/orders/draft` 400 body + doc crawl: the validator wants `state_code`
+    and `phone_no` (not `state`/`phone`); unknown keys are silently dropped, so
+    the mismatch surfaced as "value length must be at least 1" on every field.
+    """
 
     first_name: str
     last_name: str
     street_1: str
     street_2: str | None
     city: str
-    state: str | None
+    state_code: str | None
     zip_code: str
     country_code: str
-    phone: str | None = None
+    phone_no: str | None = None
     email: str | None = None
 
 
@@ -56,19 +64,18 @@ class GearmentAddress:
 class GearmentLineItem:
     """One line item on a Gearment order draft.
 
-    Schema corrected by P4-01-FIX-PAYLOAD-SCHEMA after live `/api/v3/orders/draft`
-    rejected the previous (`product_id` + flat `design_url_front/back`) shape.
-    Real schema per `specs/004-fulfillment-routing/research.md:43-44`:
-      - `legacy_id` (Gearment catalog int; alternatively `variant_id`)
-      - `printing_options[]` with `{location_code, url}` per design placement.
+    Schema corrected 2026-07-05 after the enum fix unblocked the draft and the
+    400 moved to `some gm product variants not found` (Defect-2026-05-10-02):
+    draft line items are keyed by the GM-prefixed catalog `variant_id`
+    (e.g. `GM0249020374`), NOT the `legacy_id` product int. The variant_id is
+    the merchant's `x_gearment_sku` on product.template.
 
     `printing_options` is a tuple (not list) so the dataclass remains
     structurally immutable — same pattern as `GearmentOrderPayload.line_items`.
     """
 
-    legacy_id: int
+    variant_id: str
     quantity: int
-    sku: str | None = None
     printing_options: tuple[dict, ...] = ()
     personalisation: str | None = None
     custom_attributes: dict | None = None
@@ -85,6 +92,7 @@ class GearmentOrderPayload:
 
     reference_id: str
     store_id: str
+    platform: str
     addresses: tuple[GearmentAddress, ...]
     line_items: tuple[GearmentLineItem, ...]
     shipping_method: str | None = None
@@ -99,24 +107,29 @@ class GearmentOrderPayload:
     def serialize(self) -> dict:
         """Return wire-format dict for the POST body.
 
-        Probe S3 finding: `/orders/draft` rejects `data: []` array envelope
-        with `unmarshal proto: unexpected token [`. Single-object envelope
-        `{"data": {...}}` is the working shape.
+        Shape proven with a live 200 on 2026-07-05 (draft order_id
+        260705P-GM3MUJU-Y20XJXY6). `data` is a bare object (array envelope 400s
+        with `unexpected token [`); the buyer address is the SINGULAR `address`
+        key (the `addresses` array is response-only); `platform` is required
+        (`MARKETPLACE_PLATFORM_ETSY`) else the API 404s "marketplace not found".
+        `notes`/`custom_attributes` are NOT sent — they are unknown to the draft
+        schema; keeping them off the wire keeps the proven-200 body exact.
         """
         return {
-            'data': {
+            'data': _without_none({
                 'reference_id': self.reference_id,
                 'store_id': self.store_id,
-                'addresses': [
-                    _without_none(asdict(addr)) for addr in self.addresses
-                ],
+                'platform': self.platform,
+                # SINGULAR `address` — the draft request takes one buyer address.
+                'address': (
+                    _without_none(asdict(self.addresses[0]))
+                    if self.addresses else None
+                ),
                 'line_items': [
                     _without_none(asdict(item)) for item in self.line_items
                 ],
                 'shipping_method': self.shipping_method,
-                'notes': self.notes,
-                'custom_attributes': self.custom_attributes,
-            },
+            }),
         }
 
 

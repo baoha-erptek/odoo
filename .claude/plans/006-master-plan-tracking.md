@@ -10,12 +10,17 @@
 > MF-E2E gates **0/1/2/3a/3b all DONE ×2** on staging `esty_odoo19` (commits `1bfaecf`…`855b247`;
 > evidence `docs/engineering/uats/E2E_FLOW*_2026-07-04.md`). Also closed: **P0-02** (Gearment develop
 > keys verified live), **P0-18b2** (webhook HMAC verified live), **ENV-FIX-MRP** (routes verified).
-> 9 defects fixed (ei 19.0.3.18.0 / mhf 19.0.1.0.27 / mhc 19.0.1.0.76). Vendor blocker:
-> Gearment `printing_options` validator (Defect-2026-05-10-05) — **PARTIAL (2026-07-05)**: root
-> cause found via doc crawl (`docs/vendor/gearment/`) — `location_code` is the proto3 enum
-> `PRINT_LOCATION_CODE_*`, not the bare names the 400 quotes; builder fixed (commit `595fb03286b`,
-> 390 tests green). No longer owner-escalation. Remaining: one live `/orders/draft` probe to confirm
-> end-to-end + the inferred FRONT/BACK values (WHOLE is doc-literal), behind the owner-sign-off gate.
+> 9 defects fixed (ei 19.0.3.18.0 / mhf 19.0.1.0.27 / mhc 19.0.1.0.76). Gearment dropship
+> `printing_options` validator (Defect-2026-05-10-05) — **DONE (2026-07-05)**: enum fix
+> deployed, then live probes showed the blocker had moved and cracked the full draft/quote
+> schema. `POST /orders/draft` proven **live 200** (singular `address` + `state_code`/`phone_no`,
+> `platform=MARKETPLACE_PLATFORM_ETSY`, `variant_id` line key, `METHOD_STANDARD`); the quote
+> endpoint corrected to `POST /orders/price` (was a dead GET route). flow-3b §3+§4 and demo §6
+> both pass **live ×2** on staging (draft 200 + quote→quoted). Also closes Defect-2026-05-10-02
+> (variant_id catalog key). Module suite 391 tests 0-fail. Evidence:
+> `specs/004-fulfillment-routing/findings.md` (2026-07-05 closure) +
+> `docs/engineering/uats/E2E_FLOW3B_DROPSHIP_2026-07-05.md`. Two follow-ups filed: quote
+> `nanos` cents-scale + non-US (VN) address transliteration/state-code cap.
 > Next session: `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` (P1-11 cutover → XLS verify → MF-E2E-4).
 
 **Created**: 2026-04-13

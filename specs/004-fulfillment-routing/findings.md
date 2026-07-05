@@ -794,3 +794,67 @@ tests, 0 failed; `-u --stop-after-init` exit 0. Evidence:
 - `variant_id` from the Gearment catalog (`/api/v3/catalog/variants/stock`) instead of the
   Odoo SKU — separate Defect-2026-05-10-02 (DEMO-T-* catalog-lookup failure).
 
+
+## 2026-07-05 (later) — Defect-2026-05-10-05 CLOSED + draft/quote schema fully corrected via live probes
+
+**Trigger**: `docs/NEXT_SESSION_PROMPT_GEARMENT_DROPSHIP_CLOSE.md` — take the enum fix from
+PARTIAL to a live 200. Deployed the enum builder to staging; re-ran flow-3b §3 → still 400,
+so the blocker had **moved** (as the prompt anticipated). Captured the full 400 body from
+`gearment.api.log.response_summary` (NOT the scrubbed request row) + ran a capped ladder of
+live probes against `POST /api/v3/orders/draft`.
+
+**Live-probe ladder (each captured `r.text`; ≤5 per question per the blackbox-probe rule):**
+1. Enum accepted — the `printing_options` error is GONE. Confirms Defect-05-10-05 fix works.
+2. 400 `data[0].addresses[0].* empty` → the request envelope was wrong. `data` array (`{"data":[...]}`)
+   → `unexpected token [`; `data` object is correct. The buyer address is the **singular
+   `address`** key, not `addresses[]` (the plural is response-only). Address keys are
+   `state_code` / `phone_no` (not `state`/`phone`); unknown keys are silently dropped, which
+   is why every field read as empty.
+3. 404 `marketplace not found` → **`platform` is required**; draft uses the proto-enum form
+   `MARKETPLACE_PLATFORM_ETSY` (lowercase `etsy` 404s — that's the QUOTE vocabulary).
+4. 412 `some gm product variants not found` → line item must carry the GM catalog
+   **`variant_id`** (`GM0249020374`), not `legacy_id`. Pulled from `GET /api/v3/catalog`
+   → `variants[].variant_id`. This is Defect-2026-05-10-02, now also closed here.
+5. **200** — draft `260705P-GM3MUJU-Y20XJXY6` created. Proven-200 body recorded in
+   `services/gearment_payload.py` docstring.
+
+**Quote endpoint was ALSO wrong (never worked live; E2E had always simulated §4):**
+`GET /api/v3/orders/{ref}/price` 404s (route does not exist). Real quote is
+**`POST /api/v3/orders/price`** with `{order_platform:"etsy", shipping.address:{method,
+state_code, country_code}, line_items:[{variant_id, quantity, print_locations:["front"]}]}`
+(lowercase vocabulary — distinct from the draft). Proven live 200 (`order_total` returned).
+
+**Fix landed (RED→GREEN, full module suite 391 tests 0-fail, `-u` exit 0):**
+- `services/gearment_payload.py`: `GearmentAddress` `state→state_code`, `phone→phone_no`;
+  `GearmentLineItem` `legacy_id→variant_id` (dropped `sku`); `GearmentOrderPayload` gained
+  required `platform`; `serialize()` emits singular `address`, drops `notes`/`custom_attributes`.
+- `services/gearment_payload_builder.py`: maps the new fields; `variant_id` = `x_gearment_sku`
+  (the field now holds the GM variant_id — routing is `bool()`-driven so value-agnostic, no
+  migration); `platform=MARKETPLACE_PLATFORM_ETSY`; `shipping_method=METHOD_STANDARD`; new
+  pure `build_quote_body()` for the price endpoint.
+- `services/gearment_adapter.py`: `_PRICE_URL` → `api/v3/orders/price`; `get_quote(reference_id)`
+  → `get_quote(quote_body)` POSTs the body.
+- `models/sale_order.py` `action_get_gearment_quote`: builds the quote body + POSTs it.
+- E2E: `scripts/e2e_flow3b_dropship.py` §0/§1 use a real catalog `variant_id`; §4 calls the
+  live quote. `scripts/e2e_demo_drop_ship_ordertest2.py` §6 backfills a real `variant_id` +
+  calls the live quote; assertion tightened to require 200 + `quoted`.
+
+**Acceptance (staging esty_odoo19, ×2 each):**
+- flow-3b §3 LIVE draft → 200 (refs `…YK9V5H61`, `…YKS6SMZM`); §4 LIVE quote → `quoted`.
+- demo §6 LIVE push → 200 (`…YN2J6PPP`) + quote → `quoted` ($31.00 USD).
+
+**New follow-up findings (NOT this slice):**
+- **Money `nanos` scale on `/orders/price`**: response `order_total` came back `units=12,
+  nanos=99` but the real total is $12.99 — `_money_to_decimal` reads nanos as 10^-9 → $12.00.
+  Gearment's price endpoint appears to use a non-standard nanos scale. Quote total is off by
+  the cents. Needs a decoder tweak scoped to that endpoint (candidate Defect-2026-07-05-01).
+- **Vietnam / non-US addresses**: `state_code` is capped at **3 chars** (US "TX" fine; a full
+  province name 400s) and Gearment rejects non-ASCII — Vietnamese diacritics fail with
+  "invalid characters (only letters, digits, spaces, - ' . , # / &)". VN IS an available
+  country; a raw VN address needs transliteration + a ≤3-char state code. Builder currently
+  passes `partner.state_id.code or .name` and no transliteration — fine for US, will 400 for
+  VN buyers (candidate Defect-2026-07-05-02).
+
+**Owner action**: discard these DRAFT orders in the Gearment dashboard (never confirmed/
+labeled — no charge): `260705P-GM3MUJU-` `Y20XJXY6`, `YDHZH7S6`, `YJEJTYEV`, `YK9V5H61`,
+`YKS6SMZM`, `YN2J6PPP`, plus probe refs `PROBE-VN-ASCII` and `PROBE4-VARIANT`.

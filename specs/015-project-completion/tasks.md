@@ -120,7 +120,7 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 ---
 
-### MF-E2E-3b — Flow-3b Gearment Dropship E2E (BLOCKED: E2)
+### MF-E2E-3b — Flow-3b Gearment Dropship E2E (DONE — live 200, 2026-07-05)
 
 **Owner**: Dev (e2e-runner agent)  
 **Estimated Duration**: 3–4 days once E2 keys arrive  
@@ -132,11 +132,12 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 - Runner: Route B order → quote wizard (`/draft` → price) → dropship PO confirm → `action_push_to_gearment` → simulated/live webhook (`/gearment/webhook`, HMAC-signed) → tracking recorded → Etsy push
 - Playwright: `gearment_quote_wizard` page-object walk
 
-**Exit Criteria** (closed 2026-07-04 — `docs/engineering/uats/E2E_FLOW3B_DROPSHIP_2026-07-04.md`):
-- [X] Runner sections PASS — 8/8 ×2 with DOCUMENTED MOCK FALLBACK for draft/quote (sandbox host 530-dead; production validator vendor-blocked, Defect-2026-05-10-05 re-confirmed with variant-level ids)
+**Exit Criteria** (fully closed 2026-07-05 — `docs/engineering/uats/E2E_FLOW3B_DROPSHIP_2026-07-05.md`; the 2026-07-04 mock-fallback caveat is now void):
+- [X] Runner sections PASS — 7/7 ×2, **NO mock fallback**: §3 LIVE `POST /orders/draft` → **200** with real `x_gearment_outbound_ref`; §4 LIVE `POST /orders/price` → state `quoted`. Defect-2026-05-10-05 CLOSED (full draft/quote schema corrected via live probes — see `specs/004-fulfillment-routing/findings.md` 2026-07-05 closure).
+- [X] Demo dropship §6 LIVE push → 200 + quote `quoted` ×2 (`docs/E2E_DEMO_DROP_SHIP_ORDERTEST2_2026-07-05.md`).
 - [X] Webhook HMAC verified live (closes P0-18b2) — runner §5 + TC-DROP-005 both 200 with X-Connect-Signature
-- [X] Playwright green (2 consecutive runs) — 8 pass ×2 (TC-DROP-002/003 documented vendor-blocked skips)
-- Bonus fix: webhook-triggered Etsy push sudo (mhf 1.0.27) — the D-A primary trigger had never worked from a live webhook. OWNER ACTION: Gearment support escalation on the printing_options validator (blocks production dropship push).
+- [X] Playwright green (2 consecutive runs)
+- Bonus: also closed Defect-2026-05-10-02 (draft keyed by GM `variant_id`). Two follow-ups filed: quote `nanos` cents-scale, non-US (VN) address transliteration/state-code cap. OWNER ACTION: discard the DRAFT orders listed in the findings closure (never confirmed/labeled — no charge).
 
 ---
 

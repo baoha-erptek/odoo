@@ -69,14 +69,16 @@ class TestApiLogSurvivesOuterRollback(TransactionCase):
         cls._GearmentApiAdapter = GearmentApiAdapter
         cls._payload = GearmentOrderPayload(
             reference_id='SO-EXC-PATH-01', store_id='demo',
+            platform='MARKETPLACE_PLATFORM_ETSY',
             addresses=(GearmentAddress(
                 first_name='X', last_name='Y', street_1='1 Test',
-                street_2=None, city='C', state='MA', zip_code='02108',
+                street_2=None, city='C', state_code='MA', zip_code='02108',
                 country_code='US',
             ),),
             line_items=(GearmentLineItem(
-                legacy_id=1, quantity=1, sku='SKU-EXC-PATH',
-                printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+                variant_id='GM0249020374', quantity=1,
+                printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                                   'url': 'https://x/y.png'},),
             ),),
         )
         # Fresh cursor + explicit commit so the FK target (sale.order) is

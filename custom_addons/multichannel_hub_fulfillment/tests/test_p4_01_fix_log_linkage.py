@@ -50,14 +50,16 @@ class TestApiLogFailurePathEnrichment(TransactionCase):
         self._GearmentApiAdapter = GearmentApiAdapter
         self._payload = GearmentOrderPayload(
             reference_id='SO-LOG-LINK-01', store_id='demo',
+            platform='MARKETPLACE_PLATFORM_ETSY',
             addresses=(GearmentAddress(
                 first_name='A', last_name='B', street_1='1 Main',
-                street_2=None, city='X', state='MA', zip_code='02108',
+                street_2=None, city='X', state_code='MA', zip_code='02108',
                 country_code='US',
             ),),
             line_items=(GearmentLineItem(
-                legacy_id=1, quantity=1, sku='T1',
-                printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+                variant_id='GM0249020374', quantity=1,
+                printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                                   'url': 'https://x/y.png'},),
             ),),
         )
         self._partner = self.env['res.partner'].create({'name': 'BuyerLogLink'})
@@ -151,14 +153,16 @@ class TestApiLogSuccessPathDirection(TransactionCase):
         self._GearmentApiAdapter = GearmentApiAdapter
         self._payload = GearmentOrderPayload(
             reference_id='SO-LOG-LINK-OK', store_id='demo',
+            platform='MARKETPLACE_PLATFORM_ETSY',
             addresses=(GearmentAddress(
                 first_name='A', last_name='B', street_1='1 Main',
-                street_2=None, city='X', state='MA', zip_code='02108',
+                street_2=None, city='X', state_code='MA', zip_code='02108',
                 country_code='US',
             ),),
             line_items=(GearmentLineItem(
-                legacy_id=1, quantity=1, sku='T1',
-                printing_options=({'location_code': 'front', 'url': 'https://x/y.png'},),
+                variant_id='GM0249020374', quantity=1,
+                printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
+                                   'url': 'https://x/y.png'},),
             ),),
         )
 
