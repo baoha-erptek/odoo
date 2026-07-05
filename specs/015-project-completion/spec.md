@@ -143,12 +143,12 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 | ID | Title | Origin | State | Blocker | Size | Notes |
 |---|---|---|---|---|---|---|
-| **P1-07** | Vietnamese i18n completion | Spec 003 P3-03 | **todo** | None | **L** | Phase 1 exit criterion. Audit 2026-07-04: **zero `i18n/*.po` files exist in any module** — earlier "50% translated" claims were wrong; effort = full extraction + translation, resized M→L. Some surfaces (design module state labels) ship Vietnamese-first hardcoded strings to convert. |
+| **P1-07** | Vietnamese i18n completion | Spec 003 P3-03 | **done** (2026-07-05, commit `7dd5ed37c2a`) | — | **L** | `i18n/vi.po` authored for all 4 custom modules (design 85 / mhf 326 / etsy 716 / mhc 994 entries; polib-validated, identity-scan QA). vi_VN loaded on local + staging; staging internal users switched. Verified live: full Vietnamese hub UI + KPI band (see mockup-v3 session, `feature/mockup-v3-uiux` merged to main `c112194d2e5`). |
 | **P1-01b** | Order-line dashboard refactor (model swap) | Spec 003 P1-01 | **shipped\*** (not exercised by MF-E2E-1 run 2026-07-04 — needs own verification) | — | M | Code: `views/operations_dashboard_views.xml` — model swapped to `sale.order.line` 2026-05-10; bulk Mark-Shipped server action live |
 | **P1-02c** | Spec 003 US5 GDrive upload wizard | Spec 003 US5 | **done** (2026-07-04, TC-MTO-002 upload wizard URL-mode green ×2) | — | M | Code: `multichannel_hub_core/models/design_file_upload_wizard.py` (url/small/gdrive storage modes) + `cron_design_file_gdrive_sync` promotion cron |
 | **P1-02d** | A4 batch print layout | Spec 003 P1-02 | **todo** | None | S | Design file batch print template; owner red-flag item |
 | **P1-DESIGN-AUTO-ARCHIVE** | Auto-archive design files after publish | Spec 003 P1-02 | **doing** | P-PUB-PUBLISH | M | State transition: archive after Etsy publish confirmation |
-| **P-DOCS-FLOW-VN** | Vietnamese operator flow docs | Spec 003 + 006 | **doing** | P-PUB-E2E | L | Can author in parallel; finalize post-E2E. Covers order ingest→fulfillment→shipment tracking workflow. |
+| **P-DOCS-FLOW-VN** | Vietnamese operator flow docs | Spec 003 + 006 | **done** (2026-07-05, commit `94c7e21aec0`) | — | L | Shipped as `docs/owner/HUONG_DAN_*_VN.md` v2.0 (4 guides, new Vận-hành menu paths, 21 fresh themed screenshots) + `business-flows/v3/` (11 pages, real staging captures) + consolidated PDF `docs_huong_dan_uat_vn.pdf`; synced to Confluence + docs.hatafa.erptek.net/v3/. |
 | **P3-LEAD-MAIL-ALIAS** | Forward email alias → Odoo lead routing | Spec 007 | **todo** | None | S | Off critical path; maps external email to lead creation |
 | **P3-LEAD-API-ROUTING** | Etsy messages → lead routing | Spec 007 | **todo** | P1-MSG-API-PULL | M | Off critical path; dependent on conversations_r re-submission |
 | **T067** | Reconciliation report (Spec 002 exit gate) | Spec 002 Phase 13 | **todo** | None | M | BA reconciliation CSV: Odoo `SUM(amount_total)` vs source Excel; required before staging deploy |
@@ -332,7 +332,7 @@ Every non-done tracker item from `.claude/plans/006-master-plan-tracking.md` app
 | P1-01b | doing | P1-01b | Dev: order-line dashboard refactor |
 | P1-02c | todo | P1-02c | Dev: GDrive upload wizard (depends P1-09 ✓) |
 | P1-02d | todo | P1-02d | Dev: A4 batch print layout |
-| P1-07 | todo | P1-07 | Dev: Vietnamese i18n completion |
+| P1-07 | done | P1-07 | Dev: Vietnamese i18n completion (2026-07-05) |
 | P1-11 | todo | P1-11 | Dev+Owner: pilot shop cutover (depends E2) |
 | P1-13 | todo | P1-13 | Dev+Owner: 2–4 additional shops cutover |
 | P1-MSG-SCOPE | blocked | P1-MSG-SCOPE | Owner: re-submit conversations_r scope to Etsy |
@@ -380,7 +380,7 @@ Every non-done tracker item from `.claude/plans/006-master-plan-tracking.md` app
 | P-PUB-INVENTORY | todo | P-PUB-INVENTORY | Dev: inventory writeback to Etsy |
 | P-PUB-PUBLISH | todo | P-PUB-PUBLISH | Dev: publish state transition |
 | P-PUB-E2E | todo | P-PUB-E2E | Dev: E2E publish pipeline validation |
-| P-DOCS-FLOW-VN | doing | P-DOCS-FLOW-VN | Owner+Dev: Vietnamese operator flow docs |
+| P-DOCS-FLOW-VN | done | P-DOCS-FLOW-VN | Owner+Dev: Vietnamese operator flow docs (2026-07-05) |
 | P0-20-DOCS | todo | P0-20-DOCS | Dev: module decomposition documentation |
 | SRS/SDS-REBUILD | todo | SRS/SDS-REBUILD | Dev: consolidated SRS + SDS |
 | ENV-FIX-MRP | doing | ENV-FIX-MRP | Owner: MRP route configuration (not code) |

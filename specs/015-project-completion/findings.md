@@ -245,3 +245,23 @@ deployed, the 400 **moved**, and capped live probes cracked the full draft + quo
   (design 19/19 tests) and deployed to staging `esty_odoo19` (browser-verified
   on real MO `WH/MO/00002`). flow-3a §3 extended to approve the design.order
   and assert the MO badge flips False→True; Playwright `TC-MTO-007` added.
+
+
+## 2026-07-05 — Mockup-v3 / UI-UX session closes P1-07 + P-DOCS-FLOW-VN (out-of-band)
+
+Branch `feature/mockup-v3-uiux` (12 commits, merged to main `c112194d2e5`) ran outside the
+MP006 dispatch loop on direct owner instruction. Shipped: MuK theme + Hatafa palette
+(7 muk_web_* modules vendored into custom_addons), single "Vận hành" hub (41 menus
+re-grouped into 6 workflow sections; Etsy root app folded in; Flow-4 after-sales got its
+first menus; P0 gating fixes), KPI band on Operations Dashboard (js_class OWL renderer —
+`banner_route` no longer exists in Odoo 19), Gearment→Fulfillment naming + state badge,
+full Vietnamese i18n (4 modules, 2,121 entries), staging deploy + 21 themed screenshots,
+`business-flows/v3/` + `HUONG_DAN_*` v2.0 + PDF + Confluence + docs.hatafa v3.
+
+Surprises recorded in auto-memory `feedback_mockup_v3_uiux_session.md`: local dev DB had
+45 Enterprise modules auto-installed (image bundles /opt/odoo/enterprise; staging clean CE)
+— purged, addons_path corrected; `odoo i18n export` replaced `--i18n-export`; menu records
+need explicit `<function unlink>` cleanup (not auto-purged); maker/checker review caught a
+second-upgrade crash + a KPI AccessError path that admin-run tests cannot see.
+
+Post-UAT fix same day: Etsy Shops menu re-gated to BA Lead (was manager-only after reorg).

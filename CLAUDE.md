@@ -114,7 +114,11 @@ ruff check --fix custom_addons/
 ```
 odoo19_esty/
 ├── custom_addons/           # Custom Odoo 19 modules
-│   └── etsy_integration/    # Main module: Etsy order email ingestion
+│   ├── etsy_integration/    # Etsy channel: orders (API + email), shops, publish, after-sales
+│   ├── multichannel_hub_core/        # Channel-agnostic hub: listings, SKU, pipelines, dashboard, design files
+│   ├── multichannel_hub_fulfillment/ # Gearment dropship, tracking import, webhooks
+│   ├── design/              # Design orders + MO readiness badge
+│   └── muk_web_*/           # 7 vendored MuK theme modules (Hatafa UI, LGPL-3)
 ├── odoo/                    # Odoo 19 CE source code
 ├── addons/                  # Standard Odoo 19 addons (~619)
 ├── specs/                   # Spec-kit planning documents

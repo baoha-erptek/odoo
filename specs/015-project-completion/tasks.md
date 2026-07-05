@@ -793,7 +793,12 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 **Goal**: Complete Phase 1 exit criteria; stabilize dashboards and design workflows.
 
-#### P2.1.1 — P1-07 (Vietnamese i18n Completion)
+#### P2.1.1 — P1-07 (Vietnamese i18n Completion) — DONE 2026-07-05
+
+> Closed via mockup-v3 session (commit `7dd5ed37c2a`, merged to main `c112194d2e5`).
+> `i18n/vi.po` for all 4 custom modules (2,121 entries, polib-validated); vi_VN live on
+> local + staging; manual QA green (themed Vietnamese hub UI screenshot-verified).
+> Note: file name is `vi.po` (Odoo 19 export convention), not `vi_VN.po`.
 
 **Owner**: Dev + Owner (i18n translations)  
 **Estimated Duration**: 5 days  
@@ -916,7 +921,13 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 ---
 
-#### P2.1.5 — P-DOCS-FLOW-VN (Vietnamese Operator Flow Documentation)
+#### P2.1.5 — P-DOCS-FLOW-VN (Vietnamese Operator Flow Documentation) — DONE 2026-07-05
+
+> Closed via mockup-v3 session (commit `94c7e21aec0`). Delivered as 4× `HUONG_DAN_*_VN.md`
+> v2.0 + `business-flows/v3/` (11 HTML pages, real staging screenshots) + consolidated PDF,
+> synced to Confluence and https://docs.hatafa.erptek.net/v3/ — supersedes the single
+> `operator-flows/vietnamese-flow-guide.md` deliverable named below. Video walkthroughs
+> not produced (screenshots + step lists instead); owner UAT pending.
 
 **Owner**: Owner (documentation + process photography)  
 **Estimated Duration**: 5–7 days (can run in parallel through E2E)  
