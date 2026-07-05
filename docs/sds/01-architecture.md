@@ -95,7 +95,7 @@ graph TD
     end
 
     subgraph Product["Product/Design Layer"]
-        Design["<b>design</b><br/>v19.0.1.0.0<br/>━━━━━━━━━━━━<br/>Models:<br/>• design.order<br/>• design.file (local ext)<br/>━━━━━━━━━━━━<br/>Services: N/A<br/>Views:<br/>• Design Order Form<br/>• Approval Workflow"]
+        Design["<b>design</b><br/>v19.0.1.1.0<br/>━━━━━━━━━━━━<br/>Models:<br/>• design.order<br/>• design.file (local ext)<br/>• mrp.production (ext: design_ready)<br/>━━━━━━━━━━━━<br/>Services: N/A<br/>Views:<br/>• Design Order Form<br/>• Approval Workflow<br/>• MO Design Ready badge"]
     end
 
     MHC -->|"depends on"| StdOdoo
@@ -137,7 +137,7 @@ graph TD
 | **multichannel_hub_core** | Architect + BA | Order pipeline routing, design file management, unified dashboards, product catalog hub (Phase 3) | `sale.order.fulfillment`, `order.pipeline*`, `design.file`, `shipping.carrier`, `multichannel.listing`, `multichannel.sync.health` | 80%+ (Phase 1 complete) | ✅ Phase 1 live |
 | **etsy_integration** | Etsy specialist + integrator | Etsy shop OAuth, email ingest (legacy), listing fetch, order creation, publish flow (Phase 3) | `etsy.shop`, `etsy.email.log`, `etsy.listing`, `etsy.api.log` | 80%+ (Phase 0/1 regression green) | ✅ P1 cutover ready |
 | **multichannel_hub_fulfillment** | Fulfillment + Gearment specialist | Gearment API wrapper, webhook receiver, quote state machine, tracking sync | `gearment.api.log`, `gearment.quote.wizard`, webhook models (transient) | 80%+ (P4-01 complete) | ✅ P4-01 E2E pass |
-| **design** | Product/production team | Design order document, approval workflow, file attachment, production routing | `design.order`, `design.file` (extends _core) | 80%+ (P0 spec, ESTY-244 implementation) | ✅ ESTY-244 live |
+| **design** | Product/production team | Design order document, approval workflow, file attachment, production routing, MO Design-Ready badge | `design.order`, `design.file` (extends _core), `mrp.production` (ext) | 80%+ (P0 spec, ESTY-244 + ESTY-249) | ✅ ESTY-244 + ESTY-249 live |
 
 ---
 

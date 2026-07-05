@@ -69,7 +69,8 @@ Local ticket workspaces live under `.docs/tasks/<ESTY-ID>/` (legacy pre-2026-05-
 | ESTY-208 | Etsy coupon as per-line discount % | pushed | flow-2 | Covered by ESTY-206 mapping tests; anchor S03339 amount reconciles |
 | ESTY-209 | Line product image on pulled orders | pushed | flow-2 | `widget="image_url"` path; adapter enrichment tests (memory: adapter-enrichment call-count trap) |
 | ESTY-210 | Ingest currency conversion (shop→company) | pushed | flow-2 | Verified live: anchor S03339 re-priced 734,914 VND → 16.21 USD after pricelist rework (MF-E2E-2 anchor re-audit) |
-| ESTY-244 | Split Design into standalone module + design.order | IN PROCESS | flow-3a | NOT yet on this branch. Its WIP seeds add a `design_ready` pipeline state — the source of the 3 local `test_pipeline_state_db` failures noted in the MF-E2E-3a findings. When it lands, re-run flow-3a runner §3 (design approve) + re-baseline pipeline seed tests. |
+| ESTY-244 | Split Design into standalone module + design.order | landed (In Review) | flow-3a | Landed on `feature/006` (commit `abdb49a56d0`); `design` module v19.0.1.1.0, 19/19 tests. Deployed + verified on staging `esty_odoo19`. flow-3a §3 extended to approve the design.order + assert the MO badge. |
+| ESTY-249 | MO 'Design Ready' badge (informational) | landed (In Review) | flow-3a | Same commit `abdb49a56d0`. Computed `mrp.production.design_ready`/`design_order_id` + ribbon/banner/smart-button; not a core state (ADR-019 amendment). Browser-verified on real staging MO `WH/MO/00002`. |
 | ESTY-246 | PO-level Gearment quote (dropship) | IN PROCESS | flow-3b | Folded into MF-E2E-3b scope: gate must exercise the PO "Request Gearment Quote" path once the ticket lands (SO-level quote wizard covered meanwhile). |
 
 ### New items from audit (AUD-01…AUD-05)

@@ -44,6 +44,7 @@ erDiagram
 | Design File Route | `design.file.route` | `mail.thread`, `mail.activity.mixin` | Route template for design uploads (deprecated/archive) |
 | Design File Upload Wizard | `design.file.upload.wizard` | — | Transient; file upload form |
 | Sale Order (design ext) | `sale.order` (_inherit) | `sale.order` | Extensions: auto-create design orders |
+| MO (design ext) | `mrp.production` (_inherit) | `mrp.production` | ESTY-249: computed `design_ready` + `design_order_id` (informational MO badge) |
 
 ### 5.3 Key Fields by Model
 
@@ -529,6 +530,8 @@ stateDiagram-v2
 |-------|-------|-----------------|--------------|
 | design.order | design_files_count | _compute_design_files_count | design_file_ids |
 | design.order | approved_files_count | _compute_design_files_count | design_file_ids.state |
+| mrp.production | design_ready | _compute_design_readiness | origin, company_id (non-stored; keyed on origin==SO.name) |
+| mrp.production | design_order_id | _compute_design_readiness | origin, company_id (non-stored) |
 | multichannel.listing | display_name | _compute_display_name | product_tmpl_id, channel_id, shop_ref |
 | multichannel.listing | last_sync_error | _compute_last_sync_error | product_channel_status (via join) |
 | etsy.shop | order_count | _compute_order_count | order_ids (one2many) |

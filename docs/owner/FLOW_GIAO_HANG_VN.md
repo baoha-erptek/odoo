@@ -57,6 +57,14 @@ Một đơn có thể chứa cả hai loại — hệ thống xử lý từng d�
 - Giới hạn upload trực tiếp: 10 MB (file lớn hơn → để trên GDrive + dán link).
 - File bị từ chối → BA + Marketing được thông báo qua chatter.
 
+### Phiếu Design + báo "Đã duyệt thiết kế" cho xưởng
+
+- Khi xác nhận đơn bán, hệ thống tự tạo một **Phiếu Design** riêng (bật/tắt trong
+  Cấu hình → Bán hàng). Đội sản xuất bấm **Duyệt** trên phiếu này khi file đạt.
+- Sau khi duyệt, **đơn sản xuất** hiện huy hiệu xanh **"Design Ready"** + nút mở
+  nhanh Phiếu Design. Trước khi duyệt, đơn sản xuất báo vàng "chờ duyệt thiết kế".
+  Đây chỉ là chỉ báo — không chặn xưởng bắt đầu sản xuất.
+
 ### Tự động chuyển trạng thái (sắp ra mắt)
 
 Khi đội sản xuất bấm "Hoàn thành work order" trong module MRP → trạng thái pipeline tự động sang bước tiếp theo. Hôm nay BA phải tự đổi trạng thái thủ công.

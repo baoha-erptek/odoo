@@ -218,3 +218,15 @@ Env + test findings:
 - gearment.api.log rows are NOT written for verified webhooks (discovery
   mode only) — provenance lives on fulfillment
   `gearment_last_webhook_topic/at`.
+
+## 2026-07-05 — ESTY-244 landed + ESTY-249 added
+- ESTY-244 landed on `feature/006` (commit `abdb49a56d0`): the `design` module
+  (v19.0.1.1.0) was already built; this session closed it out (fixed stale
+  ADR-018→ADR-019 refs, amended ADR-019) and shipped **ESTY-249** — the
+  informational MO 'Design Ready' badge (computed `mrp.production.design_ready`
+  + `design_order_id`, ribbon/banner/smart-button; not a core state).
+- Re: the earlier note about local `test_pipeline_state_db` "stale design_ready
+  rows" — those were ESTY-244 WIP seeds; the module is now installed cleanly
+  (design 19/19 tests) and deployed to staging `esty_odoo19` (browser-verified
+  on real MO `WH/MO/00002`). flow-3a §3 extended to approve the design.order
+  and assert the MO badge flips False→True; Playwright `TC-MTO-007` added.
