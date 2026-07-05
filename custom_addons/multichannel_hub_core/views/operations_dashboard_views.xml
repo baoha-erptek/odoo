@@ -23,6 +23,7 @@
         <field name="model">sale.order.line</field>
         <field name="arch" type="xml">
             <list string="Operations Dashboard"
+                  js_class="operations_dashboard_list"
                   decoration-info="qty_total &gt;= 2"
                   decoration-bf="is_duplicate_buyer"
                   decoration-danger="order_priority in ('push','urgent')"

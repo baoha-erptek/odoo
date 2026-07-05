@@ -82,6 +82,10 @@ fulfillment delegation landed:
         # standard product UI. See docs/owner/design-system/MU_SYSTEM.md.
         'web.assets_backend': [
             'multichannel_hub_core/static/src/scss/mu_tokens.scss',
+            # P-KPI-01 — Operations Dashboard KPI band.
+            'multichannel_hub_core/static/src/scss/mu_kpi.scss',
+            'multichannel_hub_core/static/src/views/operations_dashboard/operations_dashboard_list.js',
+            'multichannel_hub_core/static/src/views/operations_dashboard/operations_dashboard_list.xml',
         ],
     },
     'post_init_hook': 'post_init_hook',
