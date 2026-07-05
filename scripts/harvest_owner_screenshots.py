@@ -78,6 +78,9 @@ SHOTS: list[tuple[str, str, tuple, str | None]] = [
      ("multichannel_hub_core", "action_product_channel_status"), None),
     ("tao-san-pham-sku-drift", "action",
      ("multichannel_hub_core", "action_product_sku_drift"), None),
+    # flow-3b PO-driven Gearment quote (ESTY-246) + picking status (ESTY-248)
+    ("giao-hang-gearment-po-form", "form", ("purchase.order", 16), None),
+    ("giao-hang-picking-gearment-status", "form", ("stock.picking", 102), None),
 ]
 
 

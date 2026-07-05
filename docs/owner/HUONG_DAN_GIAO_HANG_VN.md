@@ -161,25 +161,32 @@ Hệ thống áp giới hạn 10 MB cho file upload trực tiếp. File lớn h�
 - Đơn có ít nhất 1 dòng với sản phẩm có **Mã SKU Gearment**.
 - Khi đơn vào hệ thống → tự động đặt tuyến **Dropship** + nhà cung cấp **Gearment**.
 
-### 5.2 Bước 1 — Báo giá Gearment
+### 5.2 Bước 1 — Đơn mua (PO) dropship tự tạo
 
-1. Mở đơn → tab **Gearment**.
-2. Bấm **"Báo giá Gearment"** (chỉ BA Shipping/Manager thấy nút).
-3. Wizard hỏi xác nhận → bấm **Gửi**.
-4. Hệ thống gọi Gearment API → tạo quote.
-5. Trạng thái đơn: **"Đã gửi báo giá"** → chờ Gearment trả lời.
+Khi đơn vào hệ thống, tuyến Dropship tự tạo một **Đơn mua hàng (PO) nháp**
+với nhà cung cấp **Gearment** — "Giao hàng đến: Dropship" kèm địa chỉ người mua.
+Xem tại **Mua hàng → Yêu cầu báo giá** (lọc nhà cung cấp Gearment).
 
-### 5.3 Bước 2 — Gearment trả giá → BA duyệt
+### 5.3 Bước 2 — Yêu cầu báo giá Gearment (trên PO)
 
-1. Gearment trả giá sau vài phút (webhook hoặc cron poll).
-2. Mở đơn → tab Gearment → thấy giá đã trả về.
-3. Kiểm tra giá hợp lý → bấm **"Duyệt giá"**.
-4. Trạng thái: **"Đã duyệt giá Gearment"**.
+![Đơn mua dropship Gearment với nút Yêu cầu báo giá Gearment](img/giao-hang-gearment-po-form.png)
 
-### 5.4 Bước 3 — Tự gửi đơn sang Gearment
+1. Mở PO nháp → bấm **"Yêu cầu báo giá Gearment"** trên đầu form
+   (nút chỉ hiện với nhóm Mua hàng / BA Shipping, khi PO còn nháp hoặc đã gửi RFQ).
+2. Hệ thống hỏi giá Gearment và **ghi thẳng chi phí vào dòng PO**:
+   giá in từng sản phẩm + một dòng "Gearment shipping & fees" cho phí vận chuyển.
+   Tổng PO = đúng chi phí Gearment → báo cáo Mua hàng theo dõi được chi tiêu.
+3. Giá cao / địa chỉ sai? Xử lý xong bấm lại nút — giá mới ghi đè, chưa có gì
+   gửi sang Gearment cho tới khi xác nhận.
 
-- Sau khi BA duyệt giá → hệ thống tự gọi Gearment API v3 để gửi đơn (cron sync mỗi 5 phút).
-- Hoặc BA bấm **"Push to Gearment"** thủ công nếu muốn nhanh.
+> Tab **"Giao hàng"** trên đơn bán vẫn hiển thị trạng thái + tổng báo giá
+> (nhãn màu: xanh = đã xác nhận, vàng = chờ duyệt, đỏ = hủy) và nút
+> **"Xem báo giá"** để đối chiếu — nhưng thao tác báo giá chuẩn làm trên PO.
+
+### 5.4 Bước 3 — Xác nhận PO → đơn sang Gearment
+
+- Kiểm tra giá + địa chỉ dropship → bấm **"Xác nhận đơn hàng"** trên PO.
+- Đơn được đẩy sang Gearment để in và gửi thẳng tới khách (không qua Hatafa).
 
 ### 5.5 Bước 4 — Bulk action khi cron tạm dừng
 
@@ -193,9 +200,13 @@ Khi cron sync tự động bị tạm dừng (debug / bảo trì):
 
 ### 5.6 Bước 5 — Tracking từ Gearment
 
+![Phiếu giao hàng hiển thị trạng thái xử lý Gearment](img/giao-hang-picking-gearment-status.png)
+
 - Gearment xác nhận đơn → tạo tracking → webhook về Odoo.
-- Hệ thống ghi tracking vào `sale.order.fulfillment`.
-- Trạng thái: **"Đang vận chuyển"**.
+- Hệ thống ghi tracking vào hồ sơ giao hàng của đơn; trạng thái: **"Đang vận chuyển"**.
+- **Phiếu giao hàng** (Tồn kho) hiện dòng trạng thái Gearment ngay dưới "Tài liệu gốc" —
+  kể cả cờ **"sản xuất bị chặn"** kèm lý do khi Gearment tạm dừng đơn.
+- Lịch sử tín hiệu chi tiết: **Vận hành → Giám sát → Nhật ký Gearment**.
 
 ### 5.7 Bước 6 — Đơn Delivered
 

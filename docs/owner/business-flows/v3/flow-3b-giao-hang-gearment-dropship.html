@@ -104,101 +104,79 @@
   </div>
 </div>
 
-<h2>Bước 1 — Chọn Dropship cho Sale Order</h2>
-<p><b>Menu:</b> Vận hành ▸ Giao hàng ▸ Đặt in &amp; giao xưởng</p>
+<h2>Bước 1 — Đơn tự động vào đường Dropship</h2>
+<p><b>Điều kiện:</b> sản phẩm trên đơn có <b>mã SKU Gearment</b></p>
 
-<p class="lead">Khi nhận đơn Etsy, BA có thể chọn cách giao hàng: <b>In nội bộ</b> (Quy trình 3a) hoặc <b>Gearment Dropship</b> (Quy trình 3b). Để chọn Gearment:</p>
+<p class="lead">Không cần thao tác tay. Khi đơn Etsy vào hệ thống và sản phẩm thuộc diện in tại Gearment, hệ thống tự động:</p>
 <ol>
-  <li>Mở Sale Order</li>
-  <li>Tab "Fulfillment" hoặc "Shipping" → Chọn <b>Fulfillment method = "Gearment Dropship"</b></li>
-  <li>Chọn <b>Gearment shop / account</b> (nếu có nhiều)</li>
-  <li>Bấm nút <b>"Request Gearment Quote"</b> (hoặc "Yêu cầu báo giá Gearment")</li>
+  <li>Đặt tuyến <b>Dropship</b> cho dòng sản phẩm đó</li>
+  <li>Tạo một <b>Đơn mua hàng (PO)</b> nháp với nhà cung cấp <b>Gearment</b> — "Giao hàng đến: Dropship", kèm địa chỉ người mua</li>
 </ol>
+<p>Xem đơn mua tại <b>Mua hàng ▸ Yêu cầu báo giá</b> (đơn có nhà cung cấp Gearment).</p>
 
-<h2>Bước 2 — Yêu cầu báo giá (Gearment Quote)</h2>
-<p><b>Hành động:</b> Bấm "Request Gearment Quote" trên form SO</p>
-
-<p class="lead">Hệ thống gửi API call tới Gearment: <b>POST /orders/price</b> với:</p>
-<ul>
-  <li><b>Người nhận:</b> Tên, SĐT, quận/huyện, từ Sale Order</li>
-  <li><b>Sản phẩm:</b> SKU, tên, số lượng, mô tả</li>
-  <li><b>Yêu cầu đặc biệt:</b> In bằng vải dù, không lót, v.v. (từ Buyer note)</li>
-</ul>
-
-<p>Gearment trả lại một <b>quote (báo giá)</b> với giá in, phí vận chuyển, tổng tiền. Hệ thống hiển thị trên form SO:</p>
+<h2>Bước 2 — Yêu cầu báo giá Gearment (trên đơn mua PO)</h2>
+<p><b>Hành động:</b> mở PO nháp → bấm <b>"Yêu cầu báo giá Gearment"</b> trên thanh nút đầu form. Nút chỉ hiện với người thuộc nhóm Mua hàng hoặc BA Shipping, và chỉ khi PO còn ở trạng thái nháp/đã gửi RFQ.</p>
 
 <figure>
-  <img src="../../img/giao-hang-mo-form.png" alt="Form Manufacturing Order (MO) — Xem báo giá Gearment">
-  <figcaption>Form Manufacturing Order (MO) — Xem báo giá từ Gearment: giá in, phí vận chuyển, tổng tiền.</figcaption>
+  <img src="../../img/giao-hang-gearment-po-form.png" alt="Đơn mua Dropship Gearment — nút Yêu cầu báo giá Gearment">
+  <figcaption>Đơn mua dropship (nhà cung cấp Gearment) — nút "Yêu cầu báo giá Gearment" trên đầu form; "Giao hàng đến: Dropship" kèm địa chỉ người mua.</figcaption>
 </figure>
 
-<h2>Bước 3 — Xác nhận báo giá &amp; Duyệt địa chỉ</h2>
-<p><b>Vai trò:</b> BA Lead hoặc RD</p>
+<p class="lead">Hệ thống hỏi giá Gearment và <b>ghi thẳng chi phí vào các dòng của PO</b>: giá in cho từng sản phẩm + một dòng "Gearment shipping &amp; fees" cho phí vận chuyển. Tổng PO = đúng chi phí Gearment, nên báo cáo Mua hàng chuẩn theo dõi được chi tiêu Gearment. Bấm lại nút sẽ hỏi giá mới và ghi đè.</p>
 
-<p class="lead">Sau khi nhìn báo giá, BA/RD:</p>
+<h2>Bước 3 — Kiểm tra &amp; xác nhận đơn mua</h2>
+<p><b>Vai trò:</b> BA Shipping / Quản lý</p>
 <ol>
-  <li>Kiểm tra <b>giá</b>: Có hợp lý không? Có vượt margin không?</li>
-  <li>Kiểm tra <b>địa chỉ khách:</b> Tên, SĐT, quận/huyện có đúng không?</li>
-  <li>Nếu cần <b>thay đổi địa chỉ,</b> sửa trực tiếp trên form SO rồi yêu cầu báo giá lại</li>
-  <li>Nếu OK, bấm nút <b>"Approve Quote"</b> hoặc <b>"Confirm to Gearment"</b></li>
+  <li>Kiểm tra <b>giá</b>: hợp lý không, có vượt margin không?</li>
+  <li>Kiểm tra <b>địa chỉ dropship</b> (tên, địa chỉ người mua)</li>
+  <li>Nếu khách vừa xin đổi địa chỉ — xử lý duyệt đổi địa chỉ trước (xem Quy trình 4), rồi bấm lại "Yêu cầu báo giá Gearment"</li>
+  <li>OK → bấm <b>"Xác nhận đơn hàng"</b> — đơn được đẩy sang Gearment để in và gửi thẳng tới khách (không qua Hatafa)</li>
 </ol>
 
 <figure>
-  <img src="../../img/giao-hang-design-file-form.png" alt="Form Design File — Upload file thiết kế cho Gearment">
-  <figcaption>Form Design File — Upload file thiết kế (PDF, PNG, v.v.) để Gearment in đúng ý muốn. Có thể upload trước yêu cầu giá hoặc sau.</figcaption>
+  <img src="../../img/giao-hang-design-file-form.png" alt="Form File thiết kế — file in cho Gearment">
+  <figcaption>File thiết kế (đã duyệt) đi kèm đơn — Gearment in theo đúng file này.</figcaption>
 </figure>
 
-<h2>Bước 4 — Đẩy đơn sang Gearment</h2>
-<p><b>Hành động:</b> Bấm "Push to Gearment" hoặc "Đẩy đơn" trên form SO hoặc MO</p>
+<h2>Bước 4 — Theo dõi trạng thái trên đơn bán &amp; phiếu giao</h2>
+<p><b>Menu:</b> Vận hành ▸ Giao hàng ▸ Theo dõi giao hàng · hoặc mở đơn bán, tab <b>"Giao hàng"</b></p>
 
-<p class="lead">Khi đã xác nhận báo giá, hệ thống gửi API call: <b>POST /orders/{order_id}</b> để tạo đơn thực tế trên Gearment. Gearment sẽ:</p>
+<p class="lead">Gearment gửi tín hiệu (webhook) về Odoo mỗi khi trạng thái đổi: xác nhận → đang in → đã gửi hàng (kèm mã vận đơn) → đã giao. Hệ thống tự cập nhật:</p>
 <ul>
-  <li>Xác nhận lại đơn hàng</li>
-  <li>Bắt đầu in</li>
-  <li>Tự động gửi trực tiếp tới khách (dropship, không qua Hatafa)</li>
+  <li>Tab <b>"Giao hàng"</b> trên đơn bán: trạng thái Gearment dạng nhãn màu (xanh = đã xác nhận, vàng = đang chờ, đỏ = hủy), tổng báo giá, thời điểm nhận tín hiệu gần nhất</li>
+  <li><b>Phiếu giao hàng</b> (Tồn kho): dòng trạng thái Gearment ngay dưới "Tài liệu gốc" — kể cả cờ <b>"sản xuất bị chặn"</b> kèm lý do khi Gearment tạm dừng đơn</li>
 </ul>
-
-<p>Hệ thSystem cập nhật <b>Sale Order state = "sent_to_fulfillment"</b> và lưu <b>Gearment order_id</b> để theo dõi.</p>
-
-<h2>Bước 5 — Theo dõi trạng thái Gearment</h2>
-<p><b>Menu:</b> Vận hành ▸ Giao hàng ▸ Gearment Logs (hoặc Manufacturing Order)</p>
-
-<p class="lead">Gearment gửi webhook tới Odoo mỗi lần trạng thái thay đổi:</p>
-<ul>
-  <li><b>order_confirmed:</b> Đơn đã được xác nhận tại Gearment</li>
-  <li><b>order_printing:</b> Đang in</li>
-  <li><b>order_quality_check:</b> Đang QC</li>
-  <li><b>order_packaged:</b> Đã đóng gói</li>
-  <li><b>order_shipped:</b> Đã gửi hàng (kèm tracking code)</li>
-  <li><b>order_delivered:</b> Đã giao tới khách</li>
-</ul>
-
-<p>Hệ thống tự động cập nhật trạng thái trên SO form. BA có thể xem chi tiết trên tab "Gearment Logs" hoặc "Manufacturing Order Details":</p>
 
 <figure>
-  <img src="../../img/giao-hang-order-form-tracking.png" alt="Order Form — Tab Tracking &amp; Fulfillment">
-  <figcaption>Order Form — Tab Tracking & Fulfillment hiển thị trạng thái Gearment, mã vận đơn, thời gian gửi, và ghi chú từ Gearment.</figcaption>
+  <img src="../../img/giao-hang-picking-gearment-status.png" alt="Phiếu giao hàng — trạng thái Gearment">
+  <figcaption>Phiếu giao hàng hiển thị trạng thái xử lý phía Gearment (và lý do chặn nếu có).</figcaption>
 </figure>
 
-<h2>Bước 6 — Tự động cập nhật Etsy</h2>
-<p><b>Hành động:</b> Tự động (webhook từ Gearment → Odoo → Etsy)</p>
+<p>Xem lịch sử tín hiệu chi tiết tại <b>Vận hành ▸ Giám sát ▸ Nhật ký Gearment</b> (Nhật ký API + Nhật ký Webhook):</p>
 
-<p class="lead">Khi Gearment gửi "order_shipped" (kèm tracking code), hệ thống:</p>
+<figure>
+  <img src="../../img/giao-hang-order-form-tracking.png" alt="Đơn bán — tab Giao hàng: trạng thái Gearment, mã vận đơn">
+  <figcaption>Đơn bán — tab "Giao hàng" hiển thị trạng thái Gearment (nhãn màu), tổng báo giá và thông tin theo dõi.</figcaption>
+</figure>
+
+<h2>Bước 5 — Mã vận đơn tự động đẩy lên Etsy</h2>
+<p><b>Hành động:</b> tự động — không cần thao tác</p>
+
+<p class="lead">Khi Gearment báo "đã gửi hàng" kèm mã vận đơn, hệ thống:</p>
 <ol>
-  <li>Nhận webhook từ Gearment</li>
-  <li>Cập nhật Odoo: <b>Sale Order state = "done"</b>, lưu <b>tracking code</b></li>
-  <li>Gửi API call tới Etsy: <b>updateReceipt(receipt_id, state=fulfilled, tracking_code, carrier)</b></li>
-  <li>Khách nhận thông báo từ Etsy với mã vận đơn Gearment</li>
+  <li>Lưu <b>mã vận đơn</b> + hãng vận chuyển vào đơn bán</li>
+  <li>Tự động đẩy mã vận đơn lên Etsy — khách nhận email thông báo từ Etsy</li>
+  <li>Đánh dấu "đã đẩy tracking lên Etsy" kèm thời điểm, xem được ở <b>Vận hành ▸ Giao hàng ▸ Theo dõi giao hàng</b></li>
 </ol>
 
 <div class="section">
   <h3><span class="num">i</span>Ghi chú cho BA &amp; RD</h3>
   <ul>
-    <li><b>Gearment là dịch vụ dropship.</b> Họ in và gửi trực tiếp tới khách, không qua Hatafa. Hatafa chỉ phải quản lý quá trình.</li>
-    <li><b>Báo giá Gearment tính tiền theo sản phẩm, không theo shop.</b> Ví dụ: T-shirt + color in, size khác nhau, v.v.</li>
-    <li><b>Tracking code từ Gearment (Viettel, GHN, v.v.) được tự động gửi lên Etsy.</b> Khách không cần can thiệp.</li>
-    <li><b>Nếu báo giá quá cao hoặc địa chỉ sai,</b> bạn có thể hủy báo giá và yêu cầu lại mà không phải push đơn thực tế.</li>
-    <li><b>Webhook từ Gearment tới Odoo là real-time,</b> nhưng có thể chậm 5-15 phút tùy mạng. Nếu muốn cập nhật ngay, bạn có thể bấm nút "Manual Sync".</li>
+    <li><b>Gearment là dịch vụ dropship.</b> Họ in và gửi trực tiếp tới khách tại Mỹ (USPS, UniUni, YunExpress…), không qua Hatafa. Hatafa chỉ theo dõi quá trình.</li>
+    <li><b>Báo giá nằm trên đơn mua (PO), không phải đơn bán.</b> Tổng PO = đúng chi phí Gearment, nên báo cáo Mua hàng phản ánh chi tiêu Gearment.</li>
+    <li><b>Bấm lại "Yêu cầu báo giá Gearment" bất kỳ lúc nào</b> khi PO còn nháp — giá mới ghi đè giá cũ, chưa có gì gửi sang Gearment cho tới khi bấm "Xác nhận đơn hàng".</li>
+    <li><b>Khách xin đổi địa chỉ?</b> Duyệt yêu cầu đổi địa chỉ trước (Quy trình 4 — hệ thống chặn sửa tay khi đang có yêu cầu chờ duyệt), rồi hỏi lại báo giá.</li>
+    <li><b>Đơn bị Gearment tạm dừng?</b> Phiếu giao hàng hiện cờ "sản xuất bị chặn" kèm lý do — xử lý theo lý do rồi liên hệ BA Shipping Manager nếu cần.</li>
   </ul>
 </div>
 
