@@ -310,3 +310,17 @@ builder side mapping + push guards (commit 5b1d91ee3f8). Surprises:
 
 P-GEAR-AUTOCONFIRM: owner asked via Telegram DM (options: gated button / auto on PO
 confirm / capped cron + spend-threshold question). Blocked until reply.
+
+
+## 2026-07-05 (E) — P-GEAR-AUTOCONFIRM shipped disabled; audit claim corrected
+
+Option (a) implemented while the owner decision is pending: "Confirm at Gearment" button
+on the dropship PO, gated by FR-017 + ICP `multichannel_hub.gearment_confirm_enabled`
+(ships 'False' — enabling it is the owner's go-live switch; options b/c remain open).
+Idempotency = row-locked `x_gearment_confirmed_at` stamp, immutable via write() override.
+
+**Correction to finding (C):** `adapter.confirm()` was NOT unreachable — the P4-01-C
+quote wizard (`gearment_quote_wizard.action_confirm`) already called it directly, gated
+only by FR-017 + quote expiry, with no spend switch and no idempotency stamp. The checker
+agent caught it; the wizard now routes through the single shared chargeable core.
+Lesson: "X is never called" claims need a `grep -rn "\.confirm("` across wizards too.
