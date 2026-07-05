@@ -265,3 +265,23 @@ need explicit `<function unlink>` cleanup (not auto-purged); maker/checker revie
 second-upgrade crash + a KPI AccessError path that admin-run tests cannot see.
 
 Post-UAT fix same day: Etsy Shops menu re-gated to BA Lead (was manager-only after reorg).
+
+
+## 2026-07-05 (C) — Gearment end-to-end audit: two gaps to a hands-off dropship loop
+
+Full code trace (quote preconditions, payload build, webhooks, Etsy pushback) confirmed the
+chain works and is E2E-proven EXCEPT:
+
+1. **Print sides not modeled** — `gearment_payload_builder._PRINT_LOCATIONS_DEFAULT` assigns
+   FRONT/BACK by design-file position on the line; no `design.file` side field, no UI. Swap
+   upload order → wrong side prints. Also: a Gearment-eligible line with no approved design
+   silently drops from the payload (no guard), and artwork URLs are never checked for public
+   reachability. → backlog `P-GEAR-PRINT-SIDES`.
+2. **Draft-only push** — `button_confirm` → `action_push_to_gearment` → POST /orders/draft;
+   the chargeable confirm (`/orders/draft/labeled`, `adapter.confirm()`) is deliberately never
+   called. Manual confirm in the Gearment dashboard is required to start production.
+   → backlog `P-GEAR-AUTOCONFIRM` (owner decision — real spend).
+
+Docs corrected same day (commit f47b28836ed): flow-3b + HUONG_DAN_GIAO_HANG §5 now teach the
+PO-driven quote; the SO tab is view-only. Next-session prompt:
+`.claude/plans/next-session-gearment-gaps.md`.
