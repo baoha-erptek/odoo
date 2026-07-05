@@ -67,11 +67,12 @@ class TestOperationsDashboardMerge(TransactionCase):
             self.assertIsNotNone(menu, "menu_operations_dashboard should exist")
             self.assertIsNotNone(menu.parent_id, "Menu should have a parent")
 
-            # Verify parent is the Operations root menu
-            operations_root = self.env.ref('multichannel_hub_core.menu_operations_root')
+            # P-IA-01 Hatafa hub: dashboard lives under Daily Work now
+            # (was Operations root before the mockup-v3 menu restructure).
+            daily_work = self.env.ref('multichannel_hub_core.menu_daily_work')
             self.assertEqual(
-                menu.parent_id, operations_root,
-                "Operations Dashboard menu should be under Operations root"
+                menu.parent_id, daily_work,
+                "Operations Dashboard menu should be under Daily Work"
             )
 
             # Verify action is linked
