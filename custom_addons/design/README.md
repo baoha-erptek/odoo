@@ -16,7 +16,7 @@ ESTY-244. Promotes design work into a first-class document — `design.order`
 - **Backfill:** on install, `post_init_hook` creates `design.order` rows from
   existing `design.file` data (idempotent; state inferred from child files).
 
-## Topology (see ADR-018)
+## Topology (see ADR-019)
 `design` **depends on `multichannel_hub_core`** and sits on top of it. It does
 not relocate `design.file` (which stays in mhc) — it extends it with
 `design_order_id`. 'Design Ready' is a pipeline-state code, not an

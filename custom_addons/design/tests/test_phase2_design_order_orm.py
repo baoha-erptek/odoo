@@ -117,11 +117,31 @@ class TestDesignOrderORM(TransactionCase):
                 'origin': so.name})
         except Exception:  # pragma: no cover - env-dependent MO setup
             self.skipTest("mrp.production could not be created in this env")
+        # ESTY-249: MO surfaces the linked design order; not ready pre-approval.
+        self.assertEqual(mo.design_order_id, do)
+        self.assertFalse(mo.design_ready)
         do.action_approve()
         att = self.env['ir.attachment'].search([
             ('res_model', '=', 'mrp.production'), ('res_id', '=', mo.id),
             ('description', 'like', 'design.file:')])
         self.assertTrue(att, "approved design file should attach to the MO")
+        # design_ready is non-stored & keyed off origin, not design.order.state,
+        # so drop the cached value before re-reading (a fresh form load recomputes).
+        mo.invalidate_recordset(['design_ready'])
+        self.assertTrue(mo.design_ready,
+                        "MO design_ready should flip True once the design order "
+                        "is approved (ESTY-249)")
+
+    def test_mo_design_ready_without_design_order(self):
+        # An MO whose origin matches no design.order is simply not ready.
+        try:
+            mo = self.env['mrp.production'].create({
+                'product_id': self.product.id, 'product_qty': 1,
+                'origin': 'NO-SUCH-SO'})
+        except Exception:  # pragma: no cover - env-dependent MO setup
+            self.skipTest("mrp.production could not be created in this env")
+        self.assertFalse(mo.design_order_id)
+        self.assertFalse(mo.design_ready)
 
     # ------------------------------------------------------------- backfill
     def test_infer_state_helper(self):

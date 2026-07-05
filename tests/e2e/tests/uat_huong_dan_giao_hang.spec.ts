@@ -320,6 +320,42 @@ test.describe('UAT Flow-3 MTO — HUONG_DAN_GIAO_HANG_VN §9.MTO', () => {
     expect(saw, 'broken-schema XLSX flagged as new schema or rejected via UserError').toBeTruthy();
     await wiz.cancel();
   });
+
+  test('TC-MTO-007 — MO Design Ready flips after design order approval (ESTY-249)', async ({ request }) => {
+    // Self-contained + idempotent: seed a throwaway SO (→ auto design.order),
+    // a manual MO sharing its origin, then assert the MO's computed design_ready
+    // flips false→true when the production team approves the design order.
+    const partnerId = await rpc(request, 'res.partner', 'create', [{ name: 'ESTY-249 UAT Buyer' }]);
+    const productId = await rpc(request, 'product.product', 'create',
+      [{ name: `ESTY-249 UAT Tee ${Date.now()}`, type: 'consu', list_price: 20 }]);
+    const soId = await rpc(request, 'sale.order', 'create',
+      [{ partner_id: partnerId, order_line: [[0, 0, { product_id: productId, product_uom_qty: 1 }]] }]);
+    await rpc(request, 'sale.order', 'action_confirm', [[soId]]);
+    const soName = (await rpc(request, 'sale.order', 'read', [[soId], ['name']]))?.[0]?.name;
+    const doIds = await rpc(request, 'design.order', 'search', [[['sale_order_id', '=', soId]]]);
+    expect(doIds?.length, 'design.order auto-created on SO confirm').toBeGreaterThan(0);
+
+    let moId: number | null = null;
+    try {
+      moId = await rpc(request, 'mrp.production', 'create',
+        [{ product_id: productId, product_qty: 1, origin: soName }]);
+    } catch {
+      test.skip(true, 'mrp.production could not be created in this env');
+    }
+    const before = (await rpc(request, 'mrp.production', 'read', [[moId], ['design_ready']]))?.[0]?.design_ready;
+    expect(before, 'MO not design_ready before approval').toBe(false);
+
+    // Approve as the production-team demo user (same cred TC-MTO-003 uses).
+    await rpcAs(request, 'demo_sanxuat@hatafax.demo', 'demo1234',
+      'design.order', 'action_approve', [[doIds[0]]]);
+    const after = (await rpc(request, 'mrp.production', 'read', [[moId], ['design_ready']]))?.[0]?.design_ready;
+    expect(after, 'MO design_ready true after design order approval').toBe(true);
+
+    // Best-effort cleanup (confirmed SO unlink may be blocked — swallow).
+    try { await rpc(request, 'mrp.production', 'unlink', [[moId]]); } catch { /* swallow */ }
+    try { await rpc(request, 'sale.order', 'action_cancel', [[soId]]); } catch { /* swallow */ }
+    try { await rpc(request, 'sale.order', 'unlink', [[soId]]); } catch { /* swallow */ }
+  });
 });
 
 // ---------------------------------------------------------------------------

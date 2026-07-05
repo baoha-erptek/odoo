@@ -62,3 +62,24 @@ Two realities surfaced during planning/build that shaped the design:
 - Legacy `design.file` views/models remain in mhc for now; a follow-up may
   relocate them once the shared infra is factored out.
 - `design` must always be installed alongside mhc (declared dependency).
+
+## Amendment 2026-07-05 — ESTY-249 (MO-side "Design Ready" visibility)
+- Ticket: ESTY-249 ("Đơn sản xuất, thêm trạng thái 'Design Ready' trước 'Draft'").
+- **Problem left open by the original decision:** modelling `design_ready` only
+  as an `order.pipeline.state` on the *sale order* means production staff opening
+  the *manufacturing order* (`mrp.production`) see no readiness signal — the
+  ticket's whole intent ("bảo bên sản xuất là file thiết kế đã được duyệt").
+- **Decision:** add an *informational* computed indicator on `mrp.production`
+  (in the `design` module, which sees both models) — non-stored `design_ready`
+  (Boolean) + `design_order_id` (Many2one), surfaced as a `web_ribbon` badge +
+  "waiting on design" banner + smart button to the design order. This promotes
+  the "Boolean + button on mrp.production" option previously listed under
+  *Alternatives considered* from rejected-as-primary to **accepted-as-complement**:
+  the pipeline stage remains the first-class workflow stage on the SO; the MO
+  boolean is a read-only mirror for production visibility only.
+- **Still rejected:** a real `mrp.production.state` value before `draft`
+  (computed/stored/readonly `_compute_state`, upgrade-fragile) — unchanged.
+- **Behaviour:** informational only; the badge does NOT gate MO confirmation or
+  completion (owner decision, ESTY-249). The field is keyed on
+  `MO.origin == sale_order.name` (same resolution as the pipeline/attachment sync)
+  and company-scoped so the `sudo()` read does not bypass multi-company isolation.

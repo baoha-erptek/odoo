@@ -342,7 +342,23 @@ def section_3_design_approve(ctx: Context) -> StepResult:
     rpc_void(ctx, "production", "design.file", "action_approve", [[df_id]])
     state = rpc(ctx, "admin", "design.file", "read",
                 [[df_id], ["state"]])[0]["state"]
-    return StepResult("3", state == "approved", f"design.file state={state}")
+
+    # ESTY-249: the MO badge is driven by the design.ORDER (auto-created on SO
+    # confirm), not the design.file. Assert it flips False -> True on approval.
+    before = rpc(ctx, "admin", "mrp.production", "read",
+                 [[ctx.mo_id], ["design_ready"]])[0]["design_ready"]
+    do_ids = rpc(ctx, "admin", "design.order", "search",
+                 [[("sale_order_id", "=", ctx.order_id)]])
+    if not do_ids:
+        return StepResult("3", False,
+                          "no design.order auto-created for the SO")
+    rpc_void(ctx, "production", "design.order", "action_approve", [[do_ids[0]]])
+    after = rpc(ctx, "admin", "mrp.production", "read",
+                [[ctx.mo_id], ["design_ready"]])[0]["design_ready"]
+    ok = state == "approved" and before is False and after is True
+    return StepResult("3", ok,
+                      f"design.file state={state}; MO design_ready "
+                      f"{before}->{after} after design order approval")
 
 
 def section_4_mo_complete(ctx: Context) -> StepResult:

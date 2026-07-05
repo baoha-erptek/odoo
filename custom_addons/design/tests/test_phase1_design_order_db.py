@@ -44,3 +44,15 @@ class TestDesignOrderDB(TransactionCase):
         val = self.env['ir.config_parameter'].sudo().get_param(
             'design.auto_create_on_confirm')
         self.assertEqual(val, 'True')
+
+    def test_mo_exposes_design_ready_fields(self):
+        # ESTY-249: mrp.production gains computed (non-stored) design_ready +
+        # design_order_id — registry-level presence check (no DB columns).
+        info = self.env['mrp.production'].fields_get(
+            ['design_ready', 'design_order_id'])
+        self.assertIn('design_ready', info,
+                      "mrp.production should expose design_ready (ESTY-249)")
+        self.assertIn('design_order_id', info,
+                      "mrp.production should expose design_order_id (ESTY-249)")
+        self.assertFalse(info['design_ready'].get('store', False),
+                         "design_ready is a non-stored computed field")

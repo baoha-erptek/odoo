@@ -7,7 +7,7 @@ stay as `design.file` rows (defined in multichannel_hub_core) linked via
 
 On approval ('Duyệt'):
   - the linked sale order advances to the `design_ready` pipeline stage
-    (via the existing order.pipeline.state layer — ADR-018 / plan §3), and
+    (via the existing order.pipeline.state layer — ADR-019 / plan §3), and
   - every approved design file is attached to the linked mrp.production(s).
 """
 import logging

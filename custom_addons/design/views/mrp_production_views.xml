@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ESTY-249: informational Design Ready indicator on the MO form.
+       Badge (ribbon) + waiting banner + smart button to the design order.
+       No new state; mrp.production.state stays core (computed/readonly). -->
+  <record id="view_mrp_production_form_design_ready" model="ir.ui.view">
+    <field name="name">mrp.production.form.design.ready</field>
+    <field name="model">mrp.production</field>
+    <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+    <field name="arch" type="xml">
+
+      <xpath expr="//div[@name='button_box']" position="before">
+        <field name="design_order_id" invisible="1"/>
+        <field name="design_ready" invisible="1"/>
+        <widget name="web_ribbon" title="Design Ready"
+                bg_color="text-bg-success"
+                invisible="not design_ready"/>
+        <div class="alert alert-warning" role="alert"
+             invisible="design_ready or not design_order_id">
+          Design not yet approved — waiting on the design order (Duyệt).
+        </div>
+      </xpath>
+
+      <xpath expr="//div[@name='button_box']" position="inside">
+        <button name="action_view_design_order" type="object"
+                class="oe_stat_button" icon="fa-paint-brush"
+                invisible="not design_order_id">
+          <div class="o_field_widget o_stat_info">
+            <span class="o_stat_text">Design Order</span>
+          </div>
+        </button>
+      </xpath>
+
+    </field>
+  </record>
+
+</odoo>
