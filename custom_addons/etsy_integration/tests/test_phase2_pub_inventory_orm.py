@@ -258,3 +258,50 @@ class TestPubInventoryORM(TransactionCase):
         existing.invalidate_recordset()
         self.assertEqual(existing.sku, 'new-sku')
         self.assertEqual(existing.quantity, 12)
+
+    def test_snapshot_upsert_links_product_by_sku(self):
+        """E2E-F1 §8 root cause: snapshot rows created/updated by the
+        publisher must be SKU-linked immediately (not wait for the
+        variant-sync cron, which races and can skip the listing)."""
+        shop, tmpl, listing = self._make_product_with_listing(
+            code='SNAP-LINK-1', listing_id='LST-SNAP-LINK',
+        )
+        variant = tmpl.product_variant_id
+        # Existing unlinked row whose SKU now matches a live product
+        existing = self.ListingProduct.create({
+            'listing_id': listing.id,
+            'etsy_product_id': 'PROD-A',
+            'sku': 'stale',
+            'quantity': 1,
+            'price': 5.0,
+        })
+        response = {
+            'products': [
+                {   # updates `existing` -> should link to variant
+                    'product_id': 'PROD-A',
+                    'sku': 'SNAP-LINK-1',
+                    'offerings': [{'quantity': 3, 'price': {'amount': 1999, 'divisor': 100}}],
+                },
+                {   # brand-new row -> should be born linked
+                    'product_id': 'PROD-B',
+                    'sku': 'SNAP-LINK-1',
+                    'offerings': [{'quantity': 4, 'price': {'amount': 1999, 'divisor': 100}}],
+                },
+            ],
+        }
+        publisher = EtsyListingPublisher(self.env)
+        with patch(
+            'odoo.addons.etsy_integration.services.etsy_listing_publisher.EtsyApiClient'
+        ) as ClientCls:
+            client = ClientCls.return_value
+            client.put.return_value = response
+            publisher.push_inventory(tmpl, listing.etsy_listing_id, shop)
+        existing.invalidate_recordset()
+        self.assertEqual(existing.product_id, variant,
+                         'updated snapshot row must SKU-link to the variant')
+        created = self.ListingProduct.search([
+            ('listing_id', '=', listing.id),
+            ('etsy_product_id', '=', 'PROD-B'),
+        ], limit=1)
+        self.assertEqual(created.product_id, variant,
+                         'new snapshot row must be born SKU-linked')

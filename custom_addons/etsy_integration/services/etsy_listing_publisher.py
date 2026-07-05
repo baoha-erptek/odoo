@@ -1444,4 +1444,7 @@ class EtsyListingPublisher:
                     'listing_id': listing.id,
                     'etsy_product_id': str(etsy_product_id),
                 })
-                ListingProduct.create(vals)
+                row = ListingProduct.create(vals)
+            # Link now — deferring to the variant-sync cron leaves the row
+            # 'unlinked' in the drift report (E2E-F1 §8 race, 2026-07-05).
+            row._match_variant(row)
