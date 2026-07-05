@@ -6131,3 +6131,18 @@ msgstr ""
 #: model:order.pipeline.state,name:multichannel_hub_core.state_vn_packed
 msgid "Đã Đóng Gói"
 msgstr ""
+
+#. module: multichannel_hub_core
+#: model:ir.model.fields,field_description:multichannel_hub_core.field_design_file__print_location
+msgid "Print Location"
+msgstr ""
+
+#. module: multichannel_hub_core
+#: model:ir.model.fields.selection,name:multichannel_hub_core.selection__design_file__print_location__front
+msgid "Front Side"
+msgstr ""
+
+#. module: multichannel_hub_core
+#: model:ir.model.fields.selection,name:multichannel_hub_core.selection__design_file__print_location__back
+msgid "Back Side"
+msgstr ""
