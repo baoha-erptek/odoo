@@ -777,11 +777,20 @@ into `docs/vendor/gearment/` (raw HTML git-ignored).
 `FRONT`/`POCKET`/`BACK` inferred from the 400 allowed-list + the proven prefix pattern.
 **One live probe against `/orders/draft` confirms** — that is the RED→GREEN of the fix slice.
 
-**Fix (deferred to its own slice, RED test first — not bundled here):**
-`services/gearment_payload_builder.py:296` — change `_PRINT_LOCATIONS_DEFAULT =
-('front','back')` to `('PRINT_LOCATION_CODE_FRONT','PRINT_LOCATION_CODE_BACK')` (and add
-WHOLE/POCKET as design-count dictates); source `variant_id` from the Gearment catalog
-(`/api/v3/catalog/variants/stock`) instead of the Odoo SKU. Live `confirm()` stays behind
-the owner-sign-off gate. Evidence: `docs/GEARMENT_API_REFERENCE.md` (Docs Source + Open
-Questions Q1.1/Q1.2/Q2.1/Q4.1, all updated) and `docs/vendor/gearment/`.
+**Fix — enum part LANDED (commit 595fb03286b, RED→GREEN):**
+`services/gearment_payload_builder.py` `_PRINT_LOCATIONS_DEFAULT` changed from
+`('front','back')` to `('PRINT_LOCATION_CODE_FRONT','PRINT_LOCATION_CODE_BACK')`. New RED
+test `tests/test_gm_printing_location_enum.py` (3 assertions) failed pre-fix
+(`'front' != 'PRINT_LOCATION_CODE_FRONT'`), passes post-fix; stale `'front'`/`'back'`
+builder assertions in `test_p4_01_fix_payload_schema.py` corrected. Full module suite: 390
+tests, 0 failed; `-u --stop-after-init` exit 0. Evidence:
+`docs/GEARMENT_API_REFERENCE.md` (Docs Source + Q1.1/Q1.2/Q2.1/Q4.1) and
+`docs/vendor/gearment/`.
+
+**Still open (NOT in this slice):**
+- Live `/orders/draft` probe to confirm the fix end-to-end + confirm FRONT/BACK/POCKET
+  enum values (only WHOLE is doc-literal). Behind the owner-sign-off gate — adapter
+  `confirm()` still raises `NotImplementedError`.
+- `variant_id` from the Gearment catalog (`/api/v3/catalog/variants/stock`) instead of the
+  Odoo SKU — separate Defect-2026-05-10-02 (DEMO-T-* catalog-lookup failure).
 
