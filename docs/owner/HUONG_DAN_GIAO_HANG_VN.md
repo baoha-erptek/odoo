@@ -122,7 +122,11 @@ Mỗi dòng có: ai bấm, từ bước nào sang bước nào, thời điểm, 
 4. 2 lựa chọn lưu file:
    - **URL mode** (khuyến nghị): dán link Google Drive
    - **Filestore mode**: upload trực tiếp ≤ 10 MB
-5. Bấm **Lưu** → file ở trạng thái **Pending**.
+5. **Chọn mặt in** (từ 2026-07): trường **"Vị trí in"** — **Mặt trước** hoặc **Mặt sau**.
+   - Bỏ trống = tự động: file cũ nhất in mặt trước, file tiếp theo in mặt sau.
+   - Đơn in 2 mặt: nên chọn rõ từng file để không bị đảo mặt.
+   - Không được để 2 file đã duyệt cùng một mặt trên cùng sản phẩm — hệ thống sẽ chặn khi đẩy sang Gearment.
+6. Bấm **Lưu** → file ở trạng thái **Pending**.
 
 ### 4.2 Duyệt file (PD / Sản xuất)
 
@@ -187,6 +191,14 @@ Xem tại **Mua hàng → Yêu cầu báo giá** (lọc nhà cung cấp Gearment
 
 - Kiểm tra giá + địa chỉ dropship → bấm **"Xác nhận đơn hàng"** trên PO.
 - Đơn được đẩy sang Gearment để in và gửi thẳng tới khách (không qua Hatafa).
+
+Từ 2026-07, hệ thống **kiểm tra chặn trước khi đẩy** (báo lỗi rõ ràng, đơn không bị đẩy thiếu):
+
+| Kiểm tra | Nếu sai |
+|---|---|
+| Sản phẩm nào cũng phải có ít nhất 1 file thiết kế **đã duyệt** kèm link | Báo lỗi nêu tên sản phẩm thiếu thiết kế (trước đây dòng đó bị **âm thầm bỏ khỏi đơn**) |
+| Link thiết kế phải **truy cập được** (link Google Drive phải mở public) | Báo lỗi nêu tên file — mở quyền chia sẻ rồi bấm lại |
+| Mỗi mặt in chỉ có **1 file** trên mỗi sản phẩm | Báo lỗi nêu mặt bị trùng — sửa "Vị trí in" trên file |
 
 ### 5.5 Bước 4 — Bulk action khi cron tạm dừng
 
