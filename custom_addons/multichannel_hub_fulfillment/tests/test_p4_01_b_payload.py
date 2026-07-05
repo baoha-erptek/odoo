@@ -109,33 +109,40 @@ class TestP401BMoneyProto(TransactionCase):
         result = self._money_to_decimal(
             {'currency_code': 'USD', 'units': '45', 'nanos': 0}
         )
-        self.assertEqual(result, (Decimal('45.000000000'), 'USD'))
+        self.assertEqual(result, (Decimal('45.00'), 'USD'))
 
     def test_money_units_and_nanos(self):
-        # 45.99 USD — 45 units + 990_000_000 nanos
+        # Gearment puts CENTS in nanos (0-99), not proto billionths.
+        # $45.99 = units 45 + nanos 99. Verified live 2026-07-05.
         result = self._money_to_decimal(
-            {'currency_code': 'USD', 'units': '45', 'nanos': 990000000}
+            {'currency_code': 'USD', 'units': '45', 'nanos': 99}
         )
         amount, currency = result
         self.assertEqual(currency, 'USD')
-        # Float comparison is fine here since 990M nanos = 0.99 exactly
-        self.assertEqual(amount, Decimal('45.990000000'))
+        self.assertEqual(amount, Decimal('45.99'))
+
+    def test_money_sub_dime_cents(self):
+        # nanos 5 = $0.05 (not $0.50) — cents field is a plain integer.
+        result = self._money_to_decimal(
+            {'currency_code': 'USD', 'units': '6', 'nanos': 5}
+        )
+        self.assertEqual(result[0], Decimal('6.05'))
 
     def test_money_zero(self):
         result = self._money_to_decimal(
             {'currency_code': 'USD', 'units': '0', 'nanos': 0}
         )
-        self.assertEqual(result[0], Decimal('0E-9'))
+        self.assertEqual(result[0], Decimal('0.00'))
 
     def test_money_handles_missing_keys(self):
         # If Gearment ever returns partial Money (real probe S3 saw this on
         # some endpoints), we degrade to zero rather than KeyError.
         result = self._money_to_decimal({'currency_code': 'USD'})
-        self.assertEqual(result, (Decimal('0E-9'), 'USD'))
+        self.assertEqual(result, (Decimal('0.00'), 'USD'))
 
     def test_money_handles_none(self):
         result = self._money_to_decimal(None)
-        self.assertEqual(result, (Decimal('0E-9'), ''))
+        self.assertEqual(result, (Decimal('0.00'), ''))
 
 
 # ---------------------------------------------------------------- helpers

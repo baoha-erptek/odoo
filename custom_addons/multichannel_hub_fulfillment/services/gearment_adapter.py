@@ -81,27 +81,26 @@ def _scrub_pii(value):
 
 
 def _money_to_decimal(money) -> tuple[Decimal, str]:
-    """Decode Gearment's proto-Money shape `{currency_code, units, nanos}`.
+    """Decode Gearment's Money shape `{currency_code, units, nanos}` to Decimal dollars.
 
-    `units` is the integer part (string in JSON to avoid JS precision loss).
-    `nanos` is the fractional part in nano-units (1 nano = 1e-9). Both can be
-    missing if Gearment returns a partial Money on degraded endpoints. We
-    degrade to zero rather than KeyError so the wizard can still display a
-    line item with currency code preserved.
+    Gearment is NON-STANDARD: `nanos` carries CENTS (0-99), not proto
+    billionths (1e-9). Verified live 2026-07-05 on POST /orders/price — the
+    $6.75 variant at qty 3 returned `units=20, nanos=25` ($20.25); a real 1e-9
+    nanos would be 250000000. So the amount is `units + nanos/100`. `units` is a
+    JSON string to dodge JS int precision. Missing parts degrade to zero
+    (currency preserved) so the wizard still renders.
     """
     if not money:
-        return (Decimal('0E-9'), '')
+        return (Decimal('0.00'), '')
     currency = money.get('currency_code', '') or ''
     units_raw = money.get('units', '0') or '0'
     nanos = money.get('nanos', 0) or 0
     try:
         units = Decimal(str(units_raw))
-        nanos_dec = Decimal(nanos) / Decimal('1000000000')
+        cents = Decimal(nanos) / Decimal('100')
     except (ValueError, TypeError, ArithmeticError):
-        return (Decimal('0E-9'), currency)
-    # Quantize to 9 decimal places so test assertions on (45 + 0.99) parts
-    # produce a stable representation.
-    return ((units + nanos_dec).quantize(Decimal('0.000000001')), currency)
+        return (Decimal('0.00'), currency)
+    return ((units + cents).quantize(Decimal('0.01')), currency)
 
 
 @dataclass(frozen=True)

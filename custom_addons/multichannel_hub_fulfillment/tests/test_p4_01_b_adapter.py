@@ -93,13 +93,13 @@ class TestP401BAdapterUrls(TransactionCase):
                 json_body={
                     'data': {
                         'order_total': {
-                            'currency_code': 'USD', 'units': '45', 'nanos': 990000000,
+                            'currency_code': 'USD', 'units': '45', 'nanos': 99,
                         },
                         'order_sub_total': {
                             'currency_code': 'USD', 'units': '40', 'nanos': 0,
                         },
                         'order_shipping_fee': {
-                            'currency_code': 'USD', 'units': '5', 'nanos': 990000000,
+                            'currency_code': 'USD', 'units': '5', 'nanos': 99,
                         },
                     },
                     'message': '[API] Order price!',
@@ -124,13 +124,13 @@ class TestP401BAdapterUrls(TransactionCase):
                 json_body={
                     'data': {
                         'order_total': {
-                            'currency_code': 'USD', 'units': '45', 'nanos': 990000000,
+                            'currency_code': 'USD', 'units': '45', 'nanos': 99,
                         },
                         'order_sub_total': {
                             'currency_code': 'USD', 'units': '40', 'nanos': 0,
                         },
                         'order_shipping_fee': {
-                            'currency_code': 'USD', 'units': '5', 'nanos': 990000000,
+                            'currency_code': 'USD', 'units': '5', 'nanos': 99,
                         },
                     },
                     'message': '[API] Order price!',
@@ -141,9 +141,9 @@ class TestP401BAdapterUrls(TransactionCase):
             quote = self.adapter.get_quote({'order_platform': 'etsy', 'line_items': []})
             # Quote dict carries decoded decimals + currency
             self.assertEqual(quote['currency'], 'USD')
-            self.assertEqual(quote['order_total'], Decimal('45.990000000'))
-            self.assertEqual(quote['order_sub_total'], Decimal('40.000000000'))
-            self.assertEqual(quote['order_shipping_fee'], Decimal('5.990000000'))
+            self.assertEqual(quote['order_total'], Decimal('45.99'))
+            self.assertEqual(quote['order_sub_total'], Decimal('40.00'))
+            self.assertEqual(quote['order_shipping_fee'], Decimal('5.99'))
 
     def test_confirm_calls_orders_draft_labeled_url(self):
         with mock.patch.object(
