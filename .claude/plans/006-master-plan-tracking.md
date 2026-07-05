@@ -10,9 +10,13 @@
 > MF-E2E gates **0/1/2/3a/3b all DONE ×2** on staging `esty_odoo19` (commits `1bfaecf`…`855b247`;
 > evidence `docs/engineering/uats/E2E_FLOW*_2026-07-04.md`). Also closed: **P0-02** (Gearment develop
 > keys verified live), **P0-18b2** (webhook HMAC verified live), **ENV-FIX-MRP** (routes verified).
-> 9 defects fixed (ei 19.0.3.18.0 / mhf 19.0.1.0.27 / mhc 19.0.1.0.76). Open vendor blocker:
-> Gearment `printing_options` validator (Defect-2026-05-10-05) — owner escalation. Next session:
-> `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` (P1-11 cutover → XLS verify → MF-E2E-4 when owner unblocks).
+> 9 defects fixed (ei 19.0.3.18.0 / mhf 19.0.1.0.27 / mhc 19.0.1.0.76). Vendor blocker:
+> Gearment `printing_options` validator (Defect-2026-05-10-05) — **PARTIAL (2026-07-05)**: root
+> cause found via doc crawl (`docs/vendor/gearment/`) — `location_code` is the proto3 enum
+> `PRINT_LOCATION_CODE_*`, not the bare names the 400 quotes; builder fixed (commit `595fb03286b`,
+> 390 tests green). No longer owner-escalation. Remaining: one live `/orders/draft` probe to confirm
+> end-to-end + the inferred FRONT/BACK values (WHOLE is doc-literal), behind the owner-sign-off gate.
+> Next session: `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` (P1-11 cutover → XLS verify → MF-E2E-4).
 
 **Created**: 2026-04-13
 **Source of truth**: [specs/006-master-plan/MASTER_PLAN.md](../../specs/006-master-plan/MASTER_PLAN.md) + [ADR-008](../../specs/006-master-plan/adrs/ADR-008-api-first-pivot.md)
