@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng — Tạo sản phẩm mới
 
-**Phiên bản:** 1.5 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 2.0 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
 
@@ -13,6 +13,9 @@
 > **Cập nhật v1.4 (2026-06-11):** Thêm **Phụ lục A — Từ điển các ô nhập trong chức năng Listing** (giải thích chi tiết TỪNG ô trên form Listing, form Sản phẩm, cài đặt Shop và Wizard publish, kèm **ảnh chụp màn hình thật** từ hệ thống). Đây là tài liệu trả lời câu hỏi "ô này là gì, điền gì vào đây?". Đồng thời chốt 3 tính năng listing mới: đặt **thời gian xử lý / phí vận chuyển** (qua Shipping Profile), **Matching Attribute** (ánh xạ thuộc tính sang Etsy), và **xem trước giá quy đổi theo tiền tệ của shop**. Xem Phụ lục A.
 
 > **Cập nhật v1.5 (2026-07-05):** Thêm tab **Original Design** trên form sản phẩm — nơi lưu file thiết kế gốc (AI/PSD/PDF) riêng biệt khỏi Documents chung. Giới hạn dung lượng file ≤10 MB. Xem mục 4.8.
+
+### Cập nhật v2.0 (2026-07-05)
+Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme** (thanh điều hướng tím, sidebar tối). Menu **Sản phẩm** vẫn giữ nguyên tên. Tất cả menu paths chính (Listings, SKU Drift, Channels) nằm dưới **"Vận hành"** hub trung tâm. Giao diện hoàn toàn **Tiếng Việt**.
 
 ---
 
@@ -314,7 +317,7 @@ SKU gợi ý mới:  MUG-CR-F11
 
 ### 6.4 Xem danh sách SKU drift
 
-**Menu:** Sản phẩm → **SKU Drift** → danh sách các sản phẩm có mã chưa khớp định dạng mới. Bấm vào mỗi dòng để giải quyết.
+**Menu:** Vận hành → Bán & Đăng bán → **SKU Drift Review** → danh sách các sản phẩm có mã chưa khớp định dạng mới. Bấm vào mỗi dòng để giải quyết.
 
 ---
 
@@ -366,7 +369,7 @@ Có **hai cách** mở Wizard publish, chọn cách phù hợp:
 
 **Cách 1 — từ form Listing (mới từ v1.3, khuyên dùng cho Marketing):**
 
-1. Mở menu **Operations → Listings**, mở dòng Listing tương ứng SP × shop.
+1. Mở menu **Vận hành → Bán & Đăng bán → Listings**, mở dòng Listing tương ứng SP × shop.
 2. Nhấn nút **"Publish to Etsy"** ở góc trên bên trái header form (cạnh statusbar Draft / Ready / Published).
 3. Wizard publish mở ra với **shop đã được tự chọn** theo Listing → bỏ qua bước chọn shop.
 4. Khi state của Listing = **Error**, nút đổi tên thành **"Resume Publish"** (chạy lại đoạn còn dang dở).
@@ -415,11 +418,11 @@ Hệ thống làm các bước:
 
 **Đồng bộ taxonomy từ Etsy:**
 - Hệ thống tự đồng bộ cây taxonomy Etsy hàng tuần (cron `Etsy: Taxonomy Cache Sync`).
-- Admin có thể bấm thủ công nút **Sync Etsy Taxonomy** trên form Etsy Shop nếu cần refresh ngay.
-- Toàn bộ cây hiển thị ở menu **Operations → Etsy Taxonomy** (chỉ Admin).
+- Admin có thể bấm thủ công nút **Sync Etsy Taxonomy** trên form cửa hàng nếu cần refresh ngay.
+- Toàn bộ cây hiển thị ở menu **Vận hành → Cấu hình** (chỉ Admin).
 
 **Cách chọn category cho 1 listing:**
-1. Vào **Operations → Listings**, mở Listing tương ứng SP × shop.
+1. Vào **Vận hành → Bán & Đăng bán → Listings**, mở Listing tương ứng SP × shop.
 2. Sang tab **Etsy** (mới).
 3. Trường **Etsy Category** → gõ tên ngách (vd "Cookware", "Throw Pillows") → autocomplete sẽ hiển thị các taxonomy đầy đủ đường dẫn (`Home & Living / Kitchen / Cookware`).
 4. Chọn → Save.
@@ -436,10 +439,10 @@ Hệ thống làm các bước:
 
 **Đồng bộ:**
 - Cron `Etsy: Shipping Profile Cache Sync` chạy hàng ngày.
-- Admin có thể bấm thủ công nút **Sync Etsy Shipping Profiles** trên form shop.
-- Operations → Etsy Shipping Profiles (Admin) — xem cache.
+- Admin có thể bấm thủ công nút **Sync Etsy Shipping Profiles** trên form cửa hàng.
+- **Vận hành → Cấu hình** (Admin) — xem cache.
 
-**Chọn per-listing:** Operations → Listings → tab Etsy → trường **Etsy Shipping Profile** (autocomplete chỉ hiển thị profile của shop đó).
+**Chọn per-listing:** **Vận hành → Bán & Đăng bán → Listings** → tab Etsy → trường **Etsy Shipping Profile** (autocomplete chỉ hiển thị profile của shop đó).
 
 **Thứ tự ưu tiên:** Listing override → Etsy Shop default → 0 (Etsy 400 — sẽ hardening sau).
 
@@ -447,7 +450,7 @@ Hệ thống làm các bước:
 
 Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chung tiêu đề / mô tả / hình thương hiệu (brand voice) — ví dụ JaHandmadeArt luôn dùng "Handmade Ceramic by JaHandmadeArt", còn namcohome dùng "Durable Office Ceramic" — không cần sửa từng listing.
 
-- **Vị trí**: vào menu *Operations → Channels → Etsy Shops*, mở shop cần cài đặt → tab **Publisher Defaults** → group **Shop Brand-Voice Defaults**.
+- **Vị trí**: vào menu *Vận hành → Cấu hình* (hoặc *Bán & Đăng bán → Channels*), mở shop cần cài đặt → tab **Publisher Defaults** → group **Shop Brand-Voice Defaults**.
 - **3 trường mới**:
   - *Default Listing Title* (≤140 ký tự) — tiêu đề mặc định nếu listing không override và sản phẩm không có tên riêng.
   - *Default Listing Description* (text dài) — mô tả mặc định.
@@ -477,7 +480,7 @@ Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chun
 
 > Mới từ 2026-06-06 (Jira ESTY-197).
 
-**Menu Operations → Listings** giờ:
+**Menu Vận hành → Bán & Đăng bán → Listings** giờ:
 - Mặc định lọc theo **state ∈ {Draft, Ready}** (= những row còn editable). Filter "Published" / "Error" để xem khác.
 - Mặc định nhóm theo **Shop** — Marketing nhanh chóng tách listings của từng shop.
 
@@ -508,7 +511,7 @@ Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chun
 2. Sang tab **Video** (tab mới).
 3. Bấm vào **Video** → chọn file `.mp4` từ máy (cỡ file < ~100MB; Etsy có giới hạn riêng).
 4. Save.
-5. Quay lại form **Sản phẩm** (menu **Products** → mở SP tương ứng).
+5. Quay lại form **Sản phẩm** (menu **Sản phẩm** → mở SP tương ứng).
 6. Bấm nút **Publish to Etsy** ở header form (nút màu vàng, chỉ hiện với BA) → chọn shop → Confirm.
 7. Hệ thống tự upload video qua `POST /shops/.../listings/.../videos` sau khi tạo listing + push tồn kho.
 
@@ -521,7 +524,7 @@ Nếu Marketing muốn tất cả sản phẩm đăng lên một shop dùng chun
 
 Khi shop Etsy bán bằng VND nhưng Odoo đang để giá USD, listing trên Etsy hiện giá VND cho khách. Trước khi bấm *Publish*, Marketing có thể xem **số VND** mà khách sẽ thực sự thấy — ngay trên form Listing.
 
-- **Vị trí**: form Listing → tab *Shipping & Variations* → group **Shop Currency Preview** ở đầu trang.
+- **Vị trí**: Vào **Vận hành → Bán & Đăng bán → Listings**, mở Listing → tab *Shipping & Variations* → group **Shop Currency Preview** ở đầu trang.
 - **Hai trường**:
   - *Etsy Shop* (dropdown) — chọn shop sẽ đăng. Hệ thống dùng tiền tệ của shop này để quy đổi.
   - *Price (shop currency)* (chỉ đọc) — giá đã quy đổi theo tỷ giá hôm nay.
@@ -534,7 +537,7 @@ Khi shop Etsy bán bằng VND nhưng Odoo đang để giá USD, listing trên Et
 Khi sản phẩm có nhiều biến thể (ví dụ Mug 4" / 6" / 8") với giá khác nhau:
 
 - **Cách thiết lập**: ở tab *Attributes & Variants*, mỗi giá trị Size có ô **Price Extra** — điền chênh lệch giá so với giá gốc. Ví dụ List Price `0` + Price Extra `10 / 20 / 30` → 3 size có giá `10 / 20 / 30` USD.
-- **Hình theo size**: vào menu **Sản phẩm → Variants** (Biến thể), mở từng variant → upload ảnh ở trường **Variant Image**. Mỗi biến thể có thể có hình riêng; không có cũng được — Etsy dùng hình chính của listing.
+- **Hình theo size**: vào menu **Sản phẩm** → chọn sản phẩm → tab **Variants** (Biến thể), mở từng variant → upload ảnh ở trường **Variant Image**. Mỗi biến thể có thể có hình riêng; không có cũng được — Etsy dùng hình chính của listing.
 - **Khi đăng**: hệ thống tự gửi từng size sang Etsy với SKU + giá + tồn riêng. Listing trên Etsy hiển thị giá "từ XXX ₫" (lấy size rẻ nhất). Người mua chọn size → Etsy đổi sang giá / hình của size đó.
 - **Lưu ý SKU**: nếu Variant không có SKU riêng (Default Code), hệ thống tự sinh `{SKU template}-{slug size}` (ví dụ `LT-4IN`, `LT-6IN`, `LT-8IN`). Tối đa 32 ký tự, cắt ở đuôi nếu dài hơn.
 

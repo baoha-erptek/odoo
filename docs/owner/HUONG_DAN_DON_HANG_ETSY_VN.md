@@ -1,11 +1,14 @@
 # Hướng dẫn sử dụng — Tiếp nhận đơn hàng Etsy
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 2.0 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User, Đội Kỹ thuật
 **Hệ thống:** Odoo 19 — module `etsy_integration`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_DON_HANG_ETSY_VN.md`](./FLOW_DON_HANG_ETSY_VN.md)
 
 > Hướng dẫn từng bước về cách đơn hàng Etsy được đưa vào hệ thống và cách BA xử lý ban đầu. Bao gồm hai đường: API (mới) và Email (cũ, dự phòng).
+
+### Cập nhật v2.0 (2026-07-05)
+Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme** (thanh điều hướng tím, sidebar tối). Menu chính **"Etsy"** được sắp xếp lại thành **"Vận hành"** (hub trung tâm) với 6 phần: Công việc hằng ngày, Bán & Đăng bán, Giao hàng, Hậu mãi, Giám sát, Cấu hình. Tất cả menu paths trong hướng dẫn này đã được cập nhật để phản ánh cấu trúc mới. Giao diện hoàn toàn **Tiếng Việt**.
 
 ---
 
@@ -52,7 +55,7 @@
 
 ![Biểu mẫu shop Etsy với các trường ID và cấu hình mặc định](img/don-hang-etsy-shop-form.png)
 
-1. Mở menu **Etsy → Shops**.
+1. Mở menu **Vận hành → Cấu hình → Cửa hàng Etsy**.
 2. Bấm **Tạo mới**.
 3. Điền:
    - **Tên shop** — ví dụ "JaHandmadeArt"
@@ -75,7 +78,7 @@
 
 ### 4.1 Bấm "Authorize Etsy"
 
-1. Mở **Etsy → Shops → [tên shop]**.
+1. Mở **Vận hành → Cấu hình → Cửa hàng Etsy → [tên shop]**.
 2. Bấm nút **"Authorize Etsy"** ở đầu form.
 3. Trình duyệt mở tab mới đến trang đăng nhập Etsy.
 4. Đăng nhập tài khoản Etsy của shop.
@@ -86,7 +89,7 @@
 
 ### 4.2 Bấm "Test Connection"
 
-1. Sau khi Authorize → bấm **"Test Connection"** trên form shop.
+1. Sau khi Authorize → bấm **"Test Connection"** trên form cửa hàng.
 2. **Mong đợi:** Thông báo "Kết nối thành công — đã lấy được thông tin shop ID = ..."
 3. Nếu lỗi:
    - **scope/permission** → bấm lại "Authorize Etsy".
@@ -100,7 +103,7 @@
 
 ### 4.4 Theo dõi log API
 
-**Menu:** Etsy → **API Log** → danh sách các cuộc gọi API gần đây.
+**Menu:** Vận hành → Giám sát → **Nhật ký API Etsy** → danh sách các cuộc gọi API gần đây.
 
 Mỗi dòng có:
 - Thời điểm
@@ -117,7 +120,7 @@ Mỗi dòng có:
 
 > _Admin làm một lần._
 
-1. Mở **Etsy → Cấu hình → Gmail Settings**.
+1. Mở **Vận hành → Cấu hình** → tìm **Gmail Settings**.
 2. Bấm **"Connect Gmail"**.
 3. Đăng nhập tài khoản Gmail nhận email Etsy.
 4. Cấp quyền đọc thư.
@@ -133,7 +136,7 @@ Mỗi dòng có:
 
 ![Danh sách email log hiển thị trạng thái xử lý: processed, failed_parse, duplicate](img/don-hang-email-log-list.png)
 
-**Menu:** Etsy → **Email Log** → danh sách email đã xử lý.
+**Menu:** Vận hành → Giám sát → **Nhật ký Email** → danh sách email đã xử lý.
 
 | Trạng thái | Ý nghĩa | Xử lý |
 |---|---|---|
@@ -245,8 +248,8 @@ Nếu khách báo đổi địa chỉ sau đặt:
 ### 8.1 Đơn không xuất hiện trong 5-10 phút
 
 **Đường API:**
-1. Mở Etsy → Shops → Test Connection.
-2. Kiểm tra Etsy API Log → có lỗi `401 Unauthorized`? → Authorize lại.
+1. Mở Vận hành → Cấu hình → Cửa hàng Etsy → bấm Test Connection trên form.
+2. Mở Vận hành → Giám sát → Nhật ký API Etsy → kiểm tra có lỗi `401 Unauthorized`? → Authorize lại.
 3. Kiểm tra Etsy Status Page → API down?
 4. Báo Đội Kỹ thuật nếu cả 3 mục trên đều OK.
 
@@ -275,7 +278,7 @@ Nếu khách báo đổi địa chỉ sau đặt:
 A: Không. Mỗi shop chỉ chọn một (trường `active_source`). Lý do: tránh tạo đơn trùng.
 
 **Q:** _Chuyển shop từ Email sang API thế nào?_
-A: Admin/BA Lead vào Etsy → Shops → [shop] → đổi `active_source` từ `email` sang `api` → bấm Authorize Etsy + Test Connection.
+A: Admin/BA Lead vào Vận hành → Cấu hình → Cửa hàng Etsy → [shop] → đổi `active_source` từ `email` sang `api` → bấm Authorize Etsy + Test Connection.
 
 **Q:** _Hệ thống lấy đơn cũ ngược về quá khứ bao xa?_
 A: Lần đầu Authorize → lấy hết đơn chưa có trong Odoo, không giới hạn thời gian. Sau đó incremental.
@@ -297,7 +300,7 @@ A: Có. Trường `gift_message` trên `sale.order` + hiển thị trong Operati
 
 ### TC-001: Authorize Etsy thành công
 
-- [ ] Vào Etsy → Shops → JaHandmadeArt (staging)
+- [ ] Vào Vận hành → Cấu hình → Cửa hàng Etsy → JaHandmadeArt (staging)
 - [ ] Bấm "Authorize Etsy"
 - [ ] Đăng nhập Etsy + cấp quyền
 - [ ] **Mong đợi:** Quay về Odoo với thông báo "Authorization successful"; trường `access_token` không trống
@@ -344,7 +347,7 @@ A: Có. Trường `gift_message` trên `sale.order` + hiển thị trong Operati
 
 ### TC-007: Etsy API Log ghi đúng
 
-- [ ] Mở Etsy → API Log
+- [ ] Mở Vận hành → Giám sát → Nhật ký API Etsy
 - [ ] **Mong đợi:** Mỗi cuộc gọi cron có 1 dòng; lỗi có chi tiết thông điệp; success có response status
 - [ ] **Pass / Fail:** _____
 

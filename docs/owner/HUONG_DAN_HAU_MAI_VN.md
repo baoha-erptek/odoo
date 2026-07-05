@@ -1,11 +1,14 @@
 # Hướng dẫn sử dụng — Hậu mãi (In lại, Tin nhắn khách, Hoàn trả/Hoàn tiền)
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 2.0 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** BA Lead, BA Marketing, BA Shipping, Kế toán, Chủ shop
 **Hệ thống:** Odoo 19 — module `etsy_integration` + `multichannel_hub_core`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_HAU_MAI_VN.md`](./FLOW_HAU_MAI_VN.md)
 
 > Hướng dẫn từng bước cho các quy trình hậu mãi: in lại đơn lỗi, xử lý tin nhắn khách, và hoàn trả/hoàn tiền. Phần "Hoàn trả & Hoàn tiền" đã **hoạt động từ 2026-07-05** — workflow tạo ticket hậu mãi, duyệt, đánh dấu hoàn tiền được E2E-verify. Phần chuyển tiền thực tế vẫn thực hiện thủ công trong Etsy Shop Manager.
+
+### Cập nhật v2.0 (2026-07-05)
+Từ phiên bản này, **Hậu mãi** (sau mãi) bây giờ có menu trực tiếp riêng trong **"Vận hành"** — không chỉ đạt được từ các nút trên form đơn. Giao diện hệ thống được làm mới với **Hatafa theme**. Ticket hậu mãi workflow (tạo → duyệt → giải quyết) đã sẵn sàng cho UAT.
 
 ---
 
@@ -16,7 +19,7 @@
 3. [Quy trình In lại đơn](#3-quy-trình-in-lại-đơn)
 4. [Quy trình Tin nhắn khách](#4-quy-trình-tin-nhắn-khách)
 5. [Yêu cầu đổi địa chỉ giao](#5-yêu-cầu-đổi-địa-chỉ-giao)
-6. [Hoàn trả & Hoàn tiền (đang xây dựng)](#6-hoàn-trả--hoàn-tiền)
+6. [Hoàn trả & Hoàn tiền](#6-hoàn-trả--hoàn-tiền)
 7. [Câu hỏi thường gặp](#7-câu-hỏi-thường-gặp)
 8. [Checklist kiểm thử UAT](#8-checklist-kiểm-thử-uat)
 9. [Báo lỗi cho ai](#9-báo-lỗi-cho-ai)
@@ -56,7 +59,7 @@
 
 #### Bước 1 — Mở đơn gốc
 
-1. **Menu:** Vận hành → Operations Dashboard.
+1. **Menu:** Vận hành → Công việc hằng ngày → Bảng điều hành.
 2. Tìm đơn theo Receipt ID hoặc tên khách.
 3. Bấm vào dòng → mở form đơn.
 
@@ -123,7 +126,7 @@
 
 #### Xử lý tin nhắn không khớp đơn (orphaned)
 
-1. **Menu:** Etsy → **Buyer Messages Buffer**.
+1. **Menu:** Vận hành → Giám sát → **Buyer Messages Buffer**.
 2. Lọc `state = orphaned` (đã hết 7 ngày).
 3. Mở từng tin → đọc nội dung.
 4. Nếu khách nhắc Receipt ID → copy nội dung vào chatter đơn tương ứng + đóng tin buffer.
@@ -180,7 +183,7 @@ Khách yêu cầu sửa địa chỉ sau khi đặt hàng — phải xử lý qu
 #### Bước 2 — BA Lead duyệt
 
 1. Đăng nhập BA Lead.
-2. **Menu:** Vận hành → **Address Change Requests**.
+2. **Menu:** Vận hành → Hậu mãi → **Address Change Requests**.
 3. Mở yêu cầu mới → kiểm tra:
    - Lý do hợp lý?
    - Đơn còn ở giai đoạn cho phép đổi?

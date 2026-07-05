@@ -1,11 +1,14 @@
 # Hướng dẫn sử dụng — Giao hàng (MTO nội bộ + Dropship Gearment)
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 2.0 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** BA Lead, BA Shipping, Đội sản xuất, Đội QC + Đóng gói, PD, Marketing
 **Hệ thống:** Odoo 19 — module `multichannel_hub_core` + `multichannel_hub_fulfillment` + `etsy_integration`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_GIAO_HANG_VN.md`](./FLOW_GIAO_HANG_VN.md)
 
 > Hướng dẫn từng bước cho hai đường giao hàng: MTO (in nội bộ) và Dropship Gearment. Bao gồm 17 trạng thái pipeline VN, quy trình design files, gọi Gearment, và push tracking lên Etsy.
+
+### Cập nhật v2.0 (2026-07-05)
+Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme**. Menu chính được sắp xếp lại thành **"Vận hành"** (hub trung tâm) với các phần: Công việc hằng ngày, Bán & Đăng bán, Giao hàng, Hậu mãi, Giám sát, Cấu hình. Lệnh sản xuất (MO) bây giờ hiển thị huy hiệu **"Design Ready"** khi thiết kế đã được duyệt. Tất cả menu paths đã được cập nhật.
 
 ---
 
@@ -235,7 +238,7 @@ Mở đơn → tab **Etsy** → khu vực "Tracking push status":
 
 ### 7.1 Mở wizard
 
-**Menu:** Logistics → **Nhập tracking GKE**
+**Menu:** Vận hành → Giao hàng → **Nhập tracking**
 
 ### 7.2 Upload file
 
@@ -254,7 +257,7 @@ Mở đơn → tab **Etsy** → khu vực "Tracking push status":
 
 - Hệ thống nhận diện schema qua hash của hàng tiêu đề.
 - Nếu hash thay đổi → import bị từ chối + cảnh báo BA Manager.
-- BA Manager mở **Logistics → Schema Versions** → duyệt schema mới.
+- BA Manager mở **Vận hành → Giao hàng → Schema Versions** → duyệt schema mới.
 - Sau khi duyệt → BA Shipping import lại.
 
 > ⚠️ Lý do: chống lỗi nhập sai cột (GKE đổi cột mà BA không biết).

@@ -110,6 +110,7 @@ Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 | 1.1 | 2026-05-25 | BA Consultant | Delta sync — 3 Story Done, Epic 7 (Trung tâm sản phẩm + xuất kênh) thêm 7 Story, mirror lên Confluence space HEP |
 | 1.2 | 2026-06-07 | UAT sweep | Thêm 5 business-flows companion markdown + UAT_WALKTHROUGH v1.2 Wave 2/3; archive 19 file E2E run logs / legacy guides sang `../archive/2026-06-07/` |
 | 1.3 | 2026-07-05 | E2E close-out | Cả 5 luồng chính đã kiểm thử E2E trên môi trường staging (kể cả Hậu mãi). 4 bộ HUONG_DAN + 4 FLOW đều có ảnh chụp màn hình thật; bổ sung tab "Original Design" trên form sản phẩm. Bộ PDF UAT hợp nhất: `../pdf/docs_huong_dan_uat_vn.pdf` |
+| 2.0 | 2026-07-05 | Hatafa UI live | Giao diện mới Hatafa + menu Vận hành mới + tiếng Việt + ảnh chụp mới (4 HUONG_DAN cập nhật v2.0) |
 
 ---
 

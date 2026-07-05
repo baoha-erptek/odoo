@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quy trình 1 — Tạo sản phẩm & đăng bán Etsy — Hatafa Ops v3</title>
+<style>
+  :root{--brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;--bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;--ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;}
+  *{box-sizing:border-box}body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}.appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}.appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}.appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .swim{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px;margin:12px 0}
+  .swim>div{background:#fff;padding:10px 12px}.swim-head{background:#faf5f9!important;font-weight:600;color:var(--brand-d);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .swim-row-lbl{background:#faf8fb!important;color:var(--muted);font-weight:600;font-size:12px}
+  .swim-cell{color:#1f2937;line-height:1.5}.swim-cell.act{background:#f0fbf5!important}.swim-cell.wait{background:#fffbeb!important;color:#a16207}
+  .steps{list-style:none;margin:8px 0;padding:0}.steps>li{display:flex;gap:14px;padding:15px 0;border-bottom:1px solid #f1eef3}
+  .steps>li:last-child{border-bottom:none}.steps>li .n{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#faf5f9;color:var(--brand);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li .body{flex:1}.steps>li .who{font-size:11.5px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .steps>li .title{font-weight:700;color:#1f2937;font-size:14.5px;margin-bottom:3px}.steps>li .desc{color:#555;font-size:13.7px;line-height:1.6}
+  .steps>li .sys{margin-top:7px;background:#faf8fb;border-left:3px solid var(--brand);padding:8px 12px;font-size:12.7px;color:#4b5563;border-radius:0 6px 6px 0}.steps>li .sys b{color:#1f2937}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-warn{background:#fdf3dd;color:var(--warn)}.b-bad{background:#fdeceb;color:var(--bad)}
+  figure{margin:16px 0;text-align:center}figure img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  figcaption{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic;max-width:100%}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· v3</span></div>
+  <nav>
+    <a href="index.html">Tổng quan</a>
+    <a href="flow-1-tao-san-pham.html" class="active">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html">Hậu mãi</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Quy trình 1</div>
+  <h1>Tạo sản phẩm & đăng bán Etsy</h1>
+  <div class="sub">Từ ý tưởng thiết kế đến listing sống trên shop Etsy. Marketing hoặc BA điền form Sản phẩm chuẩn, chọn Danh mục + Biến thể, hệ thống tự sinh Mã SKU. Bấm Publish, hệ thống gửi metadata lên Etsy API. Listing xuất hiện ở trạng thái Draft hoặc Published.</div>
+  <div class="pills">
+    <span class="hpill">Hoàn tất</span>
+    <span class="hpill">Đọc ~12 phút</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="section">
+  <h3><span class="num">A</span>Sơ đồ vai trò (Swimlane)</h3>
+  <div class="swim">
+    <div style="grid-template-columns:140px repeat(3,1fr);display:grid;gap:1px">
+      <div class="swim-head"></div>
+      <div class="swim-head">Marketing</div>
+      <div class="swim-head">Hệ thống Odoo</div>
+      <div class="swim-head">Etsy API</div>
+    </div>
+    <div style="grid-template-columns:140px repeat(3,1fr);display:grid;gap:1px">
+      <div class="swim-row-lbl">Bước 1</div>
+      <div class="swim-cell act">Tạo sản phẩm</div>
+      <div class="swim-cell">Lưu form + sinh SKU</div>
+      <div class="swim-cell"></div>
+    </div>
+    <div style="grid-template-columns:140px repeat(3,1fr);display:grid;gap:1px">
+      <div class="swim-row-lbl">Bước 2</div>
+      <div class="swim-cell"></div>
+      <div class="swim-cell">Cấu hình kênh Etsy</div>
+      <div class="swim-cell"></div>
+    </div>
+    <div style="grid-template-columns:140px repeat(3,1fr);display:grid;gap:1px">
+      <div class="swim-row-lbl">Bước 3</div>
+      <div class="swim-cell act">Bấm Publish to Etsy</div>
+      <div class="swim-cell">Tạo listing + upload ảnh</div>
+      <div class="swim-cell act">Nhận createListing, trả listing_id</div>
+    </div>
+    <div style="grid-template-columns:140px repeat(3,1fr);display:grid;gap:1px">
+      <div class="swim-row-lbl">Kết quả</div>
+      <div class="swim-cell"></div>
+      <div class="swim-cell">Listing state = published</div>
+      <div class="swim-cell">Draft listing trên Etsy</div>
+    </div>
+  </div>
+</div>
+
+<h2>Bước 1 — Tạo sản phẩm</h2>
+<p><b>Menu:</b> Vận hành ▸ Bán ▸ Sản phẩm &amp; SKU<br><b>Vai trò:</b> Marketing, BA Lead</p>
+
+<p class="lead">Người dùng điền các trường cơ bản trên form sản phẩm:</p>
+<ul>
+  <li><b>Tên sản phẩm</b> (Name)</li>
+  <li><b>Danh mục</b> (Category) — tự động sinh SKU theo dạng: [Category-Code]-[Category-Name]-[Tạo sản phẩm SKU Drift Badge</li>
+  <li><b>Biến thể</b> (Attributes & Variants) — chọn Material, Size, Color, v.v.</li>
+</ul>
+
+<figure>
+  <img src="../../img/product-form-header.png" alt="Form tạo sản phẩm — Tiêu đề và tên sản phẩm">
+  <figcaption>Form tạo sản phẩm — Tiêu đề và tên sản phẩm. Hệ thống tự sinh SKU dựa trên danh mục.</figcaption>
+</figure>
+
+<h2>Bước 2 — Cấu hình kênh Etsy</h2>
+<p><b>Tab:</b> Channel Applicability<br><b>Vai trò:</b> Marketing</p>
+
+<p class="lead">Chọn kênh "Etsy" để sản phẩm này được phép đăng bán trên Etsy. Đặt giá danh sách (List Price) bằng VND cho shop JaHandmadeArt.</p>
+
+<figure>
+  <img src="../../img/product-tab-listing-defaults.png" alt="Tab Listing Defaults — Cấu hình default cho Etsy">
+  <figcaption>Tab Listing Defaults — Chọn kênh Etsy và đặt giá VND.</figcaption>
+</figure>
+
+<h2>Bước 3 — Thêm ảnh, giá, và thuộc tính Etsy</h2>
+<p><b>Menu:</b> Vận hành ▸ Bán ▸ Đăng bán Etsy → chọn sản phẩm → Tab "Shipping &amp; Variations" hoặc "How It's Made"</p>
+
+<p class="lead">Khi lưu sản phẩm, hệ thống tự tạo listing record với default từ shop (Taxonomy ID, Shipping Profile, Who Made, When Made). Bạn có thể override per-listing nếu cần khác:</p>
+
+<figure>
+  <img src="../../img/listing-form-overview.png" alt="Form listing Etsy — Tổng quan">
+  <figcaption>Form listing Etsy trên Odoo — Các tab: Basics, How It's Made, Images, Shipping, Video.</figcaption>
+</figure>
+
+<figure>
+  <img src="../../img/listing-tab-images.png" alt="Tab Images — Tải ảnh">
+  <figcaption>Tab Images — Tải ảnh từ gallery sản phẩm (hệ thống tự lấy từ Product Template).</figcaption>
+</figure>
+
+<h2>Bước 4 — Publish to Etsy</h2>
+<p><b>Nút:</b> Trên form sản phẩm hoặc listing → "Publish to Etsy" hoặc "Yêu cầu báo giá"</p>
+
+<p class="lead">Bấm nút "Publish to Etsy" để đẩy listing lên Etsy API. Wizard hiện ra — chọn shop → "Run Publish Draft Only". Hệ thống gửi tất cả metadata, ảnh, và thuộc tính lên Etsy.</p>
+
+<figure>
+  <img src="../../img/publish-wizard.png" alt="Wizard Publish to Etsy — Chọn shop">
+  <figcaption>Wizard Publish to Etsy — Chọn shop, sau đó "Run Publish Draft Only" hoặc "Publish Immediately".</figcaption>
+</figure>
+
+<h2>Bước 5 — Theo dõi trạng thái kênh</h2>
+<p><b>Menu:</b> Vận hành ▸ Bán ▸ Trạng thái kênh (Channel Status Kanban)</p>
+
+<p class="lead">Sau khi publish, sản phẩm xuất hiện trên Kanban board theo trạng thái kênh: Draft, Published, Inactive. Bạn có thể kéo-thả giữa các cột để thay đổi trạng thái nếu cần. Nếu có lỗi đẩy lên Etsy, sản phẩm sẽ hiển thị cảnh báo màu đỏ.</p>
+
+<figure>
+  <img src="../../img/tao-san-pham-channel-status-kanban.png" alt="Kanban Board — Channel Status">
+  <figcaption>Kanban Board — Trạng thái kênh: Draft, Published, Inactive. Kéo-thả để thay đổi trạng thái.</figcaption>
+</figure>
+
+<h2>Bước 6 — Kiểm tra SKU Drift</h2>
+<p><b>Menu:</b> Vận hành ▸ Giám sát ▸ [Dành cho RD] SKU Drift Alerts</p>
+
+<p class="lead">Nếu sản phẩm được tạo lại hoặc danh mục thay đổi, SKU có thể bị dịch (drift). Bảng cảnh báo SKU Drift giúp RD phát hiện và khác phục:</p>
+
+<figure>
+  <img src="../../img/tao-san-pham-sku-drift.png" alt="SKU Drift Detector — Danh sách các SKU bất thường">
+  <figcaption>SKU Drift Detector — RD theo dõi các SKU đã thay đổi và quyết định hành động (merge, update, hoặc chấp nhận).</figcaption>
+</figure>
+
+<div class="section">
+  <h3><span class="num">i</span>Ghi chú cho Marketing &amp; BA</h3>
+  <ul>
+    <li><b>SKU được sinh tự động.</b> Bạn <b>không cần</b> điền SKU thủ công. Hệ thống lấy mã danh mục (ví dụ "TST" cho T-shirt) + tên, sau đó sinh SKU duy nhất.</li>
+    <li><b>Etsy API cấp quyền cho 4 scope.</b> Mỗi scope cho phép hành động khác (tạo listing, cập nhật giá, xoá listing, v.v.). Nếu gặp lỗi 403 Unauthorized, liên hệ Quản trị viên để re-authorize OAuth.</li>
+    <li><b>Publish có hai chế độ:</b> Draft (có thể chỉnh sửa trên Etsy) hoặc Published (bán ngay). Hầu hết quy trình dùng Draft để QC trước khi bán.</li>
+    <li><b>Metadata Etsy (Taxonomy, Shipping Profile, Who Made).</b> Các default được set ở Etsy &gt; Cửa hàng &gt; [shop] &gt; Publisher Defaults. Bạn có thể override per-listing hoặc per-product.</li>
+  </ul>
+</div>
+
+<footer>Cẩm nang vận hành Hatafa Ops v3 — Quy trình 1: Tạo sản phẩm &amp; đăng bán Etsy · 2026-07-05</footer>
+</div>
+
+</body>
+</html>
