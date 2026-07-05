@@ -83,7 +83,7 @@ graph TD
     end
 
     subgraph Foundation["Foundation Layer (Channel-Agnostic)"]
-        MHC["<b>multichannel_hub_core</b><br/>v19.0.1.0.75<br/>━━━━━━━━━━━━<br/>Models:<br/>• sale.order (ext)<br/>• sale.order.fulfillment<br/>• order.pipeline<br/>• order.pipeline.state<br/>• design.file<br/>• design.file.route<br/>• shipping.carrier<br/>• multichannel.listing<br/>• multichannel.sync.health<br/>━━━━━━━━━━━━<br/>Services:<br/>• ORM-free layer N/A<br/>Views:<br/>• 3 Dashboards<br/>(Order, Tracking, Ops)<br/>• Pipeline Kanban"]
+        MHC["<b>multichannel_hub_core</b><br/>v19.0.1.0.77<br/>━━━━━━━━━━━━<br/>Models:<br/>• sale.order (ext)<br/>• sale.order.fulfillment<br/>• order.pipeline<br/>• order.pipeline.state<br/>• design.file<br/>• design.file.route<br/>• product.document (ext)<br/>• shipping.carrier<br/>• multichannel.listing<br/>• multichannel.sync.health<br/>━━━━━━━━━━━━<br/>Services:<br/>• ORM-free layer N/A<br/>Views:<br/>• 3 Dashboards<br/>(Order, Tracking, Ops)<br/>• Pipeline Kanban"]
     end
 
     subgraph Channel["Channel Layer (Etsy-Specific)"]
@@ -134,7 +134,7 @@ graph TD
 
 | Module | Ownership | Key Responsibility | Critical Models | Test Coverage | Status |
 |--------|-----------|-------------------|-----------------|---|--------|
-| **multichannel_hub_core** | Architect + BA | Order pipeline routing, design file management, unified dashboards, product catalog hub (Phase 3) | `sale.order.fulfillment`, `order.pipeline*`, `design.file`, `shipping.carrier`, `multichannel.listing`, `multichannel.sync.health` | 80%+ (Phase 1 complete) | ✅ Phase 1 live |
+| **multichannel_hub_core** | Architect + BA | Order pipeline routing, design file management, product design documents, unified dashboards, product catalog hub (Phase 3) | `sale.order.fulfillment`, `order.pipeline*`, `design.file`, `product.document`, `multichannel.listing`, `multichannel.sync.health` | 80%+ (Phase 1 complete, ESTY-250) | ✅ Phase 1 live + ESTY-250 |
 | **etsy_integration** | Etsy specialist + integrator | Etsy shop OAuth, email ingest (legacy), listing fetch, order creation, publish flow (Phase 3) | `etsy.shop`, `etsy.email.log`, `etsy.listing`, `etsy.api.log` | 80%+ (Phase 0/1 regression green) | ✅ P1 cutover ready |
 | **multichannel_hub_fulfillment** | Fulfillment + Gearment specialist | Gearment API wrapper, webhook receiver, quote state machine, tracking sync | `gearment.api.log`, `gearment.quote.wizard`, webhook models (transient) | 80%+ (P4-01 complete) | ✅ P4-01 E2E pass |
 | **design** | Product/production team | Design order document, approval workflow, file attachment, production routing, MO Design-Ready badge | `design.order`, `design.file` (extends _core), `mrp.production` (ext) | 80%+ (P0 spec, ESTY-244 + ESTY-249) | ✅ ESTY-244 + ESTY-249 live |

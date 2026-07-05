@@ -111,6 +111,7 @@ erDiagram
     PRODUCT_TEMPLATE ||--o{ PRODUCT_CHANNEL_STATUS : "product_tmpl_id"
     PRODUCT_TEMPLATE ||--o{ SKU_FAMILY_MEMBER : "product_tmpl_id"
     PRODUCT_TEMPLATE ||--o{ PRODUCT_CATALOG_IMPORT_LINE : "product_tmpl_id"
+    PRODUCT_TEMPLATE ||--o{ PRODUCT_DOCUMENT : "res_id (ESTY-250)"
     PRODUCT_TEMPLATE }o--|| PRODUCT_CATEGORY : "categ_id"
     PRODUCT_TEMPLATE }o--|| SKU_FAMILY : "x_sku_family_id"
 
@@ -143,6 +144,7 @@ erDiagram
 | Product Product (core+ext) | `product.product` | `product.product` (_inherit) | Variant + Etsy link |
 | Product Attribute Value (core+ext) | `product.attribute.value` | `product.attribute.value` (_inherit) | Variant attribute value + Etsy mapping |
 | Product Attribute (ext) | `product.attribute` (_inherit) | `product.attribute` | Attribute definition + Etsy mapping |
+| Product Document (ext) | `product.document` (_inherit) | `product.document` | Design files (AI/PSD/PDF) tagged for Original Design tab (ESTY-250) |
 | Product Channel Status | `product.channel.status` | None | Per-channel publish status + error log |
 | Product Catalog Import Run | `product.catalog.import.run` | None | Batch import execution record |
 | Product Catalog Import Line | `product.catalog.import.line` | None | Individual row from XLSX import |
@@ -160,6 +162,7 @@ erDiagram
 | **description_sale** | Text | Sales description | Tier-1 fallback for listing description |
 | **image_1920** | Image | Hero image | Tier-1 fallback for listing image |
 | **x_extra_image_ids** | One2many → multichannel.product.image | Gallery images | Shared across all channels (Wave 2) |
+| **x_original_design_ids** | One2many → product.document | Original design files | Design source files (AI/PSD/PDF) filtered via domain `x_is_original_design=True` (ESTY-250); distinct from generic Documents smart button |
 | **x_sku_family_id** | Many2one → mhc.sku.family | SKU family | Logical grouping of related variants |
 | **categ_id** | Many2one → product.category | Category | Odoo category + pipeline assignment |
 | **list_price** | Float | List price (Monetary) | Standard Odoo selling price |
@@ -241,6 +244,18 @@ erDiagram
 | **name** | Char | Attribute value | e.g., "Small", "Red" |
 | **attribute_id** | Many2one → product.attribute | Parent attribute | Required |
 | **x_etsy_value_id** | Char | Etsy value ID | Etsy-side value mapping (Wave 2) |
+
+#### product.document (extensions, ESTY-250)
+| Field | Type | Purpose | Notes |
+|-------|------|---------|-------|
+| **x_is_original_design** | Boolean | Original design tag | Tags document for display on product's "Original Design" tab; untagged rows excluded |
+| **name** | Char | File name | Inherited from ir.attachment via delegation |
+| **datas** | Binary | File content | Inherited from ir.attachment; size cap enforced if x_is_original_design=True |
+| **res_model** | Char | Resource model | Always `product.template` for products |
+| **res_id** | Integer | Resource ID | product.template.id; indexed |
+
+**Constraints:**
+- `@api.constrains('x_is_original_design', 'datas')` — Enforces size cap (default 10 MB) via multichannel_hub.large_file_threshold_bytes config parameter when x_is_original_design=True.
 
 #### product.category (extensions)
 | Field | Type | Purpose | Notes |

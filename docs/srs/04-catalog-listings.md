@@ -164,6 +164,18 @@ This section covers:
 
 ---
 
+### SRS-CAT-13: Original Design Document Management (ESTY-250)
+
+| Property | Detail |
+|----------|--------|
+| **Statement** | Product manager can upload and manage original design source files (AI/PSD/PDF mockups) linked to each product via a dedicated "Original Design" tab on the product form. Files are stored as product.document records tagged with `x_is_original_design=True`, distinct from the generic Documents smart button. File size is capped per configuration (default 10 MB); oversized uploads are rejected. Files are indexed and ordered by sequence for gallery display. |
+| **Rationale** | Centralized design file management enables production team to access source artwork without manual file exchange; separates design assets from general product attachments. |
+| **Origin Spec(s)** | ESTY-250 (product design document tab) |
+| **Implementing Module + Model** | `multichannel_hub_core` / `product.document` (extension with `x_is_original_design` Boolean field, `_check_original_design_size_cap` constraint); `product.template` (field `x_original_design_ids` One2many with domain filter) |
+| **Status** | **Shipped** — Extension field `x_is_original_design` (models/product_document.py line 35, Boolean, indexed). Size constraint `_check_original_design_size_cap` (line 43, @api.constrains) enforces threshold via `multichannel_hub.large_file_threshold_bytes` config parameter (default 10 MB). Product template relation `x_original_design_ids` (models/product_template.py line 75, One2many with domain `x_is_original_design=True`). Form tab "Original Design" (views/product_template_views.xml line 83, editable tree with drag-to-reorder sequence, file upload via datas field). Tests: test_phase1_original_design_db.py (column existence, field registration); test_phase2_original_design_orm.py (CRUD, tagging, domain filtering, size cap rejection, sequence ordering, O2M defaults). |
+
+---
+
 ## Summary Table
 
 | Req ID | Title | Status | Module | Model | Tracker Reference |
@@ -180,6 +192,7 @@ This section covers:
 | SRS-CAT-10 | Listing Sync (Inbound from Etsy) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-02b (2026-08-05) |
 | SRS-CAT-11 | Multi-Currency Pricing | Planned | multichannel_hub_core | multichannel.listing | Phase 3 (2026-08-10) |
 | SRS-CAT-12 | Inventory Sync to Etsy | Planned | multichannel_hub_core | etsy.api.log | Phase 4 (2026-08-15) |
+| SRS-CAT-13 | Original Design Document Tab | Shipped | multichannel_hub_core | product.document, product.template | ESTY-250 |
 
 ---
 
