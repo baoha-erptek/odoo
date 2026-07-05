@@ -1,0 +1,475 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* design
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "<span class=\"o_stat_text\">Design Order</span>"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "<span class=\"o_stat_text\">Sale Order</span>"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Approve (Duyệt)"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Approved"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_at
+msgid "Approved At"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_by
+msgid "Approved By"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_files_count
+msgid "Approved Files"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+msgid "Auto-create design order on confirmation"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_res_config_settings__design_auto_create_on_confirm
+msgid "Auto-create design order on sale confirmation"
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Cannot reject design order '%(name)s' without a rejection reason."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__pending
+msgid "Chờ duyệt"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__company_id
+msgid "Company"
+msgstr ""
+
+#. module: design
+#: model:ir.model,name:design.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+msgid "Create a design order automatically when a sale order is confirmed."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__partner_id
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Customer"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__rejected
+msgid "Cần chỉnh lại"
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Design %s — %s"
+msgstr ""
+
+#. module: design
+#: model:ir.model,name:design.model_design_file
+msgid "Design File"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__design_file_ids
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Design Files"
+msgstr ""
+
+#. module: design
+#: model:ir.model,name:design.model_design_order
+#: model:ir.model.fields,field_description:design.field_design_file__design_order_id
+#: model:ir.model.fields,field_description:design.field_mrp_production__design_order_id
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Design Order"
+msgstr ""
+
+#. module: design
+#: model:ir.actions.act_window,name:design.action_design_order
+#: model:ir.model.fields,field_description:design.field_sale_order__design_order_count
+#: model:ir.model.fields,field_description:design.field_sale_order__design_order_ids
+#: model:ir.ui.menu,name:design.menu_design_order
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_list
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Design Orders"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_mrp_production__design_ready
+#: model:order.pipeline.state,name:design.state_gearment_design_ready
+#: model:order.pipeline.state,name:design.state_hybrid_design_ready
+#: model:order.pipeline.state,name:design.state_vn_design_ready
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "Design Ready"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "Design not yet approved — waiting on the design order (Duyệt)."
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Design order %s approved"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_mrp_production__design_order_id
+msgid "Design order linked to this MO's sale order (via origin)."
+msgstr ""
+
+#. module: design
+#: model_terms:ir.actions.act_window,help:design.action_design_order
+msgid ""
+"Design orders are created automatically when a sale order is confirmed."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_file__display_name
+#: model:ir.model.fields,field_description:design.field_design_order__display_name
+#: model:ir.model.fields,field_description:design.field_mrp_production__display_name
+#: model:ir.model.fields,field_description:design.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:design.field_sale_order__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__approved
+msgid "Duyệt"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__design_files_count
+msgid "Files"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_file__id
+#: model:ir.model.fields,field_description:design.field_design_order__id
+#: model:ir.model.fields,field_description:design.field_mrp_production__id
+#: model:ir.model.fields,field_description:design.field_res_config_settings__id
+#: model:ir.model.fields,field_description:design.field_sale_order__id
+msgid "ID"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_has_error
+#: model:ir.model.fields,help:design.field_design_order__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: design
+#: model:ir.model,name:design.model_mrp_production
+msgid "Manufacturing Order"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "New"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/mrp_production.py:0
+msgid "No design order is linked to this manufacturing order."
+msgstr ""
+
+#. module: design
+#: model_terms:ir.actions.act_window,help:design.action_design_order
+msgid "No design orders yet"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid ""
+"Only members of the Production Team may approve or reject a design order."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_file__design_order_id
+msgid "Parent design order document (ESTY-244)."
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Pending"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reason (required to reject)…"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__name
+msgid "Reference"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reject"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Rejected"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__rejection_reason
+msgid "Rejection Reason"
+msgstr ""
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reset to Pending"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__sale_order_id
+msgid "Sale Order"
+msgstr ""
+
+#. module: design
+#: model:ir.model,name:design.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__state
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Status"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_mrp_production__design_ready
+msgid "True once the linked design order has been approved (Duyệt)."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__website_message_ids
+msgid "Website communication history"
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields,help:design.field_res_config_settings__design_auto_create_on_confirm
+msgid ""
+"When enabled, confirming a sale order automatically creates a design order "
+"and links the order's design files to it."
+msgstr ""
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__proof_sent
+msgid "Đã gửi proof"
+msgstr ""

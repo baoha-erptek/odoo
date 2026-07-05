@@ -53,8 +53,9 @@
     <menuitem
         id="menu_etsy_listing_products"
         name="Listing Variants"
-        parent="menu_etsy_root"
+        parent="multichannel_hub_core.menu_sales_publish"
         action="action_etsy_listing_products"
-        sequence="30"/>
+        sequence="25"
+        groups="multichannel_hub_core.group_ba_user"/>
 
 </odoo>

@@ -37,13 +37,13 @@
 
     <menuitem id="menu_catalog_import_run_wizard"
               name="Import Catalog Excel"
-              parent="menu_operations_root"
+              parent="menu_operations_config"
               action="action_catalog_import_run_wizard"
-              sequence="80"/>
+              sequence="75"/>
 
     <menuitem id="menu_catalog_import_run_history"
               name="Catalog Import History"
-              parent="menu_operations_root"
+              parent="menu_operations_config"
               action="action_catalog_import_run_history"
-              sequence="81"/>
+              sequence="76"/>
 </odoo>

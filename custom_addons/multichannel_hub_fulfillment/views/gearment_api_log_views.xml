@@ -119,11 +119,12 @@
     <field name="context">{'search_default_inbound': 1}</field>
   </record>
 
-  <!-- Menus -->
+  <!-- Menus — P-IA-01: log views live under Monitoring; the operational
+       Fulfillment Tracking screen moved to the Fulfillment section. -->
   <menuitem id="menu_gearment_root"
-            name="Gearment"
-            parent="multichannel_hub_core.menu_operations_root"
-            sequence="72"
+            name="Gearment Logs"
+            parent="multichannel_hub_core.menu_monitoring"
+            sequence="40"
             groups="sales_team.group_sale_manager"/>
 
   <menuitem id="menu_gearment_api_log"

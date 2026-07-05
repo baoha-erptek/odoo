@@ -1,0 +1,1905 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* multichannel_hub_fulfillment
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid " (status: %(s)s)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_api_log
+msgid "API Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__accepted
+msgid "Accepted"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_needaction
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__is_active
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+msgid "Active"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__address_change_flag
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__address_change_flagged_count
+msgid "Address-Change Flagged"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__applied_carrier_id
+msgid "Applied Carrier"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Approve Schema"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,comment:multichannel_hub_fulfillment.group_ba_manager
+msgid "Approves new GKE schema fingerprints (FR-017 RPC-gated)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_attachment_count
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_purchase_order__x_gearment_quote_breakdown_json
+msgid ""
+"Audit trail of the last Gearment quote request: per-source-order totals and "
+"the shipping/fees split written onto this PO."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,name:multichannel_hub_fulfillment.group_ba_manager
+msgid "BA Shipping Manager"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,name:multichannel_hub_fulfillment.group_ba_shipping
+msgid "BA Shipping Operator"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Blocked"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Breakdown"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_breakdown_json
+msgid "Breakdown (JSON)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__business_handled
+msgid "Business Handled"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__business_summary
+msgid "Business Summary"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Call"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__callback
+msgid "Callback"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Cancel"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__cancelled
+msgid "Cancelled"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid ""
+"Cannot revert fulfillment status to 'produced' from a final state. Affected "
+"orders are currently in: %s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Close"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__code
+msgid "Code"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__confirm
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Confirm"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Confirm Gearment Quote"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__confirmed
+msgid "Confirmed"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__conflict_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__conflict
+msgid "Conflict"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__is_active
+msgid "Cron skips inactive partners."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_currency
+msgid "Currency"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__detected_carrier_id
+msgid "Detected Carrier"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_move__sale_order_id
+msgid ""
+"Direct link to the originating sale.order for hook-generated moves. Enables "
+"fast filter without joining through sale_line_id."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__direction
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Direction"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_line__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__done
+msgid "Done"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__draft
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__draft
+msgid "Draft"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__draft
+msgid "Draft Order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__duration_ms
+msgid "Duration (ms)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__endpoint
+msgid "Endpoint"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__error
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__error
+msgid "Error"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__error_message
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__error_message
+msgid "Error Message"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__error_count
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Errors"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Etsy Tracking Pushback"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed_at
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed_at
+msgid "Etsy Tracking Pushed At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__excel_file
+msgid "Excel File"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_expires_at
+msgid "Expires At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__failed
+msgid "Failed"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__file_size_bytes
+msgid "File Size (bytes)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "File exceeds the configured size cap."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__filename
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__excel_filename
+msgid "Filename"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__finish_at
+msgid "Finished At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_follower_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_partner_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__raw_payload
+msgid "Forensic JSON of all cells for this row."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__rate_limit_remaining
+msgid "From X-RateLimit-Remaining header if Gearment provides one."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__fulfillment_id
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Fulfillment"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Fulfillment %s has no linked order; skipping move."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_sale_order_fulfillment_detail
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_sale_order_fulfillment_detail
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_list
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Fulfillment Tracking"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Fulfillment Tracking Detail"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order_fulfillment
+msgid "Fulfillment lifecycle for a sale order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__gdrive_archive_folder_id
+msgid "GDrive Archive Folder ID"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__source_gdrive_file_id
+msgid "GDrive File ID"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__gdrive_inbox_folder_id
+msgid "GDrive Inbox Folder ID"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__source__gdrive
+msgid "GDrive poll"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_log
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_list
+msgid "GKE Tracking Imports"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_wizard
+msgid "GKE tracking import wizard"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_log
+msgid "GKE tracking import — audit log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_line
+msgid "GKE tracking import — line"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Gearment"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_gearment_api_log
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_list
+msgid "Gearment API Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.ir_cron_gearment_api_log_cleanup_ir_actions_server
+msgid "Gearment API Log: cleanup old rows"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_gearment_api_log
+msgid "Gearment API call and webhook audit log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_block_reason
+msgid "Gearment Block Reason"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_root
+msgid "Gearment Logs"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_order_ref
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_order_ref
+msgid "Gearment Order Ref"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_ref
+msgid "Gearment Outbound Reference"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_state
+msgid "Gearment Outbound State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_production_blocked
+msgid "Gearment Production Blocked"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_pushed_at
+msgid "Gearment Pushed At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__x_gearment_quote_breakdown_json
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_breakdown_json
+msgid "Gearment Quote Breakdown (JSON)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_gearment_quote_wizard
+msgid "Gearment Quote Confirmation Wizard (P4-01-C)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_currency
+msgid "Gearment Quote Currency"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_expires_at
+msgid "Gearment Quote Expires At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_total
+msgid "Gearment Quote Total"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_product__x_gearment_sku
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__x_gearment_sku
+msgid "Gearment SKU"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:product.template,name:multichannel_hub_fulfillment.product_gearment_fees_product_template
+msgid "Gearment Shipping & Fees"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_status
+msgid "Gearment Status"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_tracking_state
+msgid "Gearment Tracking Status"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_gearment_webhook_log
+msgid "Gearment Webhook Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment cancelled order (status: %(s)s). Production blocked."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment event %(t)s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment marked order completed (carrier %(c)s, tracking %(n)s)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment placed order on hold (status: %(s)s)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment push failed during PO %(po)s confirm: %(err)s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Gearment push failed for SO %(so)s: %(err)s. PO not confirmed; fix the issue"
+" and re-click Confirm on the PO."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Gearment quote cancelled by operator. Outbound ref cleared."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Gearment quote confirmed (response status: %s)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote failed for %(so)s: %(err)s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote fetched: total %(new).2f."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote updated: %(old).2f -> %(new).2f."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Gearment response has no id field: %s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment shipping & fees (%s)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_ref
+msgid ""
+"Gearment-side ID returned by push_order(). Empty until the order has been "
+"successfully pushed."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_status
+msgid ""
+"Gearment-side fulfillment state — webhook-driven (P0-18b2). See "
+"`x_gearment_outbound_state` for the local push lifecycle."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Google Drive Folders"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__http_status
+msgid "HTTP Status"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__endpoint
+msgid "HTTP method + path, e.g. 'POST /api/v3/orders'."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__has_message
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__header_columns
+msgid "Header Columns (JSON)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__header_diff_html
+msgid "Header Diff"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Headers"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__health_check
+msgid "Health Check"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__signature_header_seen
+msgid ""
+"Heuristic capture of the first incoming header whose name contains "
+"'signature'. Empty in discovery mode if Gearment did not send one."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_line__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__id
+msgid "ID"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_needaction
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_sms_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Import"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_wizard
+msgid "Import GKE Excel"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_wizard
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Import GKE Tracking Excel"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_log
+msgid "Import History"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__log_id
+msgid "Import Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__imported_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__imported
+msgid "Imported"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__in_production
+msgid "In Production"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+msgid "Inactive"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__direction__inbound
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__inbound_webhook
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Inbound Webhook"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_body
+msgid "Inbound webhook body; truncated to 4096 chars."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Invalid Excel file binary: %s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_is_follower
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__is_gearment_dropship_po
+msgid "Is Gearment Dropship PO"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_payload_summary
+msgid "JSON body sent (PII + Authorization scrubbed)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_headers
+msgid ""
+"JSON dict of inbound HTTP headers; Authorization/Cookie/secret-* keys "
+"scrubbed."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__response_summary
+msgid "JSON response truncated to ~4 KB."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_breakdown_json
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_breakdown_json
+msgid ""
+"JSON-serialised dict of decoded Money fields: {order_sub_total, "
+"order_shipping_fee, order_tax, order_discount, order_handle_fee, "
+"order_gift_message_fee, order_fee, order_total, currency}."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_at
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_at
+msgid "Last Gearment Webhook"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__last_poll_at
+msgid "Last Poll At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__last_success_poll_at
+msgid "Last Successful Poll At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_topic
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_topic
+msgid "Last Webhook Topic"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is 'error' but has no error_message."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is 'matched' but has no sale order."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is not in 'conflict' state."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__line_ids
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Lines"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Logistics Partner"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_logistics_partner
+msgid "Logistics Partner — GDrive inbox configuration"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_logistics_partner
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_logistics_partner
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_tree
+msgid "Logistics Partners"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.cron_logistics_inbox_poller_ir_actions_server
+msgid "Logistics: Poll GDrive inboxes"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__source__manual
+msgid "Manual upload"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_product_product__x_gearment_sku
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_product_template__x_gearment_sku
+msgid ""
+"Maps the product to a Gearment catalog SKU; required for any product that "
+"flows through the gearment_pod pipeline."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__matched_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__matched
+msgid "Matched"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_error
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__poll_interval_minutes
+msgid "Minimum minutes between polls for this partner."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__purpose
+msgid "Move Purpose"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__name
+msgid "Name"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__needs_review
+msgid "Needs Review"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__is_new_schema
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__is_new_schema
+msgid "New Schema"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid ""
+"New schema fingerprint detected. A BA Manager must approve before import."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "No Excel file provided."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"No Gearment-eligible lines on this order. Set `x_gearment_sku` on at least "
+"one product before requesting a quote."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "No stock move: no storable products on order %s."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:product.template,description:multichannel_hub_fulfillment.product_gearment_fees_product_template
+msgid ""
+"Non-inventory line carrying the shipping/handling/tax/fees portion of a "
+"Gearment price quote on a dropship purchase order (ESTY-246). Do not sell."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__nonce_value
+msgid "Nonce"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__notes
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__notes
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Notes"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__sale_order_id
+msgid "Null for catalog/system probes; set for order-specific calls."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_needaction_counter
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_error_counter
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_needaction_counter
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_error_counter
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__ok
+msgid "OK"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Only BA Shipping Managers can approve a new schema fingerprint."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_line.py:0
+msgid "Only BA Shipping operators can bulk-sync orders to Gearment."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Only BA Shipping operators can confirm a Gearment quote."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Only BA Shipping operators can fetch a Gearment quote."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Only BA Shipping operators can re-detect carriers."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Only BA Shipping operators can run the bulk Gearment push."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Only BA Shipping operators can run the tracking import."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Only Purchasing or BA Shipping users can request a Gearment quote on a "
+"purchase order."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__operator_review
+msgid "Operator Review"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_state
+msgid ""
+"Operator-driven push lifecycle: draft → quoted → operator_review → confirmed"
+" (or cancelled). Distinct from Gearment Status which reflects upstream "
+"fulfillment state."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__order_id
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid ""
+"Order %(name)s is in state '%(state)s', not 'operator_review'. Refresh the "
+"wizard."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Order pushed to Gearment (ref %s)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__header_columns
+msgid "Original header sequence as JSON array (forensic)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__direction
+msgid ""
+"Outbound = Odoo→Gearment API call. Inbound = Gearment→Odoo webhook callback."
+" Nullable for backward compat with rows created before P0-18b2a."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Outbound API"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__direction__outbound
+msgid "Outbound API Call"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Outbound State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__needs_review
+msgid ""
+"P2-02: True when carrier auto-detection fell back to `other` or could not "
+"match any prefix regex."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__parsed_shipping_date
+msgid "Parsed Shipping Date"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Partner name"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Payloads"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__pending
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__pending
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__pending
+msgid "Pending"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__poll_interval_minutes
+msgid "Poll Interval (minutes)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/logistics_partner.py:0
+msgid "Poll interval must be at least 1 minute."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__detected_carrier_id
+msgid "Populated by P2-02 carrier auto-detector."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Preview"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__preview_line_ids
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Preview Lines"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__preview_log_id
+msgid "Preview Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__previewed
+msgid "Previewed"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__probe
+msgid "Probe"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__processing
+msgid "Processing"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_product_template
+msgid "Product"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Production Blocked"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Production Completion: %s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Production stock.move created for order %s: qty=%s."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid ""
+"Production-locations ICP missing or unresolved for zone %s on order %s; "
+"transition succeeded but no stock.move created."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_purchase_order
+msgid "Purchase Order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Pushed to Etsy"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__quote
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Quote"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Quote Breakdown"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_total
+msgid "Quote Total"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Quote fetched from Gearment (total %(total)s %(cur)s, expires %(exp)s)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Quote for %(name)s expired at %(exp)s. Fetch a new quote."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__quoted
+msgid "Quoted"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__rate_limit_remaining
+msgid "Rate Limit Remaining"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_carrier_label
+msgid "Raw Carrier Label"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_order_number
+msgid "Raw Order Number"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_payload
+msgid "Raw Payload (JSON)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_shipping_date
+msgid "Raw Shipping Date"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_tracking_number
+msgid "Raw Tracking Number"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_re_detect_carriers
+msgid "Re-detect Carriers"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Re-process"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_replay_line
+msgid "Re-process Row"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__verify_failure_reason
+msgid ""
+"Reason code on verify failure: missing_*_header, client_key_mismatch, "
+"timestamp_invalid, timestamp_outside_window, nonce_replay, nonce_replay_db "
+"(UNIQUE-index race detected), signature_mismatch. Empty when "
+"signature_verified=True."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__name
+msgid "Reference"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_body
+msgid "Request Body"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_server_gearment_bulk_sync
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid "Request Gearment Quote"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_headers
+msgid "Request Headers"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_payload_summary
+msgid "Request Payload Summary"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_started_at
+msgid "Request Started At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_timestamp
+msgid "Request Timestamp (Unix)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Request the Gearment quote before confirming the purchase order (draft / RFQ"
+" only)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__response_summary
+msgid "Response Summary"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Review Quote"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Row %(row)s: conflict resolved → %(sel)s (candidates were: %(c)s)"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__row_number
+msgid "Row Number"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Run preview before approving the schema."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Run preview before importing."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__source_row_hash
+msgid "SHA-256 of `|`-joined raw cell values; idempotency key."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__schema_hash
+msgid "SHA-256 of normalized header sequence."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_sms_error
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__sale_order_id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__sale_order_id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__sale_order_id
+msgid "Sale Order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order_line
+msgid "Sales Order Line"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__schema_hash
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__schema_hash
+msgid "Schema Hash"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid ""
+"Schema fingerprint not approved. Ask a BA Manager to approve this header "
+"layout before importing."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Selected order %(id)s does not exist."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_move__purpose
+msgid ""
+"Semantic marker identifying which subsystem generated this move. Used by "
+"P2-03 production-completion hook for idempotency: value "
+"'production_completion' is reserved for the fulfillment_status transition "
+"hook."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__last_poll_at
+msgid "Set after every poll attempt (success or failure)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__last_success_poll_at
+msgid "Set only on log.state in (ok, warning)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__source_gdrive_file_id
+msgid "Set when source=gdrive (P2-06)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed
+msgid ""
+"Set when the post-tracking push to Etsy (EtsyTrackingPusher) succeeded for "
+"this fulfillment."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_picking__x_gearment_tracking_state
+msgid "Shipment/fulfillment state as last reported by Gearment webhooks."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__shipped
+msgid "Shipped"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__business_summary
+msgid ""
+"Short human-readable result of the topic dispatch, e.g. "
+"'order_completed:tracking_set:USPS', 'order_not_found', 'unknown_topic:foo'."
+" Empty for unverified or non-webhook rows."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Signature Failed"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__signature_header_seen
+msgid "Signature Header Seen"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__signature_verified
+msgid "Signature Verified"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__source
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__source
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Source"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__source_row_hash
+msgid "Source Row Hash"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__start_at
+msgid "Started At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__state
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__state
+msgid "State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_stock_move
+msgid "Stock Move"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"The Gearment fees product is not configured. Update the module to restore "
+"the seed."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"The Gearment quote is only available on a dropship purchase order against "
+"the Gearment vendor."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_order_ref
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_order_ref
+msgid ""
+"The order's Gearment outbound reference, stamped when the order was pushed "
+"to Gearment (sale.order.x_gearment_outbound_ref)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "This purchase order has no source sale order lines to quote."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_log_today
+msgid "Today's GKE Imports"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Today's Imports"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Toggle Active"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/logistics_partner.py:0
+msgid "Toggling logistics partner status requires BA Manager role."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__topic_seen
+msgid "Topic Seen"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_topic
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_topic
+msgid ""
+"Topic of the most recent inbound Gearment business webhook (order_completed "
+"/ tracking_order_updated / order_cancelled / order_on_hold)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__total_rows
+msgid "Total Rows"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Tracking"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_root
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Tracking Import"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed
+msgid "Tracking Pushed to Etsy"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Tracking State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid ""
+"Tracking import %(name)s in terminal state '%(state)s' requires finish_at."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid ""
+"Tracking import file (%(size)s bytes) exceeds the configured cap of %(cap)s "
+"bytes."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_stock_picking
+msgid "Transfer"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__triggered_by_user_id
+msgid "Triggered By"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__signature_verified
+msgid "True if HMAC-SHA256 verify against GEARMENT_API_SECRET passed."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__business_handled
+msgid ""
+"True if a topic-handler ran (P0-18b2c dispatcher); soft-fails like "
+"order_not_found also count as handled=True if dispatch attempted."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__is_new_schema
+msgid "True if schema_hash not in approved set at upload time."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_purchase_order__is_gearment_dropship_po
+msgid ""
+"True when this PO is a dropship procurement against the Gearment vendor. "
+"Drives the 'Request Gearment Quote' button visibility."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_expires_at
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_expires_at
+msgid ""
+"UTC timestamp after which `action_confirm` raises and the operator must "
+"fetch a fresh quote (E4 invariant)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__code
+msgid "Unique partner code (folder-path-friendly)."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__unmatched_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__unmatched
+msgid "Unmatched"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Uploaded file is %(size)s bytes; cap is %(cap)s bytes."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,comment:multichannel_hub_fulfillment.group_ba_shipping
+msgid "Uploads GKE Excel, runs preview + import. Cannot approve new schemas."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__verify_failure_reason
+msgid "Verify Failure Reason"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__warning
+msgid "Warning"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_webhook_log
+msgid "Webhook Log"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__topic_seen
+msgid ""
+"Webhook topic/event extracted from body['type'] (real Gearment payloads), "
+"body['event'], body['topic'], or X-Topic header; empty if not detectable."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Webhook verification"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__website_message_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__website_message_ids
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__website_message_ids
+msgid "Website communication history"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_at
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_at
+msgid ""
+"When the most recent inbound Gearment business webhook touched this "
+"fulfillment."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__gdrive_inbox_folder_id
+msgid "Where partner drops .xlsx tracking files."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__gdrive_archive_folder_id
+msgid "Where successfully imported files are moved."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__state
+msgid "Wizard State"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__applied_carrier_id
+msgid "Written if order's existing carrier was empty."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__nonce_value
+msgid ""
+"X-Connect-Nonce header value; used by P0-18b2b replay-protection lookup."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_timestamp
+msgid ""
+"X-Connect-Timestamp header parsed to int (unix epoch seconds). Indexed to "
+"support nonce-dedup window queries."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid "create_date"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid "finish_at must be >= start_at on %(name)s."
+msgstr ""

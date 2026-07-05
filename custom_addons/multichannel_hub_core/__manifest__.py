@@ -47,7 +47,6 @@ fulfillment delegation landed:
         'data/product_catalog_config_parameters.xml',
         'data/sku_v2_enforce_mode_seed.xml',
         'data/product_catalog_cron.xml',
-        'views/multichannel_sync_health_views.xml',
         'data/label_status_data.xml',
         'data/order_pipeline_seed.xml',
         'data/order_pipeline_state_seed.xml',
@@ -56,6 +55,7 @@ fulfillment delegation landed:
         'views/operations_dashboard_views.xml',
         'data/operations_dashboard_saved_filters.xml',
         'views/menu.xml',
+        'views/multichannel_sync_health_views.xml',
         'views/order_pipeline_views.xml',
         'views/shipping_carrier_views.xml',
         'views/design_file_views.xml',
@@ -82,6 +82,10 @@ fulfillment delegation landed:
         # standard product UI. See docs/owner/design-system/MU_SYSTEM.md.
         'web.assets_backend': [
             'multichannel_hub_core/static/src/scss/mu_tokens.scss',
+            # P-KPI-01 — Operations Dashboard KPI band.
+            'multichannel_hub_core/static/src/scss/mu_kpi.scss',
+            'multichannel_hub_core/static/src/views/operations_dashboard/operations_dashboard_list.js',
+            'multichannel_hub_core/static/src/views/operations_dashboard/operations_dashboard_list.xml',
         ],
     },
     'post_init_hook': 'post_init_hook',

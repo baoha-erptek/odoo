@@ -77,7 +77,8 @@ span.mu-mono,
  * --------------------------------------------------------------- */
 .o_form_view[name="multichannel.listing"],
 .o_form_view[name="product.template"],
-.o_form_view[name="etsy.shop"] {
+.o_form_view[name="etsy.shop"],
+.o_form_view[name="sale.order"] {
     .o_notebook .nav-link {
         &.active {
             color: $mu-brand !important;

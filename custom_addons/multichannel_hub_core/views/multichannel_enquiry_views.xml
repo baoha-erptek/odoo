@@ -167,11 +167,11 @@
         </field>
     </record>
 
-    <!-- Menu entry under Operations -->
+    <!-- P-IA-01: After-Sales section (buyer contact log). -->
     <menuitem id="menu_multichannel_enquiry"
               name="Customer Enquiries"
-              parent="menu_operations_root"
+              parent="menu_after_sales"
               action="action_multichannel_enquiry"
-              sequence="40"/>
+              sequence="30"/>
 
 </odoo>

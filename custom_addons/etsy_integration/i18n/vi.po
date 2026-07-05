@@ -1,0 +1,4562 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* etsy_integration
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Language: vi\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1700s
+msgid "1700s"
+msgstr "1700"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1800s
+msgid "1800s"
+msgstr "1800"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1900s
+msgid "1900s"
+msgstr "1900"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1910s
+msgid "1910s"
+msgstr "1910"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1920s
+msgid "1920s"
+msgstr "1920"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1930s
+msgid "1930s"
+msgstr "1930"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1940s
+msgid "1940s"
+msgstr "1940"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1950s
+msgid "1950s"
+msgstr "1950"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1960s
+msgid "1960s"
+msgstr "1960"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1970s
+msgid "1970s"
+msgstr "1970"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1980s
+msgid "1980s"
+msgstr "1980"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1990s
+msgid "1990s"
+msgstr "1990"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2000_2003
+msgid "2000 – 2003"
+msgstr "2000 – 2003"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2003_2009
+msgid "2003 – 2009"
+msgstr "2003 – 2009"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2010_2019
+msgid "2010 – 2019"
+msgstr "2010 – 2019"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2020_2026
+msgid "2020 – 2026"
+msgstr "2020 – 2026"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid ""
+"<i class=\"fa fa-exclamation-triangle me-2\"/>\n"
+"                                    Gmail Authorization Error"
+msgstr ""
+"<i class=\"fa fa-exclamation-triangle me-2\"/>\n                      \n"
+"              Gmail Authorization Error\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "<span class=\"d-inline-block\"> minutes</span>"
+msgstr "<span class=\"d-inline-block\"> phút</span>"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "<span class=\"mx-2\">to</span>"
+msgstr "<span class=\"mx-2\">đến</span>"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid ""
+"<strong>Address change pending approval.</strong>\n"
+"                    Shipping fields are locked until a BA Lead resolves\n"
+"                    the open address-change request."
+msgstr ""
+"<strong>Address change pending approval.</strong>\n                   \n"
+" Shipping fields are locked until a BA Lead resolves\n                \n"
+"    the open address-change request.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid ""
+"<strong>Attribute mapping priority:</strong>\n"
+"                                Per-listing rows (on the Listing form) →\n"
+"                                These shop defaults → Product global\n"
+"                                (Product Attribute). Leave a row's override\n"
+"                                empty to fall through to the next tier."
+msgstr ""
+"<strong>Attribute mapping priority:</strong>\n                        \n"
+"        Per-listing rows (on the Listing form) →\n                    \n"
+"            These shop defaults → Product global\n                    \n"
+"            (Product Attribute). Leave a row's override\n             \n"
+"                   empty to fall through to the next tier.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"<strong>Attribute mapping priority:</strong>\n"
+"                        Per-listing rows below → Shop default\n"
+"                        (<em>Etsy Shop &gt; Attribute Defaults</em>) →\n"
+"                        Product global (<em>Product Attribute</em>).\n"
+"                        Leave a row's override empty to fall through to the\n"
+"                        next tier."
+msgstr ""
+"<strong>Attribute mapping priority:</strong>\n                        \n"
+"Per-listing rows below → Shop default\n                        (<em>Et\n"
+"sy Shop &gt; Attribute Defaults</em>) →\n                        Produ\n"
+"ct global (<em>Product Attribute</em>).\n                        Leave\n"
+" a row's override empty to fall through to the\n                      \n"
+"  next tier.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__collective
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__collective
+msgid "A member of my shop"
+msgstr "Một thành viên của cửa hàng tôi"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__sync_mode__api_only
+msgid "API Only"
+msgstr "Chỉ API"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_needaction
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_needaction
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_needaction
+msgid "Action Needed"
+msgstr "Cần hành động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__is_active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__is_active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__active
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__active
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_search
+msgid "Active"
+msgstr "Hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active_source
+msgid "Active Source"
+msgstr "Nguồn hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active_source_changed_at
+msgid "Active Source Changed At"
+msgstr "Nguồn hoạt động thay đổi lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_ids
+msgid "Activities"
+msgstr "Hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_exception_decoration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_exception_decoration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Trang trí ngoại lệ hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_state
+msgid "Activity State"
+msgstr "Trạng thái hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_type_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_type_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Biểu tượng loại hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__actor_user_id
+msgid "Actor"
+msgstr "Diễn viên"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_shipping_lines
+msgid "Add shipping lines"
+msgstr "Thêm dòng vận chuyển"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "Address Change Request"
+msgstr "Yêu cầu đổi địa chỉ"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_address_change_request
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__address_change_request_ids
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_address_change_request
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_list
+msgid "Address Change Requests"
+msgstr "Yêu cầu đổi địa chỉ"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Address change approved by %(user)s. Updated fields: %(fields)s."
+msgstr ""
+"Đổi địa chỉ được %(user)s phê duyệt. Các trường đã cập nhật: %(fields)\n"
+"s.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid ""
+"Address change is pending approval on order(s) %s; shipping fields are "
+"locked. Approve or reject the request first."
+msgstr ""
+"Đổi địa chỉ đang chờ phê duyệt trên đơn hàng %s; các trường vận chuyển\n"
+" bị khóa. Hãy phê duyệt hoặc từ chối yêu cầu trước.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Address change rejected. Reason: %s"
+msgstr "Đổi địa chỉ bị từ chối. Lý do: %s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Advanced Diagnostics"
+msgstr "Chẩn đoán nâng cao"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "After-Sales Ticket"
+msgstr "Phiếu hậu mãi"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_order_ticket
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_order_ticket
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_list
+msgid "After-Sales Tickets"
+msgstr "Phiếu hậu mãi"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "All"
+msgstr "Tất cả"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__set_as_shop_default
+msgid "Also store this profile as the shop default shipping profile."
+msgstr "Cũng lưu trữ hồ sơ này làm hồ sơ vận chuyển mặc định của cửa hàng."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid ""
+"An outstanding address-change request already exists for order %s. Resolve "
+"it before filing a new one."
+msgstr ""
+"Yêu cầu đổi địa chỉ nổi bật đã tồn tại cho đơn hàng %s. Giải quyết nó \n"
+"trước khi tệp một yêu cầu mới.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Anomalies (R9)"
+msgstr "Bất thường (R9)"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Applied %(merged)s merges, %(errors)s errors."
+msgstr "Đã gộp %(merged)s bản ghi, %(errors)s lỗi."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Apply Merges"
+msgstr "Apply Merges"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__set_on_listing_id
+msgid "Apply To Listing"
+msgstr "Áp dụng cho listing"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Approve"
+msgstr "Duyệt"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Approve address change for order %s"
+msgstr "Phê duyệt đổi địa chỉ cho đơn hàng %s"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__approved
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__approved
+msgid "Approved"
+msgstr "Đã duyệt"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__approved_at
+msgid "Approved At"
+msgstr "Đã duyệt lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__approved_by
+msgid "Approved By"
+msgstr "Đã duyệt bởi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__approved_merges_filename
+msgid "Approved CSV filename"
+msgstr "Tên tệp CSV đã duyệt"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__approved_merges_file
+msgid "Approved Merges CSV"
+msgstr "CSV sáp nhập đã duyệt"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Approved merges CSV is not valid base64: %(error)s"
+msgstr "CSV sáp nhập đã duyệt không phải base64 hợp lệ: %(error)s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+msgid "Archived"
+msgstr "Đã lưu trữ"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_attachment_count
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_attachment_count
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_attachment_count
+msgid "Attachment Count"
+msgstr "Số tệp đính kèm"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_attribute_mapping_ids
+msgid "Attribute mapping defaults"
+msgstr "Ánh xạ thuộc tính mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__attribute_mapping_ids
+msgid "Attribute mapping overrides"
+msgstr "Ánh xạ thuộc tính ghi đè"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__audit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+msgid "Audit"
+msgstr "Kiểm toán"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__sync_audit_mode
+msgid "Audit Mode (read-only sync)"
+msgstr "Chế độ kiểm toán (đồng bộ chỉ đọc)"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "Authorization was denied: %s"
+msgstr "Xác thực bị từ chối: %s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Authorize Etsy"
+msgstr "Xác thực Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Authorize Gmail"
+msgstr "Xác thực Gmail"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__auto_recovery
+msgid "Auto Recovery"
+msgstr "Khôi phục tự động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_auto_confirm_email
+msgid "Auto-confirm cron-imported orders"
+msgstr "Tự động xác nhận đơn hàng nhập khẩu từ cron"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__auto_confirm
+msgid "Auto-confirm imported orders"
+msgstr "Tự động xác nhận đơn hàng nhập khẩu"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__auto-failover
+msgid "Automatic failover"
+msgstr "Chuyển đổi dự phòng tự động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__approved_merges_file
+msgid ""
+"BA-approved CSV exported from a previous _generate_dedup_report run, with "
+"rows kept that should actually be merged. Consumed by action_apply_merges. "
+"The wizard never merges without this approval (R10)."
+msgstr ""
+"BA-approved CSV exported from a previous _generate_dedup_report run, w\n"
+"ith rows kept that should actually be merged. Consumed by action_apply\n"
+"_merges. The wizard never merges without this approval (R10).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_raw_source_id
+msgid ""
+"Back-pointer to the originating record (e.g. 'receipt:1234' for API, "
+"'email_log:567' for the email path)."
+msgstr ""
+"Con trỏ ngược đến bản ghi gốc (ví dụ: 'receipt:1234' cho API, 'email_l\n"
+"og:567' cho đường dẫn email).\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid ""
+"Backbone wizard for the 17K-order remediation pass.\n"
+"                           Each option below is independently toggleable; the\n"
+"                           run is resumable via the checkpoint field."
+msgstr ""
+"Backbone wizard for the 17K-order remediation pass.\n                 \n"
+"          Each option below is independently toggleable; the\n        \n"
+"                   run is resumable via the checkpoint field.\n"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_listing_backfill_wizard
+msgid "Backfill Etsy Listings"
+msgstr "Hoàn tất Listings Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Backfill Etsy Listings → Product Hub"
+msgstr "Hoàn tất Listings Etsy → Trung tâm Sản phẩm"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Backfill Result"
+msgstr "Kết quả hoàn tất"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_shipping_lines
+msgid ""
+"Backfill the Etsy Shipping order line on orders where etsy_shipping_cost > 0"
+" and no shipping line exists."
+msgstr ""
+"Backfill the Etsy Shipping order line on orders where etsy_shipping_co\n"
+"st > 0 and no shipping line exists.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__batch_size
+msgid "Batch size"
+msgstr "Kích thước lô"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Batch size must be at least 1 (got %(size)s)."
+msgstr "Kích thước lô phải ít nhất 1 (được %(size)s)."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__before_1700
+msgid "Before 1700"
+msgstr "Trước 1700"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__before_2004
+msgid "Before 2004"
+msgstr "Trước 2004"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__body_sha256_prefix
+msgid "Body SHA-256 Prefix"
+msgstr "Tiền tố SHA-256 Nội dung"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__response_summary
+msgid ""
+"Body summary, truncated to ~4 KB. PII (buyer_name, buyer_email, addresses) "
+"is scrubbed before write."
+msgstr ""
+"Body summary, truncated to ~4 KB. PII (buyer_name, buyer_email, addres\n"
+"ses) is scrubbed before write.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__request_payload_summary
+msgid "Body summary; Authorization header scrubbed."
+msgstr "Tóm tắt nội dung; header Authorization đã được ẩn."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__bootstrap
+msgid "Bootstrap (migration)"
+msgstr "Bootstrap (di chuyển)"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Both minimum and maximum delivery days are required."
+msgstr "Cần cả ngày giao hàng tối thiểu và tối đa."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"Both partners must have is_etsy_customer=True (keep=%(k)s, merge=%(m)s). "
+"Refusing merge."
+msgstr ""
+"Both partners must have is_etsy_customer=True (keep=%(k)s, merge=%(m)s\n"
+"). Refusing merge.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__buffered
+msgid "Buffered"
+msgstr "Tạm lưu"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__processing_time_unit__business_days
+msgid "Business days"
+msgstr "Ngày làm việc"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__buyer_message_sync
+msgid "Buyer Message Sync"
+msgstr "Đồng bộ Tin nhắn Người mua"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__reason
+msgid "Buyer's reason for the change — required at request time."
+msgstr "Lý do của người mua cho thay đổi — cần thiết tại thời điểm yêu cầu."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__posted_at
+msgid "Buyer-side timestamp from API or email Date header (UTC)."
+msgstr "Dấu thời gian phía người mua từ API hoặc tiêu đề Date email (UTC)."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_search
+msgid "By Parent"
+msgstr "Theo cha"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_search
+msgid "By Shop"
+msgstr "Theo cửa hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__x_gdrive_design_folder_id
+msgid "Cached GDrive folder ID for design uploads (internal system field)"
+msgstr ""
+"ID thư mục GDrive được lưu trong bộ nhớ đệm để tải lên thiết kế (trườn\n"
+"g hệ thống nội bộ)\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Cancel"
+msgstr "Hủy bỏ"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_publish_wizard.py:0
+msgid "Cannot re-push inventory: product has no Etsy listing yet."
+msgstr "Không thể đẩy lại kho: sản phẩm chưa có listing Etsy."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__catalog_image_download
+msgid "Catalog Image Download"
+msgstr "Tải xuống Hình ảnh Danh mục"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__catalog_import_run
+msgid "Catalog Import Run"
+msgstr "Chạy Nhập danh mục"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__changed_at
+msgid "Changed At"
+msgstr "Thay đổi lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__channel
+msgid "Channel"
+msgstr "Kênh"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__sync_source
+msgid ""
+"Channel adapter that ingested this order; written by EtsyOrderIngestor."
+msgstr "Bộ chuyển đổi kênh đã nhập đơn hàng này; viết bởi EtsyOrderIngestor."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__child_ids
+msgid "Children"
+msgstr "Trẻ em"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Close"
+msgstr "Đóng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__generate_dedup_report
+msgid ""
+"Cluster Etsy partners by normalized name+address+city+zip and write a /tmp "
+"CSV of proposed merges. The wizard never modifies partners on its own (R10) "
+"— apply via the separate Apply Merges action with a BA-approved CSV."
+msgstr ""
+"Cụm đối tác Etsy theo tên+địa chỉ+thành phố+mã bưu chính được chuẩn hó\n"
+"a và viết CSV /tmp các sáp nhập được đề xuất. Trợ lý không bao giờ sửa\n"
+" đổi đối tác riêng (R10) — áp dụng qua hành động Áp dụng sáp nhập riên\n"
+"g biệt với CSV được BA phê duyệt.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_color
+msgid "Color"
+msgstr "Màu"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_res_config_settings
+msgid "Config Settings"
+msgstr "Cài đặt cấu hình"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__auto_confirm
+msgid "Confirm + invoice"
+msgstr "Xác nhận + hóa đơn"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_attempts
+msgid ""
+"Consecutive failed push attempts. The fallback cron stops retrying at the "
+"cap (MF-E2E-3a 2026-07-04: a permanently failing order was retried every 5 "
+"minutes forever); the manual form button is never capped. Reset on success."
+msgstr ""
+"Nỗ lực đẩy không thành công liên tiếp. Cron dự phòng ngừng thử lại ở g\n"
+"iới hạn (MF-E2E-3a 2026-07-04: một đơn hàng không thành công vĩnh viễn\n"
+" được thử lại mỗi 5 phút mãi mãi); nút biểu mẫu thủ công không bao giờ\n"
+" bị giới hạn. Đặt lại thành công.\n"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_res_partner
+msgid "Contact"
+msgstr "Liên hệ"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__conversation_sync
+msgid "Conversation Sync"
+msgstr "Đồng bộ Cuộc trò chuyện"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Cost"
+msgstr "Chi phí"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__secondary_cost
+msgid "Cost With Another Item"
+msgstr "Chi phí với Mục khác"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__primary_cost
+msgid "Cost to ship this item alone, in the shop currency."
+msgstr "Chi phí gửi mục này một mình, bằng tiền tệ cửa hàng."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__secondary_cost
+msgid "Cost to ship this item alongside another, in the shop currency."
+msgstr "Chi phí gửi mục này cùng với mục khác, bằng tiền tệ cửa hàng."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__health_check_consecutive_failures
+msgid ""
+"Counter for the 3-failure auto-failover threshold. Reset to 0 on a "
+"successful probe."
+msgstr ""
+"Bộ đếm cho ngưỡng tự động chuyển đổi dự phòng 3 lỗi. Đặt lại thành 0 k\n"
+"hi thăm dò thành công.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__recovery_probe_consecutive_successes
+msgid ""
+"Counter for the 6-success recovery threshold. Reset to 0 on a failed probe."
+msgstr ""
+"Bộ đếm cho ngưỡng khôi phục 6 lần thành công. Đặt lại thành 0 khi thăm\n"
+" dó không thành công.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Counts"
+msgstr "Số lượng"
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_discount
+msgid "Coupon/discount applied via Etsy checkout (negative amount)."
+msgstr "Phiếu giảm giá/chiết khấu được áp dụng qua thanh toán Etsy (số âm)."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shipping_profile_create_wizard
+#: model:ir.model,name:etsy_integration.model_etsy_shipping_profile_create_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Create Etsy Shipping Profile"
+msgstr "Tạo Hồ sơ Vận chuyển Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Create On Etsy"
+msgstr "Tạo trên Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Create new shipping profile"
+msgstr "Tạo hồ sơ vận chuyển mới"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Create shipping profile"
+msgstr "Tạo hồ sơ vận chuyển"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__created_at
+msgid "Created At (Etsy)"
+msgstr "Được tạo lúc (Etsy)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__created_at
+msgid "Created In Odoo At"
+msgstr "Được tạo trong Odoo lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__sale_order_id
+msgid "Created Order"
+msgstr "Đơn hàng được tạo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__create_uid
+msgid "Created by"
+msgstr "Được tạo bởi"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile__source__odoo_create
+msgid "Created in Odoo"
+msgstr "Tạo trong Odoo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__create_date
+msgid "Created on"
+msgstr "Được tạo vào"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid ""
+"Creates a <strong>manual flat-rate</strong> shipping profile\n"
+"                    on Etsy. Calculated (carrier-rate) profiles must be created\n"
+"                    in Etsy's web UI and are pulled by the daily sync."
+msgstr ""
+"Creates a <strong>manual flat-rate</strong> shipping profile\n        \n"
+"            on Etsy. Calculated (carrier-rate) profiles must be create\n"
+"d\n                    in Etsy's web UI and are pulled by the daily sy\n"
+"nc.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__currency_id
+msgid "Currency"
+msgstr "Tiền tệ"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__enquiry_alias_id
+msgid "Customer Enquiry Email Alias"
+msgstr "Bí danh Email Truy vấn Khách hàng"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_enquiry
+msgid "Customer enquiry — pre-sale conversation not yet tied to an order"
+msgstr ""
+"Truy vấn khách hàng — cuộc trò chuyện trước bán hàng chưa được liên kế\n"
+"t với đơn hàng\n"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_data_migration_wizard
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_data_migration
+msgid "Data Migration"
+msgstr "Di chuyển dữ liệu"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Date (Month)"
+msgstr "Ngày (Tháng)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__date_received
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Date Received"
+msgstr "Ngày nhận"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__approved_by
+msgid "Decided By"
+msgstr "Quyết định bởi"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Dedup report: %(count)s clusters → %(name)s (in /tmp)"
+msgstr "Báo cáo loại bỏ trùng lặp: %(count)s cụm → %(name)s (trong /tmp)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_is_supply
+msgid "Default \"Is Supply\""
+msgstr "Mặc định \"Là vật tư\""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_when_made
+msgid "Default \"When was it made\""
+msgstr "Mặc định \"Sản xuất khi nào\""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_who_made
+msgid "Default \"Who made it\""
+msgstr "Mặc định \"Ai sản xuất\""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_readiness_state_id
+msgid "Default Etsy Readiness State ID"
+msgstr "ID trạng thái sẵn sàng Etsy mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_return_policy_id
+msgid "Default Etsy Return Policy ID"
+msgstr "ID chính sách đổi trả Etsy mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_shipping_profile_id
+msgid "Default Etsy Shipping Profile ID"
+msgstr "ID hồ sơ vận chuyển Etsy mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_taxonomy_id
+msgid "Default Etsy Taxonomy ID"
+msgstr "ID danh mục Etsy mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_description
+msgid "Default Listing Description"
+msgstr "Mô tả Listing mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_image_1920
+msgid "Default Listing Image"
+msgstr "Hình ảnh Listing mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_title
+msgid "Default Listing Title"
+msgstr "Tiêu đề Listing mặc định"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__deleted
+msgid "Deleted"
+msgstr "Đã xóa"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Delivery & Processing"
+msgstr "Giao hàng & Xử lý"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Delivery Days"
+msgstr "Ngày giao hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__level
+msgid "Depth in the seller-taxonomy tree (root = 0)."
+msgstr "Độ sâu trong cây danh mục người bán (gốc = 0)."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__description
+msgid "Description"
+msgstr "Mô tả"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_design_link_back
+msgid "Design Link (Back)"
+msgstr "Liên kết Thiết kế (Phía sau)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_design_link_front
+msgid "Design Link (Front)"
+msgstr "Liên kết Thiết kế (Phía trước)"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_design_queue
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_design_queue
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_design_queue_view_list
+msgid "Design Queue"
+msgstr "Hàng chờ thiết kế"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Destination"
+msgstr "Điểm đến"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_country_id
+msgid "Destination Country"
+msgstr "Quốc gia đích"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_region
+msgid "Destination Region"
+msgstr "Khu vực đích"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__dimensions_unit_pref
+msgid "Dimensions Unit Preference"
+msgstr "Tùy chọn Đơn vị Kích thước"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_discount_code
+msgid "Discount Code"
+msgstr "Mã chiết khấu"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_currency_id
+msgid "Display Currency"
+msgstr "Tiền tệ Hiển thị"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_ir_config_parameter__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__display_name
+msgid "Display Name"
+msgstr "Tên hiển thị"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__draft
+msgid "Draft"
+msgstr "Nháp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__duration_ms
+msgid "Duration (ms)"
+msgstr "Thời lượng (ms)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__active_source__email
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__from_source__email
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__to_source__email
+msgid "Email"
+msgstr "Email"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__channel__email
+msgid "Email Fallback Parser"
+msgstr "Trình phân tích dự phòng Email"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_email_log
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_email_log
+msgid "Email Log"
+msgstr "Nhật ký Email"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__sync_mode__email_only
+msgid "Email Only"
+msgstr "Chỉ Email"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__sync_mode
+msgid ""
+"Email Only: legacy Gmail-cron ingest. API Only: Etsy v3 receipts cron "
+"ingest. Switch via P1-11 cutover only."
+msgstr ""
+"Email Only: legacy Gmail-cron ingest. API Only: Etsy v3 receipts cron \n"
+"ingest. Switch via P1-11 cutover only.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__subject
+msgid "Email Subject"
+msgstr "Chủ đề Email"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Empty → product fallback → shop default. Etsy\n"
+"                        requires all three on every listing."
+msgstr ""
+"Empty → product fallback → shop default. Etsy\n                       \n"
+" requires all three on every listing.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__endpoint
+msgid "Endpoint"
+msgstr "Điểm cuối"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__error
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Error"
+msgstr "Lỗi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__error_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__error_message
+msgid "Error Message"
+msgstr "Thông báo lỗi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_error
+msgid ""
+"Error detail from the last failed tracking push; cleared on the next "
+"successful push."
+msgstr ""
+"Error detail from the last failed tracking push; cleared on the next s\n"
+"uccessful push.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_error_count
+msgid "Errors"
+msgstr "Errors"
+
+#. module: etsy_integration
+#: model:crm.team,name:etsy_integration.team_etsy
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_form_etsy_inherit
+msgid "Etsy"
+msgstr "Etsy"
+
+#. module: etsy_integration
+#: model_terms:account.tax,description:etsy_integration.tax_etsy_collected
+msgid "Etsy (0%)"
+msgstr "Etsy (0%)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__active_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__from_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__to_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__api
+msgid "Etsy API"
+msgstr "Etsy API"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_api_log
+msgid "Etsy API Audit Log"
+msgstr "Nhật ký Kiểm toán API Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy API Identity"
+msgstr "Danh tính API Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_api_log
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_api_log
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_tree
+msgid "Etsy API Log"
+msgstr "Nhật ký API Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Etsy API Log Entry"
+msgstr "Mục Nhật ký API Etsy"
+
+#. module: etsy_integration
+#: model:res.groups,name:etsy_integration.group_etsy_api_log_reader
+msgid "Etsy API Log Reader"
+msgstr "Người đọc Nhật ký API Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_enquiry__etsy_conversation_id
+msgid "Etsy API conversation_id; UNIQUE per shop when set."
+msgstr "Etsy API conversation_id; UNIQUE trên mỗi cửa hàng khi được đặt."
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_address_change_request
+msgid "Etsy Address-Change Approval Request"
+msgstr "Yêu cầu Phê duyệt Đổi địa chỉ Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_order_ticket
+msgid "Etsy After-Sales Ticket (return / refund / reship)"
+msgstr "Phiếu Hậu mãi Etsy (đổi/trả / hoàn tiền / gửi lại)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__etsy_buyer_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__etsy_buyer_name
+msgid "Etsy Buyer Name"
+msgstr "Tên Người mua Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_taxonomy_id
+msgid "Etsy Category"
+msgstr "Danh mục Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__etsy_conversation_id
+msgid "Etsy Conversation ID"
+msgstr "ID Cuộc trò chuyện Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__channel__api
+msgid "Etsy Conversations API"
+msgstr "API Cuộc trò chuyện Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_partner_search_etsy_inherit
+msgid "Etsy Customers"
+msgstr "Khách hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_dashboard
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_dashboard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Etsy Dashboard"
+msgstr "Bảng phân tích Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Etsy Data Migration"
+msgstr "Di chuyển dữ liệu Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_data_migration_wizard
+msgid "Etsy Data Migration Wizard"
+msgstr "Trợ lý Di chuyển dữ liệu Etsy"
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_discount
+msgid "Etsy Discount"
+msgstr "Chiết khấu Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_discount_amount
+msgid "Etsy Discount Amount"
+msgstr "Số tiền Chiết khấu Etsy"
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_eur
+msgid "Etsy EUR"
+msgstr "Etsy EUR"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__email
+msgid "Etsy Email"
+msgstr "Email Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_list
+msgid "Etsy Email Log"
+msgstr "Nhật ký Email Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_email_log
+msgid "Etsy Email Processing Log"
+msgstr "Nhật ký Xử lý Email Etsy"
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_gbp
+msgid "Etsy GBP"
+msgstr "Etsy GBP"
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_gift_wrap
+msgid "Etsy Gift Wrap"
+msgstr "Gói quà tặng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_gift_wrap_price
+msgid "Etsy Gift Wrap Price"
+msgstr "Giá Gói quà tặng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__etsy_id
+msgid "Etsy ID"
+msgstr "ID Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_image_url
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__etsy_image_url
+msgid "Etsy Image URL"
+msgstr "URL Hình ảnh Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Etsy Integration"
+msgstr "Tích hợp Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_last_modified
+msgid "Etsy Last Modified"
+msgstr "Lần cuối sửa đổi Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_last_receipt_sync_at
+msgid "Etsy Last Receipt Sync At"
+msgstr "Lần cuối Đồng bộ Biên lai Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing
+msgid "Etsy Listing"
+msgstr "Listing Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__listing_currency_id
+msgid "Etsy Listing Currency"
+msgstr "Tiền tệ Listing Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__etsy_listing_id
+msgid "Etsy Listing ID"
+msgstr "ID Listing Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing_product
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_listing_variant_id
+msgid "Etsy Listing Variant"
+msgstr "Biến thể Listing Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_listing_products
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_list
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Etsy Listing Variants"
+msgstr "Biến thể Listings Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing_backfill_wizard
+msgid "Etsy Listing → Product Hub Backfill Wizard"
+msgstr "Trình bổ sung listing Etsy → Product Hub"
+
+#. module: etsy_integration
+#: model:account.fiscal.position,name:etsy_integration.fiscal_pos_etsy_marketplace
+#: model:account.tax.group,name:etsy_integration.tax_group_etsy
+msgid "Etsy Marketplace"
+msgstr "Sàn Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_message_dedupe
+msgid "Etsy Message Dedupe Ledger"
+msgstr "Sổ khử trùng lặp tin nhắn Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_access_token
+msgid "Etsy OAuth Access Token"
+msgstr "OAuth Access Token Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_refresh_token
+msgid "Etsy OAuth Refresh Token"
+msgstr "OAuth Refresh Token Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_token_expires_at
+msgid "Etsy OAuth Token Expires At"
+msgstr "OAuth Token Etsy hết hạn lúc"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Etsy Order"
+msgstr "Etsy Order"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__etsy_order_count
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__etsy_order_count
+msgid "Etsy Order Count"
+msgstr "Số đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_order_id
+msgid "Etsy Order ID"
+msgstr "Mã đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_orders
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_orders
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_graph
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_pivot
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_partner_form_etsy_inherit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_sales_order_filter_etsy_inherit
+msgid "Etsy Orders"
+msgstr "Đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__payment_status
+msgid "Etsy Payment Status"
+msgstr "Trạng thái thanh toán Etsy"
+
+#. module: etsy_integration
+#: model:account.payment.term,name:etsy_integration.payment_term_etsy_prepaid
+msgid "Etsy Prepaid"
+msgstr "Etsy Prepaid"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__price
+msgid "Etsy Price"
+msgstr "Etsy Price"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_price_anomaly
+msgid "Etsy Price Anomaly"
+msgstr "Bất thường giá Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__etsy_product_id
+msgid "Etsy Product ID"
+msgstr "Mã sản phẩm Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_search_etsy_inherit
+msgid "Etsy Products"
+msgstr "Sản phẩm Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__etsy_profile_id
+msgid "Etsy Profile ID"
+msgstr "Mã hồ sơ Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_etsy_property_id
+msgid "Etsy Property ID"
+msgstr "Mã thuộc tính Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_id_override
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_id_override
+msgid "Etsy Property ID Override"
+msgstr "Ghi đè mã thuộc tính Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_etsy_property_name
+msgid "Etsy Property Name"
+msgstr "Tên thuộc tính Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_name_override
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_name_override
+msgid "Etsy Property Name Override"
+msgstr "Ghi đè tên thuộc tính Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_publish_wizard
+msgid "Etsy Publish Wizard"
+msgstr "Trình đăng bán Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy Publisher Defaults"
+msgstr "Mặc định trình đăng bán Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.product_attribute_view_form_etsy_extension
+msgid "Etsy Publisher Settings"
+msgstr "Cài đặt trình đăng bán Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy Publisher Unit Preferences"
+msgstr "Tùy chọn đơn vị trình đăng bán Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__quantity
+msgid "Etsy Quantity"
+msgstr "Số lượng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_receipt_status
+msgid "Etsy Receipt Status"
+msgstr "Trạng thái receipt Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_sku
+msgid "Etsy SKU"
+msgstr "Etsy SKU"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_taxonomy_node
+msgid "Etsy Seller Taxonomy Node (cache)"
+msgstr "Danh mục người bán Etsy (cache)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_ship_notified_at
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__etsy_ship_notified_at
+msgid "Etsy Ship Notified At"
+msgstr "Báo giao hàng Etsy lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_is_shipped
+msgid "Etsy Shipped"
+msgstr "Etsy Shipped"
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_shipping
+msgid "Etsy Shipping"
+msgstr "Vận chuyển Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shipping_cost
+msgid "Etsy Shipping Cost"
+msgstr "Chi phí Vận chuyển Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shipping_profile_id
+msgid "Etsy Shipping Profile"
+msgstr "Hồ sơ Vận chuyển Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shipping_profile
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_shipping_profile
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_list
+msgid "Etsy Shipping Profiles"
+msgstr "Hồ sơ Vận chuyển Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shop_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_sales_order_filter_etsy_inherit
+msgid "Etsy Shop"
+msgstr "Cửa hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_api_shop_id
+msgid "Etsy Shop ID"
+msgstr "Etsy Shop ID"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shipping_profile
+msgid "Etsy Shop Shipping Profile (cache)"
+msgstr "Hồ sơ vận chuyển cửa hàng Etsy (cache)"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop_source_change_log
+msgid "Etsy Shop Source Change Log"
+msgstr "Nhật ký Thay đổi Nguồn Cửa hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop_attribute_mapping
+msgid "Etsy Shop — Default Attribute Mapping"
+msgstr "Cửa hàng Etsy — Ánh xạ thuộc tính mặc định"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shops
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_shops
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_list
+msgid "Etsy Shops"
+msgstr "Cửa hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_subtotal
+msgid "Etsy Subtotal"
+msgstr "Tạm tính Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_sync_health
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_sync_health
+msgid "Etsy Sync Health"
+msgstr "Tình trạng Đồng bộ Etsy"
+
+#. module: etsy_integration
+#: model:account.tax,name:etsy_integration.tax_etsy_collected
+msgid "Etsy Tax Collected (0%)"
+msgstr "Thuế Etsy đã thu (0%)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tax_total
+msgid "Etsy Tax Total"
+msgstr "Tổng thuế Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_taxonomy_node
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_taxonomy_node
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_list
+msgid "Etsy Taxonomy"
+msgstr "Danh mục Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_total_mismatch
+msgid "Etsy Total Mismatch"
+msgstr "Lệch tổng tiền Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_attempts
+msgid "Etsy Tracking Push Attempts"
+msgstr "Số lần đẩy tracking Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_error
+msgid "Etsy Tracking Push Error"
+msgstr "Lỗi đẩy tracking Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_status
+msgid "Etsy Tracking Push Status"
+msgstr "Trạng thái đẩy tracking Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_at
+msgid "Etsy Tracking Pushed At"
+msgstr "Đẩy tracking Etsy lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_transaction_id
+msgid "Etsy Transaction ID"
+msgstr "Mã giao dịch Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__url
+msgid "Etsy URL"
+msgstr "Etsy URL"
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_usd
+msgid "Etsy USD"
+msgstr "Etsy USD"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__webhook
+msgid "Etsy Webhook (reserved)"
+msgstr "Webhook Etsy (dự phòng)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_etsy_property_id
+msgid ""
+"Etsy attribute taxonomy ID for this axis. Stored as text to preserve large "
+"IDs. Discover via the Etsy taxonomy properties endpoint for the listing's "
+"taxonomy_id."
+msgstr ""
+"Etsy attribute taxonomy ID for this axis. Stored as text to preserve l\n"
+"arge IDs. Discover via the Etsy taxonomy properties endpoint for the l\n"
+"isting's taxonomy_id.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Etsy channel reference is missing."
+msgstr "Tham chiếu kênh Etsy bị thiếu."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid "Etsy did not return a shipping_profile_id; profile not created."
+msgstr "Etsy đã không trả về shipping_profile_id; hồ sơ chưa được tạo."
+
+#. module: etsy_integration
+#: model_terms:account.fiscal.position,note:etsy_integration.fiscal_pos_etsy_marketplace
+msgid ""
+"Etsy is responsible for collecting and remitting marketplace tax. Orders "
+"carry a 0% tax line for reporting only."
+msgstr ""
+"Etsy is responsible for collecting and remitting marketplace tax. Orde\n"
+"rs carry a 0% tax line for reporting only.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_etsy_property_name
+msgid ""
+"Etsy property display name sent with the property ID in push_inventory "
+"property_values[]. Etsy REQUIRES a non-null property_name (the inventory PUT"
+" 400s 'Expected string value for property_name' without it). For standard "
+"properties match Etsy's canonical name (e.g. 200 -> 'Primary color'); for "
+"custom properties (513/514) it is a free label."
+msgstr ""
+"Etsy property display name sent with the property ID in push_inventory\n"
+" property_values[]. Etsy REQUIRES a non-null property_name (the invent\n"
+"ory PUT 400s 'Expected string value for property_name' without it). Fo\n"
+"r standard properties match Etsy's canonical name (e.g. 200 -> 'Primar\n"
+"y color'); for custom properties (513/514) it is a free label.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Etsy property_name string"
+msgstr "Chuỗi property_name Etsy"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: SKU %r is shared by two variants with different attribute "
+"values. This usually means the base SKU is too long and synthesized SKUs "
+"collided after the %d-char Etsy truncation. Shorten the template's "
+"default_code or set explicit per-variant default_code values."
+msgstr ""
+"Etsy publish: SKU %r is shared by two variants with different attribut\n"
+"e values. This usually means the base SKU is too long and synthesized \n"
+"SKUs collided after the %d-char Etsy truncation. Shorten the template'\n"
+"s default_code or set explicit per-variant default_code values.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: cannot resolve a positive starting price for %r. Set "
+"list_price on the product or price_extra on at least one variant before "
+"publishing."
+msgstr ""
+"Etsy publish: cannot resolve a positive starting price for %r. Set lis\n"
+"t_price on the product or price_extra on at least one variant before p\n"
+"ublishing.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: cannot synthesize a variant SKU — template has no default_code"
+" AND the variant has no attribute values to derive a suffix from. Set "
+"default_code on the product or on at least one variant."
+msgstr ""
+"Etsy publish: cannot synthesize a variant SKU — template has no defaul\n"
+"t_code AND the variant has no attribute values to derive a suffix from\n"
+". Set default_code on the product or on at least one variant.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_readiness_state_id
+msgid ""
+"Etsy readiness-state id (processing-time profile). Required by "
+"createDraftListing for physical listings as of the 2025 API update. Discover"
+" via GET /shops/{shop_id}/readiness-state-definitions."
+msgstr ""
+"Etsy readiness-state id (processing-time profile). Required by createD\n"
+"raftListing for physical listings as of the 2025 API update. Discover \n"
+"via GET /shops/{shop_id}/readiness-state-definitions.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__pending_target_receipt_id
+msgid ""
+"Etsy receipt_id when message arrived before order ingestion. Cleared when "
+"state flips to posted."
+msgstr ""
+"Etsy receipt_id when message arrived before order ingestion. Cleared w\n"
+"hen state flips to posted.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid "Etsy rejected the shipping profile: %s"
+msgstr "Etsy đã từ chối hồ sơ vận chuyển: %s"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_return_policy_id
+msgid "Etsy return policy id used as the default for createDraftListing."
+msgstr ""
+"ID chính sách hoàn trả Etsy được sử dụng làm mặc định cho createDraftL\n"
+"isting.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_shipping_profile_id
+msgid "Etsy shipping profile id used as the default for createDraftListing."
+msgstr ""
+"ID hồ sơ vận chuyển Etsy được sử dụng làm mặc định cho createDraftList\n"
+"ing.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__listing_currency_id
+msgid ""
+"Etsy shop listing currency (e.g. VND, USD). Discovered via GET "
+"/shops/{shop_id}; used by the publisher to convert outbound list_price from "
+"company currency to shop currency. Without it Etsy 400s with "
+"\"price_too_low\" when company currency differs from shop currency."
+msgstr ""
+"Etsy shop listing currency (e.g. VND, USD). Discovered via GET /shops/\n"
+"{shop_id}; used by the publisher to convert outbound list_price from c\n"
+"ompany currency to shop currency. Without it Etsy 400s with \"price_to\n"
+"o_low\" when company currency differs from shop currency.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_taxonomy_id
+msgid "Etsy taxonomy node id used as the default for createDraftListing."
+msgstr ""
+"ID nút danh mục Etsy được sử dụng làm mặc định cho createDraftListing.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_when_made
+msgid "Etsy when_made enum value (e.g. made_to_order, 2020_2026)."
+msgstr "Giá trị enum when_made Etsy (ví dụ: made_to_order, 2020_2026)."
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_api_log_cleanup_ir_actions_server
+msgid "Etsy: API Log Retention Sweep"
+msgstr "Etsy: Quét Giữ lại Nhật ký API"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_order_sync_ir_actions_server
+msgid "Etsy: API Receipts Sync"
+msgstr "Etsy: Đồng bộ Biên lai API"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_download_pending_etsy_images_ir_actions_server
+msgid "Etsy: Download Pending Product Images"
+msgstr "Etsy: Tải xuống Hình ảnh Sản phẩm Đang chờ"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_fetch_etsy_emails_ir_actions_server
+msgid "Etsy: Fetch Order Emails"
+msgstr "Etsy: Tìm nạp Email Đơn hàng"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_listing_sync_ir_actions_server
+msgid "Etsy: Listing Metadata Sync"
+msgstr "Etsy: Đồng bộ Siêu dữ liệu Listing"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_listing_variant_sync_ir_actions_server
+msgid "Etsy: Listing Variant Inventory Sync"
+msgstr "Etsy: Đồng bộ Kho Biến thể Listing"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_message_dedupe_retention_ir_actions_server
+msgid "Etsy: Message Dedupe Retention Sweep"
+msgstr "Etsy: Quét Giữ lại Loại bỏ trùng lặp Tin nhắn"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_etsy_tracking_push_ir_actions_server
+msgid "Etsy: Push Tracking to Etsy"
+msgstr "Etsy: Đẩy Theo dõi đến Etsy"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_etsy_refresh_currency_rates_ir_actions_server
+msgid "Etsy: Refresh Shop Currency Rates"
+msgstr "Etsy: Làm mới Tỷ giá Tiền tệ Cửa hàng"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_shipping_profile_sync_ir_actions_server
+msgid "Etsy: Shipping Profile Cache Sync (P-LIST-SHIPPING)"
+msgstr "Etsy: Đồng bộ Bộ nhớ đệm Hồ sơ Vận chuyển (P-LIST-SHIPPING)"
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_taxonomy_sync_ir_actions_server
+msgid "Etsy: Taxonomy Cache Sync (P-LIST-CATEGORY)"
+msgstr "Etsy: Đồng bộ Bộ nhớ đệm Danh mục (P-LIST-CATEGORY)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_region__eu
+msgid "European Union"
+msgstr "Liên minh Châu Âu"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__everywhere
+msgid "Everywhere"
+msgstr "Everywhere"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__excel_file
+msgid "Excel File"
+msgstr "Excel File"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_face_mask_size
+msgid "Face Mask Size"
+msgstr "Kích thước Mặt nạ"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__failed
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__failed
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Failed"
+msgstr "Failed"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_cron_interval
+msgid "Fetch Interval (minutes)"
+msgstr "Khoảng Lấy (phút)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__excel_filename
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__excel_filename
+msgid "Filename"
+msgstr "Filename"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__excel_filename
+msgid "Filename of the uploaded source Excel file (optional)."
+msgstr "Tên tệp của tệp Excel nguồn được tải lên (tùy chọn)."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__body_sha256_prefix
+msgid ""
+"First 16 hex chars of SHA-256(body). Used to reconcile API+email arrivals of"
+" the same logical message."
+msgstr ""
+"First 16 hex chars of SHA-256(body). Used to reconcile API+email arriv\n"
+"als of the same logical message.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__payload_excerpt
+msgid ""
+"First 256 chars of the message body for audit debugging. Full body lives in "
+"mail.message."
+msgstr ""
+"First 256 chars of the message body for audit debugging. Full body liv\n"
+"es in mail.message.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Fix Options"
+msgstr "Fix Options"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_financial_config
+msgid "Fix financial config"
+msgstr "Sửa cấu hình tài chính"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_product_config
+msgid "Fix product config"
+msgstr "Sửa cấu hình sản phẩm"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_follower_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_follower_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_follower_ids
+msgid "Followers"
+msgstr "Followers"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_partner_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_partner_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Những người theo dõi (Đối tác)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_type_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_type_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Biểu tượng Font awesome ví dụ fa-tasks"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__from_source
+msgid "From Source"
+msgstr "From Source"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__quota_used_today
+msgid "From X-RateLimit-Limit-Daily header (FR-027)."
+msgstr "Từ tiêu đề X-RateLimit-Limit-Daily (FR-027)."
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order_fulfillment
+msgid "Fulfillment lifecycle for a sale order"
+msgstr "Vòng đời hoàn tất cho đơn hàng bán hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__full_path
+msgid "Full Path"
+msgstr "Full Path"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__x_gdrive_design_folder_id
+msgid "GDrive Design Folder ID"
+msgstr "ID Thư mục Thiết kế GDrive"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__generate_dedup_report
+msgid "Generate dedup CSV"
+msgstr "Tạo CSV loại bỏ trùng lặp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_gift_message
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_gift_message
+msgid "Gift Message"
+msgstr "Gift Message"
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_gift_wrap
+msgid "Gift wrap charged via Etsy checkout."
+msgstr "Quà tặng được tính phí qua thanh toán Etsy."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_client_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Client ID"
+msgstr "ID Máy khách Gmail"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Gmail Client ID or Client Secret is not configured. Please set them in "
+"Settings before authorizing."
+msgstr ""
+"Gmail Client ID or Client Secret is not configured. Please set them in\n"
+" Settings before authorizing.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_client_secret
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Client Secret"
+msgstr "Bí mật Máy khách Gmail"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Connection"
+msgstr "Kết nối Gmail"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_label
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Label"
+msgstr "Gmail Label"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__gmail_message_id
+msgid "Gmail Message ID"
+msgstr "ID Tin nhắn Gmail"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_refresh_token
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Refresh Token"
+msgstr "Token Làm mới Gmail"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_config_settings__etsy_gmail_label
+msgid "Gmail label used to filter Etsy order emails"
+msgstr "Nhãn Gmail được sử dụng để lọc email đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail label used to filter Etsy order notification emails"
+msgstr "Nhãn Gmail được sử dụng để lọc email thông báo đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__http_status
+msgid "HTTP Status"
+msgstr "Trạng thái HTTP"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__endpoint
+msgid "HTTP method + path, e.g. GET /v3/application/shops/{shop_id}/receipts"
+msgstr ""
+"Phương pháp HTTP + đường dẫn, ví dụ GET /v3/application/shops/{shop_id\n"
+"}/receipts\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__has_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__has_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__has_message
+msgid "Has Message"
+msgstr "Has Message"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__has_pending_address_change
+msgid "Has Pending Address Change"
+msgstr "Có Đổi địa chỉ Đang chờ"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__health_check
+msgid "Health Check"
+msgstr "Health Check"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__sync_health_id
+msgid ""
+"Health row created/updated for this run. Smart button opens the live state."
+msgstr ""
+"Health row created/updated for this run. Smart button opens the live s\n"
+"tate.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__health_check_consecutive_failures
+msgid "Health-Check Consecutive Failures"
+msgstr "Kiểm tra Sức khỏe Lần Lỗi Liên tiếp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__health_check_failures_at_change
+msgid "Health-Check Failures at Change"
+msgstr "Kiểm tra Sức khỏe Lần Lỗi tại Thay đổi"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "How It's Made"
+msgstr "Cách tạo"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "How often to check for new Etsy order emails (in minutes)"
+msgstr "Tần suất kiểm tra email đơn hàng Etsy mới (tính bằng phút)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__validation_notes
+msgid ""
+"Human-readable summary of warnings emitted during the last import. Empty "
+"when no warnings were raised."
+msgstr ""
+"Human-readable summary of warnings emitted during the last import. Emp\n"
+"ty when no warnings were raised.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__i_did
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__i_did
+msgid "I did"
+msgstr "I did"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__id
+#: model:ir.model.fields,field_description:etsy_integration.field_ir_config_parameter__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__id
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__id
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__id
+msgid "ID"
+msgstr "ID"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__origin_country_iso
+msgid "ISO 3166-1 alpha-2 country code from which the listing ships."
+msgstr "Mã quốc gia ISO 3166-1 alpha-2 từ đó listing được gửi."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_exception_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_exception_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_exception_icon
+msgid "Icon"
+msgstr "Icon"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_exception_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_exception_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Biểu tượng để chỉ ra hoạt động ngoại lệ."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__idle
+msgid "Idle"
+msgstr "Idle"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_needaction
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_needaction
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Nếu được chọn, tin nhắn mới cần sự chú ý của bạn."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_sms_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_sms_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Nếu được chọn, một số tin nhắn có lỗi giao hàng."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Image"
+msgstr "Image"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_image_url
+msgid "Image URL"
+msgstr "Image URL"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__created_at
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__url
+msgid "Immutable after first ingest (ADR-013)."
+msgstr "Không thể thay đổi sau khi nhập lần đầu (ADR-013)."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+msgid "Import Etsy Orders"
+msgstr "Nhập Đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_import_orders_wizard
+msgid "Import Etsy Orders from Excel"
+msgstr "Nhập Đơn hàng Etsy từ Excel"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_import_orders_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+msgid "Import Orders"
+msgstr "Nhập Đơn hàng"
+
+#. module: etsy_integration
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_import_orders
+msgid "Import Orders (Email Fallback)"
+msgstr "Nhập đơn hàng (dự phòng Email)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__inactive
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__include_anomalies
+msgid "Include $0 anomalies"
+msgstr "Bao gồm Bất thường $0"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Input & Checkpoint"
+msgstr "Đầu vào & Điểm kiểm tra"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__name
+msgid "Integration"
+msgstr "Integration"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__note
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Internal Note"
+msgstr "Ghi chú Nội bộ"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Invalid state parameter. Please restart the authorization flow from "
+"Settings."
+msgstr ""
+"Invalid state parameter. Please restart the authorization flow from Se\n"
+"ttings.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__is_deleted
+msgid "Is Deleted"
+msgstr "Is Deleted"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__is_etsy_customer
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__is_etsy_customer
+msgid "Is Etsy Customer"
+msgstr "Là Khách hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__is_etsy_order
+msgid "Is Etsy Order"
+msgstr "Là Đơn hàng Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__is_etsy_product
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__is_etsy_product
+msgid "Is Etsy Product"
+msgstr "Là Sản phẩm Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_is_follower
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_is_follower
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_is_follower
+msgid "Is Follower"
+msgstr "Is Follower"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_is_supply
+msgid "Is supply"
+msgstr "Is supply"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_error_message
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Last Error"
+msgstr "Last Error"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__http_status
+msgid ""
+"Last HTTP status seen. NULL on connection failures (no response). Audit-mode"
+" order-sync rows record 200 because the audit fires only after a successful "
+"page fetch (P-UAT-FIX-API-LOG-HTTP-STATUS)."
+msgstr ""
+"Last HTTP status seen. NULL on connection failures (no response). Audi\n"
+"t-mode order-sync rows record 200 because the audit fires only after a\n"
+" successful page fetch (P-UAT-FIX-API-LOG-HTTP-STATUS).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__last_modified
+msgid "Last Modified (Etsy)"
+msgstr "Lần cuối Sửa đổi (Etsy)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_processed_id
+msgid "Last Processed ID"
+msgstr "ID Được xử lý Cuối cùng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_at
+msgid "Last Run"
+msgstr "Last Run"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_successful_run_at
+msgid "Last Success"
+msgstr "Last Success"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__last_synced_at
+msgid "Last Synced At"
+msgstr "Lần cuối Được đồng bộ lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__write_uid
+msgid "Last Updated by"
+msgstr "Lần cuối Cập nhật bởi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__write_date
+msgid "Last Updated on"
+msgstr "Lần cuối Cập nhật vào"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__last_processed_id
+msgid "Last processed order id"
+msgstr "ID đơn hàng được xử lý cuối cùng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__name
+msgid "Leaf name (e.g. \"Cookware\", \"Throw Pillows\")."
+msgstr "Tên nút lá (ví dụ \"Cookware\", \"Throw Pillows\")."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__level
+msgid "Level"
+msgstr "Level"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_status
+msgid ""
+"Lifecycle of the tracking-number push to Etsy (POST "
+"receipts/{receipt_id}/tracking)."
+msgstr ""
+"Lifecycle of the tracking-number push to Etsy (POST receipts/{receipt_\n"
+"id}/tracking).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__requested_fields
+msgid "List of field names (sale.order destination fields) being changed."
+msgstr "Danh sách tên trường (trường đích sale.order) đang thay đổi."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__listing_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__listing_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Listing"
+msgstr "Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_create
+msgid "Listing Create (Draft)"
+msgstr "Tạo Listing (Nháp)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_image_delete
+msgid "Listing Image Delete"
+msgstr "Xóa Hình ảnh Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_image_upload
+msgid "Listing Image Upload"
+msgstr "Tải lên Hình ảnh Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_inventory_push
+msgid "Listing Inventory Push"
+msgstr "Đẩy Kho Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_publish
+msgid "Listing Publish"
+msgstr "Đăng bán Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_pull
+msgid "Listing Pull"
+msgstr "Listing Pull"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_push
+msgid "Listing Push"
+msgstr "Listing Push"
+
+#. module: etsy_integration
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_listing_products
+msgid "Listing Variants"
+msgstr "Biến thể listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__display_currency_id
+msgid ""
+"Listing currency derived from the Etsy shop. Used to drive the "
+"``display_price_in_shop_currency`` Monetary widget."
+msgstr ""
+"Listing currency derived from the Etsy shop. Used to drive the ``displ\n"
+"ay_price_in_shop_currency`` Monetary widget.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__quantity
+msgid ""
+"Listing-level quantity from the Etsy listings endpoint. Variant-level "
+"inventory is Slice 2 (P-LIST-INV-PULL)."
+msgstr ""
+"Listing-level quantity from the Etsy listings endpoint. Variant-level \n"
+"inventory is Slice 2 (P-LIST-INV-PULL).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__made_to_order
+msgid "Made to order"
+msgstr "Được làm theo đơn hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__enquiry_alias_id
+msgid ""
+"Mail alias that routes inbound emails to multichannel.enquiry records owned "
+"by this shop. Provisioned via action_provision_enquiry_alias."
+msgstr ""
+"Mail alias that routes inbound emails to multichannel.enquiry records \n"
+"owned by this shop. Provisioned via action_provision_enquiry_alias.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__manual
+msgid "Manual toggle"
+msgstr "Chuyển đổi Thủ công"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__new_values
+msgid ""
+"Map of field_name -> value. Many2one fields stored as {'id': <int>, "
+"'display_name': <str>}."
+msgstr ""
+"Map of field_name -> value. Many2one fields stored as {'id': <int>, 'd\n"
+"isplay_name': <str>}.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Mark Refunded / Done"
+msgstr "Đánh dấu Được hoàn tiền / Hoàn tất"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Marked refunded/done by %s (refund executed manually on Etsy)."
+msgstr ""
+"Được đánh dấu hoàn tiền/hoàn tất bởi %s (hoàn tiền được thực hiện thủ \n"
+"công trên Etsy).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__matched_count
+msgid "Matched Count"
+msgstr "Số lượng Phù hợp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__max_delivery_days
+msgid "Max Delivery Days"
+msgstr "Ngày Giao hàng Tối đa"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__max_processing_time
+msgid "Max Processing Time"
+msgstr "Thời gian Xử lý Tối đa"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_error
+msgid "Message Delivery error"
+msgstr "Lỗi Giao hàng Tin nhắn"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__etsy_message_id
+msgid "Message ID"
+msgstr "Message ID"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_ids
+msgid "Messages"
+msgstr "Messages"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"Migration complete: %(processed)s orders processed, %(errors)s errors, "
+"%(anomalies)s anomalies quarantined."
+msgstr ""
+"Migration complete: %(processed)s orders processed, %(errors)s errors,\n"
+" %(anomalies)s anomalies quarantined.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__min_delivery_days
+msgid "Min Delivery Days"
+msgstr "Ngày Giao hàng Tối thiểu"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__min_processing_time
+msgid "Min Processing Time"
+msgstr "Thời gian Xử lý Tối thiểu"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Minimum delivery days cannot exceed maximum delivery days."
+msgstr "Ngày giao hàng tối thiểu không thể vượt quá ngày giao hàng tối đa."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_last_modified
+msgid ""
+"Mirrors the Etsy receipt last_modified timestamp. Used to distinguish stale "
+"re-syncs from genuine updates."
+msgstr ""
+"Mirrors the Etsy receipt last_modified timestamp. Used to distinguish \n"
+"stale re-syncs from genuine updates.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/import_orders_wizard.py:0
+msgid ""
+"Missing required column(s) in the uploaded file: %(missing)s.\n"
+"Required headers are: %(required)s."
+msgstr ""
+"Missing required column(s) in the uploaded file: %(missing)s.\nRequire\n"
+"d headers are: %(required)s.\n"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_listing
+msgid "Multichannel Listing Intent (per-channel / per-shop)"
+msgstr "Ý định Listing Đa kênh (trên mỗi kênh / trên mỗi cửa hàng)"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_listing_attribute_mapping
+msgid "Multichannel Listing — Per-listing Attribute Mapping"
+msgstr "Listing Đa kênh — Ánh xạ Thuộc tính Theo Listing"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__my_activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__my_activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Thời hạn Hoạt động của tôi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__actor_user_id
+msgid "NULL for cron-driven (auto-failover / recovery-probe) changes."
+msgstr ""
+"NULL cho các thay đổi do cron (tự động chuyển đổi dự phòng / thăm dò k\n"
+"hôi phục).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__from_source
+msgid "NULL for the first (bootstrap) row of a shop."
+msgstr "NULL cho hàng đầu tiên (bootstrap) của cửa hàng."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__name
+msgid "Name"
+msgstr "Tên"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_needs_product_review
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__etsy_needs_product_review
+msgid "Needs Etsy Product Review"
+msgstr "Cần Đánh giá Sản phẩm Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_search_etsy_inherit
+msgid "Needs Etsy Review"
+msgstr "Cần Đánh giá Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_needs_gift_wrap
+msgid "Needs Gift Wrap"
+msgstr "Cần Quà tặng Gói bọc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__new_values
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "New Values"
+msgstr "New Values"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Thời hạn Hoạt động Tiếp theo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_summary
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_summary
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_summary
+msgid "Next Activity Summary"
+msgstr "Tóm tắt Hoạt động Tiếp theo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_type_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_type_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_type_id
+msgid "Next Activity Type"
+msgstr "Loại Hoạt động Tiếp theo"
+
+#. module: etsy_integration
+#: model_terms:ir.actions.act_window,help:etsy_integration.action_etsy_api_log
+msgid "No Etsy API log entries yet."
+msgstr "Chưa có mục nhật ký API Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "No Etsy shops assigned to you."
+msgstr "Không có cửa hàng Etsy nào được gán cho bạn."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"No approved-merges CSV uploaded. Generate one via 'Generate dedup CSV' "
+"first, have it reviewed by a BA, then upload the approved subset here."
+msgstr ""
+"No approved-merges CSV uploaded. Generate one via 'Generate dedup CSV'\n"
+" first, have it reviewed by a BA, then upload the approved subset here\n"
+".\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "No authorization code received."
+msgstr "Không nhận được mã xác thực."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"No refresh token received from Google. Please revoke access at "
+"https://myaccount.google.com/permissions and try again."
+msgstr ""
+"No refresh token received from Google. Please revoke access at https:/\n"
+"/myaccount.google.com/permissions and try again.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_region__non_eu
+msgid "Non-EU Europe"
+msgstr "Châu Âu không phải EU"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__none
+msgid "Not Pushed"
+msgstr "Not Pushed"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_note_from_buyer
+msgid "Note from Buyer"
+msgstr "Ghi chú từ Người mua"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Note from buyer (Etsy)"
+msgstr "Ghi chú từ người mua (Etsy)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__notes
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__notes
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Notes"
+msgstr "Notes"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Nothing to retry — this email is not in Failed state."
+msgstr "Không có gì để thử lại — email này không ở trạng thái Lỗi."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_needaction_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_needaction_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Số lượng Hành động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_error_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_error_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_error_counter
+msgid "Number of errors"
+msgstr "Số lượng lỗi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_needaction_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_needaction_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Số lượng tin nhắn cần hành động"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_error_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_error_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Số lượng tin nhắn có lỗi giao hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__batch_size
+msgid ""
+"Number of orders per savepoint. 500 balances memory against rollback "
+"granularity for the 17K backlog."
+msgstr ""
+"Number of orders per savepoint. 500 balances memory against rollback g\n"
+"ranularity for the 17K backlog.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__warning_count
+msgid ""
+"Number of zero-price rows or missing-optional-header warnings observed "
+"during the last import (Spec 002 US5 T033)."
+msgstr ""
+"Number of zero-price rows or missing-optional-header warnings observed\n"
+" during the last import (Spec 002 US5 T033).\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Numeric Etsy property_id"
+msgstr "Property_id Etsy Số học"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_id_override
+msgid ""
+"Numeric Etsy property_id to use FOR THIS LISTING. Empty → falls back to shop"
+" default → product.attribute.x_etsy_property_id."
+msgstr ""
+"Numeric Etsy property_id to use FOR THIS LISTING. Empty → falls back t\n"
+"o shop default → product.attribute.x_etsy_property_id.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__etsy_profile_id
+msgid ""
+"Numeric shipping_profile_id from Etsy (stored as string to avoid XML-RPC "
+"int32 overflow)."
+msgstr ""
+"Numeric shipping_profile_id from Etsy (stored as string to avoid XML-R\n"
+"PC int32 overflow).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__etsy_api_shop_id
+msgid ""
+"Numeric shop_id assigned by Etsy (visible in seller dashboard URL). Used in "
+"/v3/application/shops/{shop_id}/* URLs. Must be set before flipping Active "
+"Source to \"Etsy API\"."
+msgstr ""
+"Numeric shop_id assigned by Etsy (visible in seller dashboard URL). Us\n"
+"ed in /v3/application/shops/{shop_id}/* URLs. Must be set before flipp\n"
+"ing Active Source to \"Etsy API\".\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__scope_validation
+msgid "OAuth Scope Validation"
+msgstr "Xác thực Phạm vi OAuth"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Client ID for Gmail API access"
+msgstr "ID Máy khách OAuth2 để truy cập API Gmail"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Client Secret for Gmail API access"
+msgstr "Bí mật Máy khách OAuth2 để truy cập API Gmail"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Refresh Token for Gmail API access"
+msgstr "Token Làm mới OAuth2 để truy cập API Gmail"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__ok
+msgid "OK"
+msgstr "OK"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__product_id
+msgid "Odoo Product"
+msgstr "Odoo Product"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__odoo_qty
+msgid "Odoo Quantity"
+msgstr "Số lượng Odoo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__product_attribute_id
+msgid "Odoo product attribute (e.g. Size, Color, Material)."
+msgstr "Thuộc tính sản phẩm Odoo (ví dụ: Size, Color, Material)."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__user_id
+msgid ""
+"Odoo user who manages this shop; scopes order visibility and manual pull."
+msgstr ""
+"Odoo user who manages this shop; scopes order visibility and manual pu\n"
+"ll.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only BA Leads may approve or reject address-change requests."
+msgstr "Chỉ BA Leads có thể phê duyệt hoặc từ chối các yêu cầu đổi địa chỉ."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Only BA users can create Etsy shipping profiles."
+msgstr "Chỉ người dùng BA có thể tạo hồ sơ vận chuyển Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_publish_wizard.py:0
+msgid "Only BA users can publish products to Etsy."
+msgstr "Chỉ người dùng BA có thể đăng bán sản phẩm lên Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Only BA users can run the backfill wizard."
+msgstr "Chỉ người dùng BA có thể chạy trợ lý hoàn tất."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Only a BA Lead can approve, reject, or close after-sales tickets."
+msgstr ""
+"Chỉ BA Lead mới có thể phê duyệt, từ chối hoặc đóng các phiếu hậu mãi.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_shop.py:0
+msgid ""
+"Only administrators can provision a customer enquiry email alias for an Etsy"
+" shop."
+msgstr ""
+"Only administrators can provision a customer enquiry email alias for a\n"
+"n Etsy shop.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only requests in 'requested' state can be approved."
+msgstr "Chỉ duyệt được yêu cầu ở trạng thái 'đã yêu cầu'."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only requests in 'requested' state can be rejected."
+msgstr "Chỉ từ chối được yêu cầu ở trạng thái 'đã yêu cầu'."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Only the production/fulfillment team can push tracking to Etsy."
+msgstr "Chỉ đội sản xuất/hoàn tất mới có thể đẩy theo dõi đến Etsy."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Operator notes (only editable field)"
+msgstr "Ghi chú Điều hành (trường chỉ có thể chỉnh sửa)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_option
+msgid "Option"
+msgstr "Option"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__excel_file
+msgid ""
+"Optional Excel file consumed by the price-from-Excel fix (T041, lands in "
+"W3.2b). Not required for the backbone run."
+msgstr ""
+"Optional Excel file consumed by the price-from-Excel fix (T041, lands \n"
+"in W3.2b). Not required for the backbone run.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_name_override
+msgid ""
+"Optional override for the Etsy property_name string. Empty → falls back to "
+"product.attribute.x_etsy_property_name."
+msgstr ""
+"Optional override for the Etsy property_name string. Empty → falls bac\n"
+"k to product.attribute.x_etsy_property_name.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__order_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__order_id
+msgid "Order"
+msgstr "Order"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Order %s created from this email."
+msgstr "Đơn hàng %s được tạo từ email này."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__order_count
+msgid "Order Count"
+msgstr "Order Count"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__sync
+msgid "Order Sync"
+msgstr "Order Sync"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Order already exists — email marked as duplicate."
+msgstr "Đơn hàng đã tồn tại — email được đánh dấu là trùng lặp."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid ""
+"Order already shipped — create a return/ticket instead (see Spec 004c)."
+msgstr ""
+"Order already shipped — create a return/ticket instead (see Spec 004c)\n"
+".\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Order fixes"
+msgstr "Order fixes"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__order_ids
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Orders"
+msgstr "Orders"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Origin"
+msgstr "Nguồn gốc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__origin_country_iso
+msgid "Origin Country"
+msgstr "Quốc gia Nguồn gốc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_postal_code
+msgid "Origin Postal Code"
+msgstr "Mã bưu chính Nguồn gốc"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Origin country has no ISO code."
+msgstr "Quốc gia nguồn gốc không có mã ISO."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_partner__etsy_buyer_name
+#: model:ir.model.fields,help:etsy_integration.field_res_users__etsy_buyer_name
+msgid "Original buyer name from Etsy (may differ from shipping name)"
+msgstr "Tên người mua gốc từ Etsy (có thể khác với tên giao hàng)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__orphaned
+msgid "Orphaned"
+msgstr "Orphaned"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__message_send
+msgid "Outbound Message Send"
+msgstr "Gửi Tin nhắn Gửi đi"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__payment_status__paid
+msgid "Paid"
+msgstr "Paid"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__parent_id
+msgid "Parent"
+msgstr "Parent"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Parse failed again: %s"
+msgstr "Phân tích cú pháp không thành công lần nữa: %s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Partner dedup (R10)"
+msgstr "Loại bỏ trùng lặp Đối tác (R10)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__payload_excerpt
+msgid "Payload Excerpt"
+msgstr "Đoạn trích Tải trọng"
+
+#. module: etsy_integration
+#: model_terms:account.payment.term,note:etsy_integration.payment_term_etsy_prepaid
+msgid "Payment collected by Etsy at checkout"
+msgstr "Thanh toán được thu thập bởi Etsy tại thanh toán"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__payment_status
+msgid ""
+"Payment state mirrored from the Etsy receipt; updated on every API re-sync."
+msgstr ""
+"Payment state mirrored from the Etsy receipt; updated on every API re-\n"
+"sync.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__pending
+msgid "Pending"
+msgstr "Chờ duyệt"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__pending_target_receipt_id
+msgid "Pending Receipt ID"
+msgstr "ID Biên lai Đang chờ"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__attribute_mapping_ids
+msgid ""
+"Per-listing Etsy property_id overrides. Priority chain when the publisher "
+"resolves an Etsy property for a variation axis: 1) listing mapping row, 2) "
+"shop default mapping, 3) global product.attribute.x_etsy_property_id. Leave "
+"a row empty to fall through to the next tier."
+msgstr ""
+"Per-listing Etsy property_id overrides. Priority chain when the publis\n"
+"her resolves an Etsy property for a variation axis: 1) listing mapping\n"
+" row, 2) shop default mapping, 3) global product.attribute.x_etsy_prop\n"
+"erty_id. Leave a row empty to fall through to the next tier.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_taxonomy_id
+msgid ""
+"Per-listing Etsy taxonomy override. Empty → falls back to "
+"product.template.x_taxonomy_id → etsy.shop.default_taxonomy_id."
+msgstr ""
+"Per-listing Etsy taxonomy override. Empty → falls back to product.temp\n"
+"late.x_taxonomy_id → etsy.shop.default_taxonomy_id.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_when_made
+msgid ""
+"Per-listing override. Empty → falls back to product (x_when_made) → shop "
+"default (default_when_made)."
+msgstr ""
+"Per-listing override. Empty → falls back to product (x_when_made) → sh\n"
+"op default (default_when_made).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_who_made
+msgid ""
+"Per-listing override. Empty → falls back to product (x_who_made) → shop "
+"default (default_who_made)."
+msgstr ""
+"Per-listing override. Empty → falls back to product (x_who_made) → sho\n"
+"p default (default_who_made).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_shipping_profile_id
+msgid ""
+"Per-listing shipping profile override. Empty → falls back to "
+"etsy.shop.default_shipping_profile_id."
+msgstr ""
+"Per-listing shipping profile override. Empty → falls back to etsy.shop\n"
+".default_shipping_profile_id.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_description
+msgid ""
+"Per-shop brand-voice description used when neither the listing override nor "
+"the product canonical description is set. Marketing owns this field — leave "
+"empty to inherit product description_sale."
+msgstr ""
+"Per-shop brand-voice description used when neither the listing overrid\n"
+"e nor the product canonical description is set. Marketing owns this fi\n"
+"eld — leave empty to inherit product description_sale.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_title
+msgid ""
+"Per-shop brand-voice title used when neither the listing override nor the "
+"product canonical name is set. Marketing owns this field — leave empty to "
+"inherit product name."
+msgstr ""
+"Per-shop brand-voice title used when neither the listing override nor \n"
+"the product canonical name is set. Marketing owns this field — leave e\n"
+"mpty to inherit product name.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Per-shop fallback description; empty → product description_sale"
+msgstr "Mô tả dự phòng theo cửa hàng; trống → description_sale sản phẩm"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_image_1920
+msgid ""
+"Per-shop hero image used when neither the listing override nor the product "
+"canonical image is set. Marketing owns this field — leave empty to inherit "
+"product image_1920."
+msgstr ""
+"Per-shop hero image used when neither the listing override nor the pro\n"
+"duct canonical image is set. Marketing owns this field — leave empty t\n"
+"o inherit product image_1920.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_personalisation
+msgid "Personalisation"
+msgstr "Cá nhân hóa"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__posted
+msgid "Posted"
+msgstr "Posted"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__posted_at
+msgid "Posted At"
+msgstr "Posted At"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__display_price_in_shop_currency
+msgid ""
+"Preview of the list price converted to the shop currency using today's "
+"``res.currency.rate``. 0.0 means the shop, currency, or rate is not "
+"configured."
+msgstr ""
+"Preview of the list price converted to the shop currency using today's\n"
+" ``res.currency.rate``. 0.0 means the shop, currency, or rate is not c\n"
+"onfigured.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__price
+msgid "Price"
+msgstr "Price"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_price_in_shop_currency
+msgid "Price (shop currency)"
+msgstr "Giá (tiền tệ cửa hàng)"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Pricing"
+msgstr "Pricing"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_processing_time
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Processing Time"
+msgstr "Thời gian Xử lý"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__processing_time_unit
+msgid "Processing Unit"
+msgstr "Đơn vị Xử lý"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_template
+msgid "Product"
+msgstr "Product"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_attribute
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__product_attribute_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__product_attribute_id
+msgid "Product Attribute"
+msgstr "Thuộc tính Sản phẩm"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Product Image"
+msgstr "Hình ảnh Sản phẩm"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__product_tmpl_id
+msgid "Product Tmpl"
+msgstr "Product Tmpl"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_product
+msgid "Product Variant"
+msgstr "Biến thể Sản phẩm"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Profile"
+msgstr "Profile"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__title
+msgid "Profile Name"
+msgstr "Profile Name"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Profile name is required."
+msgstr "Tên hồ sơ là bắt buộc."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__property_values
+msgid "Property Values (JSON)"
+msgstr "Giá trị Thuộc tính (JSON)"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Provision Email Alias"
+msgstr "Bí danh Email Cung cấp"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Publish (full)"
+msgstr "Đăng bán (đầy đủ)"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Publish Draft Only"
+msgstr "Chỉ Đăng bán Nháp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_publish_as_property
+msgid "Publish as Etsy property"
+msgstr "Đăng bán như thuộc tính Etsy"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_publish_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy_publish_button
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_form_etsy_inherit
+msgid "Publish to Etsy"
+msgstr "Đăng bán lên Etsy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Publisher Defaults"
+msgstr "Mặc định Nhà xuất bản"
+
+#. module: etsy_integration
+#. odoo-javascript
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+#: code:addons/etsy_integration/static/src/views/etsy_pull_list/etsy_pull_list_controller.xml:0
+msgid "Pull Etsy Orders"
+msgstr "Kéo Đơn hàng Etsy"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid ""
+"Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, %(errors)s "
+"errors."
+msgstr ""
+"Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, %(erro\n"
+"rs)s errors.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Push failed."
+msgstr "Push failed."
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Push tracking to Etsy"
+msgstr "Đẩy theo dõi đến Etsy"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__pushed
+msgid "Pushed"
+msgstr "Pushed"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__qty_drift
+msgid "Qty Drift"
+msgstr "Qty Drift"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__quantity
+msgid "Quantity"
+msgstr "Quantity"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__quota_remaining_today
+msgid "Quota Remaining Today"
+msgstr "Hạn mức Còn lại Hôm nay"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__quota_used_today
+msgid "Quota Used Today"
+msgstr "Hạn mức Được sử dụng Hôm nay"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__raw_body_html
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Raw Body (HTML)"
+msgstr "Nội dung Thô (HTML)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__raw_body_text
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Raw Body (Text)"
+msgstr "Nội dung Thô (Văn bản)"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Re-push Inventory Only"
+msgstr "Chỉ đẩy lại tồn kho"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__sync_audit_mode
+msgid ""
+"Read-only API sync: fetch receipts, compare, log diffs; no sale.order "
+"writes. Use during cutover validation."
+msgstr ""
+"Read-only API sync: fetch receipts, compare, log diffs; no sale.order \n"
+"writes. Use during cutover validation.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__etsy_message_id
+msgid ""
+"Real Etsy conversation_id+message_id, or synthesized for email-fallback"
+msgstr ""
+"Real Etsy conversation_id+message_id, or synthesized for email-fallbac\n"
+"k\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__reason
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__reason
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__reason
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Reason"
+msgstr "Reason"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Receipt Status"
+msgstr "Trạng thái receipt"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__recovery-probe
+msgid "Recovery probe"
+msgstr "Thăm dò Khôi phục"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__recovery_probe_consecutive_successes
+msgid "Recovery-Probe Consecutive Successes"
+msgstr "Thăm dò Khôi phục Lần Thành công Liên tiếp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__name
+msgid "Reference"
+msgstr "Reference"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Refresh the taxonomy / shipping caches from\n"
+"                        <em>Etsy Shop Settings</em> if the dropdowns look\n"
+"                        stale."
+msgstr ""
+"Refresh the taxonomy / shipping caches from\n                        <\n"
+"em>Etsy Shop Settings</em> if the dropdowns look\n                    \n"
+"    stale.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__refund
+msgid "Refund"
+msgstr "Hoàn tiền"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__refund_amount
+msgid "Refund Amount"
+msgstr "Số tiền Hoàn tiền"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Refund amount cannot be negative."
+msgstr "Số tiền hoàn tiền không thể âm."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__refunded
+msgid "Refunded / Done"
+msgstr "Được hoàn tiền / Hoàn tất"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__region
+msgid "Region (EU / non-EU)"
+msgstr "Khu vực (EU / không phải EU)"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Reject"
+msgstr "Từ chối"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__rejected
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__rejected
+msgid "Rejected"
+msgstr "Đã từ chối"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__rejected_at
+msgid "Rejected At"
+msgstr "Rejected At"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__rejection_reason
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "Rejection Reason"
+msgstr "Lý do Từ chối"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__request_started_at
+msgid "Request Started At"
+msgstr "Yêu cầu Bắt đầu lúc"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__request_payload_summary
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Request Summary"
+msgstr "Tóm tắt Yêu cầu"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Request address change"
+msgstr "Yêu cầu đổi địa chỉ"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__requested
+msgid "Requested"
+msgstr "Requested"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__requested_by
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__requested_by
+msgid "Requested By"
+msgstr "Requested By"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__requested_fields
+msgid "Requested Fields"
+msgstr "Trường Được yêu cầu"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_postal_code
+msgid "Required by Etsy for countries that use postal codes (US, etc.)."
+msgstr ""
+"Được yêu cầu bởi Etsy cho các quốc gia sử dụng mã bưu chính (US, v.v.)\n"
+".\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__rejection_reason
+msgid "Required when state is rejected."
+msgstr "Bắt buộc khi trạng thái bị từ chối."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__reship
+msgid "Reship"
+msgstr "Reship"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Resolved by request %s."
+msgstr "Được giải quyết bởi yêu cầu %s."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__response_summary
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Response Summary"
+msgstr "Tóm tắt phản hồi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__user_id
+msgid "Responsible"
+msgstr "Responsible"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_user_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_user_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_user_id
+msgid "Responsible User"
+msgstr "Người dùng Chịu trách nhiệm"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Results"
+msgstr "Results"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Resumability (R4)"
+msgstr "Khả năng Tiếp tục (R4)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_sync_health__last_processed_id
+msgid "Resumability checkpoint for batched workers"
+msgstr "Điểm kiểm tra Khả năng Tiếp tục cho công nhân được phân lô"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__last_processed_id
+msgid ""
+"Resumability checkpoint — updated after each successful batch. The next run "
+"with resume_from_checkpoint=True starts at id > last_processed_id."
+msgstr ""
+"Resumability checkpoint — updated after each successful batch. The nex\n"
+"t run with resume_from_checkpoint=True starts at id > last_processed_i\n"
+"d.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy_publish_button
+msgid "Resume Publish"
+msgstr "Tiếp tục Đăng bán"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__resume_from_checkpoint
+msgid "Resume from last checkpoint"
+msgstr "Tiếp tục từ điểm kiểm tra cuối cùng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__retry_count
+msgid "Retry Count"
+msgstr "Retry Count"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Retry Parse"
+msgstr "Retry Parse"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__return
+msgid "Return"
+msgstr "Return"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "Return to"
+msgstr "Return to"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_row_count
+msgid "Rows Processed"
+msgstr "Hàng Được xử lý"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Run Backfill"
+msgstr "Run Backfill"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Run Migration"
+msgstr "Chạy Di chuyển"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__running
+msgid "Running"
+msgstr "Running"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__sku
+msgid "SKU"
+msgstr "SKU"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_sms_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_sms_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "Lỗi Giao hàng SMS"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order
+msgid "Sales Order"
+msgstr "Sales Order"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Dòng Đơn hàng Bán hàng"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Scheduling"
+msgstr "Scheduling"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__scope-revoked
+msgid "Scope revoked"
+msgstr "Phạm vi Bị hủy"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Search Email Logs"
+msgstr "Tìm kiếm Nhật ký Email"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+msgid "Search Etsy Shops"
+msgstr "Tìm kiếm Cửa hàng Etsy"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Select a destination country."
+msgstr "Chọn một quốc gia đích."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Select a destination region."
+msgstr "Chọn một khu vực đích."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__sequence
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__sequence
+msgid "Sequence"
+msgstr "Thứ tự"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__set_as_shop_default
+msgid "Set As Shop Default"
+msgstr "Đặt làm Mặc định Cửa hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__active_source_changed_at
+msgid "Set automatically on every active_source transition."
+msgstr "Được đặt tự động trên mỗi chuyển tiếp active_source."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_financial_config
+msgid ""
+"Set fiscal_position_id, payment_term_id, team_id, pricelist_id, currency_id "
+"on every Etsy order."
+msgstr ""
+"Set fiscal_position_id, payment_term_id, team_id, pricelist_id, curren\n"
+"cy_id on every Etsy order.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_product_config
+msgid ""
+"Set is_storable=True and run the product categorizer on all Etsy products "
+"touched in the current batch."
+msgstr ""
+"Set is_storable=True and run the product categorizer on all Etsy produ\n"
+"cts touched in the current batch.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_product__etsy_needs_product_review
+#: model:ir.model.fields,help:etsy_integration.field_product_template__etsy_needs_product_review
+msgid "Set when Etsy order ingest had to auto-create this product."
+msgstr "Được đặt khi nhập đơn hàng Etsy phải tự động tạo sản phẩm này."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_total_mismatch
+msgid ""
+"Set when Odoo amount_total did not reconcile with the Etsy buyer-paid total "
+"(grandtotal minus marketplace-remitted tax). Review pricing/line mapping for"
+" this order."
+msgstr ""
+"Set when Odoo amount_total did not reconcile with the Etsy buyer-paid \n"
+"total (grandtotal minus marketplace-remitted tax). Review pricing/line\n"
+" mapping for this order.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__created_at
+msgid ""
+"Set when the profile was created from Odoo; NULL for profiles that "
+"originated in Etsy and were synced."
+msgstr ""
+"Set when the profile was created from Odoo; NULL for profiles that ori\n"
+"ginated in Etsy and were synced.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "Settings"
+msgstr "Settings"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Shipping"
+msgstr "Vận chuyển"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Shipping & Variations"
+msgstr "Vận chuyển & Biến thể"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__primary_cost
+msgid "Shipping Cost"
+msgstr "Chi phí Vận chuyển"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__shipping_profile_create
+msgid "Shipping Profile Create"
+msgstr "Tạo Hồ sơ Vận chuyển"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shipping_service
+msgid "Shipping Service"
+msgstr "Dịch vụ Vận chuyển"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Shipping Tracking"
+msgstr "Theo dõi Vận chuyển"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shipping_last_synced_at
+msgid "Shipping cache last synced"
+msgstr "Bộ nhớ đệm Vận chuyển lần cuối được đồng bộ"
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_shipping
+msgid "Shipping cost collected via Etsy checkout."
+msgstr "Chi phí vận chuyển được thu thập qua thanh toán Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Shipping costs cannot be negative."
+msgstr "Chi phí vận chuyển không thể âm."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_country_id
+msgid "Ships From"
+msgstr "Ships From"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_kind
+msgid "Ships To"
+msgstr "Ships To"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__shop_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Shop"
+msgstr "Cửa hàng"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid ""
+"Shop %s has no Etsy shop id; authorize the shop before creating shipping "
+"profiles."
+msgstr ""
+"Shop %s has no Etsy shop id; authorize the shop before creating shippi\n"
+"ng profiles.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Shop Brand-Voice Defaults"
+msgstr "Mặc định Giọng nói Thương hiệu Cửa hàng"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Shop Currency Preview"
+msgstr "Xem trước Tiền tệ Cửa hàng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__name
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Shop Name"
+msgstr "Tên Cửa hàng"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Shop currency not configured — set Etsy Shop and its listing currency to "
+"enable preview."
+msgstr ""
+"Shop currency not configured — set Etsy Shop and its listing currency \n"
+"to enable preview.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_shop_id
+msgid ""
+"Shop this listing pushes to. Drives the price-display widget and per-"
+"channel-shop overrides."
+msgstr ""
+"Shop this listing pushes to. Drives the price-display widget and per-c\n"
+"hannel-shop overrides.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_id_override
+msgid ""
+"Shop-wide default Etsy property_id. Listings can still override per-row."
+msgstr ""
+"Shop-wide default Etsy property_id. Listings can still override per-ro\n"
+"w.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_attribute_mapping_ids
+msgid ""
+"Shop-wide overrides for product.attribute → Etsy property_id. Listings can "
+"still override per row."
+msgstr ""
+"Shop-wide overrides for product.attribute → Etsy property_id. Listings\n"
+" can still override per row.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_side
+msgid "Side"
+msgstr "Side"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_size
+msgid "Size"
+msgstr "Size"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Skipped"
+msgstr "Skipped"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__skipped
+msgid "Skipped (Duplicate)"
+msgstr "Bị bỏ qua (Trùng lặp)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__full_path
+msgid "Slash-joined breadcrumb, e.g. \"Home & Living / Kitchen / Cookware\"."
+msgstr "Đường dẫn phân cấp nối bằng \"/\", ví dụ \"Home & Living / Kitchen / Cookware\"."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__health_check_failures_at_change
+msgid "Snapshot of the shop consecutive-failure counter at switch time."
+msgstr ""
+"Ảnh chụp nhanh của bộ đếm lỗi liên tiếp của cửa hàng tại thời điểm chu\n"
+"yển đổi.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__active
+msgid ""
+"Soft-disable when Etsy retires a taxonomy node so historical listings still "
+"resolve their label."
+msgstr ""
+"Soft-disable when Etsy retires a taxonomy node so historical listings \n"
+"still resolve their label.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__someone_else
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__someone_else
+msgid "Someone else"
+msgstr "Someone else"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__source
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__source
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+msgid "Source"
+msgstr "Nguồn"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_email_log_id
+msgid "Source Email"
+msgstr "Source Email"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__excel_file
+msgid "Source Excel (optional)"
+msgstr "Excel Nguồn (tùy chọn)"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_raw_source_id
+msgid "Source Record Reference"
+msgstr "Tham chiếu Bản ghi Nguồn"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Source data (optional)"
+msgstr "Dữ liệu Nguồn (tùy chọn)"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__country
+msgid "Specific country"
+msgstr "Quốc gia Cụ thể"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid ""
+"Start the OAuth2 flow to grant Gmail access. Requires Client ID and Client "
+"Secret to be saved first."
+msgstr ""
+"Start the OAuth2 flow to grant Gmail access. Requires Client ID and Cl\n"
+"ient Secret to be saved first.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__state
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "State"
+msgstr "State"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__status_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__parse_status
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__status_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__state
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Status"
+msgstr "Status"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_state
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_state
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Status based on activities\nOverdue: Due date is already passed\nToday\n"
+": Activity date is today\nPlanned: Future activities.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__source
+msgid "Subsystem that generated this log entry."
+msgstr "Hệ thống con đã tạo ra mục nhật ký này."
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__success
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Success"
+msgstr "Thành công"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__suspended
+msgid "Suspended"
+msgstr "Suspended"
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_sync_health
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__sync_health_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_tree
+msgid "Sync Health"
+msgstr "Tình trạng Đồng bộ"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__sync_mode
+msgid "Sync Mode"
+msgstr "Chế độ Đồng bộ"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__sync_source
+msgid "Sync Source"
+msgstr "Nguồn Đồng bộ"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile__source__etsy_sync
+msgid "Synced from Etsy"
+msgstr "Được đồng bộ từ Etsy"
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_ir_config_parameter
+msgid "System Parameter"
+msgstr "Tham số Hệ thống"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/ir_config_parameter.py:0
+msgid "System parameter %r is restricted to administrators."
+msgstr "Tham số hệ thống %r được giới hạn cho quản trị viên."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__target_enquiry_id
+msgid "Target Enquiry"
+msgstr "Truy vấn Mục tiêu"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__target_sale_order_id
+msgid "Target Sale Order"
+msgstr "Đơn hàng Bán hàng Mục tiêu"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_taxonomy_last_synced_at
+msgid "Taxonomy cache last synced"
+msgstr "Bộ nhớ đệm Danh mục lần cuối được đồng bộ"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Test Connection"
+msgstr "Kiểm tra Kết nối"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__etsy_id
+msgid ""
+"The Etsy seller-taxonomy node id (int64 stored as string to avoid XML-RPC "
+"int32 overflow)."
+msgstr ""
+"The Etsy seller-taxonomy node id (int64 stored as string to avoid XML-\n"
+"RPC int32 overflow).\n"
+
+#. module: etsy_integration
+#: model_terms:ir.actions.act_window,help:etsy_integration.action_etsy_api_log
+msgid ""
+"This audit trail records every Etsy API call and audit-mode receipt comparison.\n"
+"                Rows older than the configured retention window (default 30 days) are\n"
+"                cleaned up daily."
+msgstr ""
+"This audit trail records every Etsy API call and audit-mode receipt co\n"
+"mparison.\n                Rows older than the configured retention wi\n"
+"ndow (default 30 days) are\n                cleaned up daily.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid ""
+"This listing has no Etsy Shop resolved. Open the Advanced settings group and"
+" set the Etsy Shop manually, or contact an admin to re-run the shop "
+"backfill."
+msgstr ""
+"This listing has no Etsy Shop resolved. Open the Advanced settings gro\n"
+"up and set the Etsy Shop manually, or contact an admin to re-run the s\n"
+"hop backfill.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid ""
+"This listing has no Etsy Shop resolved; set the Etsy Shop before creating a "
+"shipping profile."
+msgstr ""
+"This listing has no Etsy Shop resolved; set the Etsy Shop before creat\n"
+"ing a shipping profile.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid "This listing is not bound to the Etsy channel."
+msgstr "Listing này không được ràng buộc với kênh Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Ticket approved by %s."
+msgstr "Phiếu được phê duyệt bởi %s."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Ticket rejected by %s."
+msgstr "Phiếu bị từ chối bởi %s."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_at
+msgid "Timestamp of the last successful tracking push to Etsy."
+msgstr "Dấu thời gian của lần đẩy theo dõi thành công cuối cùng đến Etsy."
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__title
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__title
+msgid "Title"
+msgstr "Title"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__to_source
+msgid "To Source"
+msgstr "To Source"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Token exchange failed (HTTP %s). Please verify your credentials and try "
+"again."
+msgstr ""
+"Token exchange failed (HTTP %s). Please verify your credentials and tr\n"
+"y again.\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "Token exchange request failed: %s"
+msgstr "Yêu cầu trao đổi token không thành công: %s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_search
+msgid "Top level"
+msgstr "Top level"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__revenue_total
+msgid "Total Revenue"
+msgstr "Tổng Doanh thu"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__tracking_push
+msgid "Tracking Push"
+msgstr "Đẩy Theo dõi"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking number was pushed to Etsy."
+msgstr "Số theo dõi đã được đẩy đến Etsy."
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking push failed"
+msgstr "Đẩy theo dõi không thành công"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking pushed"
+msgstr "Đẩy theo dõi"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_price_anomaly
+msgid ""
+"True when an Etsy order has a non-positive amount_total — used by the "
+"migration wizard to quarantine bad data."
+msgstr ""
+"True when an Etsy order has a non-positive amount_total — used by the \n"
+"migration wizard to quarantine bad data.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__has_pending_address_change
+msgid ""
+"True when at least one address-change request is in 'requested' state. Locks"
+" shipping fields per C-SO-001."
+msgstr ""
+"True when at least one address-change request is in 'requested' state.\n"
+" Locks shipping fields per C-SO-001.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__is_deleted
+msgid ""
+"True when the profile has been deleted on Etsy. Soft-keep so historical "
+"listings still resolve."
+msgstr ""
+"True when the profile has been deleted on Etsy. Soft-keep so historica\n"
+"l listings still resolve.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_is_supply
+msgid ""
+"True when this item is a supply (raw materials, tools). Per-listing — no "
+"fallback chain; the shop default is used only when no listing intent row "
+"exists."
+msgstr ""
+"True when this item is a supply (raw materials, tools). Per-listing — \n"
+"no fallback chain; the shop default is used only when no listing inten\n"
+"t row exists.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__ticket_type
+msgid "Type"
+msgstr "Loại"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_exception_decoration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_exception_decoration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Loại hoạt động ngoại lệ trên bản ghi."
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_ship_notified_at
+#: model:ir.model.fields,help:etsy_integration.field_sale_order_fulfillment__etsy_ship_notified_at
+msgid ""
+"UTC timestamp of the last successful Etsy buyer-shipping notification (set "
+"by Spec 005 EtsyTrackingPusher on 200 OK). System-only writes — operators "
+"cannot fake notification times."
+msgstr ""
+"UTC timestamp of the last successful Etsy buyer-shipping notification \n"
+"(set by Spec 005 EtsyTrackingPusher on 200 OK). System-only writes — o\n"
+"perators cannot fake notification times.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_order_id
+msgid "Unique Etsy order identifier from the notification email"
+msgstr "Định danh đơn hàng Etsy Duy nhất từ email thông báo"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__weight_unit_pref
+msgid ""
+"Unit system for Etsy listings: oz (ounces) or g (grams). Odoo stores weight "
+"in kg; conversion applied on publish."
+msgstr ""
+"Unit system for Etsy listings: oz (ounces) or g (grams). Odoo stores w\n"
+"eight in kg; conversion applied on publish.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__dimensions_unit_pref
+msgid ""
+"Unit system for item_length/width/height on Etsy listings: cm (centimeters) "
+"or in (inches)."
+msgstr ""
+"Unit system for item_length/width/height on Etsy listings: cm (centime\n"
+"ters) or in (inches).\n"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Unknown partner id(s) keep=%(k)s merge=%(m)s"
+msgstr "ID đối tác không xác định keep=%(k)s merge=%(m)s"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Unlinked"
+msgstr "Unlinked"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__unmatched_count
+msgid "Unmatched Count"
+msgstr "Số lượng Không phù hợp"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__unmatched_skus
+msgid "Unmatched Skus"
+msgstr "SKU Không phù hợp"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__payment_status__unpaid
+msgid "Unpaid"
+msgstr "Unpaid"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid ""
+"Upload BA-approved CSV (from a prior run with 'Generate dedup CSV' enabled) "
+"before clicking 'Apply Merges'."
+msgstr ""
+"Upload BA-approved CSV (from a prior run with 'Generate dedup CSV' ena\n"
+"bled) before clicking 'Apply Merges'.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__validation_notes
+msgid "Validation Notes"
+msgstr "Ghi chú Xác thực"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Verify Gmail credentials are valid"
+msgstr "Xác minh thông tin xác thực Gmail có hiệu lực"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "View Order"
+msgstr "View Order"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__warning
+msgid "Warning"
+msgstr "Warning"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__warning_count
+msgid "Warnings"
+msgstr "Warnings"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__etsy_last_receipt_sync_at
+msgid ""
+"Watermark for incremental Etsy receipt sync. The syncer fetches receipts "
+"modified after this timestamp."
+msgstr ""
+"Watermark for incremental Etsy receipt sync. The syncer fetches receip\n"
+"ts modified after this timestamp.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__webhook_register
+msgid "Webhook Register"
+msgstr "Đăng ký Webhook"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__website_message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__website_message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__website_message_ids
+msgid "Website Messages"
+msgstr "Tin nhắn Trang web"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__website_message_ids
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__website_message_ids
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__website_message_ids
+msgid "Website communication history"
+msgstr "Lịch sử giao tiếp Trang web"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__processing_time_unit__weeks
+msgid "Weeks"
+msgstr "Weeks"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__weight_unit_pref
+msgid "Weight Unit Preference"
+msgstr "Tùy chọn Đơn vị Trọng lượng"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__include_anomalies
+msgid ""
+"When False (default), orders with etsy_price_anomaly=True are excluded from "
+"the migration loop and only quarantined to a CSV. Enable to also process "
+"them through the fixes."
+msgstr ""
+"When False (default), orders with etsy_price_anomaly=True are excluded\n"
+" from the migration loop and only quarantined to a CSV. Enable to also\n"
+" process them through the fixes.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__auto_recovery
+msgid ""
+"When False, the recovery probe never auto-switches the shop back to its "
+"primary source (ADR-008a §3)."
+msgstr ""
+"When False, the recovery probe never auto-switches the shop back to it\n"
+"s primary source (ADR-008a §3).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__resume_from_checkpoint
+msgid ""
+"When True, the migration only iterates orders with id > last_processed_id "
+"(R4). Disable for a full re-run."
+msgstr ""
+"When True, the migration only iterates orders with id > last_processed\n"
+"_id (R4). Disable for a full re-run.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__auto_confirm
+msgid ""
+"When enabled, draft orders are confirmed, their pickings are validated, and "
+"invoice_status is set to invoiced (R5). No invoice records are generated."
+msgstr ""
+"When enabled, draft orders are confirmed, their pickings are validated\n"
+", and invoice_status is set to invoiced (R5). No invoice records are g\n"
+"enerated.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__auto_confirm
+msgid ""
+"When enabled, each imported order is confirmed, its picking validated, and "
+"marked as invoiced (per R5)."
+msgstr ""
+"When enabled, each imported order is confirmed, its picking validated,\n"
+" and marked as invoiced (per R5).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_config_settings__etsy_auto_confirm_email
+msgid ""
+"When enabled, orders created by the email cron are immediately confirmed, "
+"their pickings validated, and marked as invoiced (see R5). Default off — "
+"operators may want to review first."
+msgstr ""
+"When enabled, orders created by the email cron are immediately confirm\n"
+"ed, their pickings validated, and marked as invoiced (see R5). Default\n"
+" off — operators may want to review first.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_publish_as_property
+msgid ""
+"When enabled, this attribute axis is included in Etsy push_inventory "
+"products[].property_values[]. Defaults to False (opt-in) so that new "
+"attributes never leak to Etsy without an admin explicitly enabling them. The"
+" shipped seed flips this True for the known publishable axes (Material, "
+"Color, Size, Shape, Fluid oz, Apparel Size)."
+msgstr ""
+"When enabled, this attribute axis is included in Etsy push_inventory p\n"
+"roducts[].property_values[]. Defaults to False (opt-in) so that new at\n"
+"tributes never leak to Etsy without an admin explicitly enabling them.\n"
+" The shipped seed flips this True for the known publishable axes (Mate\n"
+"rial, Color, Size, Shape, Fluid oz, Apparel Size).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__set_on_listing_id
+msgid ""
+"When launched from a listing, the new profile becomes that listing's "
+"shipping-profile override on success."
+msgstr ""
+"When launched from a listing, the new profile becomes that listing's s\n"
+"hipping-profile override on success.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_when_made
+msgid "When made"
+msgstr "When made"
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__active_source
+msgid ""
+"Which upstream adapter feeds the single ingestion pipeline for this shop "
+"(ADR-008a). Toggling is restricted to system administrators (C-ESY-002)."
+msgstr ""
+"Which upstream adapter feeds the single ingestion pipeline for this sh\n"
+"op (ADR-008a). Toggling is restricted to system administrators (C-ESY-\n"
+"002).\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_who_made
+msgid "Who made it"
+msgstr "Who made it"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__dimensions_unit_pref__cm
+msgid "cm"
+msgstr "cm"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "e.g. 60752333"
+msgstr "ví dụ: 60752333"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "e.g. Handmade Ceramic by JaHandmadeArt"
+msgstr "ví dụ: Handmade Ceramic by JaHandmadeArt"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__dimensions_unit_pref__in
+msgid "in"
+msgstr "in"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "keep_partner_id == merge_partner_id (%(id)s)"
+msgstr "keep_partner_id == merge_partner_id (%(id)s)"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_shop.py:0
+msgid ""
+"multichannel.enquiry model is not registered; ensure multichannel_hub_core "
+"is installed."
+msgstr ""
+"multichannel.enquiry model is not registered; ensure multichannel_hub_\n"
+"core is installed.\n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__weight_unit_pref__oz
+msgid "oz"
+msgstr "oz"
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "rejection_reason is required when rejecting an address-change request."
+msgstr ""
+"rejection_reason is required when rejecting an address-change request.\n"
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "to review your configuration and try again."
+msgstr "để xem lại cấu hình của bạn và thử lại."

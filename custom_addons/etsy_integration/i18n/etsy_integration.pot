@@ -1,15 +1,4274 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# * etsy_integration
+# 	* etsy_integration
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-03 00:00+0000\n"
-"PO-Revision-Date: 2026-04-03 00:00+0000\n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1700s
+msgid "1700s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1800s
+msgid "1800s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1900s
+msgid "1900s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1910s
+msgid "1910s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1920s
+msgid "1920s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1930s
+msgid "1930s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1940s
+msgid "1940s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1950s
+msgid "1950s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1960s
+msgid "1960s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1970s
+msgid "1970s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1980s
+msgid "1980s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__1990s
+msgid "1990s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2000_2003
+msgid "2000 – 2003"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2003_2009
+msgid "2003 – 2009"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2010_2019
+msgid "2010 – 2019"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__2020_2026
+msgid "2020 – 2026"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid ""
+"<i class=\"fa fa-exclamation-triangle me-2\"/>\n"
+"                                    Gmail Authorization Error"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "<span class=\"d-inline-block\"> minutes</span>"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "<span class=\"mx-2\">to</span>"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid ""
+"<strong>Address change pending approval.</strong>\n"
+"                    Shipping fields are locked until a BA Lead resolves\n"
+"                    the open address-change request."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid ""
+"<strong>Attribute mapping priority:</strong>\n"
+"                                Per-listing rows (on the Listing form) →\n"
+"                                These shop defaults → Product global\n"
+"                                (Product Attribute). Leave a row's override\n"
+"                                empty to fall through to the next tier."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"<strong>Attribute mapping priority:</strong>\n"
+"                        Per-listing rows below → Shop default\n"
+"                        (<em>Etsy Shop &gt; Attribute Defaults</em>) →\n"
+"                        Product global (<em>Product Attribute</em>).\n"
+"                        Leave a row's override empty to fall through to the\n"
+"                        next tier."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__collective
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__collective
+msgid "A member of my shop"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__sync_mode__api_only
+msgid "API Only"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_needaction
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_needaction
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__is_active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__is_active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__active
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__active
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_search
+msgid "Active"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active_source
+msgid "Active Source"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__active_source_changed_at
+msgid "Active Source Changed At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_exception_decoration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_exception_decoration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_type_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_type_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__actor_user_id
+msgid "Actor"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_shipping_lines
+msgid "Add shipping lines"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "Address Change Request"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_address_change_request
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__address_change_request_ids
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_address_change_request
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_list
+msgid "Address Change Requests"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Address change approved by %(user)s. Updated fields: %(fields)s."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid ""
+"Address change is pending approval on order(s) %s; shipping fields are "
+"locked. Approve or reject the request first."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Address change rejected. Reason: %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Advanced Diagnostics"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "After-Sales Ticket"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_order_ticket
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_order_ticket
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_list
+msgid "After-Sales Tickets"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "All"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__set_as_shop_default
+msgid "Also store this profile as the shop default shipping profile."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid ""
+"An outstanding address-change request already exists for order %s. Resolve "
+"it before filing a new one."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Anomalies (R9)"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Applied %(merged)s merges, %(errors)s errors."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Apply Merges"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__set_on_listing_id
+msgid "Apply To Listing"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Approve"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Approve address change for order %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__approved
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__approved
+msgid "Approved"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__approved_at
+msgid "Approved At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__approved_by
+msgid "Approved By"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__approved_merges_filename
+msgid "Approved CSV filename"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__approved_merges_file
+msgid "Approved Merges CSV"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Approved merges CSV is not valid base64: %(error)s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+msgid "Archived"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_attachment_count
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_attachment_count
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_attribute_mapping_ids
+msgid "Attribute mapping defaults"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__attribute_mapping_ids
+msgid "Attribute mapping overrides"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__audit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+msgid "Audit"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__sync_audit_mode
+msgid "Audit Mode (read-only sync)"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "Authorization was denied: %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Authorize Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Authorize Gmail"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__auto_recovery
+msgid "Auto Recovery"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_auto_confirm_email
+msgid "Auto-confirm cron-imported orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__auto_confirm
+msgid "Auto-confirm imported orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__auto-failover
+msgid "Automatic failover"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__approved_merges_file
+msgid ""
+"BA-approved CSV exported from a previous _generate_dedup_report run, with "
+"rows kept that should actually be merged. Consumed by action_apply_merges. "
+"The wizard never merges without this approval (R10)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_raw_source_id
+msgid ""
+"Back-pointer to the originating record (e.g. 'receipt:1234' for API, "
+"'email_log:567' for the email path)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid ""
+"Backbone wizard for the 17K-order remediation pass.\n"
+"                           Each option below is independently toggleable; the\n"
+"                           run is resumable via the checkpoint field."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_listing_backfill_wizard
+msgid "Backfill Etsy Listings"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Backfill Etsy Listings → Product Hub"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Backfill Result"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_shipping_lines
+msgid ""
+"Backfill the Etsy Shipping order line on orders where etsy_shipping_cost > 0"
+" and no shipping line exists."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__batch_size
+msgid "Batch size"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Batch size must be at least 1 (got %(size)s)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__before_1700
+msgid "Before 1700"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__before_2004
+msgid "Before 2004"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__body_sha256_prefix
+msgid "Body SHA-256 Prefix"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__response_summary
+msgid ""
+"Body summary, truncated to ~4 KB. PII (buyer_name, buyer_email, addresses) "
+"is scrubbed before write."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__request_payload_summary
+msgid "Body summary; Authorization header scrubbed."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__bootstrap
+msgid "Bootstrap (migration)"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Both minimum and maximum delivery days are required."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"Both partners must have is_etsy_customer=True (keep=%(k)s, merge=%(m)s). "
+"Refusing merge."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__buffered
+msgid "Buffered"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__processing_time_unit__business_days
+msgid "Business days"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__buyer_message_sync
+msgid "Buyer Message Sync"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__reason
+msgid "Buyer's reason for the change — required at request time."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__posted_at
+msgid "Buyer-side timestamp from API or email Date header (UTC)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_search
+msgid "By Parent"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_search
+msgid "By Shop"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__x_gdrive_design_folder_id
+msgid "Cached GDrive folder ID for design uploads (internal system field)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Cancel"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_publish_wizard.py:0
+msgid "Cannot re-push inventory: product has no Etsy listing yet."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__catalog_image_download
+msgid "Catalog Image Download"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__catalog_import_run
+msgid "Catalog Import Run"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__changed_at
+msgid "Changed At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__channel
+msgid "Channel"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__sync_source
+msgid ""
+"Channel adapter that ingested this order; written by EtsyOrderIngestor."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__child_ids
+msgid "Children"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Close"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__generate_dedup_report
+msgid ""
+"Cluster Etsy partners by normalized name+address+city+zip and write a /tmp "
+"CSV of proposed merges. The wizard never modifies partners on its own (R10) "
+"— apply via the separate Apply Merges action with a BA-approved CSV."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_color
+msgid "Color"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__auto_confirm
+msgid "Confirm + invoice"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_attempts
+msgid ""
+"Consecutive failed push attempts. The fallback cron stops retrying at the "
+"cap (MF-E2E-3a 2026-07-04: a permanently failing order was retried every 5 "
+"minutes forever); the manual form button is never capped. Reset on success."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_res_partner
+msgid "Contact"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__conversation_sync
+msgid "Conversation Sync"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Cost"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__secondary_cost
+msgid "Cost With Another Item"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__primary_cost
+msgid "Cost to ship this item alone, in the shop currency."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__secondary_cost
+msgid "Cost to ship this item alongside another, in the shop currency."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__health_check_consecutive_failures
+msgid ""
+"Counter for the 3-failure auto-failover threshold. Reset to 0 on a "
+"successful probe."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__recovery_probe_consecutive_successes
+msgid ""
+"Counter for the 6-success recovery threshold. Reset to 0 on a failed probe."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Counts"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_discount
+msgid "Coupon/discount applied via Etsy checkout (negative amount)."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shipping_profile_create_wizard
+#: model:ir.model,name:etsy_integration.model_etsy_shipping_profile_create_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Create Etsy Shipping Profile"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Create On Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Create new shipping profile"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Create shipping profile"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__created_at
+msgid "Created At (Etsy)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__created_at
+msgid "Created In Odoo At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__sale_order_id
+msgid "Created Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__create_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile__source__odoo_create
+msgid "Created in Odoo"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__create_date
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid ""
+"Creates a <strong>manual flat-rate</strong> shipping profile\n"
+"                    on Etsy. Calculated (carrier-rate) profiles must be created\n"
+"                    in Etsy's web UI and are pulled by the daily sync."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__currency_id
+msgid "Currency"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__enquiry_alias_id
+msgid "Customer Enquiry Email Alias"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_enquiry
+msgid "Customer enquiry — pre-sale conversation not yet tied to an order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_data_migration_wizard
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_data_migration
+msgid "Data Migration"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Date (Month)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__date_received
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Date Received"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__approved_by
+msgid "Decided By"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Dedup report: %(count)s clusters → %(name)s (in /tmp)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_is_supply
+msgid "Default \"Is Supply\""
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_when_made
+msgid "Default \"When was it made\""
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_who_made
+msgid "Default \"Who made it\""
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_readiness_state_id
+msgid "Default Etsy Readiness State ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_return_policy_id
+msgid "Default Etsy Return Policy ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_shipping_profile_id
+msgid "Default Etsy Shipping Profile ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_taxonomy_id
+msgid "Default Etsy Taxonomy ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_description
+msgid "Default Listing Description"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_image_1920
+msgid "Default Listing Image"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__default_title
+msgid "Default Listing Title"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__deleted
+msgid "Deleted"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Delivery & Processing"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Delivery Days"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__level
+msgid "Depth in the seller-taxonomy tree (root = 0)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__description
+msgid "Description"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_design_link_back
+msgid "Design Link (Back)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_design_link_front
+msgid "Design Link (Front)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_design_queue
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_design_queue
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_design_queue_view_list
+msgid "Design Queue"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Destination"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_country_id
+msgid "Destination Country"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_region
+msgid "Destination Region"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__dimensions_unit_pref
+msgid "Dimensions Unit Preference"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_discount_code
+msgid "Discount Code"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_currency_id
+msgid "Display Currency"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_ir_config_parameter__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__display_name
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__draft
+msgid "Draft"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__duration_ms
+msgid "Duration (ms)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__active_source__email
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__from_source__email
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__to_source__email
+msgid "Email"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__channel__email
+msgid "Email Fallback Parser"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_email_log
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_email_log
+msgid "Email Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__sync_mode__email_only
+msgid "Email Only"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__sync_mode
+msgid ""
+"Email Only: legacy Gmail-cron ingest. API Only: Etsy v3 receipts cron "
+"ingest. Switch via P1-11 cutover only."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__subject
+msgid "Email Subject"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Empty → product fallback → shop default. Etsy\n"
+"                        requires all three on every listing."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__endpoint
+msgid "Endpoint"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__error
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__error_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__error_message
+msgid "Error Message"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_error
+msgid ""
+"Error detail from the last failed tracking push; cleared on the next "
+"successful push."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_error_count
+msgid "Errors"
+msgstr ""
+
+#. module: etsy_integration
+#: model:crm.team,name:etsy_integration.team_etsy
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_form_etsy_inherit
+msgid "Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:account.tax,description:etsy_integration.tax_etsy_collected
+msgid "Etsy (0%)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__active_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__from_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__to_source__api
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__api
+msgid "Etsy API"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_api_log
+msgid "Etsy API Audit Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy API Identity"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_api_log
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_api_log
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_tree
+msgid "Etsy API Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Etsy API Log Entry"
+msgstr ""
+
+#. module: etsy_integration
+#: model:res.groups,name:etsy_integration.group_etsy_api_log_reader
+msgid "Etsy API Log Reader"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_enquiry__etsy_conversation_id
+msgid "Etsy API conversation_id; UNIQUE per shop when set."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_address_change_request
+msgid "Etsy Address-Change Approval Request"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_order_ticket
+msgid "Etsy After-Sales Ticket (return / refund / reship)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__etsy_buyer_name
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__etsy_buyer_name
+msgid "Etsy Buyer Name"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_taxonomy_id
+msgid "Etsy Category"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__etsy_conversation_id
+msgid "Etsy Conversation ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__channel__api
+msgid "Etsy Conversations API"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_partner_search_etsy_inherit
+msgid "Etsy Customers"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_dashboard
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_dashboard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Etsy Dashboard"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Etsy Data Migration"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_data_migration_wizard
+msgid "Etsy Data Migration Wizard"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_discount
+msgid "Etsy Discount"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_discount_amount
+msgid "Etsy Discount Amount"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_eur
+msgid "Etsy EUR"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__email
+msgid "Etsy Email"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_list
+msgid "Etsy Email Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_email_log
+msgid "Etsy Email Processing Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_gbp
+msgid "Etsy GBP"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_gift_wrap
+msgid "Etsy Gift Wrap"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_gift_wrap_price
+msgid "Etsy Gift Wrap Price"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__etsy_id
+msgid "Etsy ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_image_url
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__etsy_image_url
+msgid "Etsy Image URL"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Etsy Integration"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_last_modified
+msgid "Etsy Last Modified"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_last_receipt_sync_at
+msgid "Etsy Last Receipt Sync At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing
+msgid "Etsy Listing"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__listing_currency_id
+msgid "Etsy Listing Currency"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__etsy_listing_id
+msgid "Etsy Listing ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing_product
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_listing_variant_id
+msgid "Etsy Listing Variant"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_listing_products
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_list
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Etsy Listing Variants"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_listing_backfill_wizard
+msgid "Etsy Listing → Product Hub Backfill Wizard"
+msgstr ""
+
+#. module: etsy_integration
+#: model:account.fiscal.position,name:etsy_integration.fiscal_pos_etsy_marketplace
+#: model:account.tax.group,name:etsy_integration.tax_group_etsy
+msgid "Etsy Marketplace"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_message_dedupe
+msgid "Etsy Message Dedupe Ledger"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_access_token
+msgid "Etsy OAuth Access Token"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_refresh_token
+msgid "Etsy OAuth Refresh Token"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_oauth_token_expires_at
+msgid "Etsy OAuth Token Expires At"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Etsy Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__etsy_order_count
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__etsy_order_count
+msgid "Etsy Order Count"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_order_id
+msgid "Etsy Order ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_orders
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_orders
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_graph
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_pivot
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_partner_form_etsy_inherit
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_sales_order_filter_etsy_inherit
+msgid "Etsy Orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__payment_status
+msgid "Etsy Payment Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:account.payment.term,name:etsy_integration.payment_term_etsy_prepaid
+msgid "Etsy Prepaid"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__price
+msgid "Etsy Price"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_price_anomaly
+msgid "Etsy Price Anomaly"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__etsy_product_id
+msgid "Etsy Product ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_search_etsy_inherit
+msgid "Etsy Products"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__etsy_profile_id
+msgid "Etsy Profile ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_etsy_property_id
+msgid "Etsy Property ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_id_override
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_id_override
+msgid "Etsy Property ID Override"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_etsy_property_name
+msgid "Etsy Property Name"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_name_override
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_name_override
+msgid "Etsy Property Name Override"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_publish_wizard
+msgid "Etsy Publish Wizard"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy Publisher Defaults"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.product_attribute_view_form_etsy_extension
+msgid "Etsy Publisher Settings"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Etsy Publisher Unit Preferences"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__quantity
+msgid "Etsy Quantity"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_receipt_status
+msgid "Etsy Receipt Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_sku
+msgid "Etsy SKU"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_taxonomy_node
+msgid "Etsy Seller Taxonomy Node (cache)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_ship_notified_at
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__etsy_ship_notified_at
+msgid "Etsy Ship Notified At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_is_shipped
+msgid "Etsy Shipped"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,name:etsy_integration.product_etsy_shipping
+msgid "Etsy Shipping"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shipping_cost
+msgid "Etsy Shipping Cost"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shipping_profile_id
+msgid "Etsy Shipping Profile"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shipping_profile
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_shipping_profile
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_list
+msgid "Etsy Shipping Profiles"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shop_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_sales_order_filter_etsy_inherit
+msgid "Etsy Shop"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__etsy_api_shop_id
+msgid "Etsy Shop ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shipping_profile
+msgid "Etsy Shop Shipping Profile (cache)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop_source_change_log
+msgid "Etsy Shop Source Change Log"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_shop_attribute_mapping
+msgid "Etsy Shop — Default Attribute Mapping"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_shops
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_shops
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_list
+msgid "Etsy Shops"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_subtotal
+msgid "Etsy Subtotal"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_sync_health
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_sync_health
+msgid "Etsy Sync Health"
+msgstr ""
+
+#. module: etsy_integration
+#: model:account.tax,name:etsy_integration.tax_etsy_collected
+msgid "Etsy Tax Collected (0%)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tax_total
+msgid "Etsy Tax Total"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_taxonomy_node
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_taxonomy_node
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_list
+msgid "Etsy Taxonomy"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_total_mismatch
+msgid "Etsy Total Mismatch"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_attempts
+msgid "Etsy Tracking Push Attempts"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_error
+msgid "Etsy Tracking Push Error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_status
+msgid "Etsy Tracking Push Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_tracking_push_at
+msgid "Etsy Tracking Pushed At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_transaction_id
+msgid "Etsy Transaction ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__url
+msgid "Etsy URL"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.pricelist,name:etsy_integration.pricelist_etsy_usd
+msgid "Etsy USD"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__sync_source__webhook
+msgid "Etsy Webhook (reserved)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_etsy_property_id
+msgid ""
+"Etsy attribute taxonomy ID for this axis. Stored as text to preserve large "
+"IDs. Discover via the Etsy taxonomy properties endpoint for the listing's "
+"taxonomy_id."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Etsy channel reference is missing."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid "Etsy did not return a shipping_profile_id; profile not created."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:account.fiscal.position,note:etsy_integration.fiscal_pos_etsy_marketplace
+msgid ""
+"Etsy is responsible for collecting and remitting marketplace tax. Orders "
+"carry a 0% tax line for reporting only."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_etsy_property_name
+msgid ""
+"Etsy property display name sent with the property ID in push_inventory "
+"property_values[]. Etsy REQUIRES a non-null property_name (the inventory PUT"
+" 400s 'Expected string value for property_name' without it). For standard "
+"properties match Etsy's canonical name (e.g. 200 -> 'Primary color'); for "
+"custom properties (513/514) it is a free label."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Etsy property_name string"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: SKU %r is shared by two variants with different attribute "
+"values. This usually means the base SKU is too long and synthesized SKUs "
+"collided after the %d-char Etsy truncation. Shorten the template's "
+"default_code or set explicit per-variant default_code values."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: cannot resolve a positive starting price for %r. Set "
+"list_price on the product or price_extra on at least one variant before "
+"publishing."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_listing_publisher.py:0
+msgid ""
+"Etsy publish: cannot synthesize a variant SKU — template has no default_code"
+" AND the variant has no attribute values to derive a suffix from. Set "
+"default_code on the product or on at least one variant."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_readiness_state_id
+msgid ""
+"Etsy readiness-state id (processing-time profile). Required by "
+"createDraftListing for physical listings as of the 2025 API update. Discover"
+" via GET /shops/{shop_id}/readiness-state-definitions."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__pending_target_receipt_id
+msgid ""
+"Etsy receipt_id when message arrived before order ingestion. Cleared when "
+"state flips to posted."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid "Etsy rejected the shipping profile: %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_return_policy_id
+msgid "Etsy return policy id used as the default for createDraftListing."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_shipping_profile_id
+msgid "Etsy shipping profile id used as the default for createDraftListing."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__listing_currency_id
+msgid ""
+"Etsy shop listing currency (e.g. VND, USD). Discovered via GET "
+"/shops/{shop_id}; used by the publisher to convert outbound list_price from "
+"company currency to shop currency. Without it Etsy 400s with "
+"\"price_too_low\" when company currency differs from shop currency."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_taxonomy_id
+msgid "Etsy taxonomy node id used as the default for createDraftListing."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_when_made
+msgid "Etsy when_made enum value (e.g. made_to_order, 2020_2026)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_api_log_cleanup_ir_actions_server
+msgid "Etsy: API Log Retention Sweep"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_order_sync_ir_actions_server
+msgid "Etsy: API Receipts Sync"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_download_pending_etsy_images_ir_actions_server
+msgid "Etsy: Download Pending Product Images"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_fetch_etsy_emails_ir_actions_server
+msgid "Etsy: Fetch Order Emails"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_listing_sync_ir_actions_server
+msgid "Etsy: Listing Metadata Sync"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_listing_variant_sync_ir_actions_server
+msgid "Etsy: Listing Variant Inventory Sync"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_message_dedupe_retention_ir_actions_server
+msgid "Etsy: Message Dedupe Retention Sweep"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_etsy_tracking_push_ir_actions_server
+msgid "Etsy: Push Tracking to Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.ir_cron_etsy_refresh_currency_rates_ir_actions_server
+msgid "Etsy: Refresh Shop Currency Rates"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_shipping_profile_sync_ir_actions_server
+msgid "Etsy: Shipping Profile Cache Sync (P-LIST-SHIPPING)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.server,name:etsy_integration.cron_etsy_taxonomy_sync_ir_actions_server
+msgid "Etsy: Taxonomy Cache Sync (P-LIST-CATEGORY)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_region__eu
+msgid "European Union"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__everywhere
+msgid "Everywhere"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__excel_file
+msgid "Excel File"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_face_mask_size
+msgid "Face Mask Size"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__failed
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__failed
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Failed"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_cron_interval
+msgid "Fetch Interval (minutes)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__excel_filename
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__excel_filename
+msgid "Filename"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__excel_filename
+msgid "Filename of the uploaded source Excel file (optional)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__body_sha256_prefix
+msgid ""
+"First 16 hex chars of SHA-256(body). Used to reconcile API+email arrivals of"
+" the same logical message."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__payload_excerpt
+msgid ""
+"First 256 chars of the message body for audit debugging. Full body lives in "
+"mail.message."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Fix Options"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_financial_config
+msgid "Fix financial config"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__fix_product_config
+msgid "Fix product config"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_follower_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_follower_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_partner_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_partner_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_type_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_type_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__from_source
+msgid "From Source"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__quota_used_today
+msgid "From X-RateLimit-Limit-Daily header (FR-027)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order_fulfillment
+msgid "Fulfillment lifecycle for a sale order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__full_path
+msgid "Full Path"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__x_gdrive_design_folder_id
+msgid "GDrive Design Folder ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__generate_dedup_report
+msgid "Generate dedup CSV"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_gift_message
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_gift_message
+msgid "Gift Message"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_gift_wrap
+msgid "Gift wrap charged via Etsy checkout."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_client_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Client ID"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Gmail Client ID or Client Secret is not configured. Please set them in "
+"Settings before authorizing."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_client_secret
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Client Secret"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Connection"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_label
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Label"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__gmail_message_id
+msgid "Gmail Message ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__etsy_gmail_refresh_token
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail Refresh Token"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_config_settings__etsy_gmail_label
+msgid "Gmail label used to filter Etsy order emails"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Gmail label used to filter Etsy order notification emails"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__http_status
+msgid "HTTP Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__endpoint
+msgid "HTTP method + path, e.g. GET /v3/application/shops/{shop_id}/receipts"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__has_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__has_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__has_pending_address_change
+msgid "Has Pending Address Change"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__health_check
+msgid "Health Check"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__sync_health_id
+msgid ""
+"Health row created/updated for this run. Smart button opens the live state."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__health_check_consecutive_failures
+msgid "Health-Check Consecutive Failures"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__health_check_failures_at_change
+msgid "Health-Check Failures at Change"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "How It's Made"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "How often to check for new Etsy order emails (in minutes)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__validation_notes
+msgid ""
+"Human-readable summary of warnings emitted during the last import. Empty "
+"when no warnings were raised."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__i_did
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__i_did
+msgid "I did"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__id
+#: model:ir.model.fields,field_description:etsy_integration.field_ir_config_parameter__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_enquiry__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__id
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__id
+#: model:ir.model.fields,field_description:etsy_integration.field_res_config_settings__id
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_fulfillment__id
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__id
+msgid "ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__origin_country_iso
+msgid "ISO 3166-1 alpha-2 country code from which the listing ships."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_exception_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_exception_icon
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_exception_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_exception_icon
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__idle
+msgid "Idle"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_needaction
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_needaction
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_sms_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_sms_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_error
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Image"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_image_url
+msgid "Image URL"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__created_at
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__url
+msgid "Immutable after first ingest (ADR-013)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+msgid "Import Etsy Orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_etsy_import_orders_wizard
+msgid "Import Etsy Orders from Excel"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_import_orders_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_import_orders_wizard_view_form
+msgid "Import Orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_import_orders
+msgid "Import Orders (Email Fallback)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__inactive
+msgid "Inactive"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__include_anomalies
+msgid "Include $0 anomalies"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Input & Checkpoint"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__name
+msgid "Integration"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__note
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Internal Note"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Invalid state parameter. Please restart the authorization flow from "
+"Settings."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__is_deleted
+msgid "Is Deleted"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_res_partner__is_etsy_customer
+#: model:ir.model.fields,field_description:etsy_integration.field_res_users__is_etsy_customer
+msgid "Is Etsy Customer"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__is_etsy_order
+msgid "Is Etsy Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__is_etsy_product
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__is_etsy_product
+msgid "Is Etsy Product"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_is_follower
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_is_follower
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_is_supply
+msgid "Is supply"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_error_message
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Last Error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__http_status
+msgid ""
+"Last HTTP status seen. NULL on connection failures (no response). Audit-mode"
+" order-sync rows record 200 because the audit fires only after a successful "
+"page fetch (P-UAT-FIX-API-LOG-HTTP-STATUS)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__last_modified
+msgid "Last Modified (Etsy)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_processed_id
+msgid "Last Processed ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_at
+msgid "Last Run"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_successful_run_at
+msgid "Last Success"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__last_synced_at
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__last_synced_at
+msgid "Last Synced At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__write_uid
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__write_date
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__last_processed_id
+msgid "Last processed order id"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__name
+msgid "Leaf name (e.g. \"Cookware\", \"Throw Pillows\")."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__level
+msgid "Level"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_status
+msgid ""
+"Lifecycle of the tracking-number push to Etsy (POST "
+"receipts/{receipt_id}/tracking)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__requested_fields
+msgid "List of field names (sale.order destination fields) being changed."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__listing_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__listing_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Listing"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_create
+msgid "Listing Create (Draft)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_image_delete
+msgid "Listing Image Delete"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_image_upload
+msgid "Listing Image Upload"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_inventory_push
+msgid "Listing Inventory Push"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_publish
+msgid "Listing Publish"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_pull
+msgid "Listing Pull"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__listing_push
+msgid "Listing Push"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.ui.menu,name:etsy_integration.menu_etsy_listing_products
+msgid "Listing Variants"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__display_currency_id
+msgid ""
+"Listing currency derived from the Etsy shop. Used to drive the "
+"``display_price_in_shop_currency`` Monetary widget."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_listing__quantity
+msgid ""
+"Listing-level quantity from the Etsy listings endpoint. Variant-level "
+"inventory is Slice 2 (P-LIST-INV-PULL)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_when_made__made_to_order
+msgid "Made to order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__enquiry_alias_id
+msgid ""
+"Mail alias that routes inbound emails to multichannel.enquiry records owned "
+"by this shop. Provisioned via action_provision_enquiry_alias."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__manual
+msgid "Manual toggle"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__new_values
+msgid ""
+"Map of field_name -> value. Many2one fields stored as {'id': <int>, "
+"'display_name': <str>}."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Mark Refunded / Done"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Marked refunded/done by %s (refund executed manually on Etsy)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__matched_count
+msgid "Matched Count"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__max_delivery_days
+msgid "Max Delivery Days"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__max_processing_time
+msgid "Max Processing Time"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__etsy_message_id
+msgid "Message ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"Migration complete: %(processed)s orders processed, %(errors)s errors, "
+"%(anomalies)s anomalies quarantined."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__min_delivery_days
+msgid "Min Delivery Days"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__min_processing_time
+msgid "Min Processing Time"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Minimum delivery days cannot exceed maximum delivery days."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_last_modified
+msgid ""
+"Mirrors the Etsy receipt last_modified timestamp. Used to distinguish stale "
+"re-syncs from genuine updates."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/import_orders_wizard.py:0
+msgid ""
+"Missing required column(s) in the uploaded file: %(missing)s.\n"
+"Required headers are: %(required)s."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_listing
+msgid "Multichannel Listing Intent (per-channel / per-shop)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_multichannel_listing_attribute_mapping
+msgid "Multichannel Listing — Per-listing Attribute Mapping"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__my_activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__my_activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__actor_user_id
+msgid "NULL for cron-driven (auto-failover / recovery-probe) changes."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__from_source
+msgid "NULL for the first (bootstrap) row of a shop."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__name
+msgid "Name"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_product__etsy_needs_product_review
+#: model:ir.model.fields,field_description:etsy_integration.field_product_template__etsy_needs_product_review
+msgid "Needs Etsy Product Review"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_search_etsy_inherit
+msgid "Needs Etsy Review"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_needs_gift_wrap
+msgid "Needs Gift Wrap"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__new_values
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "New Values"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_date_deadline
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_summary
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_summary
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_type_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_type_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.actions.act_window,help:etsy_integration.action_etsy_api_log
+msgid "No Etsy API log entries yet."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "No Etsy shops assigned to you."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid ""
+"No approved-merges CSV uploaded. Generate one via 'Generate dedup CSV' "
+"first, have it reviewed by a BA, then upload the approved subset here."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "No authorization code received."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"No refresh token received from Google. Please revoke access at "
+"https://myaccount.google.com/permissions and try again."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_region__non_eu
+msgid "Non-EU Europe"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__none
+msgid "Not Pushed"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_note_from_buyer
+msgid "Note from Buyer"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Note from buyer (Etsy)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__notes
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__notes
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Notes"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Nothing to retry — this email is not in Failed state."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_needaction_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_needaction_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_error_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_error_counter
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_needaction_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_needaction_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__message_has_error_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__message_has_error_counter
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__batch_size
+msgid ""
+"Number of orders per savepoint. 500 balances memory against rollback "
+"granularity for the 17K backlog."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__warning_count
+msgid ""
+"Number of zero-price rows or missing-optional-header warnings observed "
+"during the last import (Spec 002 US5 T033)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Numeric Etsy property_id"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_id_override
+msgid ""
+"Numeric Etsy property_id to use FOR THIS LISTING. Empty → falls back to shop"
+" default → product.attribute.x_etsy_property_id."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__etsy_profile_id
+msgid ""
+"Numeric shipping_profile_id from Etsy (stored as string to avoid XML-RPC "
+"int32 overflow)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__etsy_api_shop_id
+msgid ""
+"Numeric shop_id assigned by Etsy (visible in seller dashboard URL). Used in "
+"/v3/application/shops/{shop_id}/* URLs. Must be set before flipping Active "
+"Source to \"Etsy API\"."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__scope_validation
+msgid "OAuth Scope Validation"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Client ID for Gmail API access"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Client Secret for Gmail API access"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "OAuth2 Refresh Token for Gmail API access"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__ok
+msgid "OK"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__product_id
+msgid "Odoo Product"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__odoo_qty
+msgid "Odoo Quantity"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__product_attribute_id
+msgid "Odoo product attribute (e.g. Size, Color, Material)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__user_id
+msgid ""
+"Odoo user who manages this shop; scopes order visibility and manual pull."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only BA Leads may approve or reject address-change requests."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Only BA users can create Etsy shipping profiles."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_publish_wizard.py:0
+msgid "Only BA users can publish products to Etsy."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_listing_backfill_wizard.py:0
+msgid "Only BA users can run the backfill wizard."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Only a BA Lead can approve, reject, or close after-sales tickets."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_shop.py:0
+msgid ""
+"Only administrators can provision a customer enquiry email alias for an Etsy"
+" shop."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only requests in 'requested' state can be approved."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Only requests in 'requested' state can be rejected."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Only the production/fulfillment team can push tracking to Etsy."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "Operator notes (only editable field)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_option
+msgid "Option"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__excel_file
+msgid ""
+"Optional Excel file consumed by the price-from-Excel fix (T041, lands in "
+"W3.2b). Not required for the backbone run."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing_attribute_mapping__etsy_property_name_override
+msgid ""
+"Optional override for the Etsy property_name string. Empty → falls back to "
+"product.attribute.x_etsy_property_name."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__order_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__order_id
+msgid "Order"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Order %s created from this email."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__order_count
+msgid "Order Count"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__sync
+msgid "Order Sync"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Order already exists — email marked as duplicate."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid ""
+"Order already shipped — create a return/ticket instead (see Spec 004c)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Order fixes"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__order_ids
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Orders"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Origin"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__origin_country_iso
+msgid "Origin Country"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_postal_code
+msgid "Origin Postal Code"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Origin country has no ISO code."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_partner__etsy_buyer_name
+#: model:ir.model.fields,help:etsy_integration.field_res_users__etsy_buyer_name
+msgid "Original buyer name from Etsy (may differ from shipping name)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__orphaned
+msgid "Orphaned"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__message_send
+msgid "Outbound Message Send"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__payment_status__paid
+msgid "Paid"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_taxonomy_node__parent_id
+msgid "Parent"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+msgid "Parse failed again: %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Partner dedup (R10)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__payload_excerpt
+msgid "Payload Excerpt"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:account.payment.term,note:etsy_integration.payment_term_etsy_prepaid
+msgid "Payment collected by Etsy at checkout"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__payment_status
+msgid ""
+"Payment state mirrored from the Etsy receipt; updated on every API re-sync."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__pending
+msgid "Pending"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__pending_target_receipt_id
+msgid "Pending Receipt ID"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__attribute_mapping_ids
+msgid ""
+"Per-listing Etsy property_id overrides. Priority chain when the publisher "
+"resolves an Etsy property for a variation axis: 1) listing mapping row, 2) "
+"shop default mapping, 3) global product.attribute.x_etsy_property_id. Leave "
+"a row empty to fall through to the next tier."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_taxonomy_id
+msgid ""
+"Per-listing Etsy taxonomy override. Empty → falls back to "
+"product.template.x_taxonomy_id → etsy.shop.default_taxonomy_id."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_when_made
+msgid ""
+"Per-listing override. Empty → falls back to product (x_when_made) → shop "
+"default (default_when_made)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_who_made
+msgid ""
+"Per-listing override. Empty → falls back to product (x_who_made) → shop "
+"default (default_who_made)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_shipping_profile_id
+msgid ""
+"Per-listing shipping profile override. Empty → falls back to "
+"etsy.shop.default_shipping_profile_id."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_description
+msgid ""
+"Per-shop brand-voice description used when neither the listing override nor "
+"the product canonical description is set. Marketing owns this field — leave "
+"empty to inherit product description_sale."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_title
+msgid ""
+"Per-shop brand-voice title used when neither the listing override nor the "
+"product canonical name is set. Marketing owns this field — leave empty to "
+"inherit product name."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Per-shop fallback description; empty → product description_sale"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_image_1920
+msgid ""
+"Per-shop hero image used when neither the listing override nor the product "
+"canonical image is set. Marketing owns this field — leave empty to inherit "
+"product image_1920."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_personalisation
+msgid "Personalisation"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_message_dedupe__state__posted
+msgid "Posted"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__posted_at
+msgid "Posted At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__display_price_in_shop_currency
+msgid ""
+"Preview of the list price converted to the shop currency using today's "
+"``res.currency.rate``. 0.0 means the shop, currency, or rate is not "
+"configured."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__price
+msgid "Price"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__display_price_in_shop_currency
+msgid "Price (shop currency)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Pricing"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_processing_time
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Processing Time"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__processing_time_unit
+msgid "Processing Unit"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_template
+msgid "Product"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_attribute
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__product_attribute_id
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__product_attribute_id
+msgid "Product Attribute"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Product Image"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__product_tmpl_id
+msgid "Product Tmpl"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_product_product
+msgid "Product Variant"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_shipping_profile_create_wizard_form
+msgid "Profile"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__title
+msgid "Profile Name"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Profile name is required."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__property_values
+msgid "Property Values (JSON)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Provision Email Alias"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Publish (full)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Publish Draft Only"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_product_attribute__x_publish_as_property
+msgid "Publish as Etsy property"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_publish_wizard
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy_publish_button
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_product_template_form_etsy_inherit
+msgid "Publish to Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Publisher Defaults"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-javascript
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+#: code:addons/etsy_integration/static/src/views/etsy_pull_list/etsy_pull_list_controller.xml:0
+msgid "Pull Etsy Orders"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid ""
+"Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, %(errors)s "
+"errors."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Push failed."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Push tracking to Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__etsy_tracking_push_status__pushed
+msgid "Pushed"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__qty_drift
+msgid "Qty Drift"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__quantity
+msgid "Quantity"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__quota_remaining_today
+msgid "Quota Remaining Today"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__quota_used_today
+msgid "Quota Used Today"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__raw_body_html
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Raw Body (HTML)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__raw_body_text
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Raw Body (Text)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_publish_wizard_form
+msgid "Re-push Inventory Only"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__sync_audit_mode
+msgid ""
+"Read-only API sync: fetch receipts, compare, log diffs; no sale.order "
+"writes. Use during cutover validation."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_message_dedupe__etsy_message_id
+msgid ""
+"Real Etsy conversation_id+message_id, or synthesized for email-fallback"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__reason
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__reason
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__reason
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Reason"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Receipt Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__recovery-probe
+msgid "Recovery probe"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__recovery_probe_consecutive_successes
+msgid "Recovery-Probe Consecutive Successes"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__name
+msgid "Reference"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Refresh the taxonomy / shipping caches from\n"
+"                        <em>Etsy Shop Settings</em> if the dropdowns look\n"
+"                        stale."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__refund
+msgid "Refund"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__refund_amount
+msgid "Refund Amount"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Refund amount cannot be negative."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__refunded
+msgid "Refunded / Done"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__region
+msgid "Region (EU / non-EU)"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_order_ticket_form
+msgid "Reject"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__rejected
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__state__rejected
+msgid "Rejected"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__rejected_at
+msgid "Rejected At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__rejection_reason
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_address_change_request_form
+msgid "Rejection Reason"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__request_started_at
+msgid "Request Started At"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__request_payload_summary
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Request Summary"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Request address change"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_address_change_request__state__requested
+msgid "Requested"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__requested_by
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__requested_by
+msgid "Requested By"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__requested_fields
+msgid "Requested Fields"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_postal_code
+msgid "Required by Etsy for countries that use postal codes (US, etc.)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__rejection_reason
+msgid "Required when state is rejected."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__reship
+msgid "Reship"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "Resolved by request %s."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__response_summary
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_form
+msgid "Response Summary"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__user_id
+msgid "Responsible"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__activity_user_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__activity_user_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Results"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Resumability (R4)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_sync_health__last_processed_id
+msgid "Resumability checkpoint for batched workers"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__last_processed_id
+msgid ""
+"Resumability checkpoint — updated after each successful batch. The next run "
+"with resume_from_checkpoint=True starts at id > last_processed_id."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy_publish_button
+msgid "Resume Publish"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__resume_from_checkpoint
+msgid "Resume from last checkpoint"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__retry_count
+msgid "Retry Count"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_email_log.py:0
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "Retry Parse"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_order_ticket__ticket_type__return
+msgid "Return"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "Return to"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__last_run_row_count
+msgid "Rows Processed"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_backfill_wizard_form
+msgid "Run Backfill"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Run Migration"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__running
+msgid "Running"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_product__sku
+msgid "SKU"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__message_has_sms_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__message_has_sms_error
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_sale_order_line
+msgid "Sales Order Line"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Scheduling"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop_source_change_log__reason__scope-revoked
+msgid "Scope revoked"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Search Email Logs"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_search
+msgid "Search Etsy Shops"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Select a destination country."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Select a destination region."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__sequence
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing_attribute_mapping__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__set_as_shop_default
+msgid "Set As Shop Default"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__active_source_changed_at
+msgid "Set automatically on every active_source transition."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_financial_config
+msgid ""
+"Set fiscal_position_id, payment_term_id, team_id, pricelist_id, currency_id "
+"on every Etsy order."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__fix_product_config
+msgid ""
+"Set is_storable=True and run the product categorizer on all Etsy products "
+"touched in the current batch."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_product__etsy_needs_product_review
+#: model:ir.model.fields,help:etsy_integration.field_product_template__etsy_needs_product_review
+msgid "Set when Etsy order ingest had to auto-create this product."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_total_mismatch
+msgid ""
+"Set when Odoo amount_total did not reconcile with the Etsy buyer-paid total "
+"(grandtotal minus marketplace-remitted tax). Review pricing/line mapping for"
+" this order."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__created_at
+msgid ""
+"Set when the profile was created from Odoo; NULL for profiles that "
+"originated in Etsy and were synced."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "Settings"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Shipping"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Shipping & Variations"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__primary_cost
+msgid "Shipping Cost"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__shipping_profile_create
+msgid "Shipping Profile Create"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_shipping_service
+msgid "Shipping Service"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_order_form_etsy_inherit
+msgid "Shipping Tracking"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_shipping_last_synced_at
+msgid "Shipping cache last synced"
+msgstr ""
+
+#. module: etsy_integration
+#: model:product.template,description_sale:etsy_integration.product_etsy_shipping
+msgid "Shipping cost collected via Etsy checkout."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/etsy_shipping_profile_create_wizard.py:0
+msgid "Shipping costs cannot be negative."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__origin_country_id
+msgid "Ships From"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile_create_wizard__destination_kind
+msgid "Ships To"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_publish_wizard__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_attribute_mapping__shop_id
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__shop_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_dashboard_search
+msgid "Shop"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/services/etsy_shipping_profile_creator.py:0
+msgid ""
+"Shop %s has no Etsy shop id; authorize the shop before creating shipping "
+"profiles."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Shop Brand-Voice Defaults"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid "Shop Currency Preview"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__name
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "Shop Name"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_multichannel_listing_form_etsy
+msgid ""
+"Shop currency not configured — set Etsy Shop and its listing currency to "
+"enable preview."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_shop_id
+msgid ""
+"Shop this listing pushes to. Drives the price-display widget and per-"
+"channel-shop overrides."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_attribute_mapping__etsy_property_id_override
+msgid ""
+"Shop-wide default Etsy property_id. Listings can still override per-row."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__default_attribute_mapping_ids
+msgid ""
+"Shop-wide overrides for product.attribute → Etsy property_id. Listings can "
+"still override per row."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_side
+msgid "Side"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order_line__etsy_size
+msgid "Size"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Skipped"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__skipped
+msgid "Skipped (Duplicate)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__full_path
+msgid "Slash-joined breadcrumb, e.g. \"Home & Living / Kitchen / Cookware\"."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop_source_change_log__health_check_failures_at_change
+msgid "Snapshot of the shop consecutive-failure counter at switch time."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__active
+msgid ""
+"Soft-disable when Etsy retires a taxonomy node so historical listings still "
+"resolve their label."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__default_who_made__someone_else
+#: model:ir.model.fields.selection,name:etsy_integration.selection__multichannel_listing__etsy_who_made__someone_else
+msgid "Someone else"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_api_log__source
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__source
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_api_log_search
+msgid "Source"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_email_log_id
+msgid "Source Email"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__excel_file
+msgid "Source Excel (optional)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__etsy_raw_source_id
+msgid "Source Record Reference"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid "Source data (optional)"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__destination_kind__country
+msgid "Specific country"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid ""
+"Start the OAuth2 flow to grant Gmail access. Requires Client ID and Client "
+"Secret to be saved first."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__state
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_sync_health__state
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+msgid "State"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__status_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__parse_status
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__status_message
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__state
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Status"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_state
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_state
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_api_log__source
+msgid "Subsystem that generated this log entry."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_email_log__parse_status__success
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_search
+msgid "Success"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_listing__state__suspended
+msgid "Suspended"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.actions.act_window,name:etsy_integration.action_etsy_sync_health
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_data_migration_wizard__sync_health_id
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_sync_health_tree
+msgid "Sync Health"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__sync_mode
+msgid "Sync Mode"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_sale_order__sync_source
+msgid "Sync Source"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile__source__etsy_sync
+msgid "Synced from Etsy"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model,name:etsy_integration.model_ir_config_parameter
+msgid "System Parameter"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/ir_config_parameter.py:0
+msgid "System parameter %r is restricted to administrators."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__target_enquiry_id
+msgid "Target Enquiry"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_message_dedupe__target_sale_order_id
+msgid "Target Sale Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_taxonomy_last_synced_at
+msgid "Taxonomy cache last synced"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Test Connection"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_taxonomy_node__etsy_id
+msgid ""
+"The Etsy seller-taxonomy node id (int64 stored as string to avoid XML-RPC "
+"int32 overflow)."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.actions.act_window,help:etsy_integration.action_etsy_api_log
+msgid ""
+"This audit trail records every Etsy API call and audit-mode receipt comparison.\n"
+"                Rows older than the configured retention window (default 30 days) are\n"
+"                cleaned up daily."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid ""
+"This listing has no Etsy Shop resolved. Open the Advanced settings group and"
+" set the Etsy Shop manually, or contact an admin to re-run the shop "
+"backfill."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid ""
+"This listing has no Etsy Shop resolved; set the Etsy Shop before creating a "
+"shipping profile."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/multichannel_listing.py:0
+msgid "This listing is not bound to the Etsy channel."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Ticket approved by %s."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_order_ticket.py:0
+msgid "Ticket rejected by %s."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_tracking_push_at
+msgid "Timestamp of the last successful tracking push to Etsy."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing__title
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shipping_profile__title
+msgid "Title"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop_source_change_log__to_source
+msgid "To Source"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid ""
+"Token exchange failed (HTTP %s). Please verify your credentials and try "
+"again."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/controllers/oauth.py:0
+msgid "Token exchange request failed: %s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_taxonomy_node_search
+msgid "Top level"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__revenue_total
+msgid "Total Revenue"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__tracking_push
+msgid "Tracking Push"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking number was pushed to Etsy."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking push failed"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/sale_order.py:0
+msgid "Tracking pushed"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_price_anomaly
+msgid ""
+"True when an Etsy order has a non-positive amount_total — used by the "
+"migration wizard to quarantine bad data."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__has_pending_address_change
+msgid ""
+"True when at least one address-change request is in 'requested' state. Locks"
+" shipping fields per C-SO-001."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile__is_deleted
+msgid ""
+"True when the profile has been deleted on Etsy. Soft-keep so historical "
+"listings still resolve."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_multichannel_listing__etsy_is_supply
+msgid ""
+"True when this item is a supply (raw materials, tools). Per-listing — no "
+"fallback chain; the shop default is used only when no listing intent row "
+"exists."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__ticket_type
+msgid "Type"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__activity_exception_decoration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__activity_exception_decoration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_ship_notified_at
+#: model:ir.model.fields,help:etsy_integration.field_sale_order_fulfillment__etsy_ship_notified_at
+msgid ""
+"UTC timestamp of the last successful Etsy buyer-shipping notification (set "
+"by Spec 005 EtsyTrackingPusher on 200 OK). System-only writes — operators "
+"cannot fake notification times."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_sale_order__etsy_order_id
+msgid "Unique Etsy order identifier from the notification email"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__weight_unit_pref
+msgid ""
+"Unit system for Etsy listings: oz (ounces) or g (grams). Odoo stores weight "
+"in kg; conversion applied on publish."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__dimensions_unit_pref
+msgid ""
+"Unit system for item_length/width/height on Etsy listings: cm (centimeters) "
+"or in (inches)."
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "Unknown partner id(s) keep=%(k)s merge=%(m)s"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_listing_product_search
+msgid "Unlinked"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__unmatched_count
+msgid "Unmatched Count"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_listing_backfill_wizard__unmatched_skus
+msgid "Unmatched Skus"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__sale_order__payment_status__unpaid
+msgid "Unpaid"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.view_etsy_data_migration_wizard_form
+msgid ""
+"Upload BA-approved CSV (from a prior run with 'Generate dedup CSV' enabled) "
+"before clicking 'Apply Merges'."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__validation_notes
+msgid "Validation Notes"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.res_config_settings_view_form_etsy
+msgid "Verify Gmail credentials are valid"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_email_log_view_form
+msgid "View Order"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_sync_health__state__warning
+msgid "Warning"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_import_orders_wizard__warning_count
+msgid "Warnings"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__etsy_last_receipt_sync_at
+msgid ""
+"Watermark for incremental Etsy receipt sync. The syncer fetches receipts "
+"modified after this timestamp."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_api_log__source__webhook_register
+msgid "Webhook Register"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_address_change_request__website_message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_email_log__website_message_ids
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_order_ticket__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_address_change_request__website_message_ids
+#: model:ir.model.fields,help:etsy_integration.field_etsy_email_log__website_message_ids
+#: model:ir.model.fields,help:etsy_integration.field_etsy_order_ticket__website_message_ids
+msgid "Website communication history"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shipping_profile_create_wizard__processing_time_unit__weeks
+msgid "Weeks"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_etsy_shop__weight_unit_pref
+msgid "Weight Unit Preference"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__include_anomalies
+msgid ""
+"When False (default), orders with etsy_price_anomaly=True are excluded from "
+"the migration loop and only quarantined to a CSV. Enable to also process "
+"them through the fixes."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__auto_recovery
+msgid ""
+"When False, the recovery probe never auto-switches the shop back to its "
+"primary source (ADR-008a §3)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__resume_from_checkpoint
+msgid ""
+"When True, the migration only iterates orders with id > last_processed_id "
+"(R4). Disable for a full re-run."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_data_migration_wizard__auto_confirm
+msgid ""
+"When enabled, draft orders are confirmed, their pickings are validated, and "
+"invoice_status is set to invoiced (R5). No invoice records are generated."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_import_orders_wizard__auto_confirm
+msgid ""
+"When enabled, each imported order is confirmed, its picking validated, and "
+"marked as invoiced (per R5)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_res_config_settings__etsy_auto_confirm_email
+msgid ""
+"When enabled, orders created by the email cron are immediately confirmed, "
+"their pickings validated, and marked as invoiced (see R5). Default off — "
+"operators may want to review first."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_product_attribute__x_publish_as_property
+msgid ""
+"When enabled, this attribute axis is included in Etsy push_inventory "
+"products[].property_values[]. Defaults to False (opt-in) so that new "
+"attributes never leak to Etsy without an admin explicitly enabling them. The"
+" shipped seed flips this True for the known publishable axes (Material, "
+"Color, Size, Shape, Fluid oz, Apparel Size)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shipping_profile_create_wizard__set_on_listing_id
+msgid ""
+"When launched from a listing, the new profile becomes that listing's "
+"shipping-profile override on success."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_when_made
+msgid "When made"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,help:etsy_integration.field_etsy_shop__active_source
+msgid ""
+"Which upstream adapter feeds the single ingestion pipeline for this shop "
+"(ADR-008a). Toggling is restricted to system administrators (C-ESY-002)."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields,field_description:etsy_integration.field_multichannel_listing__etsy_who_made
+msgid "Who made it"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__dimensions_unit_pref__cm
+msgid "cm"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "e.g. 60752333"
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.etsy_shop_view_form
+msgid "e.g. Handmade Ceramic by JaHandmadeArt"
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__dimensions_unit_pref__in
+msgid "in"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/wizards/data_migration_wizard.py:0
+msgid "keep_partner_id == merge_partner_id (%(id)s)"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_shop.py:0
+msgid ""
+"multichannel.enquiry model is not registered; ensure multichannel_hub_core "
+"is installed."
+msgstr ""
+
+#. module: etsy_integration
+#: model:ir.model.fields.selection,name:etsy_integration.selection__etsy_shop__weight_unit_pref__oz
+msgid "oz"
+msgstr ""
+
+#. module: etsy_integration
+#. odoo-python
+#: code:addons/etsy_integration/models/etsy_address_change_request.py:0
+msgid "rejection_reason is required when rejecting an address-change request."
+msgstr ""
+
+#. module: etsy_integration
+#: model_terms:ir.ui.view,arch_db:etsy_integration.oauth_error_page
+msgid "to review your configuration and try again."
+msgstr ""

@@ -78,9 +78,9 @@
   </record>
 
   <menuitem id="menu_etsy_order_ticket"
-            name="After-Sales"
-            parent="etsy_integration.menu_etsy_root"
+            name="After-Sales Tickets"
+            parent="multichannel_hub_core.menu_after_sales"
             action="action_etsy_order_ticket"
-            sequence="45"/>
+            sequence="10"/>
 
 </odoo>

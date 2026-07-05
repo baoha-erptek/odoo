@@ -74,8 +74,8 @@
 
     <menuitem id="menu_logistics_partner"
               name="Logistics Partners"
-              parent="multichannel_hub_fulfillment.menu_tracking_import_root"
+              parent="multichannel_hub_core.menu_operations_config"
               action="action_logistics_partner"
-              sequence="50"
+              sequence="40"
               groups="multichannel_hub_fulfillment.group_ba_shipping,multichannel_hub_fulfillment.group_ba_manager,base.group_system"/>
 </odoo>

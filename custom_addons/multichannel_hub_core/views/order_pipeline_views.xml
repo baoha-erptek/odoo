@@ -147,9 +147,9 @@
 
   <menuitem id="menu_pipeline_team"
             name="Pipeline Teams"
-            parent="menu_operations_root"
+            parent="menu_operations_config"
             action="action_pipeline_team"
-            sequence="55"
+            sequence="65"
             groups="sales_team.group_sale_manager"/>
 
   <!-- order.pipeline.transition.log read-only audit list. -->
@@ -178,9 +178,9 @@
 
   <menuitem id="menu_pipeline_transition_log"
             name="Pipeline Transitions"
-            parent="menu_operations_root"
+            parent="menu_operations_config"
             action="action_pipeline_transition_log"
-            sequence="60"
+            sequence="70"
             groups="sales_team.group_sale_manager"/>
 
   <record id="action_order_pipeline" model="ir.actions.act_window">
@@ -191,9 +191,9 @@
 
   <menuitem id="menu_order_pipeline"
             name="Fulfillment Pipelines"
-            parent="menu_operations_root"
+            parent="menu_operations_config"
             action="action_order_pipeline"
-            sequence="50"
+            sequence="60"
             groups="sales_team.group_sale_manager"/>
 
   <!-- product.template form extension — show x_default_pipeline_id. -->

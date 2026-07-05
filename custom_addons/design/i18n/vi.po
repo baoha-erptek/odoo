@@ -1,0 +1,484 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* design
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "<span class=\"o_stat_text\">Design Order</span>"
+msgstr "<span class=\"o_stat_text\">Đơn thiết kế</span>"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "<span class=\"o_stat_text\">Sale Order</span>"
+msgstr "<span class=\"o_stat_text\">Đơn bán hàng</span>"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_needaction
+msgid "Action Needed"
+msgstr "Cần hành động"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_ids
+msgid "Activities"
+msgstr "Hoạt động"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Trang trí ngoại lệ hoạt động"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_state
+msgid "Activity State"
+msgstr "Trạng thái hoạt động"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Biểu tượng loại hoạt động"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Approve (Duyệt)"
+msgstr "Duyệt (Duyệt)"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Approved"
+msgstr "Đã duyệt"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_at
+msgid "Approved At"
+msgstr "Duyệt lúc"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_by
+msgid "Approved By"
+msgstr "Duyệt bởi"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__approved_files_count
+msgid "Approved Files"
+msgstr "File đã duyệt"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_attachment_count
+msgid "Attachment Count"
+msgstr "Số lượng tệp đính kèm"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+msgid "Auto-create design order on confirmation"
+msgstr "Tự động tạo đơn thiết kế khi xác nhận"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_res_config_settings__design_auto_create_on_confirm
+msgid "Auto-create design order on sale confirmation"
+msgstr "Tự động tạo đơn thiết kế khi xác nhận bán hàng"
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Cannot reject design order '%(name)s' without a rejection reason."
+msgstr "Không thể từ chối đơn thiết kế '%(name)s' mà không có lý do từ chối."
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__pending
+msgid "Chờ duyệt"
+msgstr "Chờ duyệt"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__company_id
+msgid "Company"
+msgstr "Công ty"
+
+#. module: design
+#: model:ir.model,name:design.model_res_config_settings
+msgid "Config Settings"
+msgstr "Cài đặt cấu hình"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+msgid "Create a design order automatically when a sale order is confirmed."
+msgstr "Tự động tạo đơn thiết kế khi đơn bán hàng được xác nhận."
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__create_uid
+msgid "Created by"
+msgstr "Được tạo bởi"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__create_date
+msgid "Created on"
+msgstr "Được tạo lúc"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__partner_id
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Customer"
+msgstr "Khách hàng"
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__rejected
+msgid "Cần chỉnh lại"
+msgstr "Cần chỉnh lại"
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Design %s — %s"
+msgstr "Thiết kế %s — %s"
+
+#. module: design
+#: model:ir.model,name:design.model_design_file
+msgid "Design File"
+msgstr "File thiết kế"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__design_file_ids
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Design Files"
+msgstr "File thiết kế"
+
+#. module: design
+#: model:ir.model,name:design.model_design_order
+#: model:ir.model.fields,field_description:design.field_design_file__design_order_id
+#: model:ir.model.fields,field_description:design.field_mrp_production__design_order_id
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Design Order"
+msgstr "Đơn thiết kế"
+
+#. module: design
+#: model:ir.actions.act_window,name:design.action_design_order
+#: model:ir.model.fields,field_description:design.field_sale_order__design_order_count
+#: model:ir.model.fields,field_description:design.field_sale_order__design_order_ids
+#: model:ir.ui.menu,name:design.menu_design_order
+#: model_terms:ir.ui.view,arch_db:design.res_config_settings_view_form_design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_list
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Design Orders"
+msgstr "Đơn thiết kế"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_mrp_production__design_ready
+#: model:order.pipeline.state,name:design.state_gearment_design_ready
+#: model:order.pipeline.state,name:design.state_hybrid_design_ready
+#: model:order.pipeline.state,name:design.state_vn_design_ready
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "Design Ready"
+msgstr "Thiết kế sẵn sàng"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_mrp_production_form_design_ready
+msgid "Design not yet approved — waiting on the design order (Duyệt)."
+msgstr "Thiết kế chưa được duyệt — đang chờ đơn thiết kế (Duyệt)."
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "Design order %s approved"
+msgstr "Đơn thiết kế %s đã được duyệt"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_mrp_production__design_order_id
+msgid "Design order linked to this MO's sale order (via origin)."
+msgstr "Đơn thiết kế được liên kết với đơn bán hàng của MO này (qua nguồn gốc)."
+
+#. module: design
+#: model_terms:ir.actions.act_window,help:design.action_design_order
+msgid ""
+"Design orders are created automatically when a sale order is confirmed."
+msgstr ""
+"Đơn thiết kế được tạo tự động khi đơn bán hàng được xác nhận."
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_file__display_name
+#: model:ir.model.fields,field_description:design.field_design_order__display_name
+#: model:ir.model.fields,field_description:design.field_mrp_production__display_name
+#: model:ir.model.fields,field_description:design.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:design.field_sale_order__display_name
+msgid "Display Name"
+msgstr "Tên hiển thị"
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__approved
+msgid "Duyệt"
+msgstr "Duyệt"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__design_files_count
+msgid "Files"
+msgstr "File"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_follower_ids
+msgid "Followers"
+msgstr "Người theo dõi"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Người theo dõi (Đối tác)"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Biểu tượng Font Awesome ví dụ fa-tasks"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__has_message
+msgid "Has Message"
+msgstr "Có tin nhắn"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_file__id
+#: model:ir.model.fields,field_description:design.field_design_order__id
+#: model:ir.model.fields,field_description:design.field_mrp_production__id
+#: model:ir.model.fields,field_description:design.field_res_config_settings__id
+#: model:ir.model.fields,field_description:design.field_sale_order__id
+msgid "ID"
+msgstr "ID"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_exception_icon
+msgid "Icon"
+msgstr "Biểu tượng"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Biểu tượng chỉ báo hoạt động ngoại lệ."
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Nếu được chọn, các tin nhắn mới yêu cầu sự chú ý của bạn."
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_has_error
+#: model:ir.model.fields,help:design.field_design_order__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Nếu được chọn, một số tin nhắn có lỗi gửi."
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_is_follower
+msgid "Is Follower"
+msgstr "Là người theo dõi"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__write_uid
+msgid "Last Updated by"
+msgstr "Cập nhật cuối cùng bởi"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__write_date
+msgid "Last Updated on"
+msgstr "Cập nhật cuối cùng lúc"
+
+#. module: design
+#: model:ir.model,name:design.model_mrp_production
+msgid "Manufacturing Order"
+msgstr "Lệnh sản xuất"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_error
+msgid "Message Delivery error"
+msgstr "Lỗi gửi tin nhắn"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_ids
+msgid "Messages"
+msgstr "Tin nhắn"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Hạn chót hoạt động của tôi"
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid "New"
+msgstr "Mới"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Hạn chót hoạt động tiếp theo"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_summary
+msgid "Next Activity Summary"
+msgstr "Tóm tắt hoạt động tiếp theo"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_type_id
+msgid "Next Activity Type"
+msgstr "Loại hoạt động tiếp theo"
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/mrp_production.py:0
+msgid "No design order is linked to this manufacturing order."
+msgstr "Không có đơn thiết kế được liên kết với lệnh sản xuất này."
+
+#. module: design
+#: model_terms:ir.actions.act_window,help:design.action_design_order
+msgid "No design orders yet"
+msgstr "Chưa có đơn thiết kế nào"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Số lượng hành động"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_error_counter
+msgid "Number of errors"
+msgstr "Số lượng lỗi"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Số lượng tin nhắn yêu cầu hành động"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Số lượng tin nhắn có lỗi gửi"
+
+#. module: design
+#. odoo-python
+#: code:addons/design/models/design_order.py:0
+msgid ""
+"Only members of the Production Team may approve or reject a design order."
+msgstr ""
+"Chỉ các thành viên của Nhóm sản xuất mới có thể duyệt hoặc từ chối đơn thiết kế."
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_file__design_order_id
+msgid "Parent design order document (ESTY-244)."
+msgstr "Tài liệu đơn thiết kế cha (ESTY-244)."
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Pending"
+msgstr "Chờ duyệt"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reason (required to reject)…"
+msgstr "Lý do (bắt buộc để từ chối)…"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__name
+msgid "Reference"
+msgstr "Tham chiếu"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reject"
+msgstr "Từ chối"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Rejected"
+msgstr "Đã từ chối"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__rejection_reason
+msgid "Rejection Reason"
+msgstr "Lý do từ chối"
+
+#. module: design
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_form
+msgid "Reset to Pending"
+msgstr "Đặt lại thành chờ duyệt"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__activity_user_id
+msgid "Responsible User"
+msgstr "Người dùng chịu trách nhiệm"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "Lỗi gửi SMS"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__sale_order_id
+msgid "Sale Order"
+msgstr "Đơn bán hàng"
+
+#. module: design
+#: model:ir.model,name:design.model_sale_order
+msgid "Sales Order"
+msgstr "Đơn bán hàng"
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__state
+#: model_terms:ir.ui.view,arch_db:design.view_design_order_search
+msgid "Status"
+msgstr "Trạng thái"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Trạng thái dựa trên hoạt động\n"
+"Quá hạn: Ngày hết hạn đã qua\n"
+"Hôm nay: Ngày hoạt động là hôm nay\n"
+"Dự kiến: Hoạt động trong tương lai."
+
+#. module: design
+#: model:ir.model.fields,help:design.field_mrp_production__design_ready
+msgid "True once the linked design order has been approved (Duyệt)."
+msgstr "Đúng khi đơn thiết kế được liên kết đã được duyệt (Duyệt)."
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Loại hoạt động ngoại lệ trên bản ghi."
+
+#. module: design
+#: model:ir.model.fields,field_description:design.field_design_order__website_message_ids
+msgid "Website Messages"
+msgstr "Tin nhắn trang web"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_design_order__website_message_ids
+msgid "Website communication history"
+msgstr "Lịch sử giao tiếp trang web"
+
+#. module: design
+#: model:ir.model.fields,help:design.field_res_config_settings__design_auto_create_on_confirm
+msgid ""
+"When enabled, confirming a sale order automatically creates a design order "
+"and links the order's design files to it."
+msgstr ""
+"Khi được bật, xác nhận đơn bán hàng sẽ tự động tạo đơn thiết kế "
+"và liên kết các file thiết kế của đơn hàng với nó."
+
+#. module: design
+#: model:ir.model.fields.selection,name:design.selection__design_order__state__proof_sent
+msgid "Đã gửi proof"
+msgstr "Đã gửi proof"

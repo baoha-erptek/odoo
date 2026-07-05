@@ -67,6 +67,9 @@ Features:
         'views/etsy_shipping_profile_views.xml',
         'views/multichannel_listing_etsy_views.xml',
         'views/multichannel_listing_views.xml',
+        # P-IA-01: must stay LAST — unlinks the old Etsy root menu after all
+        # of its former children have re-parented onto the Operations hub.
+        'views/menu_cleanup.xml',
     ],
     'demo': [
         'data/demo_data.xml',

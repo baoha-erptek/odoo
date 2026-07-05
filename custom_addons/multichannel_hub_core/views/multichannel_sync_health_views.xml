@@ -50,7 +50,7 @@
 
     <menuitem id="menu_multichannel_sync_health"
               name="Sync Health"
-              parent="menu_operations_root"
+              parent="menu_monitoring"
               action="action_multichannel_sync_health"
-              sequence="90"/>
+              sequence="10"/>
 </odoo>

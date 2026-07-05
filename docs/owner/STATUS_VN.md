@@ -2,7 +2,9 @@
 
 **Cập nhật:** 2026-07-05 | **Soạn:** BA | **Đọc cho:** Chủ dự án (CDA)
 
-> **Mốc lớn 2026-07-05:** Cả **5 luồng nghiệp vụ chính** (Tạo sản phẩm → Nhận đơn → Giao nội bộ → Dropship Gearment → Hậu mãi) đã **kiểm thử E2E đầy đủ trên môi trường staging**, chạy bằng API thật (Etsy + Gearment). Lỗi báo giá Gearment đã đóng — báo giá thật $12.99 trả về đúng. Bộ tài liệu hướng dẫn kèm ảnh chụp màn hình thật đã sẵn sàng gửi người dùng UAT.
+> **Mốc lớn 2026-07-05A:** Cả **5 luồng nghiệp vụ chính** (Tạo sản phẩm → Nhận đơn → Giao nội bộ → Dropship Gearment → Hậu mãi) đã **kiểm thử E2E đầy đủ trên môi trường staging**, chạy bằng API thật (Etsy + Gearment). Lỗi báo giá Gearment đã đóng — báo giá thật $12.99 trả về đúng. Bộ tài liệu hướng dẫn kèm ảnh chụp màn hình thật đã sẵn sàng gửi người dùng UAT.
+>
+> **Mốc lớn 2026-07-05B:** **Hatafa UI live + v2.0 guides ready** — Giao diện hệ thống được làm mới với theme Hatafa (thanh điều hướng tím, sidebar tối), menu chính sắp xếp lại thành "Vận hành" (hub 6 phần). Tất cả 4 bộ HUONG_DAN (Tiếp nhận đơn, Giao hàng, Hậu mãi, Tạo sản phẩm) đã cập nhật v2.0 với menu paths mới + ảnh chụp màn hình thật từ staging 2026-07-05.
 
 > File 1 trang. Đọc trong 2 phút. Chi tiết xem `SRS_VN.md` hoặc Jira board.
 

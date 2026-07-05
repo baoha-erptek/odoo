@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hatafa Ops v3 — Cẩm nang vận hành</title>
+<style>
+  :root{
+    --brand:#714B67;--brand-d:#573a50;--brand-l:#8d6680;--accent:#e8a13a;
+    --bg:#f5f3f6;--card:#fff;--ink:#23202a;--muted:#6b6675;--line:#e7e2e9;
+    --ok:#1f9d63;--warn:#c98a00;--bad:#c0392b;--info:#2d6cdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--brand-d)}
+  .appbar{position:sticky;top:0;z-index:30;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 26px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .appbar .brand{font-weight:800;font-size:15px}.appbar .brand span{opacity:.7;font-weight:600}
+  .appbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;font-size:13.5px}
+  .appbar nav a{color:#fff;opacity:.85;text-decoration:none;padding-bottom:3px}
+  .appbar nav a:hover{opacity:1}.appbar nav a.active{opacity:1;border-bottom:2px solid var(--accent)}
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:36px 40px 30px}
+  header.hero .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;margin-bottom:8px}
+  header.hero h1{margin:0 0 8px;font-size:27px;line-height:1.25}
+  header.hero .sub{opacity:.93;font-size:14.5px;max-width:820px}
+  header.hero .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  header.hero .hpill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .wrap{max-width:1160px;margin:0 auto;padding:24px 40px 80px}
+  h2{margin:40px 0 10px;font-size:21px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{margin:20px 0 8px;font-size:16.5px;color:var(--ink)}
+  p{margin:9px 0}.lead{color:var(--muted);font-size:15.5px}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}li{margin:4px 0}
+  .section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .section h3{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .section h3 .num{flex-shrink:0;width:28px;height:28px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-ok{background:#e6f6ee;color:var(--ok)}.b-warn{background:#fdf3dd;color:var(--warn)}
+  .b-info{background:#eaf1fd;color:var(--info)}.b-bad{background:#fdeceb;color:var(--bad)}
+  .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin:16px 0}
+  .lcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:.14s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .lcard:hover{border-color:var(--brand-l);box-shadow:0 6px 18px rgba(87,58,80,.10);transform:translateY(-2px)}
+  .lcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--brand-l);font-weight:700;margin-bottom:6px}
+  .lcard .t{font-weight:700;color:var(--brand-d);font-size:15px;margin-bottom:4px}
+  .lcard .d{font-size:13px;color:var(--muted)}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:44px;padding-top:16px}
+  .changelog{background:#edf8f2;border-left:4px solid var(--ok);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .deferred{background:#fdf3dd;border-left:4px solid var(--warn);padding:11px 15px;border-radius:0 10px 10px 0;margin:12px 0;font-size:14px}
+  .hero-stats{display:flex;gap:28px;margin-top:18px;flex-wrap:wrap}
+  .hero-stats .s{font-size:13px;opacity:.92}.hero-stats .s b{display:block;font-size:22px;font-weight:800}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand">Hatafa Ops <span>· Cẩm nang vận hành v3</span></div>
+  <nav>
+    <a href="index.html" class="active">Tổng quan</a>
+    <a href="flow-1-tao-san-pham.html">Tạo sản phẩm</a>
+    <a href="flow-2-nhan-don-hang-etsy.html">Đơn Etsy</a>
+    <a href="flow-3a-giao-hang-in-noi-bo.html">Giao nội bộ</a>
+    <a href="flow-3b-giao-hang-gearment-dropship.html">Dropship</a>
+    <a href="flow-4-hau-mai.html">Hậu mãi</a>
+    <a href="index.html#roles">Vai trò</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Cẩm nang vận hành</div>
+  <h1>Hatafa Ops v3 — một nơi làm việc cho cả vòng đời đơn hàng Etsy</h1>
+  <div class="sub">Phiên bản v3 vừa được cập nhật với giao diện thương hiệu Hatafa (MuK theme + tím #714B67), menu điều hướng nhóm theo công việc, bảng số liệu KPI thực tế, và toàn bộ tiếng Việt. Tất cả màn hình là những hình ảnh chụp trực tiếp từ hệ thống đang chạy.</div>
+  <div class="pills">
+    <span class="hpill">Phiên bản 3 — 2026-07-05</span>
+    <span class="hpill">Giao diện thương hiệu</span>
+    <span class="hpill">Tiếng Việt đầy đủ</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="section">
+    <h3><span class="num">ℹ</span>Có gì mới trong v3</h3>
+    <div class="grid2">
+      <div class="card">
+        <h3>Giao diện thương hiệu Hatafa</h3>
+        <p>Mũ tím #714B67, thanh bên trái tối, và bảng số liệu lớn — giống y như mockup v2, nhưng giờ đây là hình chụp thực tế từ hệ thống đang chạy.</p>
+      </div>
+      <div class="card">
+        <h3>Menu "Vận hành" (Công việc hằng ngày)</h3>
+        <p>Thanh điều hướng bên trái được nhóm theo công việc: <b>Công việc hằng ngày</b> (Bảng điều hành, Pipeline, Duyệt thiết kế), <b>Bán</b> (Sản phẩm, Đăng bán, Trạng thái kênh), <b>Giao hàng</b>, <b>Hậu mãi</b>, <b>Giám sát</b>, <b>Cấu hình</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Bảng số liệu KPI trên Bảng điều hành</h3>
+        <p>Mở lên là thấy ngay: <b>Đơn mới hôm nay</b>, <b>Chờ giao hàng</b>, <b>Thiết kế chờ duyệt</b>, <b>Lỗi kênh bán</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Toàn bộ tiếng Việt</h3>
+        <p>Các module tuỳ chỉnh được dịch sang tiếng Việt. Odoo CE đã hỗ trợ tiếng Việt từ trước. Tất cả các màn hình trong tài liệu này đã được xác nhận là tiếng Việt.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">ℹ</span>So sánh v2, v2-uiux-improved, và v3</h3>
+    <div class="changelog">
+      <b>v2 (2026-06-27)</b> — Phiên bản đầu tiên, các mockup minh hoạ bố cục.
+    </div>
+    <div class="changelog">
+      <b>v2-uiux-improved</b> — Các ý tưởng bố cục được tối ưu. Tất cả những ý tưởng này <b>đã được triển khai</b> trên staging và tạo thành v3.
+    </div>
+    <div class="changelog">
+      <b>v3 (2026-07-05)</b> — <b>Phiên bản sản xuất</b>. Tất cả hình ảnh là chụp trực tiếp từ Odoo 19 CE + Hatafa Custom Addons trên staging (giao diện MuK + module etsy_integration v3.19+). Thay thế v2 hoàn toàn.
+    </div>
+  </div>
+
+  <div class="section">
+    <h3><span class="num">ℹ</span>Công việc còn lại (không được triển khai)</h3>
+    <div class="deferred">
+      <b>Chưa có:</b> Thẻ xem trước payload, bảng kiểm tra chất lượng (QC), màn hình scan sản xuất. <b>Bị chặn:</b> Nhập liệu Cuộc trò chuyện từ Etsy (cần OAuth scope Conversations mà Etsy chưa cấp phép).
+    </div>
+  </div>
+
+  <h2 id="flows">Năm quy trình nghiệp vụ — với hình chụp thực tế</h2>
+  <p>Mỗi quy trình có một trang riêng: sơ đồ vai trò (swimlane), các bước chi tiết với menu Vận hành thực tế, và những hình chụp từ hệ thống đang chạy hoặc mockup cho các phần chưa triển khai (được đánh dấu).</p>
+  <div class="links">
+    <a class="lcard" href="flow-1-tao-san-pham.html"><div class="k">Quy trình 1</div><div class="t">Tạo sản phẩm & đăng bán Etsy</div><div class="d">Tạo sản phẩm mới, tự sinh mã SKU, đặt giá và đăng bản nháp lên Etsy. Includes sku-drift detector + channel-status kanban.</div></a>
+    <a class="lcard" href="flow-2-nhan-don-hang-etsy.html"><div class="k">Quy trình 2</div><div class="t">Tiếp nhận đơn hàng Etsy</div><div class="d">Đơn từ Etsy tự về hệ thống mỗi 10 phút, đối chiếu khách, định tuyến, và hiện trên bảng điều hành với bốn thẻ số liệu.</div></a>
+    <a class="lcard" href="flow-3a-giao-hang-in-noi-bo.html"><div class="k">Quy trình 3a</div><div class="t">Giao hàng — in nội bộ</div><div class="d">Đơn đi qua bảng pipeline kéo-thả, từ nhận đơn đến gửi bưu vận, có badge trạng thái outbound (in, QC, đóng gói, đã gửi).</div></a>
+    <a class="lcard" href="flow-3b-giao-hang-gearment-dropship.html"><div class="k">Quy trình 3b</div><div class="t">Giao hàng — dropship Gearment</div><div class="d">Lấy báo giá Gearment, xác nhận người nhận, duyệt và đẩy sang xưởng in đối tác, theo dõi giao hàng trên Gearment logs.</div></a>
+    <a class="lcard" href="flow-4-hau-mai.html"><div class="k">Quy trình 4</div><div class="t">Chăm sóc sau bán</div><div class="d">Ghi chú khách, đổi địa chỉ giao, in lại, xử lý hoàn tiền theo quy trình duyệt. Menu "Hậu mãi" tập hợp tất cả công việc sau bán.</div></a>
+  </div>
+
+  <h2 id="roles">Năm vai trò — một ngày trong Hatafa Ops</h2>
+  <p>Mỗi vai trò là một nhân vật điển hình tại Hatafa: kịch bản giờ giấc, hành động, và những màn hình họ nhìn thấy mỗi ngày.</p>
+  <div class="links">
+    <a class="lcard" href="role-1-ba-lead.html"><div class="k">Vai trò 1</div><div class="t">Trưởng nhóm vận hành (BA Lead)</div><div class="d">Người điều phối: mở bảng điều hành mỗi sáng, duyệt thiết kế, gỡ điểm nghẽn, chốt báo cáo cuối ngày.</div></a>
+    <a class="lcard" href="role-2-marketing.html"><div class="k">Vai trò 2</div><div class="t">Marketing</div><div class="d">Tạo sản phẩm, đăng bán và quản lý listing trên Etsy; theo dõi sức khoẻ listing qua trạng thái kênh.</div></a>
+    <a class="lcard" href="role-3-san-xuat.html"><div class="k">Vai trò 3</div><div class="t">Sản xuất</div><div class="d">Kéo-thả đơn qua các chặng in, QC, đóng gói trên bảng pipeline; nhập mã vận đơn khi giao hàng.</div></a>
+    <a class="lcard" href="role-4-rd.html"><div class="k">Vai trò 4</div><div class="t">Kiểm soát giá (RD)</div><div class="d">Rà soát đơn giá thấp bất thường và phí vận chuyển lệch; bảo vệ biên lợi nhuận.</div></a>
+    <a class="lcard" href="role-5-pd.html"><div class="k">Vai trò 5</div><div class="t">Thiết kế sản phẩm (PD)</div><div class="d">Lặp file thiết kế với nhóm, duyệt hoặc trả lại qua bảng ba trạng thái, lưu kho Design Ready.</div></a>
+  </div>
+
+  <h2 id="howto">Cách đọc bộ tài liệu này</h2>
+  <div class="links">
+    <div class="lcard" style="cursor:default"><div class="k">Chủ dự án</div><div class="t">~10 phút lướt nhanh</div><div class="d">Đọc trang này + Quy trình 2 (Tiếp nhận đơn) + Vai trò 1 (Trưởng nhóm). Đủ thấy bức tranh vận hành mỗi ngày.</div></div>
+    <div class="lcard" style="cursor:default"><div class="k">Quản lý vận hành</div><div class="t">~30 phút đọc đầy đủ</div><div class="d">Đọc cả 5 quy trình. Dùng làm tài liệu đào tạo cho nhân viên mới, và tham chiếu khi có câu hỏi về qui trình.</div></div>
+    <div class="lcard" style="cursor:default"><div class="k">Nhân viên</div><div class="t">Đọc trang vai trò của mình</div><div class="d">Mỗi trang vai trò có giờ giấc, hành động, và những màn hình cụ thể cho công việc thường ngày.</div></div>
+  </div>
+
+  <footer>Cẩm nang vận hành Hatafa Ops v3 · 11 trang tự chứa, hoạt động ngoại tuyến · Các hình ảnh là chụp trực tiếp từ Odoo 19 CE + Hatafa Custom Addons (staging, 2026-07-05) · Thay thế v2 hoàn toàn.</footer>
+</div>
+
+</body>
+</html>

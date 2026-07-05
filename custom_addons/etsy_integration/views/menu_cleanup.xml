@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P-IA-01 cleanup — loaded LAST in the manifest so every former child
+         of the old "Etsy" root app has already re-parented onto the
+         Operations hub sections. Unlinks the ir.ui.menu record itself (not
+         just its ir.model.data row — removing only the xmlid would leave a
+         ghost root menu in the apps switcher). search+unlink is a no-op on
+         fresh databases where the xmlid never existed. -->
+    <function name="unlink" model="ir.ui.menu">
+      <value model="ir.model.data"
+             search="[('module', '=', 'etsy_integration'),
+                      ('name', '=', 'menu_etsy_root'),
+                      ('model', '=', 'ir.ui.menu')]"
+             use="res_id"/>
+    </function>
+    <function name="unlink" model="ir.model.data">
+      <function name="search" model="ir.model.data">
+        <value eval="[('module', '=', 'etsy_integration'),
+                      ('name', '=', 'menu_etsy_root')]"/>
+      </function>
+    </function>
+</odoo>

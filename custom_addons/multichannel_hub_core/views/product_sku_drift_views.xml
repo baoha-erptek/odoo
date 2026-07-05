@@ -25,6 +25,15 @@
         <field name="domain">[('x_sku_v2_status', 'in', ['non_canonical', 'msc_catchall'])]</field>
     </record>
 
+    <!-- P-IA-01: surface the drift review in Sales &amp; Publish (action
+         previously had no menu — reachable only via direct URL). -->
+    <menuitem id="menu_product_sku_drift"
+              name="SKU Drift Review"
+              parent="menu_sales_publish"
+              action="action_product_sku_drift"
+              sequence="40"
+              groups="multichannel_hub_core.group_ba_user"/>
+
     <!-- Wizard form -->
     <record id="view_product_sku_canonicalise_wizard_form" model="ir.ui.view">
         <field name="name">product.sku.canonicalise.wizard.form</field>

@@ -647,3 +647,62 @@ class SaleOrder(models.Model):
             'default_order_id': self.id,
         }
         return action
+
+    # ------------------------------------------------------------------
+    # P-KPI-01 — Operations Dashboard KPI band (mockup-v3 plan)
+    # ------------------------------------------------------------------
+
+    @api.model
+    def get_operations_dashboard_kpis(self):
+        """Counts for the KPI band above the Operations Dashboard list.
+
+        Called by the `operations_dashboard_list` js_class renderer. Uses
+        search_count as the current user, so ACLs and record rules apply —
+        each user sees counts over the records they can read.
+        """
+        today_start = fields.Datetime.to_datetime(fields.Date.context_today(self))
+        return [
+            {
+                'key': 'orders_today',
+                'label': _('New Orders Today'),
+                'value': self.search_count([
+                    ('date_order', '>=', today_start),
+                    ('state', '!=', 'cancel'),
+                ]),
+            },
+            {
+                'key': 'to_fulfill',
+                'label': _('To Fulfill'),
+                'value': self.search_count([
+                    ('state', '=', 'sale'),
+                    ('delivery_status', 'in', ('pending', 'started', 'partial')),
+                ]),
+            },
+            {
+                'key': 'designs_pending',
+                'label': _('Designs Awaiting Approval'),
+                'value': self._kpi_safe_count('design.file', [
+                    ('state', '=', 'pending'),
+                ]),
+            },
+            {
+                'key': 'channel_errors',
+                'label': _('Channel Errors'),
+                'value': self._kpi_safe_count('product.channel.status', [
+                    ('state', '=', 'error'),
+                ]),
+            },
+        ]
+
+    @api.model
+    def _kpi_safe_count(self, model_name, domain):
+        """search_count that degrades to 0 when the user lacks read access.
+
+        The KPI band must never crash the dashboard view for a user whose
+        groups can open the list but cannot read a side model (e.g.
+        design.file is production/sales gated).
+        """
+        try:
+            return self.env[model_name].search_count(domain)
+        except AccessError:
+            return 0

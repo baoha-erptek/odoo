@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+  <!-- P-IA-01: Daily Work section; production-team gated (P0 fix — was
+       visible to every internal user). -->
   <menuitem id="menu_design_order"
             name="Design Orders"
-            parent="multichannel_hub_core.menu_operations_root"
+            parent="multichannel_hub_core.menu_daily_work"
             action="action_design_order"
-            sequence="25"/>
+            sequence="35"
+            groups="multichannel_hub_core.group_production_team"/>
 </odoo>

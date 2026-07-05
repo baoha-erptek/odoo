@@ -1,0 +1,1914 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* multichannel_hub_fulfillment
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 09:26+0000\n"
+"PO-Revision-Date: 2026-07-05 09:26+0000\n"
+"Last-Translator: \n"
+"Language: vi\n"
+"Language-Team: Vietnamese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* multichannel_hub_fulfillment
+#
+msgid ""
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid " (status: %(s)s)"
+msgstr " (trạng thái: %(s)s)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_api_log
+msgid "API Log"
+msgstr "Nhật ký API"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__accepted
+msgid "Accepted"
+msgstr "Được chấp nhận"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_needaction
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction
+msgid "Action Needed"
+msgstr "Cần hành động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__is_active
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+msgid "Active"
+msgstr "Hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_ids
+msgid "Activities"
+msgstr "Hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Trang trí ngoại lệ hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_state
+msgid "Activity State"
+msgstr "Trạng thái hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Biểu tượng loại hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__address_change_flag
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__address_change_flagged_count
+msgid "Address-Change Flagged"
+msgstr "Được đánh dấu thay đổi địa chỉ"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__applied_carrier_id
+msgid "Applied Carrier"
+msgstr "Đơn vị vận chuyển được áp dụng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Approve Schema"
+msgstr "Phê duyệt lược đồ"
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,comment:multichannel_hub_fulfillment.group_ba_manager
+msgid "Approves new GKE schema fingerprints (FR-017 RPC-gated)."
+msgstr "Phê duyệt các dấu vân tay lược đồ GKE mới (FR-017 RPC-gated)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_attachment_count
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_attachment_count
+msgid "Attachment Count"
+msgstr "Số lượng tệp đính kèm"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_purchase_order__x_gearment_quote_breakdown_json
+msgid ""
+"Audit trail of the last Gearment quote request: per-source-order totals and "
+"the shipping/fees split written onto this PO."
+msgstr "Dấu vết kiểm tra của yêu cầu báo giá Gearment cuối cùng: tổng cộng theo đơn hàng nguồn và phần chia vận chuyển/phí được ghi vào PO này."
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,name:multichannel_hub_fulfillment.group_ba_manager
+msgid "BA Shipping Manager"
+msgstr "Quản lý vận chuyển BA"
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,name:multichannel_hub_fulfillment.group_ba_shipping
+msgid "BA Shipping Operator"
+msgstr "Nhân viên vận chuyển BA"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Blocked"
+msgstr "Bị chặn"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Breakdown"
+msgstr "Chi tiết"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_breakdown_json
+msgid "Breakdown (JSON)"
+msgstr "Chi tiết (JSON)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__business_handled
+msgid "Business Handled"
+msgstr "Kinh doanh được xử lý"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__business_summary
+msgid "Business Summary"
+msgstr "Tóm tắt kinh doanh"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Call"
+msgstr "Cuộc gọi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__callback
+msgid "Callback"
+msgstr "Gọi lại"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Cancel"
+msgstr "Hủy"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__cancelled
+msgid "Cancelled"
+msgstr "Đã hủy"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid ""
+"Cannot revert fulfillment status to 'produced' from a final state. Affected "
+"orders are currently in: %s"
+msgstr "Không thể hoàn nguyên trạng thái giao hàng về 'produced' từ trạng thái cuối cùng. Các đơn hàng bị ảnh hưởng hiện đang ở: %s"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Close"
+msgstr "Đóng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__code
+msgid "Code"
+msgstr "Mã"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__confirm
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Confirm"
+msgstr "Xác nhận"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_quote_wizard_form
+msgid "Confirm Gearment Quote"
+msgstr "Xác nhận báo giá Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__confirmed
+msgid "Confirmed"
+msgstr "Đã xác nhận"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__conflict_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__conflict
+msgid "Conflict"
+msgstr "Xung đột"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__create_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__create_uid
+msgid "Created by"
+msgstr "Tạo bởi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__create_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__create_date
+msgid "Created on"
+msgstr "Tạo vào"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__is_active
+msgid "Cron skips inactive partners."
+msgstr "Cron bỏ qua các đối tác không hoạt động."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_currency
+msgid "Currency"
+msgstr "Tiền tệ"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__detected_carrier_id
+msgid "Detected Carrier"
+msgstr "Đơn vị vận chuyển được phát hiện"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_move__sale_order_id
+msgid ""
+"Direct link to the originating sale.order for hook-generated moves. Enables "
+"fast filter without joining through sale_line_id."
+msgstr "Liên kết trực tiếp đến sale.order gốc cho các di chuyển do hook tạo ra. Cho phép lọc nhanh mà không cần tham gia thông qua sale_line_id."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__direction
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Direction"
+msgstr "Hướng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_line__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__display_name
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__display_name
+msgid "Display Name"
+msgstr "Tên hiển thị"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__done
+msgid "Done"
+msgstr "Hoàn tất"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__draft
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__draft
+msgid "Draft"
+msgstr "Nháp"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__draft
+msgid "Draft Order"
+msgstr "Đơn hàng nháp"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__duration_ms
+msgid "Duration (ms)"
+msgstr "Thời lượng (ms)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__endpoint
+msgid "Endpoint"
+msgstr "Điểm cuối"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__error
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__error
+msgid "Error"
+msgstr "Lỗi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__error_message
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__error_message
+msgid "Error Message"
+msgstr "Thông báo lỗi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__error_count
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Errors"
+msgstr "Lỗi"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Etsy Tracking Pushback"
+msgstr "Phản hồi theo dõi Etsy"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed_at
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed_at
+msgid "Etsy Tracking Pushed At"
+msgstr "Theo dõi Etsy được đẩy vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__excel_file
+msgid "Excel File"
+msgstr "Tệp Excel"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_expires_at
+msgid "Expires At"
+msgstr "Hết hạn vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__failed
+msgid "Failed"
+msgstr "Thất bại"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__file_size_bytes
+msgid "File Size (bytes)"
+msgstr "Kích thước tệp (byte)"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "File exceeds the configured size cap."
+msgstr "Tệp vượt quá giới hạn kích thước được cấu hình."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__filename
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__excel_filename
+msgid "Filename"
+msgstr "Tên tệp"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__finish_at
+msgid "Finished At"
+msgstr "Hoàn tất vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_follower_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_follower_ids
+msgid "Followers"
+msgstr "Những người theo dõi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_partner_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Những người theo dõi (Đối tác)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Biểu tượng Font awesome ví dụ fa-tasks"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__raw_payload
+msgid "Forensic JSON of all cells for this row."
+msgstr "JSON pháp y của tất cả các ô cho hàng này."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__rate_limit_remaining
+msgid "From X-RateLimit-Remaining header if Gearment provides one."
+msgstr "Từ tiêu đề X-RateLimit-Remaining nếu Gearment cung cấp."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__fulfillment_id
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Fulfillment"
+msgstr "Giao hàng"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Fulfillment %s has no linked order; skipping move."
+msgstr "Giao hàng %s không có đơn hàng được liên kết; bỏ qua di chuyển."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_sale_order_fulfillment_detail
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_sale_order_fulfillment_detail
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_list
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Fulfillment Tracking"
+msgstr "Theo dõi giao hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Fulfillment Tracking Detail"
+msgstr "Chi tiết theo dõi giao hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order_fulfillment
+msgid "Fulfillment lifecycle for a sale order"
+msgstr "Vòng đời giao hàng của một đơn bán hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__gdrive_archive_folder_id
+msgid "GDrive Archive Folder ID"
+msgstr "ID thư mục lưu trữ GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__source_gdrive_file_id
+msgid "GDrive File ID"
+msgstr "ID tệp GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__gdrive_inbox_folder_id
+msgid "GDrive Inbox Folder ID"
+msgstr "ID thư mục hộp thư GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__source__gdrive
+msgid "GDrive poll"
+msgstr "Bỏ phiếu GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_log
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_list
+msgid "GKE Tracking Imports"
+msgstr "Nhập theo dõi GKE"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_wizard
+msgid "GKE tracking import wizard"
+msgstr "Trợ lý nhập theo dõi GKE"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_log
+msgid "GKE tracking import — audit log"
+msgstr "Nhập theo dõi GKE — nhật ký kiểm tra"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_tracking_import_line
+msgid "GKE tracking import — line"
+msgstr "Nhập theo dõi GKE — dòng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Gearment"
+msgstr "Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_gearment_api_log
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_list
+msgid "Gearment API Log"
+msgstr "Nhật ký API Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.ir_cron_gearment_api_log_cleanup_ir_actions_server
+msgid "Gearment API Log: cleanup old rows"
+msgstr "Nhật ký API Gearment: dọn dẹp các hàng cũ"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_gearment_api_log
+msgid "Gearment API call and webhook audit log"
+msgstr "Nhật ký kiểm tra cuộc gọi API và webhook Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_block_reason
+msgid "Gearment Block Reason"
+msgstr "Lý do chặn Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_root
+msgid "Gearment Logs"
+msgstr "Nhật ký Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_order_ref
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_order_ref
+msgid "Gearment Order Ref"
+msgstr "Mã tham chiếu đơn hàng Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_ref
+msgid "Gearment Outbound Reference"
+msgstr "Mã tham chiếu gửi đi Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_state
+msgid "Gearment Outbound State"
+msgstr "Trạng thái gửi đi Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_production_blocked
+msgid "Gearment Production Blocked"
+msgstr "Sản xuất Gearment bị chặn"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_pushed_at
+msgid "Gearment Pushed At"
+msgstr "Gearment được đẩy vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__x_gearment_quote_breakdown_json
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_breakdown_json
+msgid "Gearment Quote Breakdown (JSON)"
+msgstr "Chi tiết báo giá Gearment (JSON)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_gearment_quote_wizard
+msgid "Gearment Quote Confirmation Wizard (P4-01-C)"
+msgstr "Trợ lý xác nhận báo giá Gearment (P4-01-C)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_currency
+msgid "Gearment Quote Currency"
+msgstr "Tiền tệ báo giá Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_expires_at
+msgid "Gearment Quote Expires At"
+msgstr "Báo giá Gearment hết hạn vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_total
+msgid "Gearment Quote Total"
+msgstr "Tổng báo giá Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_product__x_gearment_sku
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__x_gearment_sku
+msgid "Gearment SKU"
+msgstr "SKU Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:product.template,name:multichannel_hub_fulfillment.product_gearment_fees_product_template
+msgid "Gearment Shipping & Fees"
+msgstr "Vận chuyển & Phí Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_status
+msgid "Gearment Status"
+msgstr "Trạng thái Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__x_gearment_tracking_state
+msgid "Gearment Tracking Status"
+msgstr "Trạng thái theo dõi Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_gearment_webhook_log
+msgid "Gearment Webhook Log"
+msgstr "Nhật ký Webhook Gearment"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment cancelled order (status: %(s)s). Production blocked."
+msgstr "Đơn hàng Gearment bị hủy (trạng thái: %(s)s). Sản xuất bị chặn."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment event %(t)s"
+msgstr "Sự kiện Gearment %(t)s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment marked order completed (carrier %(c)s, tracking %(n)s)."
+msgstr "Gearment đánh dấu đơn hàng hoàn tất (đơn vị vận chuyển %(c)s, theo dõi %(n)s)."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_webhook_dispatcher.py:0
+msgid "Gearment placed order on hold (status: %(s)s)."
+msgstr "Gearment đặt đơn hàng tạm dừng (trạng thái: %(s)s)."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment push failed during PO %(po)s confirm: %(err)s"
+msgstr "Gearment push thất bại trong quá trình xác nhận PO %(po)s: %(err)s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Gearment push failed for SO %(so)s: %(err)s. PO not confirmed; fix the issue"
+" and re-click Confirm on the PO."
+msgstr "Gearment push thất bại cho SO %(so)s: %(err)s. PO không được xác nhận; khắc phục sự cố và nhấp lại Xác nhận trên PO."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Gearment quote cancelled by operator. Outbound ref cleared."
+msgstr "Báo giá Gearment bị hủy bởi nhân viên vận hành. Mã tham chiếu gửi đi bị xóa."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Gearment quote confirmed (response status: %s)."
+msgstr "Báo giá Gearment được xác nhận (trạng thái phản hồi: %s)."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote failed for %(so)s: %(err)s"
+msgstr "Báo giá Gearment thất bại cho %(so)s: %(err)s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote fetched: total %(new).2f."
+msgstr "Báo giá Gearment được tìm nạp: tổng cộng %(new).2f."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment quote updated: %(old).2f -> %(new).2f."
+msgstr "Báo giá Gearment được cập nhật: %(old).2f -> %(new).2f."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Gearment response has no id field: %s"
+msgstr "Phản hồi Gearment không có trường id: %s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "Gearment shipping & fees (%s)"
+msgstr "Vận chuyển & phí Gearment (%s)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_ref
+msgid ""
+"Gearment-side ID returned by push_order(). Empty until the order has been "
+"successfully pushed."
+msgstr "ID phía Gearment được trả về bởi push_order(). Trống cho đến khi đơn hàng được đẩy thành công."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_status
+msgid ""
+"Gearment-side fulfillment state — webhook-driven (P0-18b2). See "
+"`x_gearment_outbound_state` for the local push lifecycle."
+msgstr "Trạng thái giao hàng phía Gearment — được webhook điều khiển (P0-18b2). Xem `x_gearment_outbound_state` cho vòng đời đẩy cục bộ."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Google Drive Folders"
+msgstr "Thư mục Google Drive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__http_status
+msgid "HTTP Status"
+msgstr "Trạng thái HTTP"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__endpoint
+msgid "HTTP method + path, e.g. 'POST /api/v3/orders'."
+msgstr "Phương thức HTTP + đường dẫn, ví dụ 'POST /api/v3/orders'."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__has_message
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__has_message
+msgid "Has Message"
+msgstr "Có thông báo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__header_columns
+msgid "Header Columns (JSON)"
+msgstr "Cột tiêu đề (JSON)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__header_diff_html
+msgid "Header Diff"
+msgstr "Khác biệt tiêu đề"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Headers"
+msgstr "Tiêu đề"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__health_check
+msgid "Health Check"
+msgstr "Kiểm tra sức khỏe"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__signature_header_seen
+msgid ""
+"Heuristic capture of the first incoming header whose name contains "
+"'signature'. Empty in discovery mode if Gearment did not send one."
+msgstr "Bắt giữ heuristic của tiêu đề đến đầu tiên có tên chứa 'signature'. Trống trong chế độ khám phá nếu Gearment không gửi."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_product_template__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_line__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_picking__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__id
+msgid "ID"
+msgstr "ID"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_icon
+msgid "Icon"
+msgstr "Biểu tượng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Biểu tượng để chỉ ra hoạt động ngoại lệ."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_needaction
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Nếu được chọn, các thông báo mới yêu cầu sự chú ý của bạn."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_sms_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Nếu được chọn, một số thông báo có lỗi gửi."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Import"
+msgstr "Nhập"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_wizard
+msgid "Import GKE Excel"
+msgstr "Nhập Excel GKE"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_wizard
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Import GKE Tracking Excel"
+msgstr "Nhập Excel theo dõi GKE"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_log
+msgid "Import History"
+msgstr "Lịch sử nhập"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__log_id
+msgid "Import Log"
+msgstr "Nhật ký nhập"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__imported_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__imported
+msgid "Imported"
+msgstr "Đã nhập"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__in_production
+msgid "In Production"
+msgstr "Đang sản xuất"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__direction__inbound
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__inbound_webhook
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Inbound Webhook"
+msgstr "Webhook nhận về"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_body
+msgid "Inbound webhook body; truncated to 4096 chars."
+msgstr "Phần thân webhook nhận về; cắt ngắn thành 4096 ký tự."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Invalid Excel file binary: %s"
+msgstr "Tệp Excel nhị phân không hợp lệ: %s"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_is_follower
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_is_follower
+msgid "Is Follower"
+msgstr "Là người theo dõi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_purchase_order__is_gearment_dropship_po
+msgid "Is Gearment Dropship PO"
+msgstr "Là PO dropship Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_payload_summary
+msgid "JSON body sent (PII + Authorization scrubbed)."
+msgstr "JSON body sent (PII + Authorization scrubbed)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_headers
+msgid ""
+"JSON dict of inbound HTTP headers; Authorization/Cookie/secret-* keys "
+"scrubbed."
+msgstr "Từ điển JSON của tiêu đề HTTP nhận về; các khóa Authorization/Cookie/secret-* bị xóa."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__response_summary
+msgid "JSON response truncated to ~4 KB."
+msgstr "JSON response truncated to ~4 KB."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_breakdown_json
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_breakdown_json
+msgid ""
+"JSON-serialised dict of decoded Money fields: {order_sub_total, "
+"order_shipping_fee, order_tax, order_discount, order_handle_fee, "
+"order_gift_message_fee, order_fee, order_total, currency}."
+msgstr "Từ điển JSON được tuần tự hóa của các trường Tiền được giải mã: {order_sub_total, order_shipping_fee, order_tax, order_discount, order_handle_fee, order_gift_message_fee, order_fee, order_total, currency}."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_at
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_at
+msgid "Last Gearment Webhook"
+msgstr "Webhook Gearment cuối cùng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__last_poll_at
+msgid "Last Poll At"
+msgstr "Lần bỏ phiếu cuối cùng vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__last_success_poll_at
+msgid "Last Successful Poll At"
+msgstr "Lần bỏ phiếu thành công cuối cùng vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__write_uid
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__write_uid
+msgid "Last Updated by"
+msgstr "Cập nhật lần cuối bởi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__write_date
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__write_date
+msgid "Last Updated on"
+msgstr "Cập nhật lần cuối vào"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_topic
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_topic
+msgid "Last Webhook Topic"
+msgstr "Chủ đề webhook cuối cùng"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is 'error' but has no error_message."
+msgstr "Dòng %(row)s ở trạng thái 'lỗi' nhưng không có thông báo lỗi."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is 'matched' but has no sale order."
+msgstr "Dòng %(row)s đã 'khớp' nhưng không có đơn hàng."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Line on row %(row)s is not in 'conflict' state."
+msgstr "Dòng %(row)s không ở trạng thái 'xung đột'."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__line_ids
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Lines"
+msgstr "Dòng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Logistics Partner"
+msgstr "Đối tác vận chuyển"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_logistics_partner
+msgid "Logistics Partner — GDrive inbox configuration"
+msgstr "Đối tác vận chuyển — Cấu hình hộp thư GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_logistics_partner
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_logistics_partner
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_search
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_tree
+msgid "Logistics Partners"
+msgstr "Đối tác vận chuyển"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.cron_logistics_inbox_poller_ir_actions_server
+msgid "Logistics: Poll GDrive inboxes"
+msgstr "Vận chuyển: Bỏ phiếu hộp thư GDrive"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__source__manual
+msgid "Manual upload"
+msgstr "Tải lên thủ công"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_product_product__x_gearment_sku
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_product_template__x_gearment_sku
+msgid ""
+"Maps the product to a Gearment catalog SKU; required for any product that "
+"flows through the gearment_pod pipeline."
+msgstr "Ánh xạ sản phẩm đến SKU danh mục Gearment; bắt buộc cho bất kỳ sản phẩm nào chảy qua đường dẫn gearment_pod."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__matched_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__matched
+msgid "Matched"
+msgstr "Khớp"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_error
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error
+msgid "Message Delivery error"
+msgstr "Lỗi gửi thông báo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_ids
+msgid "Messages"
+msgstr "Thông báo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__poll_interval_minutes
+msgid "Minimum minutes between polls for this partner."
+msgstr "Số phút tối thiểu giữa các lần bỏ phiếu cho đối tác này."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__purpose
+msgid "Move Purpose"
+msgstr "Mục đích di chuyển"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Hạn chót hoạt động của tôi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__name
+msgid "Name"
+msgstr "Tên"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__is_new_schema
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__is_new_schema
+msgid "New Schema"
+msgstr "Lược đồ mới"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid ""
+"New schema fingerprint detected. A BA Manager must approve before import."
+msgstr "Phát hiện dấu vân tay lược đồ mới. Quản lý BA phải phê duyệt trước khi nhập."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Hạn chót hoạt động tiếp theo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_summary
+msgid "Next Activity Summary"
+msgstr "Tóm tắt hoạt động tiếp theo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_type_id
+msgid "Next Activity Type"
+msgstr "Loại hoạt động tiếp theo"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "No Excel file provided."
+msgstr "Không có tệp Excel được cung cấp."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"No Gearment-eligible lines on this order. Set `x_gearment_sku` on at least "
+"one product before requesting a quote."
+msgstr "Không có dòng đủ điều kiện Gearment trên đơn hàng này. Đặt `x_gearment_sku` trên ít nhất một sản phẩm trước khi yêu cầu báo giá."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "No stock move: no storable products on order %s."
+msgstr "Không có di chuyển kho: không có sản phẩm có thể lưu trữ trên đơn hàng %s."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:product.template,description:multichannel_hub_fulfillment.product_gearment_fees_product_template
+msgid ""
+"Non-inventory line carrying the shipping/handling/tax/fees portion of a "
+"Gearment price quote on a dropship purchase order (ESTY-246). Do not sell."
+msgstr "Dòng không có hàng tồn kho mang phần vận chuyển/xử lý/thuế/phí của báo giá giá Gearment trên đơn mua dropship (ESTY-246). Không bán."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__nonce_value
+msgid "Nonce"
+msgstr "Nonce"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__notes
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__notes
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Notes"
+msgstr "Ghi chú"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__sale_order_id
+msgid "Null for catalog/system probes; set for order-specific calls."
+msgstr "Null cho các thăm dò danh mục/hệ thống; đặt cho các cuộc gọi theo đơn hàng."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_needaction_counter
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Số lượng hành động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_error_counter
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error_counter
+msgid "Number of errors"
+msgstr "Số lượng lỗi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_needaction_counter
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Số lượng thông báo yêu cầu hành động"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__message_has_error_counter
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Số lượng thông báo có lỗi gửi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__ok
+msgid "OK"
+msgstr "OK"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Only BA Shipping Managers can approve a new schema fingerprint."
+msgstr "Chỉ Quản lý vận chuyển BA có thể phê duyệt dấu vân tay lược đồ mới."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_line.py:0
+msgid "Only BA Shipping operators can bulk-sync orders to Gearment."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể đồng bộ hóa đơn hàng hàng loạt với Gearment."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Only BA Shipping operators can confirm a Gearment quote."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể xác nhận báo giá Gearment."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Only BA Shipping operators can fetch a Gearment quote."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể tìm nạp báo giá Gearment."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Only BA Shipping operators can re-detect carriers."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể phát hiện lại đơn vị vận chuyển."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Only BA Shipping operators can run the bulk Gearment push."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể chạy đẩy Gearment hàng loạt."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Only BA Shipping operators can run the tracking import."
+msgstr "Chỉ các nhân viên vận chuyển BA có thể chạy nhập theo dõi."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Only Purchasing or BA Shipping users can request a Gearment quote on a "
+"purchase order."
+msgstr "Chỉ những người dùng Mua hàng hoặc Vận chuyển BA có thể yêu cầu báo giá Gearment trên đơn mua hàng."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__operator_review
+msgid "Operator Review"
+msgstr "Chờ vận hành duyệt"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_outbound_state
+msgid ""
+"Operator-driven push lifecycle: draft → quoted → operator_review → confirmed"
+" (or cancelled). Distinct from Gearment Status which reflects upstream "
+"fulfillment state."
+msgstr "Vòng đời đẩy được điều khiển bởi nhân viên vận hành: nháp → báo giá → operator_review → xác nhận (hoặc hủy). Khác biệt với Trạng thái Gearment phản ánh trạng thái giao hàng hạ lưu."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__order_id
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Order"
+msgstr "Đơn hàng"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid ""
+"Order %(name)s is in state '%(state)s', not 'operator_review'. Refresh the "
+"wizard."
+msgstr "Đơn hàng %(name)s ở trạng thái '%(state)s', không phải 'operator_review'. Làm mới trợ lý."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Order pushed to Gearment (ref %s)."
+msgstr "Đơn hàng được đẩy đến Gearment (mã tham chiếu %s)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__header_columns
+msgid "Original header sequence as JSON array (forensic)."
+msgstr "Chuỗi tiêu đề gốc dưới dạng mảng JSON (pháp y)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__direction
+msgid ""
+"Outbound = Odoo→Gearment API call. Inbound = Gearment→Odoo webhook callback."
+" Nullable for backward compat with rows created before P0-18b2a."
+msgstr "Gửi đi = Cuộc gọi API Odoo→Gearment. Nhận về = Gọi lại webhook Gearment→Odoo. Có thể là null để tương thích ngược với các hàng được tạo trước P0-18b2a."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Outbound API"
+msgstr "API gửi đi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__direction__outbound
+msgid "Outbound API Call"
+msgstr "Cuộc gọi API gửi đi"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Outbound State"
+msgstr "Trạng thái gửi đi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__needs_review
+msgid ""
+"P2-02: True when carrier auto-detection fell back to `other` or could not "
+"match any prefix regex."
+msgstr "P2-02: Đúng khi phát hiện tự động đơn vị vận chuyển quay trở lại `other` hoặc không khớp bất kỳ regex tiền tố nào."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__parsed_shipping_date
+msgid "Parsed Shipping Date"
+msgstr "Ngày vận chuyển được phân tích"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Partner name"
+msgstr "Tên đối tác"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Payloads"
+msgstr "Tải trọng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__pending
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__pending
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__pending
+msgid "Pending"
+msgstr "Chờ xử lý"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__poll_interval_minutes
+msgid "Poll Interval (minutes)"
+msgstr "Khoảng bỏ phiếu (phút)"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/logistics_partner.py:0
+msgid "Poll interval must be at least 1 minute."
+msgstr "Khoảng bỏ phiếu phải ít nhất 1 phút."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__detected_carrier_id
+msgid "Populated by P2-02 carrier auto-detector."
+msgstr "Được điền bởi bộ phát hiện tự động đơn vị vận chuyển P2-02."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Preview"
+msgstr "Xem trước"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__preview_line_ids
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_wizard_form
+msgid "Preview Lines"
+msgstr "Dòng xem trước"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__preview_log_id
+msgid "Preview Log"
+msgstr "Nhật ký xem trước"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_wizard__state__previewed
+msgid "Previewed"
+msgstr "Đã xem trước"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__probe
+msgid "Probe"
+msgstr "Thăm dò"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__processing
+msgid "Processing"
+msgstr "Đang xử lý"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_product_template
+msgid "Product"
+msgstr "Sản phẩm"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Production Blocked"
+msgstr "Sản xuất bị chặn"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Production Completion: %s"
+msgstr "Hoàn thành sản xuất: %s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid "Production stock.move created for order %s: qty=%s."
+msgstr "stock.move sản xuất được tạo cho đơn hàng %s: qty=%s."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order_fulfillment.py:0
+msgid ""
+"Production-locations ICP missing or unresolved for zone %s on order %s; "
+"transition succeeded but no stock.move created."
+msgstr "ICP vị trí sản xuất bị thiếu hoặc chưa được phân giải cho vùng %s trên đơn hàng %s; quá trình chuyển đổi thành công nhưng không có stock.move được tạo."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_purchase_order
+msgid "Purchase Order"
+msgstr "Đơn mua hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Pushed to Etsy"
+msgstr "Được đẩy lên Etsy"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__gearment_api_log__source__quote
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Quote"
+msgstr "Báo giá"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Quote Breakdown"
+msgstr "Chi tiết báo giá"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_total
+msgid "Quote Total"
+msgstr "Tổng báo giá"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Quote fetched from Gearment (total %(total)s %(cur)s, expires %(exp)s)."
+msgstr "Báo giá được tìm nạp từ Gearment (tổng cộng %(total)s %(cur)s, hết hạn %(exp)s)."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/gearment_quote_wizard.py:0
+msgid "Quote for %(name)s expired at %(exp)s. Fetch a new quote."
+msgstr "Báo giá cho %(name)s hết hạn vào %(exp)s. Tìm nạp báo giá mới."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_outbound_state__quoted
+msgid "Quoted"
+msgstr "Đã báo giá"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__rate_limit_remaining
+msgid "Rate Limit Remaining"
+msgstr "Giới hạn tỷ lệ còn lại"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_carrier_label
+msgid "Raw Carrier Label"
+msgstr "Nhãn vận chuyển thô"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_order_number
+msgid "Raw Order Number"
+msgstr "Số đơn hàng thô"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_payload
+msgid "Raw Payload (JSON)"
+msgstr "Tải trọng thô (JSON)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_shipping_date
+msgid "Raw Shipping Date"
+msgstr "Ngày vận chuyển thô"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__raw_tracking_number
+msgid "Raw Tracking Number"
+msgstr "Số theo dõi thô"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_re_detect_carriers
+msgid "Re-detect Carriers"
+msgstr "Phát hiện lại đơn vị vận chuyển"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Re-process"
+msgstr "Xử lý lại"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_replay_line
+msgid "Re-process Row"
+msgstr "Xử lý lại hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__verify_failure_reason
+msgid ""
+"Reason code on verify failure: missing_*_header, client_key_mismatch, "
+"timestamp_invalid, timestamp_outside_window, nonce_replay, nonce_replay_db "
+"(UNIQUE-index race detected), signature_mismatch. Empty when "
+"signature_verified=True."
+msgstr "Mã lý do khi xác thực thất bại: missing_*_header, client_key_mismatch, timestamp_invalid, timestamp_outside_window, nonce_replay, nonce_replay_db (UNIQUE-index race detected), signature_mismatch. Trống khi signature_verified=True."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__name
+msgid "Reference"
+msgstr "Mã tham chiếu"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_body
+msgid "Request Body"
+msgstr "Phần thân yêu cầu"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.actions.server,name:multichannel_hub_fulfillment.action_server_gearment_bulk_sync
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid "Request Gearment Quote"
+msgstr "Yêu cầu báo giá Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_headers
+msgid "Request Headers"
+msgstr "Tiêu đề yêu cầu"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_payload_summary
+msgid "Request Payload Summary"
+msgstr "Tóm tắt tải trọng yêu cầu"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_started_at
+msgid "Request Started At"
+msgstr "Yêu cầu bắt đầu vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__request_timestamp
+msgid "Request Timestamp (Unix)"
+msgstr "Dấu thời gian yêu cầu (Unix)"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Request the Gearment quote before confirming the purchase order (draft / RFQ"
+" only)."
+msgstr "Yêu cầu báo giá Gearment trước khi xác nhận đơn mua hàng (chỉ nháp / RFQ)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__response_summary
+msgid "Response Summary"
+msgstr "Tóm tắt phản hồi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__activity_user_id
+msgid "Responsible User"
+msgstr "Người dùng chịu trách nhiệm"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_order_form_gearment_inherit
+msgid "Review Quote"
+msgstr "Xem báo giá"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Row %(row)s: conflict resolved → %(sel)s (candidates were: %(c)s)"
+msgstr "Row %(row)s: conflict resolved → %(sel)s (candidates were: %(c)s)"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__row_number
+msgid "Row Number"
+msgstr "Số hàng"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Run preview before approving the schema."
+msgstr "Chạy xem trước trước khi phê duyệt lược đồ."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Run preview before importing."
+msgstr "Chạy xem trước trước khi nhập."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__source_row_hash
+msgid "SHA-256 of `|`-joined raw cell values; idempotency key."
+msgstr "SHA-256 of `|`-joined raw cell values; idempotency key."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__schema_hash
+msgid "SHA-256 of normalized header sequence."
+msgstr "SHA-256 of normalized header sequence."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__message_has_sms_error
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "Lỗi gửi SMS"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__sale_order_id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_stock_move__sale_order_id
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__sale_order_id
+msgid "Sale Order"
+msgstr "Đơn bán hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order
+msgid "Sales Order"
+msgstr "Đơn bán hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Dòng đơn bán hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__schema_hash
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__schema_hash
+msgid "Schema Hash"
+msgstr "Hash lược đồ"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid ""
+"Schema fingerprint not approved. Ask a BA Manager to approve this header "
+"layout before importing."
+msgstr "Dấu vân tay lược đồ không được phê duyệt. Yêu cầu Quản lý BA phê duyệt bố cục tiêu đề này trước khi nhập."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_line.py:0
+msgid "Selected order %(id)s does not exist."
+msgstr "Đơn hàng được chọn %(id)s không tồn tại."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_move__purpose
+msgid ""
+"Semantic marker identifying which subsystem generated this move. Used by "
+"P2-03 production-completion hook for idempotency: value "
+"'production_completion' is reserved for the fulfillment_status transition "
+"hook."
+msgstr "Dấu hiệu ngữ nghĩa xác định hệ thống con nào tạo ra di chuyển này. Được sử dụng bởi hook hoàn thành sản xuất P2-03 để tính đơn lực: giá trị 'production_completion' được dành riêng cho hook chuyển đổi fulfillment_status."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__last_poll_at
+msgid "Set after every poll attempt (success or failure)."
+msgstr "Set after every poll attempt (success or failure)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__last_success_poll_at
+msgid "Set only on log.state in (ok, warning)."
+msgstr "Set only on log.state in (ok, warning)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__source_gdrive_file_id
+msgid "Set when source=gdrive (P2-06)."
+msgstr "Set when source=gdrive (P2-06)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed
+msgid ""
+"Set when the post-tracking push to Etsy (EtsyTrackingPusher) succeeded for "
+"this fulfillment."
+msgstr "Đặt khi việc đẩy sau theo dõi đến Etsy (EtsyTrackingPusher) thành công cho lần giao hàng này."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_stock_picking__x_gearment_tracking_state
+msgid "Shipment/fulfillment state as last reported by Gearment webhooks."
+msgstr "Shipment/fulfillment state as last reported by Gearment webhooks."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__sale_order__x_gearment_status__shipped
+msgid "Shipped"
+msgstr "Shipped"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__business_summary
+msgid ""
+"Short human-readable result of the topic dispatch, e.g. "
+"'order_completed:tracking_set:USPS', 'order_not_found', 'unknown_topic:foo'."
+" Empty for unverified or non-webhook rows."
+msgstr "Kết quả dễ đọc ngắn gọn của việc gửi chủ đề, ví dụ 'order_completed:tracking_set:USPS', 'order_not_found', 'unknown_topic:foo'. Trống đối với các hàng chưa xác thực hoặc không phải webhook."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Signature Failed"
+msgstr "Chữ ký thất bại"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__signature_header_seen
+msgid "Signature Header Seen"
+msgstr "Tiêu đề chữ ký được nhìn thấy"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__signature_verified
+msgid "Signature Verified"
+msgstr "Chữ ký được xác thực"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__source
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__source
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_search
+msgid "Source"
+msgstr "Nguồn"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__source_row_hash
+msgid "Source Row Hash"
+msgstr "Hash hàng nguồn"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__start_at
+msgid "Started At"
+msgstr "Bắt đầu vào lúc"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_line__state
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__state
+msgid "State"
+msgstr "Trạng thái"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_stock_move
+msgid "Stock Move"
+msgstr "Di chuyển kho"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"The Gearment fees product is not configured. Update the module to restore "
+"the seed."
+msgstr "Sản phẩm phí Gearment không được cấu hình. Cập nhật mô-đun để khôi phục hạt giống."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"The Gearment quote is only available on a dropship purchase order against "
+"the Gearment vendor."
+msgstr "Báo giá Gearment chỉ có sẵn trên đơn mua dropship với nhà cung cấp Gearment."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_order_ref
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_order_ref
+msgid ""
+"The order's Gearment outbound reference, stamped when the order was pushed "
+"to Gearment (sale.order.x_gearment_outbound_ref)."
+msgstr "Mã tham chiếu gửi đi Gearment của đơn hàng, được đóng dấu khi đơn hàng được đẩy đến Gearment (sale.order.x_gearment_outbound_ref)."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid "This purchase order has no source sale order lines to quote."
+msgstr "This purchase order has no source sale order lines to quote."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+#: model:ir.actions.act_window,name:multichannel_hub_fulfillment.action_tracking_import_log_today
+msgid "Today's GKE Imports"
+msgstr "Nhập GKE hôm nay"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Today's Imports"
+msgstr "Nhập hôm nay"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_logistics_partner_form
+msgid "Toggle Active"
+msgstr "Bật/tắt hoạt động"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/logistics_partner.py:0
+msgid "Toggling logistics partner status requires BA Manager role."
+msgstr "Bật/tắt trạng thái đối tác vận chuyển yêu cầu vai trò Quản lý BA."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__topic_seen
+msgid "Topic Seen"
+msgstr "Chủ đề được nhìn thấy"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_topic
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_topic
+msgid ""
+"Topic of the most recent inbound Gearment business webhook (order_completed "
+"/ tracking_order_updated / order_cancelled / order_on_hold)."
+msgstr "Chủ đề của webhook kinh doanh Gearment nhận về gần đây nhất (order_completed / tracking_order_updated / order_cancelled / order_on_hold)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__total_rows
+msgid "Total Rows"
+msgstr "Tổng số hàng"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_form
+msgid "Tracking"
+msgstr "Theo dõi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_tracking_import_root
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_tracking_import_log_form
+msgid "Tracking Import"
+msgstr "Nhập tracking"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__etsy_tracking_pushed
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order_fulfillment__etsy_tracking_pushed
+msgid "Tracking Pushed to Etsy"
+msgstr "Theo dõi được đẩy lên Etsy"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_sale_order_fulfillment_detail_search
+msgid "Tracking State"
+msgstr "Trạng thái theo dõi"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid ""
+"Tracking import %(name)s in terminal state '%(state)s' requires finish_at."
+msgstr "Nhập theo dõi %(name)s ở trạng thái cuối cùng '%(state)s' yêu cầu finish_at."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid ""
+"Tracking import file (%(size)s bytes) exceeds the configured cap of %(cap)s "
+"bytes."
+msgstr "Tệp nhập theo dõi (%(size)s byte) vượt quá giới hạn được cấu hình là %(cap)s byte."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model,name:multichannel_hub_fulfillment.model_stock_picking
+msgid "Transfer"
+msgstr "Chuyển giao"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__triggered_by_user_id
+msgid "Triggered By"
+msgstr "Được kích hoạt bởi"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__signature_verified
+msgid "True if HMAC-SHA256 verify against GEARMENT_API_SECRET passed."
+msgstr "Đúng nếu xác thực HMAC-SHA256 so với GEARMENT_API_SECRET đã qua."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__business_handled
+msgid ""
+"True if a topic-handler ran (P0-18b2c dispatcher); soft-fails like "
+"order_not_found also count as handled=True if dispatch attempted."
+msgstr "Đúng nếu trình xử lý chủ đề đã chạy (trình điều phối P0-18b2c); các lỗi mềm như order_not_found cũng tính là handled=True nếu thử gửi."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__is_new_schema
+msgid "True if schema_hash not in approved set at upload time."
+msgstr "True if schema_hash not in approved set at upload time."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_purchase_order__is_gearment_dropship_po
+msgid ""
+"True when this PO is a dropship procurement against the Gearment vendor. "
+"Drives the 'Request Gearment Quote' button visibility."
+msgstr "Đúng khi PO này là mua hàng dropship chống lại nhà cung cấp Gearment. Điều khiển khả năng hiển thị nút 'Yêu cầu báo giá Gearment'."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Type of the exception activity on record."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_quote_wizard__quote_expires_at
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__x_gearment_quote_expires_at
+msgid ""
+"UTC timestamp after which `action_confirm` raises and the operator must "
+"fetch a fresh quote (E4 invariant)."
+msgstr "Dấu thời gian UTC sau đó `action_confirm` tăng lên và nhân viên vận hành phải tìm nạp báo giá mới (E4 bất biến)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__code
+msgid "Unique partner code (folder-path-friendly)."
+msgstr "Mã đối tác duy nhất (thân thiện với đường dẫn thư mục)."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__unmatched_count
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_line__state__unmatched
+msgid "Unmatched"
+msgstr "Không khớp"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/wizards/tracking_import_wizard.py:0
+msgid "Uploaded file is %(size)s bytes; cap is %(cap)s bytes."
+msgstr "Tệp đã tải lên là %(size)s byte; giới hạn là %(cap)s byte."
+
+#. module: multichannel_hub_fulfillment
+#: model:res.groups,comment:multichannel_hub_fulfillment.group_ba_shipping
+msgid "Uploads GKE Excel, runs preview + import. Cannot approve new schemas."
+msgstr "Tải lên Excel GKE, chạy xem trước + nhập. Không thể phê duyệt các lược đồ mới."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_gearment_api_log__verify_failure_reason
+msgid "Verify Failure Reason"
+msgstr "Lý do xác thực thất bại"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields.selection,name:multichannel_hub_fulfillment.selection__tracking_import_log__state__warning
+msgid "Warning"
+msgstr "Cảnh báo"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.ui.menu,name:multichannel_hub_fulfillment.menu_gearment_webhook_log
+msgid "Webhook Log"
+msgstr "Nhật ký Webhook"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__topic_seen
+msgid ""
+"Webhook topic/event extracted from body['type'] (real Gearment payloads), "
+"body['event'], body['topic'], or X-Topic header; empty if not detectable."
+msgstr "Chủ đề/sự kiện webhook được trích xuất từ body['type'] (tải trọng Gearment thực), body['event'], body['topic'], hoặc tiêu đề X-Topic; trống nếu không thể phát hiện."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_gearment_api_log_form
+msgid "Webhook verification"
+msgstr "Xác thực Webhook"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_logistics_partner__website_message_ids
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_log__website_message_ids
+msgid "Website Messages"
+msgstr "Thông báo trang web"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__website_message_ids
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_log__website_message_ids
+msgid "Website communication history"
+msgstr "Lịch sử giao tiếp trang web"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order__gearment_last_webhook_at
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_sale_order_fulfillment__gearment_last_webhook_at
+msgid ""
+"When the most recent inbound Gearment business webhook touched this "
+"fulfillment."
+msgstr "Khi webhook kinh doanh Gearment nhận về gần đây nhất chạm vào lần giao hàng này."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__gdrive_inbox_folder_id
+msgid "Where partner drops .xlsx tracking files."
+msgstr "Nơi đối tác thả các tệp theo dõi .xlsx."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_logistics_partner__gdrive_archive_folder_id
+msgid "Where successfully imported files are moved."
+msgstr "Nơi các tệp được nhập thành công được di chuyển."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_tracking_import_wizard__state
+msgid "Wizard State"
+msgstr "Trạng thái trợ lý"
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_tracking_import_line__applied_carrier_id
+msgid "Written if order's existing carrier was empty."
+msgstr "Được viết nếu đơn vị vận chuyển hiện có của đơn hàng trống."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__nonce_value
+msgid ""
+"X-Connect-Nonce header value; used by P0-18b2b replay-protection lookup."
+msgstr "Giá trị tiêu đề X-Connect-Nonce; được sử dụng bởi tìm kiếm bảo vệ phát lại P0-18b2b."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,help:multichannel_hub_fulfillment.field_gearment_api_log__request_timestamp
+msgid ""
+"X-Connect-Timestamp header parsed to int (unix epoch seconds). Indexed to "
+"support nonce-dedup window queries."
+msgstr "Tiêu đề X-Connect-Timestamp được phân tích cú pháp thành int (giây epoch unix). Được lập chỉ mục để hỗ trợ các truy vấn cửa sổ loại bỏ nonce."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid "create_date"
+msgstr "create_date"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/tracking_import_log.py:0
+msgid "finish_at must be >= start_at on %(name)s."
+msgstr "finish_at must be >= start_at on %(name)s."
+

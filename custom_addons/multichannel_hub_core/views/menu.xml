@@ -8,13 +8,44 @@
               sequence="20"
               groups="sales_team.group_sale_salesman"/>
 
-    <!-- P1-DASH-MERGE — single Operations Dashboard menu under
-         Operations root. Replaces the original P1-01a menu_order_dashboard
+    <!-- P-IA-01 — workflow-grouped hub sections (owner-approved
+         v2-uiux-improved IA). Sections carry no action: Odoo hides a section
+         when the user can see none of its children, so leaf-level groups=
+         drive visibility. Labels stay English in XML; Vietnamese comes from
+         i18n/vi.po. Menus in etsy_integration / multichannel_hub_fulfillment
+         / design re-parent onto these ids (they all depend on this module). -->
+    <menuitem id="menu_daily_work"
+              name="Daily Work"
+              parent="menu_operations_root"
+              sequence="10"/>
+
+    <menuitem id="menu_sales_publish"
+              name="Sales &amp; Publish"
+              parent="menu_operations_root"
+              sequence="20"/>
+
+    <menuitem id="menu_fulfillment"
+              name="Fulfillment"
+              parent="menu_operations_root"
+              sequence="30"/>
+
+    <menuitem id="menu_after_sales"
+              name="After-Sales"
+              parent="menu_operations_root"
+              sequence="40"/>
+
+    <menuitem id="menu_monitoring"
+              name="Monitoring"
+              parent="menu_operations_root"
+              sequence="50"/>
+
+    <!-- P1-DASH-MERGE — single Operations Dashboard menu, now first Daily
+         Work entry. Replaces the original P1-01a menu_order_dashboard
          and the P1-03 menu_tracking_dashboard which are deleted below
          per CEO directive 2026-05-03. -->
     <menuitem id="menu_operations_dashboard"
               name="Operations Dashboard"
-              parent="menu_operations_root"
+              parent="menu_daily_work"
               action="action_operations_dashboard"
               sequence="10"/>
 

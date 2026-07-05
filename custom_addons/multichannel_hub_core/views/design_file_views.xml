@@ -172,11 +172,13 @@
         </field>
     </record>
 
-    <!-- Menu under Operations -->
+    <!-- P-IA-01: Daily Work section; production-team gated (P0 fix — was
+         visible to every internal user). -->
     <menuitem id="menu_design_file"
               name="Design Files"
-              parent="multichannel_hub_core.menu_operations_root"
+              parent="multichannel_hub_core.menu_daily_work"
               action="action_design_file"
-              sequence="20"/>
+              sequence="30"
+              groups="multichannel_hub_core.group_production_team"/>
 
 </odoo>

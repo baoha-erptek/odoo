@@ -193,3 +193,18 @@ staging or harvest those forms on a populated DB to get record-level shots for t
 | flow-3b/v2-tracking-import-log.png | Tracking Imports | 0 | view exists (empty) |
 | flow-4/v2-enquiry-list/form.png | Customer Enquiries | 0 | `built` (empty — conversations blocked) |
 | flow-4/v2-address-change-list/form.png | Address Change | 0 | `built` (empty) |
+
+---
+
+## CLOSED — 2026-07-05 (mockup-v3 session)
+
+The remaining UI/UX gaps in this audit are now shipped (branch `feature/mockup-v3-uiux`):
+MuK backend theme + Hatafa palette (#714B67), single "Vận hành" hub with 6 workflow
+sections (Etsy app folded in; after-sales finally reachable from the menu; P0 menu-gating
+fixes), KPI band on the Operations Dashboard, Gearment→Fulfillment naming + state badge,
+and full Vietnamese UI (vi.po for all 4 custom modules). Deployed to staging esty_odoo19;
+21 fresh screenshots harvested. Deferred items unchanged (payload preview, QC checklist,
+production scan); Conversations still blocked on the Etsy scope.
+
+Successor doc set: `v3/` (hybrid: real screenshots + status-pill blocks for
+deferred/blocked) + `HUONG_DAN_*_VN.md` v2.0. This audit is now historical.
