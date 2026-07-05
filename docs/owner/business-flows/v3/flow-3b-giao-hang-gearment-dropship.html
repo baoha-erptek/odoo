@@ -130,12 +130,20 @@
   <li>Kiểm tra <b>giá</b>: hợp lý không, có vượt margin không?</li>
   <li>Kiểm tra <b>địa chỉ dropship</b> (tên, địa chỉ người mua)</li>
   <li>Nếu khách vừa xin đổi địa chỉ — xử lý duyệt đổi địa chỉ trước (xem Quy trình 4), rồi bấm lại "Yêu cầu báo giá Gearment"</li>
+  <li>Kiểm tra <b>file thiết kế</b>: mỗi sản phẩm có file đã duyệt, và với đơn in 2 mặt — trường <b>"Vị trí in"</b> (Mặt trước / Mặt sau) đã chọn đúng trên từng file</li>
   <li>OK → bấm <b>"Xác nhận đơn hàng"</b> — đơn được đẩy sang Gearment để in và gửi thẳng tới khách (không qua Hatafa)</li>
 </ol>
 
+<p class="lead">Từ 2026-07, hệ thống <b>kiểm tra chặn trước khi đẩy</b> — nếu có vấn đề, đơn KHÔNG bị đẩy thiếu mà báo lỗi rõ ràng:</p>
+<ul>
+  <li>Sản phẩm <b>chưa có file thiết kế đã duyệt</b> kèm link → báo lỗi nêu tên sản phẩm (trước đây dòng đó bị âm thầm bỏ khỏi đơn)</li>
+  <li><b>Link thiết kế không truy cập được</b> (Google Drive chưa mở public) → báo lỗi nêu tên file; mở quyền chia sẻ rồi bấm lại</li>
+  <li><b>Hai file đã duyệt cùng một mặt in</b> trên cùng sản phẩm → báo lỗi nêu mặt bị trùng; sửa "Vị trí in" trên file</li>
+</ul>
+
 <figure>
-  <img src="../../img/giao-hang-design-file-form.png" alt="Form File thiết kế — file in cho Gearment">
-  <figcaption>File thiết kế (đã duyệt) đi kèm đơn — Gearment in theo đúng file này.</figcaption>
+  <img src="../../img/giao-hang-design-file-form.png" alt="Form File thiết kế — file in cho Gearment, có trường Vị trí in">
+  <figcaption>File thiết kế (đã duyệt) đi kèm đơn — Gearment in theo đúng file này. Trường "Vị trí in" chọn Mặt trước / Mặt sau; bỏ trống = tự động (file cũ nhất in mặt trước).</figcaption>
 </figure>
 
 <h2>Bước 4 — Theo dõi trạng thái trên đơn bán &amp; phiếu giao</h2>
@@ -176,6 +184,7 @@
     <li><b>Báo giá nằm trên đơn mua (PO), không phải đơn bán.</b> Tổng PO = đúng chi phí Gearment, nên báo cáo Mua hàng phản ánh chi tiêu Gearment.</li>
     <li><b>Bấm lại "Yêu cầu báo giá Gearment" bất kỳ lúc nào</b> khi PO còn nháp — giá mới ghi đè giá cũ, chưa có gì gửi sang Gearment cho tới khi bấm "Xác nhận đơn hàng".</li>
     <li><b>Khách xin đổi địa chỉ?</b> Duyệt yêu cầu đổi địa chỉ trước (Quy trình 4 — hệ thống chặn sửa tay khi đang có yêu cầu chờ duyệt), rồi hỏi lại báo giá.</li>
+    <li><b>In 2 mặt?</b> Chọn "Vị trí in" (Mặt trước / Mặt sau) trên từng file thiết kế. Bỏ trống = tự động theo thứ tự tải lên (file cũ nhất = mặt trước).</li>
     <li><b>Đơn bị Gearment tạm dừng?</b> Phiếu giao hàng hiện cờ "sản xuất bị chặn" kèm lý do — xử lý theo lý do rồi liên hệ BA Shipping Manager nếu cần.</li>
   </ul>
 </div>

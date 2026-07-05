@@ -16,10 +16,14 @@ P4-01-C added the operator-driven Gearment outbound state machine
 from `x_gearment_status` which is webhook-driven Gearment-side state
 (decision E1.b in `specs/004-fulfillment-routing/p4-01-c-plan.md`).
 """
+import ipaddress
 import json
 import logging
+import socket
 from datetime import timedelta
+from urllib.parse import urlparse
 
+import requests
 from markupsafe import escape
 
 from odoo import _, api, fields, models
@@ -41,6 +45,22 @@ _GEARMENT_OUTBOUND_STATE_SEQUENCE = (
 # expires-at value. Short enough that operator must review today; long
 # enough for back-and-forth with BA. Adjust via ICP later if needed.
 _GEARMENT_QUOTE_DEFAULT_TTL_MINUTES = 30
+
+# P-GEAR-PRINT-SIDES — pre-push artwork URL reachability check. Gearment
+# fetches artwork server-side; a private GDrive link fails production hours
+# later with no Odoo-side signal. ICP killswitch (default ON) in case the
+# owner worries about push latency.
+_ARTWORK_URL_CHECK_ICP = 'multichannel_hub.gearment_artwork_url_check_enabled'
+_ARTWORK_URL_TIMEOUT_S = 5
+
+
+def _looks_like_ip(host):
+    """True when `host` is an IPv4/IPv6 literal (vs a DNS name)."""
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
 
 
 class SaleOrder(models.Model):
@@ -170,6 +190,7 @@ class SaleOrder(models.Model):
                 continue
             files = order._all_design_files().filtered(
                 lambda f: f.state in _ACCEPTABLE_DESIGN_STATES)
+            order._check_artwork_urls_reachable(files)
             payload = gearment_payload_builder.build_payload(order, files)
             try:
                 adapter = adapter_cls(env=order.env)
@@ -191,6 +212,87 @@ class SaleOrder(models.Model):
             order.message_post(body=_(
                 "Order pushed to Gearment (ref %s).", ref))
             order._advance_pipeline_to('confirmed')
+
+    @staticmethod
+    def _is_private_host(url):
+        """True when the URL's host resolves to a private/loopback/link-local
+        address — SSRF defense-in-depth for the artwork reachability probe.
+
+        ponytail: checks the given URL's host (IP literal or one DNS resolve);
+        does not pin per-redirect-hop addresses. Operators are internal and
+        ACL-gated; upgrade to a hop-pinning session adapter if this ever
+        faces untrusted input.
+        """
+        host = urlparse(url).hostname
+        if not host:
+            return True
+        try:
+            addrs = [host] if _looks_like_ip(host) else [
+                info[4][0] for info in socket.getaddrinfo(host, None)]
+        except OSError:
+            return False  # unresolvable — let the HEAD call report it
+        for addr in addrs:
+            try:
+                ip = ipaddress.ip_address(addr)
+            except ValueError:
+                continue
+            if (ip.is_private or ip.is_loopback or ip.is_link_local
+                    or ip.is_reserved or ip.is_unspecified):
+                return True
+        return False
+
+    def _check_artwork_urls_reachable(self, files):
+        """P-GEAR-PRINT-SIDES — HEAD-check every artwork URL before pushing.
+
+        2xx/3xx passes. 405/501 also pass (host rejects HEAD — GET would be
+        too heavy for a pre-flight). Anything else, or a transport error,
+        raises UserError naming the design file so the operator can fix the
+        share settings. Killswitch: ICP
+        `multichannel_hub.gearment_artwork_url_check_enabled` != 'True'.
+        """
+        self.ensure_one()
+        # sudo(): plain read of a boolean killswitch ICP — ICPs are
+        # system-group-read by default, but every push-capable operator must
+        # pass this check uniformly. No sensitive data exposed.
+        icp = self.env['ir.config_parameter'].sudo().get_param(
+            _ARTWORK_URL_CHECK_ICP, 'True')
+        if icp != 'True':
+            return
+        for df in files:
+            url = df.file_url or df.gdrive_preview_url
+            if not url:
+                continue
+            if self._is_private_host(url):
+                raise UserError(_(
+                    "Artwork URL for design '%(name)s' points to a private "
+                    "or internal address. Use a public link.", name=df.name,
+                ))
+            try:
+                resp = requests.head(
+                    url, timeout=_ARTWORK_URL_TIMEOUT_S, allow_redirects=True)
+                status = resp.status_code
+            except requests.RequestException as exc:
+                _logger.warning(
+                    "Artwork URL check failed for design.file id=%s: %s",
+                    df.id, exc)
+                raise UserError(_(
+                    "Artwork URL for design '%(name)s' is not reachable. "
+                    "Make the link public before pushing to Gearment.",
+                    name=df.name,
+                )) from exc
+            # Post-redirect landing must not be internal either.
+            if resp.url and self._is_private_host(resp.url):
+                raise UserError(_(
+                    "Artwork URL for design '%(name)s' redirects to a "
+                    "private or internal address. Use a public link.",
+                    name=df.name,
+                ))
+            if status >= 400 and status not in (405, 501):
+                raise UserError(_(
+                    "Artwork URL for design '%(name)s' returned HTTP "
+                    "%(status)s. Make the link public before pushing to "
+                    "Gearment.", name=df.name, status=status,
+                ))
 
     # ------------------------------------------------------------------
     # P4-01-C — Gearment outbound state machine + quote handshake

@@ -79,9 +79,11 @@ class TestPipelineStateDatabase(TransactionCase):
     def test_seed_states_vn_internal(self):
         vn = self.env.ref('multichannel_hub_core.order_pipeline_vn_internal_production')
         codes = set(vn.state_ids.mapped('code'))
-        self.assertEqual(
-            codes,
+        # Superset check: other modules extend pipelines with extra states
+        # (e.g. the design module seeds 'design_ready' — ESTY-249).
+        self.assertLessEqual(
             {'pending_file', 'in_production', 'packed', 'shipped', 'done', 'reprint'},
+            codes,
         )
         initial = vn.state_ids.filtered(lambda s: s.is_initial)
         self.assertEqual(len(initial), 1)
@@ -90,12 +92,14 @@ class TestPipelineStateDatabase(TransactionCase):
     def test_seed_states_gearment(self):
         g = self.env.ref('multichannel_hub_core.order_pipeline_gearment_pod')
         codes = set(g.state_ids.mapped('code'))
-        self.assertEqual(codes, {'draft', 'quoted', 'confirmed', 'shipped'})
+        # Superset check — see test_seed_states_vn_internal.
+        self.assertLessEqual({'draft', 'quoted', 'confirmed', 'shipped'}, codes)
 
     def test_seed_states_hybrid(self):
         h = self.env.ref('multichannel_hub_core.order_pipeline_multi_technique_hybrid')
         codes = set(h.state_ids.mapped('code'))
-        self.assertEqual(codes, {'setup', 'production', 'done'})
+        # Superset check — see test_seed_states_vn_internal.
+        self.assertLessEqual({'setup', 'production', 'done'}, codes)
 
     def test_initial_state_id_computed_per_pipeline(self):
         for ref in ('multichannel_hub_core.order_pipeline_vn_internal_production',

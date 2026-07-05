@@ -1912,3 +1912,65 @@ msgstr "create_date"
 msgid "finish_at must be >= start_at on %(name)s."
 msgstr "finish_at must be >= start_at on %(name)s."
 
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_payload_builder.py:0
+msgid ""
+"Cannot build the Gearment order: product '%(product)s' has more than one "
+"approved design file on the same print side (%(sides)s). Set a distinct "
+"Print Location on each file."
+msgstr ""
+"Không thể tạo đơn Gearment: sản phẩm '%(product)s' có nhiều hơn một file "
+"thiết kế đã duyệt trên cùng một mặt in (%(sides)s). Hãy chọn Vị trí in "
+"khác nhau cho từng file."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/services/gearment_payload_builder.py:0
+msgid ""
+"Cannot push to Gearment: product '%(product)s' has no approved design file "
+"with a usable URL. Upload and approve a design for it first."
+msgstr ""
+"Không thể đẩy sang Gearment: sản phẩm '%(product)s' chưa có file thiết kế "
+"đã duyệt kèm URL hợp lệ. Hãy tải lên và duyệt thiết kế trước."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Artwork URL for design '%(name)s' is not reachable. Make the link public "
+"before pushing to Gearment."
+msgstr ""
+"URL thiết kế của file '%(name)s' không truy cập được. Hãy mở quyền công "
+"khai cho link trước khi đẩy sang Gearment."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Artwork URL for design '%(name)s' returned HTTP %(status)s. Make the link "
+"public before pushing to Gearment."
+msgstr ""
+"URL thiết kế của file '%(name)s' trả về HTTP %(status)s. Hãy mở quyền công "
+"khai cho link trước khi đẩy sang Gearment."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Artwork URL for design '%(name)s' points to a private or internal address. "
+"Use a public link."
+msgstr ""
+"URL thiết kế của file '%(name)s' trỏ tới địa chỉ nội bộ. Hãy dùng link "
+"công khai."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Artwork URL for design '%(name)s' redirects to a private or internal "
+"address. Use a public link."
+msgstr ""
+"URL thiết kế của file '%(name)s' chuyển hướng tới địa chỉ nội bộ. Hãy dùng "
+"link công khai."

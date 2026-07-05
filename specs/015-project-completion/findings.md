@@ -285,3 +285,28 @@ chain works and is E2E-proven EXCEPT:
 Docs corrected same day (commit f47b28836ed): flow-3b + HUONG_DAN_GIAO_HANG §5 now teach the
 PO-driven quote; the SO tab is view-only. Next-session prompt:
 `.claude/plans/next-session-gearment-gaps.md`.
+
+
+## 2026-07-05 (D) — P-GEAR-PRINT-SIDES shipped; latent side-inversion found
+
+Implemented `design.file.print_location` (front/back Selection, vi: "Vị trí in") + payload
+builder side mapping + push guards (commit 5b1d91ee3f8). Surprises:
+
+1. **The old positional mapping was inverted.** `design.file._order` is `create_date DESC,
+   id DESC`, so recordsets from the One2many arrive newest-first — the old `zip` gave the
+   NEWEST file `PRINT_LOCATION_CODE_FRONT`. For seeded front+back pairs (front created
+   first) the back design printed front. Fallback now sorts id ASC (oldest = front).
+2. **Plan divergence (deliberate):** field ships with NO default instead of the planned
+   `front` default. A hard default stamps every legacy row 'front' at column init and turns
+   every legacy two-file line into a duplicate-front UserError; no-default = unset = auto,
+   zero migration.
+3. `Back` msgid was already taken by the SKU-builder wizard nav button — selection labels
+   are 'Front Side'/'Back Side' to keep vi.po msgids distinct.
+4. Security review added: private/loopback-host rejection on the artwork HEAD probe (SSRF
+   defense-in-depth), exception detail logged not surfaced, sudo comment on ICP read.
+5. Pre-existing main breakage found + fixed (35f89e85590): mhc pipeline-seed exact-set
+   asserts went stale when the design module seeded `design_ready` (ESTY-249); dashboard
+   menu assert still expected the pre-Hatafa parent.
+
+P-GEAR-AUTOCONFIRM: owner asked via Telegram DM (options: gated button / auto on PO
+confirm / capped cron + spend-threshold question). Blocked until reply.
