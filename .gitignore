@@ -98,3 +98,7 @@ deployment/nginx-tfv.*.conf
 # graphify analysis output (tooling artefact, not source)
 graphify-out/
 .gstack/
+
+# Gearment doc crawl — raw HTML snapshots (curated .md is committed; raw is not)
+docs/vendor/gearment/_raw/
+docs/vendor/**/*.tmp

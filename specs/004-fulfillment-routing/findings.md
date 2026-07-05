@@ -748,3 +748,40 @@ Two surprises surfaced during the slice that are worth carrying forward:
 
 **Trivial-slice shortcut applied**: this slice qualifies for the playbook's "≤50 LOC, no business logic" shortcut (actual diff: +13/-3). Phase 1/2 tests deferred because `multichannel_hub_fulfillment/tests/test_p4_01_fix_payload_schema.py::test_builder_sets_legacy_id_from_numeric_sku` already proves the invariant — numeric `x_gearment_sku='1234'` produces `payload.line_items[0].legacy_id=1234`. The only thing this slice changes is which numeric value goes in; the parsing surface is unchanged. Documented in commit body so the skip is auditable.
 
+---
+
+## 2026-07-05 — Doc crawl cracks Defect-2026-05-10-05 (`printing_options` 400)
+
+**Trigger**: owner asked to crawl the Gearment developer docs and re-examine Gearment
+blockers. Master-plan review confirmed exactly one live blocker (this defect; E2 creds are
+now DONE per P0-02 2026-07-04). Crawled `developers.gearment.com` via `crawl4ai` (uv tool)
+into `docs/vendor/gearment/` (raw HTML git-ignored).
+
+**Root cause found (was a vendor-escalation blocker, now self-serviceable):**
+- The draft endpoint wants `printing_options:[{location_code:"PRINT_LOCATION_CODE_WHOLE",
+  url:"..."}]`. The `location_code` is a **proto3 enum with the `PRINT_LOCATION_CODE_*`
+  prefix** — the house style across every enum in the same doc. Our 14+ probes tried
+  `front`, `FRONT`, `PRINT_LOCATION_FRONT`, `LOCATION_FRONT`, `PRINT_LOCATION_TYPE_FRONT` …
+  but **never `PRINT_LOCATION_CODE_FRONT`**. The 400 message quotes the human names
+  (front/pocket/back/whole); the wire values are the prefixed enum.
+- No hidden required sibling field — the object is exactly `{location_code, url}`.
+- **Draft ≠ Quote**: quote endpoint uses `print_locations:["front"]` (lowercase strings) —
+  a different shape. Builder must not conflate them.
+- **Draft keys on `variant_id`** (e.g. `GM0002003147`) + `product_id` (`G5000`), not
+  free-text SKU. Our `DEMO-T-*` SKUs fail catalog lookup — this is the *separate*
+  Defect-2026-05-10-02, now clearly distinguished from the enum bug.
+- No standalone OpenAPI/Swagger file is served (well-known paths 404); the SPA
+  server-renders the schemas. Postman collection also at `api.gearment.com`.
+
+**Confidence**: `PRINT_LOCATION_CODE_WHOLE` literal-confirmed from the doc example;
+`FRONT`/`POCKET`/`BACK` inferred from the 400 allowed-list + the proven prefix pattern.
+**One live probe against `/orders/draft` confirms** — that is the RED→GREEN of the fix slice.
+
+**Fix (deferred to its own slice, RED test first — not bundled here):**
+`services/gearment_payload_builder.py:296` — change `_PRINT_LOCATIONS_DEFAULT =
+('front','back')` to `('PRINT_LOCATION_CODE_FRONT','PRINT_LOCATION_CODE_BACK')` (and add
+WHOLE/POCKET as design-count dictates); source `variant_id` from the Gearment catalog
+(`/api/v3/catalog/variants/stock`) instead of the Odoo SKU. Live `confirm()` stays behind
+the owner-sign-off gate. Evidence: `docs/GEARMENT_API_REFERENCE.md` (Docs Source + Open
+Questions Q1.1/Q1.2/Q2.1/Q4.1, all updated) and `docs/vendor/gearment/`.
+
