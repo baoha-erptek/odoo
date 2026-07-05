@@ -109,11 +109,13 @@ class TestNavigationHub(TransactionCase):
         production = self._ref('multichannel_hub_core.group_production_team')
         manager = self._ref('sales_team.group_sale_manager')
         ba_user = self._ref('multichannel_hub_core.group_ba_user')
+        ba_lead = self._ref('multichannel_hub_core.group_ba_lead')
         cases = {
             'multichannel_hub_core.menu_design_file': production,
             'design.menu_design_order': production,
             'etsy_integration.menu_etsy_design_queue': production,
-            'etsy_integration.menu_etsy_shops': manager,
+            # BA Leads own shop publisher defaults (Flow 1)
+            'etsy_integration.menu_etsy_shops': ba_lead,
             'etsy_integration.menu_etsy_import_orders': manager,
             'etsy_integration.menu_etsy_orders': ba_user,
             'etsy_integration.menu_etsy_email_log': ba_user,
