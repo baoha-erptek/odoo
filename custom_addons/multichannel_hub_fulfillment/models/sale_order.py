@@ -53,6 +53,11 @@ _GEARMENT_QUOTE_DEFAULT_TTL_MINUTES = 30
 _ARTWORK_URL_CHECK_ICP = 'multichannel_hub.gearment_artwork_url_check_enabled'
 _ARTWORK_URL_TIMEOUT_S = 5
 
+# P-GEAR-AUTOCONFIRM — master switch for the CHARGEABLE Gearment production
+# confirm (/orders/draft/labeled). Ships 'False': the button exists but every
+# call is refused until the owner explicitly enables it (real-money gate).
+_GEARMENT_CONFIRM_ICP = 'multichannel_hub.gearment_confirm_enabled'
+
 
 def _looks_like_ip(host):
     """True when `host` is an IPv4/IPv6 literal (vs a DNS name)."""
@@ -76,6 +81,13 @@ class SaleOrder(models.Model):
     )
     x_gearment_pushed_at = fields.Datetime(
         string='Gearment Pushed At', readonly=True, copy=False)
+    # P-GEAR-AUTOCONFIRM — idempotency stamp: set exactly once when the
+    # chargeable /orders/draft/labeled confirm succeeds. Never cleared.
+    x_gearment_confirmed_at = fields.Datetime(
+        string='Gearment Production Confirmed At', readonly=True, copy=False,
+        help="Set when the Gearment draft was submitted for production "
+             "(chargeable). A set value blocks any further confirm call.",
+    )
     x_gearment_status = fields.Selection(
         [
             ('pending', 'Pending'),
@@ -129,6 +141,23 @@ class SaleOrder(models.Model):
              "order_discount, order_handle_fee, order_gift_message_fee, "
              "order_fee, order_total, currency}.",
     )
+
+    def write(self, vals):
+        """Financial audit-trail guard: `x_gearment_confirmed_at` is
+        immutable once set. `readonly=True` is only a UI hint — without
+        this, any sale.order-write user could clear the stamp via RPC and
+        re-enable a second chargeable Gearment confirm.
+        """
+        if 'x_gearment_confirmed_at' in vals:
+            for order in self:
+                if (order.x_gearment_confirmed_at
+                        and vals['x_gearment_confirmed_at']
+                        != order.x_gearment_confirmed_at):
+                    raise UserError(_(
+                        "The Gearment production confirmation timestamp on "
+                        "%(so)s cannot be changed or cleared (financial "
+                        "audit trail).", so=order.name))
+        return super().write(vals)
 
     # ------------------------------------------------------------------
     # Pipeline transition helper
@@ -212,6 +241,90 @@ class SaleOrder(models.Model):
             order.message_post(body=_(
                 "Order pushed to Gearment (ref %s).", ref))
             order._advance_pipeline_to('confirmed')
+
+    def _gearment_confirm_charged(self):
+        """P-GEAR-AUTOCONFIRM — the ONE chargeable confirm core.
+
+        Every path that submits a Gearment draft for production
+        (/orders/draft/labeled — REAL MONEY) must route through here:
+        the PO/SO button (`action_confirm_at_gearment`) and the quote
+        wizard (`gearment.quote.wizard.action_confirm`). Do not call
+        `adapter.confirm()` anywhere else.
+
+        Guards, in order:
+        1. ICP master switch `multichannel_hub.gearment_confirm_enabled`,
+           ships 'False' — the owner must explicitly enable real spend.
+        2. Draft must exist (`x_gearment_outbound_ref` set by the push).
+        3. Idempotency under concurrency: row lock, then re-read
+           `x_gearment_confirmed_at` — a set stamp blocks forever. The
+           adapter additionally sends an Idempotency-Key header.
+
+        Success stamps `x_gearment_confirmed_at` + chatter; failure posts
+        chatter and raises so nothing is stamped. Full request/response is
+        audited by the adapter into `gearment.api.log` (source='confirm').
+        Caller is responsible for its own FR-017 access gate.
+        """
+        self.ensure_one()
+        # sudo(): boolean killswitch ICP read — every gate-passing operator
+        # must see the same switch; no sensitive data.
+        enabled = self.env['ir.config_parameter'].sudo().get_param(
+            _GEARMENT_CONFIRM_ICP, 'False')
+        if enabled != 'True':
+            raise UserError(_(
+                "Confirming production at Gearment is disabled. The shop "
+                "owner must enable it (config switch "
+                "'multichannel_hub.gearment_confirm_enabled') before this "
+                "chargeable step can run."))
+        if not self.x_gearment_outbound_ref:
+            raise UserError(_(
+                "Order %(so)s has not been pushed to Gearment yet — confirm "
+                "the purchase order first to create the draft.",
+                so=self.name))
+        # Raw SQL justified: serialize concurrent confirm clicks. The ORM
+        # has no single-row SELECT ... FOR UPDATE primitive; parameterized
+        # id, no injection surface. The second transaction blocks here
+        # until the first commits, then the re-read below sees its stamp.
+        self.env.cr.execute(
+            "SELECT 1 FROM sale_order WHERE id = %s FOR UPDATE", (self.id,))
+        self.invalidate_recordset(['x_gearment_confirmed_at'])
+        if self.x_gearment_confirmed_at:
+            raise UserError(_(
+                "Order %(so)s was already confirmed at Gearment on "
+                "%(when)s. It cannot be confirmed twice.",
+                so=self.name, when=self.x_gearment_confirmed_at))
+        reference_id = self.channel_order_ref or self.name
+        adapter = gearment_adapter.GearmentApiAdapter(env=self.env)
+        try:
+            response = adapter.confirm(reference_id)
+        except Exception as exc:
+            self.message_post(body=_(
+                "Gearment production confirm FAILED for %(ref)s: %(err)s",
+                ref=reference_id, err=escape(str(exc)[:512])))
+            raise UserError(_(
+                "Gearment refused the production confirm for %(so)s. "
+                "See the Gearment API log for the full response.",
+                so=self.name)) from exc
+        # sudo(): stamp + chatter after the caller's FR-017 gate passed —
+        # BA Shipping operators may lack plain sale.order write ACL (same
+        # pattern as the wizard's _advance_gearment_state sudo).
+        self.sudo().write({'x_gearment_confirmed_at': fields.Datetime.now()})
+        self.message_post(body=_(
+            "Order submitted for production at Gearment (ref %(ref)s, "
+            "status %(status)s). This step is chargeable.",
+            ref=reference_id,
+            status=(response or {}).get('status', '?')))
+        return response
+
+    def action_confirm_at_gearment(self):
+        """P-GEAR-AUTOCONFIRM (option a) — gated production confirm button.
+
+        FR-017 method gate (view `groups=` alone is RPC-bypassable), then
+        the shared chargeable core `_gearment_confirm_charged`.
+        """
+        self.ensure_one()
+        self._check_ba_shipping_or_raise()
+        self._gearment_confirm_charged()
+        return True
 
     @staticmethod
     def _is_private_host(url):

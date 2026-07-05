@@ -1952,3 +1952,83 @@ msgid ""
 "Artwork URL for design '%(name)s' returned HTTP %(status)s. Make the link "
 "public before pushing to Gearment."
 msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_confirmed_at
+msgid "Gearment Production Confirmed At"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Confirming production at Gearment is disabled. The shop owner must enable "
+"it (config switch 'multichannel_hub.gearment_confirm_enabled') before this "
+"chargeable step can run."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order %(so)s has not been pushed to Gearment yet — confirm the purchase "
+"order first to create the draft."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order %(so)s was already confirmed at Gearment on %(when)s. It cannot be "
+"confirmed twice."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Gearment production confirm FAILED for %(ref)s: %(err)s"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Gearment refused the production confirm for %(so)s. See the Gearment API "
+"log for the full response."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order submitted for production at Gearment (ref %(ref)s, status "
+"%(status)s). This step is chargeable."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Nothing to confirm at Gearment: no source order with a pushed draft that "
+"is still unconfirmed."
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid "Confirm at Gearment"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid ""
+"This submits the order for PRODUCTION at Gearment and is chargeable. "
+"Continue?"
+msgstr ""
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"The Gearment production confirmation timestamp on %(so)s cannot be changed "
+"or cleared (financial audit trail)."
+msgstr ""

@@ -200,6 +200,11 @@ Từ 2026-07, hệ thống **kiểm tra chặn trước khi đẩy** (báo lỗi
 | Link thiết kế phải **truy cập được** (link Google Drive phải mở public) | Báo lỗi nêu tên file — mở quyền chia sẻ rồi bấm lại |
 | Mỗi mặt in chỉ có **1 file** trên mỗi sản phẩm | Báo lỗi nêu mặt bị trùng — sửa "Vị trí in" trên file |
 
+> **Lưu ý:** sau bước này đơn mới ở trạng thái **nháp** bên Gearment — chưa in, chưa tính phí.
+> Việc xác nhận cho Gearment bắt đầu in hiện làm **thủ công trên dashboard Gearment**.
+> Nút **"Xác nhận sản xuất Gearment"** ngay trên PO đã sẵn sàng nhưng **đang tắt** —
+> chỉ hoạt động sau khi chủ shop bật (vì bước này tính phí thật).
+
 ### 5.5 Bước 4 — Bulk action khi cron tạm dừng
 
 Khi cron sync tự động bị tạm dừng (debug / bảo trì):

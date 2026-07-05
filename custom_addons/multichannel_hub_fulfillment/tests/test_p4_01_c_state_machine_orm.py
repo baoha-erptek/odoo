@@ -192,6 +192,13 @@ class TestP401CWizardConfirm(TransactionCase):
         self.order.x_gearment_quote_expires_at = (
             fields.Datetime.now() + timedelta(minutes=15)
         )
+        # P-GEAR-AUTOCONFIRM: wizard confirm now routes through the shared
+        # chargeable core — needs the owner killswitch ON and an existing
+        # pushed draft (killswitch-off behavior is covered in
+        # test_gear_confirm_button.py).
+        self.env['ir.config_parameter'].sudo().set_param(
+            'multichannel_hub.gearment_confirm_enabled', 'True')
+        self.order.x_gearment_outbound_ref = 'GM-DRAFT-WIZ'
         self.wizard = self.env['gearment.quote.wizard'].create({
             'order_id': self.order.id,
         })
