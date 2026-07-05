@@ -71,6 +71,13 @@ SHOTS: list[tuple[str, str, tuple, str | None]] = [
     # HUONG_DAN_TAO_SAN_PHAM_VN refresh (ESTY-250)
     ("product-tab-original-design", "form", ("product.template", 614),
      "Original Design"),
+    # mockup-v3 refresh (theme + vi_VN UI) — re-capture the flow-1 anchors
+    ("product-form-header", "form", ("product.template", 614), None),
+    ("listing-form-overview", "form", ("multichannel.listing", 62), None),
+    ("tao-san-pham-channel-status-kanban", "action",
+     ("multichannel_hub_core", "action_product_channel_status"), None),
+    ("tao-san-pham-sku-drift", "action",
+     ("multichannel_hub_core", "action_product_sku_drift"), None),
 ]
 
 
