@@ -224,7 +224,7 @@
 
     <menuitem id="menu_multichannel_listing"
               name="Listings"
-              parent="multichannel_hub_core.menu_operations_root"
+              parent="multichannel_hub_core.menu_sales_publish"
               action="action_multichannel_listing"
-              sequence="25"/>
+              sequence="20"/>
 </odoo>

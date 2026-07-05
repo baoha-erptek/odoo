@@ -42,8 +42,8 @@
 
     <menuitem id="menu_etsy_taxonomy_node"
               name="Etsy Taxonomy"
-              parent="multichannel_hub_core.menu_operations_root"
+              parent="multichannel_hub_core.menu_operations_config"
               action="action_etsy_taxonomy_node"
-              sequence="80"
+              sequence="50"
               groups="base.group_system"/>
 </odoo>

@@ -42,8 +42,8 @@
 
     <menuitem id="menu_etsy_shipping_profile"
               name="Etsy Shipping Profiles"
-              parent="multichannel_hub_core.menu_operations_root"
+              parent="multichannel_hub_core.menu_operations_config"
               action="action_etsy_shipping_profile"
-              sequence="81"
+              sequence="45"
               groups="base.group_system"/>
 </odoo>

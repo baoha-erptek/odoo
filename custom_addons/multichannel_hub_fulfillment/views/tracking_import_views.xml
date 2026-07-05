@@ -214,8 +214,8 @@
   <!-- Menu -->
   <menuitem id="menu_tracking_import_root"
             name="Tracking Import"
-            parent="multichannel_hub_core.menu_operations_root"
-            sequence="70"
+            parent="multichannel_hub_core.menu_fulfillment"
+            sequence="20"
             groups="multichannel_hub_fulfillment.group_ba_shipping"/>
 
   <menuitem id="menu_tracking_import_wizard"

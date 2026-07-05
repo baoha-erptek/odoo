@@ -60,11 +60,14 @@
         <field name="view_mode">list,form</field>
     </record>
 
+    <!-- P-IA-01: distinct model from multichannel.sync.health — renamed to
+         disambiguate, both live under Monitoring. -->
     <menuitem
         id="menu_etsy_sync_health"
-        name="Sync Health"
-        parent="menu_etsy_root"
+        name="Etsy Sync Health"
+        parent="multichannel_hub_core.menu_monitoring"
         action="action_etsy_sync_health"
-        sequence="60"/>
+        sequence="15"
+        groups="multichannel_hub_core.group_ba_user"/>
 
 </odoo>

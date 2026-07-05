@@ -92,10 +92,10 @@
     </record>
 
     <menuitem id="menu_etsy_api_log"
-              name="API Log"
-              parent="menu_etsy_root"
+              name="Etsy API Log"
+              parent="multichannel_hub_core.menu_monitoring"
               action="action_etsy_api_log"
-              sequence="50"
+              sequence="20"
               groups="etsy_integration.group_etsy_api_log_reader,base.group_system"/>
 
 </odoo>

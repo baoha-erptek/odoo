@@ -66,11 +66,14 @@
     <!-- Menu: Operations -> Configuration -> {SKU Families, Build SKU}  -->
     <!-- ============================================================== -->
 
+    <!-- P-IA-01: Configuration is the last hub section (seq 60) and is
+         manager-gated — master data only; day-to-day items moved to the
+         workflow sections. -->
     <menuitem id="menu_operations_config"
               name="Configuration"
               parent="menu_operations_root"
-              sequence="80"
-              groups="multichannel_hub_core.group_ba_user"/>
+              sequence="60"
+              groups="sales_team.group_sale_manager"/>
 
     <menuitem id="menu_sku_families"
               name="SKU Families"
@@ -81,9 +84,9 @@
 
     <menuitem id="menu_sku_builder_wizard"
               name="Build SKU &amp; Create Product"
-              parent="menu_operations_config"
+              parent="menu_sales_publish"
               action="action_product_sku_builder_wizard"
-              sequence="20"
+              sequence="10"
               groups="multichannel_hub_core.group_ba_user"
               active="False"/>
 

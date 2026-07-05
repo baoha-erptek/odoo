@@ -90,3 +90,4 @@ from . import test_p_d3_pipeline_wizard_orm
 from . import test_p_c_product_curation_orm
 from . import test_phase1_original_design_db
 from . import test_phase2_original_design_orm
+from . import test_navigation_hub

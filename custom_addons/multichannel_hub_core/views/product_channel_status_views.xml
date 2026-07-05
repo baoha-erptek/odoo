@@ -91,8 +91,8 @@
 
   <menuitem id="menu_product_channel_status"
             name="Channel Status"
-            parent="multichannel_hub_core.menu_operations_root"
+            parent="multichannel_hub_core.menu_sales_publish"
             action="action_product_channel_status"
-            sequence="27"/>
+            sequence="30"/>
 
 </odoo>
