@@ -844,10 +844,12 @@ state_code, country_code}, line_items:[{variant_id, quantity, print_locations:["
 - demo §6 LIVE push → 200 (`…YN2J6PPP`) + quote → `quoted` ($31.00 USD).
 
 **New follow-up findings (NOT this slice):**
-- **Money `nanos` scale on `/orders/price`**: response `order_total` came back `units=12,
-  nanos=99` but the real total is $12.99 — `_money_to_decimal` reads nanos as 10^-9 → $12.00.
-  Gearment's price endpoint appears to use a non-standard nanos scale. Quote total is off by
-  the cents. Needs a decoder tweak scoped to that endpoint (candidate Defect-2026-07-05-01).
+- **Money `nanos` scale — FIXED (commit `cd529987e7f`, 2026-07-05)**: Gearment's Money is
+  non-standard — `nanos` carries CENTS (0-99), not proto 10^-9. Proven decisively: the $6.75
+  variant at qty 3 returned `units=20, nanos=25` ($20.25); real 1e-9 nanos would be 250000000.
+  `_money_to_decimal` now computes `units + nanos/100` (quantized 0.01). Live re-verify:
+  flow-3b §4 `x_gearment_quote_total` = **12.99** (was 12.00). Money-proto tests updated to the
+  real shape. Draft ref to discard: `260705P-GM3MUJU-Z9Y83RVD`.
 - **Vietnam / non-US addresses**: `state_code` is capped at **3 chars** (US "TX" fine; a full
   province name 400s) and Gearment rejects non-ASCII — Vietnamese diacritics fail with
   "invalid characters (only letters, digits, spaces, - ' . , # / &)". VN IS an available
