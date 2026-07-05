@@ -41,6 +41,12 @@ class TestPurchaseOrderCallsite(TransactionCase):
         super().setUpClass()
         _set_gearment_env()
         cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        # P-GEAR-PRINT-SIDES: these tests exercise the PO→push wiring with
+        # fixture URLs; disable the artwork-URL reachability pre-flight so no
+        # real HEAD requests fire (it has dedicated tests in
+        # test_gear_print_sides.py).
+        cls.env['ir.config_parameter'].sudo().set_param(
+            'multichannel_hub.gearment_artwork_url_check_enabled', 'False')
 
         # Load pipelines and states
         cls.gearment_pipeline = cls.env.ref(
@@ -86,6 +92,15 @@ class TestPurchaseOrderCallsite(TransactionCase):
         order = self.env['sale.order'].create(defaults)
         # Ensure pipeline resolved to gearment_pod
         order.invalidate_recordset(['x_pipeline_id', 'x_pipeline_state_id'])
+        # P-GEAR-PRINT-SIDES: build_payload now raises on eligible lines
+        # without an approved design file — give the fixture one.
+        self.env['design.file'].create({
+            'name': 'callsite fixture design',
+            'order_line_id': order.order_line[0].id,
+            'storage_mode': 'url',
+            'file_url': f'https://drive.example/{order.id}-front.png',
+            'state': 'approved',
+        })
         return order
 
     def _confirm_sale_order_and_get_po(self, sale_order):

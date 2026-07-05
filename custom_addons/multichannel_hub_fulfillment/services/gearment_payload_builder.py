@@ -10,23 +10,30 @@ schema, so it is no longer built.
 """
 from __future__ import annotations
 
+from odoo import _
+from odoo.exceptions import UserError
+
 from .gearment_payload import (
     GearmentAddress,
     GearmentLineItem,
     GearmentOrderPayload,
 )
 
-# Default location-code assignment when design.file lacks a per-record code.
 # Gearment's draft validator wants the proto3 enum `PRINT_LOCATION_CODE_*`, NOT
 # the bare human names (front/back/pocket/whole) it quotes in its 400 message —
 # that mismatch was Defect-2026-05-10-05 (opaque 400 on every draft push). Wire
 # values confirmed from the doc crawl 2026-07-05
 # (docs/vendor/gearment/api_api.order.v1.vendororderapi.md, example
-# PRINT_LOCATION_CODE_WHOLE). Two-sided print is the dominant Etsy POD pattern;
-# positions beyond back are skipped until a per-design override field lands.
-# NOTE: the QUOTE endpoint uses a different shape (`print_locations: ["front"]`,
-# lowercase) — do not reuse these values there.
-_PRINT_LOCATIONS_DEFAULT = ('PRINT_LOCATION_CODE_FRONT', 'PRINT_LOCATION_CODE_BACK')
+# PRINT_LOCATION_CODE_WHOLE).
+# P-GEAR-PRINT-SIDES: `design.file.print_location` picks the side explicitly;
+# unset files fall back to positional assignment in id-ASC order (oldest =
+# front). NOTE: the QUOTE endpoint uses a different shape
+# (`print_locations: ["front"]`, lowercase) — do not reuse these values there.
+_SIDES = ('front', 'back')
+_WIRE_LOCATION = {
+    'front': 'PRINT_LOCATION_CODE_FRONT',
+    'back': 'PRINT_LOCATION_CODE_BACK',
+}
 
 # Draft `platform` enum. Only Etsy flows through this pipeline today; the draft
 # API 404s "marketplace not found" without it.
@@ -44,7 +51,47 @@ _SHIPPING_METHOD_DEFAULT = 'METHOD_STANDARD'
 # (order_total returned). Do NOT reuse the draft's proto-enum constants here.
 _QUOTE_PLATFORM_ETSY = 'etsy'
 _QUOTE_SHIPPING_METHOD = 'standard'
-_PRINT_LOCATIONS_QUOTE = ('front', 'back')
+
+
+def _printable_designs_by_line(design_files):
+    """Index design files by order-line id, keeping only files with a URL."""
+    by_line: dict[int, list] = {}
+    for df in design_files:
+        if not df.order_line_id:
+            continue
+        if not (df.file_url or df.gdrive_preview_url):
+            continue
+        by_line.setdefault(df.order_line_id.id, []).append(df)
+    return by_line
+
+
+def _assign_sides(line_designs, line_label):
+    """Return [(side, design.file)] front-first for one order line.
+
+    Explicit `print_location` wins. Unset files fill the remaining free
+    sides in id-ASC order — oldest file prints front. (The old positional
+    zip iterated the recordset in its natural `create_date DESC` order,
+    which put the NEWEST file on the front.) Duplicate explicit sides
+    raise; unset files beyond the free sides are dropped (legacy 2-file cap).
+    """
+    designs = sorted(line_designs, key=lambda d: d.id or 0)
+    explicit = [d.print_location for d in designs if d.print_location]
+    duplicated = sorted({s for s in explicit if explicit.count(s) > 1})
+    if duplicated:
+        raise UserError(_(
+            "Cannot build the Gearment order: product '%(product)s' has "
+            "more than one approved design file on the same print side "
+            "(%(sides)s). Set a distinct Print Location on each file.",
+            product=line_label, sides=', '.join(duplicated),
+        ))
+    free = [s for s in _SIDES if s not in explicit]
+    assigned = []
+    for d in designs:
+        if d.print_location:
+            assigned.append((d.print_location, d))
+        elif free:
+            assigned.append((free.pop(0), d))
+    return sorted(assigned, key=lambda pair: _SIDES.index(pair[0]))
 
 
 def build_payload(order, design_files) -> GearmentOrderPayload:
@@ -82,38 +129,37 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         email=partner.email or None,
     )
 
-    # Index design files by line so we can attach front/back URLs to the right
+    # Index design files by line so we can attach per-side URLs to the right
     # GearmentLineItem. design.file has order_line_id (P1-02a/b).
-    designs_by_line: dict[int, list] = {}
-    for df in design_files:
-        line_id = df.order_line_id.id if df.order_line_id else None
-        if line_id:
-            designs_by_line.setdefault(line_id, []).append(df)
+    designs_by_line = _printable_designs_by_line(design_files)
 
     line_items: list[GearmentLineItem] = []
     for line in order.order_line:
         sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
         if not sku:
             continue
+        product_label = line.product_id.display_name or line.name or sku
         line_designs = designs_by_line.get(line.id, [])
-        # P4-01-FIX-PAYLOAD-SCHEMA: Gearment requires `printing_options[]` with
-        # at least one entry per line. Build deterministically: first design.file
-        # → PRINT_LOCATION_CODE_FRONT; second → PRINT_LOCATION_CODE_BACK.
-        # Per-design `location_code` override is deferred to a future slice once
-        # design.file gains the field. URL preference: file_url → gdrive_preview_url.
+        if not line_designs:
+            # P-GEAR-PRINT-SIDES: was a silent `continue` that shipped the
+            # order WITHOUT this line (findings 2026-07-05 (C)). Fail loudly
+            # so the operator fixes the design gap before pushing.
+            raise UserError(_(
+                "Cannot push to Gearment: product '%(product)s' has no "
+                "approved design file with a usable URL. Upload and approve "
+                "a design for it first.",
+                product=product_label,
+            ))
+        # P4-01-FIX-PAYLOAD-SCHEMA: Gearment requires `printing_options[]`
+        # with at least one entry per line. URL preference:
+        # file_url → gdrive_preview_url.
         printing_options = tuple(
             {
-                'location_code': code,
+                'location_code': _WIRE_LOCATION[side],
                 'url': df.file_url or df.gdrive_preview_url,
             }
-            for code, df in zip(_PRINT_LOCATIONS_DEFAULT, line_designs)
-            if (df.file_url or df.gdrive_preview_url)
+            for side, df in _assign_sides(line_designs, product_label)
         )
-        if not printing_options:
-            # Skip line entirely — Gearment rejects orders containing line_items
-            # with empty printing_options. The operator sees the missing-design
-            # gap on the dashboard's design_status indicator instead.
-            continue
         line_items.append(GearmentLineItem(
             # x_gearment_sku holds the GM-prefixed catalog variant_id
             # (e.g. GM0249020374) — the draft's line-item key (Defect-05-10-02).
@@ -153,24 +199,25 @@ def build_quote_body(order, design_files) -> dict:
     order.ensure_one()
     partner = order.partner_shipping_id or order.partner_id
 
-    designs_by_line: dict[int, int] = {}
-    for df in design_files:
-        line_id = df.order_line_id.id if df.order_line_id else None
-        if line_id and (df.file_url or df.gdrive_preview_url):
-            designs_by_line[line_id] = designs_by_line.get(line_id, 0) + 1
+    designs_by_line = _printable_designs_by_line(design_files)
 
     line_items: list[dict] = []
     for line in order.order_line:
         sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
         if not sku:
             continue
-        design_count = min(designs_by_line.get(line.id, 0), len(_PRINT_LOCATIONS_QUOTE))
-        if not design_count:
+        line_designs = designs_by_line.get(line.id, [])
+        if not line_designs:
+            # Quote is advisory — skip the line instead of raising; the
+            # push path (`build_payload`) is the hard gate.
             continue
+        product_label = line.product_id.display_name or line.name or sku
         line_items.append({
             'variant_id': sku,
             'quantity': int(line.product_uom_qty or 0),
-            'print_locations': list(_PRINT_LOCATIONS_QUOTE[:design_count]),
+            'print_locations': [
+                side for side, _df in _assign_sides(line_designs, product_label)
+            ],
         })
 
     return {

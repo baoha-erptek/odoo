@@ -33,6 +33,7 @@
                             <field name="order_id" options="{'no_create': True}"/>
                             <field name="order_line_id" options="{'no_create': True}"/>
                             <field name="storage_mode"/>
+                            <field name="print_location"/>
                             <field name="version" readonly="1"/>
                             <field name="parent_file_id" readonly="1" invisible="not parent_file_id"/>
                             <field name="is_seed" readonly="1" invisible="not is_seed"/>
@@ -88,6 +89,7 @@
                 <field name="order_id"/>
                 <field name="order_line_id" optional="hide"/>
                 <field name="storage_mode"/>
+                <field name="print_location" optional="show"/>
                 <field name="state"/>
                 <field name="version"/>
                 <field name="approved_by" optional="show"/>

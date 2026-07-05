@@ -230,10 +230,11 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         self.assertEqual(po[0]['url'], 'https://drive.example/a.png')
         self.assertEqual(po[1]['location_code'], 'PRINT_LOCATION_CODE_BACK')
 
-    def test_builder_skips_line_with_no_designs_and_no_existing_options(self):
-        """A line item with zero design_files cannot ship — builder skips it."""
+    def test_builder_raises_on_eligible_line_with_no_designs(self):
+        """P-GEAR-PRINT-SIDES: a Gearment-eligible line with zero printable
+        design files must raise (was a silent drop that shipped incomplete
+        orders — findings 2026-07-05 (C))."""
+        from odoo.exceptions import UserError
         order, product = self._make_minimal_order()
-        payload = self._build_payload(order, self.env['design.file'])
-        for line in payload.line_items:
-            self.assertGreaterEqual(len(line.printing_options), 1,
-                "every emitted line must have at least one printing_option")
+        with self.assertRaises(UserError):
+            self._build_payload(order, self.env['design.file'])

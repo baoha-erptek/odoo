@@ -79,6 +79,22 @@ class DesignFile(models.Model):
         default='url',
         tracking=True,
     )
+    # P-GEAR-PRINT-SIDES — explicit garment side for the Gearment
+    # printing_options[].location_code. Deliberately NO default: unset means
+    # "auto" (payload builder assigns positionally, oldest file = front),
+    # which keeps every pre-existing row and single-file line working
+    # without a migration. Values align with the quote endpoint's lowercase
+    # vocabulary; the draft endpoint maps them to PRINT_LOCATION_CODE_*.
+    # Labels 'Front Side'/'Back Side' (not bare 'Front'/'Back') — the bare
+    # msgids collide with the SKU-builder wizard's "Back" nav button in vi.po.
+    print_location = fields.Selection(
+        [('front', 'Front Side'), ('back', 'Back Side')],
+        string='Print Location',
+        tracking=True,
+        help="Garment side this design prints on (Gearment). Leave empty "
+             "for automatic assignment: oldest file on the line prints "
+             "front, the next one back.",
+    )
     design_file = fields.Binary(
         string='Design File',
         attachment=True,
@@ -623,14 +639,14 @@ class DesignFile(models.Model):
 
         created = 0
         roles = (
-            ('etsy_design_link_front', 'Front'),
-            ('etsy_design_link_back', 'Back'),
+            ('etsy_design_link_front', 'Front', 'front'),
+            ('etsy_design_link_back', 'Back', 'back'),
         )
 
         for offset in range(0, len(candidates), batch_size):
             batch = candidates[offset:offset + batch_size]
             for line in batch:
-                for field_name, role_label in roles:
+                for field_name, role_label, side in roles:
                     url = (getattr(line, field_name) or '').strip()
                     if not url:
                         continue
@@ -648,6 +664,7 @@ class DesignFile(models.Model):
                         'file_url': url,
                         'state': 'approved',
                         'is_seed': True,
+                        'print_location': side,
                     })
                     created += 1
 
@@ -697,12 +714,12 @@ class DesignFile(models.Model):
             return 0
 
         roles = (
-            ('design_link_front', 'Front'),
-            ('design_link_back', 'Back'),
+            ('design_link_front', 'Front', 'front'),
+            ('design_link_back', 'Back', 'back'),
         )
         created = 0
         for line in order.order_line:
-            for field_name, role_label in roles:
+            for field_name, role_label, side in roles:
                 url = (getattr(line, field_name, '') or '').strip()
                 if not url:
                     continue
@@ -724,6 +741,7 @@ class DesignFile(models.Model):
                     'state': 'pending',
                     'is_seed': False,
                     'created_via': created_via,
+                    'print_location': side,
                 })
                 created += 1
 

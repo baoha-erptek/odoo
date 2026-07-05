@@ -79,3 +79,4 @@ __all__ = [
 ]
 from . import test_mf_e2e3a_gdrive_carrier_detect_orm
 from . import test_gm_printing_location_enum
+from . import test_gear_print_sides
