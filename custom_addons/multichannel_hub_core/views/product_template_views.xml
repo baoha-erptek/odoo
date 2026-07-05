@@ -80,6 +80,15 @@
                         </list>
                     </field>
                 </page>
+                <page string="Original Design" name="hub_original_design">
+                    <field name="x_original_design_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="datas" filename="name" required="1"/>
+                            <field name="name"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
 
             <!-- P-DS-2-MVP-BACKPORT — Tier 3 visibility model per

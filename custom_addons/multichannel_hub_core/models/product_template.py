@@ -72,6 +72,19 @@ class ProductTemplate(models.Model):
         help="Gallery rows beyond image_1920 for multi-image publishing "
              "(Etsy iterates main image + these, capped at 10).",
     )
+    x_original_design_ids = fields.One2many(
+        'product.document',
+        'res_id',
+        string='Original Design Files',
+        domain=lambda self: [
+            ('res_model', '=', self._name),
+            ('x_is_original_design', '=', True),
+        ],
+        context={'default_res_model': 'product.template', 'default_x_is_original_design': True},
+        help="Design source files (AI/PSD/PDF) for this product (ESTY-250). "
+             "Distinct from the generic Documents smart button — only files "
+             "uploaded through this tab are tagged and shown here.",
+    )
     x_is_personalizable = fields.Boolean(
         default=False,
         help="Channel-agnostic: listing supports buyer personalization. "
