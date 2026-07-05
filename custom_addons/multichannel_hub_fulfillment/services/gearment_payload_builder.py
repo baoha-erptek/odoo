@@ -19,10 +19,16 @@ from .gearment_payload import (
 )
 
 # Default location-code assignment when design.file lacks a per-record code.
-# Gearment's accepted values include front, back, pocket, whole, left_sleeve,
-# right_sleeve. Two-sided print is the dominant Etsy POD pattern; positions
-# beyond `back` are skipped until a per-design override field lands.
-_PRINT_LOCATIONS_DEFAULT = ('front', 'back')
+# Gearment's draft validator wants the proto3 enum `PRINT_LOCATION_CODE_*`, NOT
+# the bare human names (front/back/pocket/whole) it quotes in its 400 message —
+# that mismatch was Defect-2026-05-10-05 (opaque 400 on every draft push). Wire
+# values confirmed from the doc crawl 2026-07-05
+# (docs/vendor/gearment/api_api.order.v1.vendororderapi.md, example
+# PRINT_LOCATION_CODE_WHOLE). Two-sided print is the dominant Etsy POD pattern;
+# positions beyond back are skipped until a per-design override field lands.
+# NOTE: the QUOTE endpoint uses a different shape (`print_locations: ["front"]`,
+# lowercase) — do not reuse these values there.
+_PRINT_LOCATIONS_DEFAULT = ('PRINT_LOCATION_CODE_FRONT', 'PRINT_LOCATION_CODE_BACK')
 
 
 def build_payload(order, design_files) -> GearmentOrderPayload:
@@ -76,9 +82,9 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         line_designs = designs_by_line.get(line.id, [])
         # P4-01-FIX-PAYLOAD-SCHEMA: Gearment requires `printing_options[]` with
         # at least one entry per line. Build deterministically: first design.file
-        # → location_code='front'; second → 'back'. Per-design `location_code`
-        # override is deferred to a future slice once design.file gains the
-        # field. URL preference: file_url (external CDN) → gdrive_preview_url.
+        # → PRINT_LOCATION_CODE_FRONT; second → PRINT_LOCATION_CODE_BACK.
+        # Per-design `location_code` override is deferred to a future slice once
+        # design.file gains the field. URL preference: file_url → gdrive_preview_url.
         printing_options = tuple(
             {
                 'location_code': code,

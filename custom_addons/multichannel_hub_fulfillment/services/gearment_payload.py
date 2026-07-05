@@ -17,8 +17,8 @@ Wire shape (`/api/v3/orders/draft` POST body — schema-corrected 2026-05-10):
         "line_items": [{
             "legacy_id": 1234, "quantity": 1, "sku": "MUG-001",
             "printing_options": [
-                {"location_code": "front", "url": "https://drive.../front.png"},
-                {"location_code": "back", "url": "https://drive.../back.png"},
+                {"location_code": "PRINT_LOCATION_CODE_FRONT", "url": "https://drive.../front.png"},
+                {"location_code": "PRINT_LOCATION_CODE_BACK", "url": "https://drive.../back.png"},
             ],
             ...
         }],

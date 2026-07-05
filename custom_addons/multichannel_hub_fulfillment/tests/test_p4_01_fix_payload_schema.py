@@ -224,16 +224,18 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         payload = self._build_payload(order, design_front | design_back)
         po = payload.line_items[0].printing_options
         self.assertEqual(len(po), 2)
+        # location_code is the proto3 enum PRINT_LOCATION_CODE_* (Defect-2026-05-10-05).
         location_codes = {entry['location_code'] for entry in po}
-        self.assertIn('front', location_codes)
-        self.assertIn('back', location_codes)
+        self.assertIn('PRINT_LOCATION_CODE_FRONT', location_codes)
+        self.assertIn('PRINT_LOCATION_CODE_BACK', location_codes)
         urls = {entry['url'] for entry in po}
         self.assertIn('https://drive.example/front.png', urls)
         self.assertIn('https://drive.example/back.png', urls)
 
     def test_builder_first_design_gets_front_location(self):
-        """Heuristic: first approved design.file → front; second → back.
+        """Heuristic: first approved design.file → FRONT; second → BACK.
 
+        Values are the proto3 enum `PRINT_LOCATION_CODE_*` (Defect-2026-05-10-05).
         Production-grade per-file `location_code` is deferred to a separate
         slice (P1-DESIGN-LOCATION-CODE). For now, ordering by id is the
         deterministic positional assignment.
@@ -255,9 +257,9 @@ class TestBuilderEmitsCorrectSchema(TransactionCase):
         })
         payload = self._build_payload(order, design_a | design_b)
         po = payload.line_items[0].printing_options
-        self.assertEqual(po[0]['location_code'], 'front')
+        self.assertEqual(po[0]['location_code'], 'PRINT_LOCATION_CODE_FRONT')
         self.assertEqual(po[0]['url'], 'https://drive.example/a.png')
-        self.assertEqual(po[1]['location_code'], 'back')
+        self.assertEqual(po[1]['location_code'], 'PRINT_LOCATION_CODE_BACK')
 
     def test_builder_skips_line_with_no_designs_and_no_existing_options(self):
         """A line item with zero design_files cannot ship — builder skips it.
