@@ -1,11 +1,35 @@
 # Gearment v3 API Reference
 
-**Last Updated**: 2026-05-10  
+**Last Updated**: 2026-07-05  
 **API Version**: v3  
 **Canonical URL**: https://developers.gearment.com/api  
-**Implementation Status**: P4-01 (Gearment adapter + state machine + quote workflow)
+**Implementation Status**: **LIVE — Defect-2026-05-10-05 + -02 CLOSED (2026-07-05)**; draft push + price quote both proven live 200 on staging.
 
 ---
+
+> ## ⚠️ SCHEMA CORRECTED 2026-07-05 — read this first
+>
+> The "Order Push Payload Reference" and "Printing Options Deep Dive" sections below were
+> written during the opaque-validator era and are **partly superseded**. The definitive,
+> live-proven contract (draft `POST /orders/draft` **200** + quote `POST /orders/price` **200**):
+>
+> **Draft** `POST /api/v3/orders/draft` — `{"data": {...}}` bare object:
+> - `platform`: `"MARKETPLACE_PLATFORM_ETSY"` (required; missing → 404 "marketplace not found")
+> - `address`: **singular object** (not `addresses[]`), keys `first_name,last_name,street_1,
+>   street_2,city,state_code,zip_code,country_code,phone_no,email` — note `state_code`/`phone_no`
+> - `shipping_method`: `"METHOD_STANDARD"`
+> - `line_items[]`: `{variant_id:"GM…" (NOT legacy_id), quantity,
+>   printing_options:[{location_code:"PRINT_LOCATION_CODE_FRONT", url}]}`
+>
+> **Quote** `POST /api/v3/orders/price` (the old `GET /orders/{ref}/price` is a **dead 404 route**):
+> - `{order_platform:"etsy" (lowercase), shipping:{address:{method:"standard", state_code,
+>   country_code}}, line_items:[{variant_id, quantity, print_locations:["front"]}]}`
+>
+> **Money**: `nanos` carries **cents (0-99)**, NOT proto 1e-9 → value = `units + nanos/100`.
+>
+> **Non-US**: `state_code` ≤ 3 chars; only ASCII (Vietnamese diacritics 400 "invalid characters").
+>
+> Full closure + evidence: `specs/004-fulfillment-routing/findings.md` (2026-07-05 entries).
 
 ## Table of Contents
 
@@ -210,7 +234,13 @@ Our `build_payload(order, design_files)` function constructs the above shape aut
 
 ## Printing Options Deep Dive
 
-### The Problem: Opaque Validation (Defect-2026-05-10-05, HIGH)
+### The Problem: Opaque Validation (Defect-2026-05-10-05) — **CLOSED 2026-07-05**
+
+> **RESOLVED.** The enum was only the first wrong field; live probes then corrected the full
+> draft envelope (singular `address`, `platform`, `variant_id`, `METHOD_STANDARD`) and the quote
+> endpoint (`POST /orders/price`). Draft + quote both proven live 200. The probe log below is
+> retained for history. See the corrected-schema banner at the top of this doc.
+
 
 After the P4-01-FIX-PAYLOAD-SCHEMA fix landed (schema structure corrected), the live Gearment API at `https://apiv2.gearment.com/integration-handler/api/v3/orders/draft` still rejects orders with:
 
@@ -328,18 +358,20 @@ payloads**, which are authoritative. Findings:
   400 error's own allowed-list + the proven prefix pattern — confirm with one live probe):
   `PRINT_LOCATION_CODE_FRONT`, `PRINT_LOCATION_CODE_POCKET`, `PRINT_LOCATION_CODE_BACK`,
   `PRINT_LOCATION_CODE_WHOLE`.
-- **Draft ≠ Quote.** Draft (`/orders/draft`) uses
+- **Draft ≠ Quote.** Draft (`POST /orders/draft`) uses
   `printing_options:[{location_code:"PRINT_LOCATION_CODE_*", url}]`; Quote
-  (`/orders/{ref}/price`) uses `print_locations:["front"]` (lowercase strings). Our builder
-  must not send the draft enum to the quote endpoint or vice versa.
+  (**`POST /orders/price`** — NOT the old dead `GET /orders/{ref}/price` route) uses
+  `line_items[].print_locations:["front"]` (lowercase strings) + top-level `order_platform:"etsy"`.
+  Our builder must not send the draft enum to the quote endpoint or vice versa.
 - **`variant_id`, not SKU.** Draft line items key on `variant_id` (e.g. `GM0002003147`) +
   `product_id` (e.g. `G5000`), looked up via `/api/v3/catalog/variants/stock`. Synthetic
   `DEMO-T-*` SKUs fail catalog lookup (this is the separate Defect-2026-05-10-02).
 
-**Required fix** (separate slice, RED test first — do NOT hand-edit without a failing
-test): in `services/gearment_payload_builder.py`, change `_PRINT_LOCATIONS_DEFAULT` from
-`('front','back')` to the prefixed enum values, and source `variant_id` from the Gearment
-catalog rather than the Odoo SKU.
+**Fix LANDED (2026-07-05, RED→GREEN):** `services/gearment_payload_builder.py`
+`_PRINT_LOCATIONS_DEFAULT` = prefixed enum; `variant_id` sourced from the merchant's
+`x_gearment_sku` (which now holds the GM catalog variant_id); plus the full envelope
+correction (singular `address`, `platform`, `METHOD_STANDARD`) and the quote endpoint
+rewrite (`POST /orders/price`) + Money nanos-as-cents decode. FRONT/BACK confirmed live 200.
 
 Full evidence: `docs/vendor/gearment/api_api.order.v1.vendororderapi.md`
 (draft example ≈ lines 581–594).

@@ -1,5 +1,14 @@
 # NEXT SESSION — Close Defect-2026-05-10-05 (Gearment dropship live draft push)
 
+> ## ✅ DONE — 2026-07-05. This prompt is historical.
+> Defect-2026-05-10-05 (and -02) CLOSED. Enum fix deployed → 400 moved → live probes
+> corrected the full draft envelope (singular `address`, `state_code`/`phone_no`, `platform`,
+> `variant_id`, `METHOD_STANDARD`) and the quote endpoint (`POST /orders/price`, was a dead
+> GET route) + Money nanos-as-cents. flow-3b §3 draft **200** + §4 quote `quoted $12.99`, demo
+> §6 live push+quote — all ×2 on staging. Commits `474bcd4af07` + `cd529987e7f`, mhf 19.0.1.0.28.
+> Closure: `specs/004-fulfillment-routing/findings.md` (2026-07-05). Owner: discard the test
+> DRAFT orders in the Gearment dashboard.
+
 **Branch:** `feature/006-master-plan-coding` (already pushed through commit `e508df6ac1d`).
 **Goal:** Take the `printing_options` enum fix from "code-fixed, PARTIAL" to **fully closed** —
 a LIVE `POST /api/v3/orders/draft` returns **200** with a real `x_gearment_outbound_ref`,

@@ -194,7 +194,22 @@ Env + test findings:
 - Gearment E2 keys in `.env` verified LIVE (200 on catalog) — MF-E2E-3b
   unblocked without a simulator.
 
-## 2026-07-04 — MF-E2E-3b flow-3b Gearment gate (runner 8/8 ×2, Playwright ×2)
+## 2026-07-05 — MF-E2E-3b CLOSED LIVE (no mock); Gearment vendor blocker resolved
+
+Supersedes the 2026-07-04 "vendor blocker / mock fallback" note below. The enum fix was
+deployed, the 400 **moved**, and capped live probes cracked the full draft + quote schema
+→ both **200**. No simulator remains in the pass path.
+- **Draft** `POST /orders/draft` → 200: singular `address` (state_code/phone_no), required
+  `platform=MARKETPLACE_PLATFORM_ETSY`, line key `variant_id` (GM…, closes Defect-2026-05-10-02),
+  `METHOD_STANDARD`. flow-3b §3 refs e.g. `260705P-GM3MUJU-YK9V5H61`.
+- **Quote** was a dead route (`GET /orders/{ref}/price` 404); real is `POST /orders/price`.
+  flow-3b §4 → state `quoted`, total **$12.99** (after Money nanos-as-cents fix).
+- Demo `scripts/e2e_demo_drop_ship_ordertest2.py` §6 live push+quote 200 ×2.
+- Fixes: mhf 19.0.1.0.28 (commits `474bcd4af07` schema, `cd529987e7f` nanos). Module suite
+  391+ tests 0-fail; both reviewers CLEAN. Full detail: `specs/004-fulfillment-routing/findings.md`
+  2026-07-05 entries. OWNER: discard the test DRAFT orders in the dashboard (listed there).
+
+### (Historical) 2026-07-04 — MF-E2E-3b flow-3b Gearment gate (runner 8/8 ×2, Playwright ×2)
 
 - **E2 keys LIVE** (owner: develop account, actual tests blessed): 200 on
   catalog. Production host in .env; sandbox host 530-dead.

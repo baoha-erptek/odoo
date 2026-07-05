@@ -29,7 +29,7 @@
 
 | Item | Action |
 |---|---|
-| **Gearment printing_options validator** (Defect-2026-05-10-05) | Owner emails Gearment support: validator `has_front_back_or_whole_printing_option`, request_id `1d36e400-77e8-4612-b0f7-2539b2471d76`, ask for the exact draft-order line_items JSON contract. 14+ shapes probed — do NOT probe more. Blocks live dropship push (flow-3b draft/quote legs run simulated meanwhile). |
+| ~~**Gearment printing_options validator** (Defect-2026-05-10-05)~~ | **CLOSED 2026-07-05 — no owner/vendor action needed.** Cracked via live probes (not vendor support): full draft+quote schema corrected, both proven live 200. flow-3b + demo pass live ×2. See `specs/004-fulfillment-routing/findings.md` 2026-07-05. Remaining owner action: discard the test DRAFT orders in the Gearment dashboard. |
 | **Etsy `listings_d` scope** | Owner decision: add to DEFAULT_SCOPES + re-authorize shop (enables true test-listing DELETE), or periodically purge `UAT-TAOSP*`/`E2E-F1*` drafts in Shop Manager. |
 | **`active_source` UI toggle vs flow-2 doc** | Owner decision: fix doc ("backend/admin write") or request a system-gated UI toggle (badge is deliberate P-DS-3a design). |
 | **P1-MSG-SCOPE** | Owner re-submits `conversations_r` to Etsy (blocks P3 lead routing only). |
