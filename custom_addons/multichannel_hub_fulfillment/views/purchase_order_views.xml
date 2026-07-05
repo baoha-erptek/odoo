@@ -17,6 +17,13 @@
                 string="Request Gearment Quote"
                 groups="purchase.group_purchase_user,multichannel_hub_fulfillment.group_ba_shipping"
                 invisible="not is_gearment_dropship_po or state not in ('draft', 'sent')"/>
+        <!-- P-GEAR-AUTOCONFIRM: chargeable production confirm. Method-level
+             FR-017 gate + owner ICP killswitch (ships OFF) back this up. -->
+        <button name="action_confirm_at_gearment" type="object"
+                string="Confirm at Gearment"
+                groups="multichannel_hub_fulfillment.group_ba_shipping"
+                invisible="not is_gearment_dropship_po or state != 'purchase'"
+                confirm="This submits the order for PRODUCTION at Gearment and is chargeable. Continue?"/>
       </xpath>
     </field>
   </record>

@@ -125,6 +125,24 @@ class PurchaseOrder(models.Model):
         ))
         self.env.flush_all()
 
+    def action_confirm_at_gearment(self):
+        """P-GEAR-AUTOCONFIRM — confirm production at Gearment for every
+        source SO that has a draft and is not yet confirmed. Each SO call
+        re-runs the FR-017 BA-shipping gate + the owner ICP killswitch
+        (ships disabled) — see `sale.order.action_confirm_at_gearment`.
+        """
+        self.ensure_one()
+        candidates = self._get_source_sale_orders().filtered(
+            lambda so: so.x_gearment_outbound_ref
+            and not so.x_gearment_confirmed_at)
+        if not candidates:
+            raise UserError(_(
+                "Nothing to confirm at Gearment: no source order with a "
+                "pushed draft that is still unconfirmed."))
+        for sale_order in candidates:
+            sale_order.action_confirm_at_gearment()
+        return True
+
     # ------------------------------------------------------------------
     # ESTY-246 — Request Gearment quote (cost) on a dropship PO
     # ------------------------------------------------------------------

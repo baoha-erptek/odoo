@@ -1974,3 +1974,98 @@ msgid ""
 msgstr ""
 "URL thiết kế của file '%(name)s' chuyển hướng tới địa chỉ nội bộ. Hãy dùng "
 "link công khai."
+
+#. module: multichannel_hub_fulfillment
+#: model:ir.model.fields,field_description:multichannel_hub_fulfillment.field_sale_order__x_gearment_confirmed_at
+msgid "Gearment Production Confirmed At"
+msgstr "Thời điểm xác nhận sản xuất Gearment"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Confirming production at Gearment is disabled. The shop owner must enable "
+"it (config switch 'multichannel_hub.gearment_confirm_enabled') before this "
+"chargeable step can run."
+msgstr ""
+"Chức năng xác nhận sản xuất với Gearment đang tắt. Chủ shop cần bật cấu "
+"hình 'multichannel_hub.gearment_confirm_enabled' trước khi chạy bước tính "
+"phí này."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order %(so)s has not been pushed to Gearment yet — confirm the purchase "
+"order first to create the draft."
+msgstr ""
+"Đơn %(so)s chưa được đẩy sang Gearment — hãy xác nhận đơn mua trước để tạo "
+"đơn nháp."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order %(so)s was already confirmed at Gearment on %(when)s. It cannot be "
+"confirmed twice."
+msgstr ""
+"Đơn %(so)s đã được xác nhận với Gearment lúc %(when)s. Không thể xác nhận "
+"hai lần."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid "Gearment production confirm FAILED for %(ref)s: %(err)s"
+msgstr "Xác nhận sản xuất Gearment THẤT BẠI cho %(ref)s: %(err)s"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Gearment refused the production confirm for %(so)s. See the Gearment API "
+"log for the full response."
+msgstr ""
+"Gearment từ chối xác nhận sản xuất cho %(so)s. Xem Nhật ký API Gearment "
+"để biết chi tiết."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"Order submitted for production at Gearment (ref %(ref)s, status "
+"%(status)s). This step is chargeable."
+msgstr ""
+"Đơn đã được gửi sản xuất tại Gearment (mã %(ref)s, trạng thái %(status)s). "
+"Bước này tính phí."
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/purchase_order.py:0
+msgid ""
+"Nothing to confirm at Gearment: no source order with a pushed draft that "
+"is still unconfirmed."
+msgstr ""
+"Không có gì để xác nhận với Gearment: không có đơn nguồn nào đã đẩy nháp "
+"mà chưa xác nhận."
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid "Confirm at Gearment"
+msgstr "Xác nhận sản xuất Gearment"
+
+#. module: multichannel_hub_fulfillment
+#: model_terms:ir.ui.view,arch_db:multichannel_hub_fulfillment.view_purchase_order_form_gearment_quote
+msgid ""
+"This submits the order for PRODUCTION at Gearment and is chargeable. "
+"Continue?"
+msgstr "Thao tác này gửi đơn vào SẢN XUẤT tại Gearment và sẽ tính phí. Tiếp tục?"
+
+#. module: multichannel_hub_fulfillment
+#. odoo-python
+#: code:addons/multichannel_hub_fulfillment/models/sale_order.py:0
+msgid ""
+"The Gearment production confirmation timestamp on %(so)s cannot be changed "
+"or cleared (financial audit trail)."
+msgstr ""
+"Mốc thời gian xác nhận sản xuất Gearment trên %(so)s không thể sửa hoặc "
+"xóa (dấu vết kiểm toán tài chính)."

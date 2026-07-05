@@ -96,18 +96,12 @@ class GearmentQuoteWizard(models.TransientModel):
                 "Quote for %(name)s expired at %(exp)s. Fetch a new quote.",
                 name=order.name, exp=order.x_gearment_quote_expires_at,
             ))
-        # Late import dodges the "import-time circular" trap when the
-        # wizard module loads before the services package is fully
-        # initialised — pattern reused from action_push_to_gearment.
-        from ..services import gearment_adapter
-        adapter = gearment_adapter.GearmentApiAdapter(env=self.env)
-        reference_id = order.channel_order_ref or order.name
-        response = adapter.confirm(reference_id)
+        # P-GEAR-AUTOCONFIRM: the chargeable call routes through the ONE
+        # shared core on sale.order (ICP killswitch shipping OFF +
+        # row-locked idempotency stamp + api.log audit). Never call
+        # adapter.confirm() directly.
+        order._gearment_confirm_charged()
         order.sudo()._advance_gearment_state('confirmed')
-        order.message_post(body=_(
-            "Gearment quote confirmed (response status: %s).",
-            (response or {}).get('status') or 'ok',
-        ))
         return {'type': 'ir.actions.act_window_close'}
 
     def action_cancel(self):
