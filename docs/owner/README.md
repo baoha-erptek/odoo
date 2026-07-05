@@ -50,14 +50,15 @@ Sơ đồ bơi làn (swimlane) — ai làm gì, theo thứ tự nào — dùng �
 Chỉ mục business-flows: [`business-flows/README.md`](business-flows/README.md)
 Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.html)
 
+> **Bộ PDF UAT hợp nhất** (gửi người dùng cuối, kèm ảnh chụp màn hình thật):
+> [`../pdf/docs_huong_dan_uat_vn.pdf`](../pdf/docs_huong_dan_uat_vn.pdf) — gồm cả 4 luồng, mỗi luồng = tài liệu nghiệp vụ (FLOW) + hướng dẫn thao tác (HUONG_DAN). Build lại: `bash docs/pdf/build-pdfs.sh`.
+
 ## UAT (Owner kiểm thử)
 
 | File | Mục đích | Phiên bản |
 |---|---|---|
 | [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md) | Kịch bản click-by-click cho Wave 2/3 (ESTY-189..199) | 1.2 — **dùng** |
 | [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md) | Phiên bản trước (TC-006..TC-012 vẫn còn dùng) | 1.0 |
-| [`UAT_FINDINGS_2026-05-26.md`](UAT_FINDINGS_2026-05-26.md) | Kết quả UAT lần 1 (9 PASS / 3 SKIP) | — |
-| [`UAT_FINDINGS_2026-05-28.md`](UAT_FINDINGS_2026-05-28.md) | Kết quả UAT v1.2 form-only | — |
 | [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md) | Checklist trước khi publish live | — |
 | [`INVENTORY_SETUP_VN.md`](INVENTORY_SETUP_VN.md) | Cấu hình kho + bin | — |
 | [`SKU_GRAMMAR.md`](SKU_GRAMMAR.md) | Ngữ pháp SKU + defect matrix | — |
@@ -65,6 +66,7 @@ Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.
 ## Lưu trữ (đã archive)
 
 Tài liệu cũ / chạy log / draft email đã chuyển sang [`../archive/2026-06-07/`](../archive/2026-06-07/).
+Kết quả UAT các đợt cũ (2026-05/06) đã chuyển sang [`../archive/2026-07-05/`](../archive/2026-07-05/).
 Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 
 ---
@@ -107,6 +109,7 @@ Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 | 1.0 | 2026-05-21 | BA Consultant | Tài liệu khởi tạo — 4 file owner-readable, chuẩn bị sync Jira |
 | 1.1 | 2026-05-25 | BA Consultant | Delta sync — 3 Story Done, Epic 7 (Trung tâm sản phẩm + xuất kênh) thêm 7 Story, mirror lên Confluence space HEP |
 | 1.2 | 2026-06-07 | UAT sweep | Thêm 5 business-flows companion markdown + UAT_WALKTHROUGH v1.2 Wave 2/3; archive 19 file E2E run logs / legacy guides sang `../archive/2026-06-07/` |
+| 1.3 | 2026-07-05 | E2E close-out | Cả 5 luồng chính đã kiểm thử E2E trên môi trường staging (kể cả Hậu mãi). 4 bộ HUONG_DAN + 4 FLOW đều có ảnh chụp màn hình thật; bổ sung tab "Original Design" trên form sản phẩm. Bộ PDF UAT hợp nhất: `../pdf/docs_huong_dan_uat_vn.pdf` |
 
 ---
 

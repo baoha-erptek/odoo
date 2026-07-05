@@ -32,13 +32,15 @@ printf '{"flowchart":{"htmlLabels":false,"useMaxWidth":true},"er":{"useMaxWidth"
 
 build_set() {
   local name="$1"; shift
+  local srcdir="$1"; shift
   local files=("$@")
   local src="$BUILD/$name.md"
   : > "$src"
   for f in "${files[@]}"; do
-    cat "$DOCS/$name/$f" >> "$src"
+    cat "$srcdir/$f" >> "$src"
     printf '\n\n' >> "$src"
   done
+  export SRC_BASE="$srcdir"
 
   echo ">> [$name] rendering mermaid with mmdc ..."
   npx --no-install @mermaid-js/mermaid-cli \
@@ -57,8 +59,11 @@ text = open(md_path, encoding="utf-8").read()
 # so they go on their own landscape page (10in usable width vs 6.5in portrait).
 WIDE_ASPECT = 2.4
 
-# mmdc emits: ![diagram](name.rendered-1.svg)  (path relative to the output md)
-img_re = re.compile(r'!\[[^\]]*\]\(([^)]+\.svg)\)')
+# mmdc emits: ![diagram](name.rendered-1.svg)  (path relative to the output md).
+# PNG screenshots (owner guides) resolve against SRC_BASE (the source doc dir)
+# because the concatenated md lives in the build dir, not next to img/.
+img_re = re.compile(r'!\[[^\]]*\]\(([^)]+\.(?:svg|png))\)')
+src_base = os.environ.get("SRC_BASE", base)
 
 def svg_aspect(svg_text):
     m = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ([\d.]+)"', svg_text[:4000])
@@ -71,15 +76,22 @@ n_wide = 0
 def repl(m):
     global n_wide
     rel = m.group(1)
-    svg_path = rel if os.path.isabs(rel) else os.path.join(base, rel)
-    svg = open(svg_path, encoding="utf-8").read()
-    b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
-    cls = ""
-    if svg_aspect(svg) >= WIDE_ASPECT:
-        cls = ' class="wide"'
-        n_wide += 1
+    if rel.endswith(".svg"):
+        path = rel if os.path.isabs(rel) else os.path.join(base, rel)
+        svg = open(path, encoding="utf-8").read()
+        b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        mime = "image/svg+xml"
+        cls = ""
+        if svg_aspect(svg) >= WIDE_ASPECT:
+            cls = ' class="wide"'
+            n_wide += 1
+    else:  # png screenshot — resolve against the source doc dir
+        path = rel if os.path.isabs(rel) else os.path.join(src_base, rel)
+        b64 = base64.b64encode(open(path, "rb").read()).decode("ascii")
+        mime = "image/png"
+        cls = ""
     return (f'<figure{cls}><img alt="diagram" '
-            f'src="data:image/svg+xml;base64,{b64}"></figure>')
+            f'src="data:{mime};base64,{b64}"></figure>')
 
 new, n = img_re.subn(repl, text)
 
@@ -107,7 +119,15 @@ PY
 }
 
 # Order per docs/<set>/README.md (README index files are excluded).
-build_set sds 01-architecture.md 02a-data-model.md 02b-data-model.md 03-integrations.md 04a-sequence-flows.md 04b-sequence-flows.md 05-security.md
-build_set srs 01-overview.md 02-channel-etsy.md 03-orders-fulfillment.md 04-catalog-listings.md 05-operations-admin.md
+build_set sds "$DOCS/sds" 01-architecture.md 02a-data-model.md 02b-data-model.md 03-integrations.md 04a-sequence-flows.md 04b-sequence-flows.md 05-security.md
+build_set srs "$DOCS/srs" 01-overview.md 02-channel-etsy.md 03-orders-fulfillment.md 04-catalog-listings.md 05-operations-admin.md
+
+# Consolidated end-user UAT guide (VN): per flow, business overview (FLOW_*)
+# then click-by-click guide (HUONG_DAN_*). PNG screenshots inline as data-URIs.
+build_set huong_dan_uat_vn "$DOCS/owner" \
+  FLOW_TAO_SAN_PHAM_VN.md HUONG_DAN_TAO_SAN_PHAM_VN.md \
+  FLOW_DON_HANG_ETSY_VN.md HUONG_DAN_DON_HANG_ETSY_VN.md \
+  FLOW_GIAO_HANG_VN.md HUONG_DAN_GIAO_HANG_VN.md \
+  FLOW_HAU_MAI_VN.md HUONG_DAN_HAU_MAI_VN.md
 
 echo "All PDFs rebuilt."

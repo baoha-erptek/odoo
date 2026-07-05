@@ -1,11 +1,11 @@
 # Hướng dẫn sử dụng — Hậu mãi (In lại, Tin nhắn khách, Hoàn trả/Hoàn tiền)
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-26 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** BA Lead, BA Marketing, BA Shipping, Kế toán, Chủ shop
 **Hệ thống:** Odoo 19 — module `etsy_integration` + `multichannel_hub_core`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_HAU_MAI_VN.md`](./FLOW_HAU_MAI_VN.md)
 
-> Hướng dẫn từng bước cho các quy trình hậu mãi: in lại đơn lỗi, xử lý tin nhắn khách, và hoàn trả/hoàn tiền. Phần "Hoàn trả & Hoàn tiền" hiện đang xây dựng — phần này mô tả quy trình thủ công hôm nay và kế hoạch tự động hoá.
+> Hướng dẫn từng bước cho các quy trình hậu mãi: in lại đơn lỗi, xử lý tin nhắn khách, và hoàn trả/hoàn tiền. Phần "Hoàn trả & Hoàn tiền" đã **hoạt động từ 2026-07-05** — workflow tạo ticket hậu mãi, duyệt, đánh dấu hoàn tiền được E2E-verify. Phần chuyển tiền thực tế vẫn thực hiện thủ công trong Etsy Shop Manager.
 
 ---
 
@@ -152,6 +152,8 @@ Khi Etsy bật quyền:
 
 ## 5. Yêu cầu đổi địa chỉ giao
 
+![Danh sách các yêu cầu đổi địa chỉ với trạng thái Requested/Approved/Rejected](img/hau-mai-address-change-list.png)
+
 ### 5.1 Khi nào dùng
 
 Khách yêu cầu sửa địa chỉ sau khi đặt hàng — phải xử lý qua workflow chính thức, không sửa trực tiếp.
@@ -164,6 +166,8 @@ Khách yêu cầu sửa địa chỉ sau khi đặt hàng — phải xử lý qu
 ### 5.3 Các bước
 
 #### Bước 1 — BA Marketing tạo yêu cầu
+
+![Form yêu cầu đổi địa chỉ với trường địa chỉ mới và lý do](img/hau-mai-address-change-form.png)
 
 1. Mở form đơn.
 2. Bấm **"Yêu cầu đổi địa chỉ"** ở đầu form.
@@ -199,7 +203,24 @@ Khách yêu cầu sửa địa chỉ sau khi đặt hàng — phải xử lý qu
 
 ## 6. Hoàn trả & Hoàn tiền
 
-> ⚠️ Phần này **đang xây dựng**. Hôm nay đội BA xử lý thủ công. Mô tả dưới đây gồm: (a) **quy trình thủ công hiện tại**, (b) **kế hoạch tự động hoá** ở phiên bản kế tiếp.
+### 6.0 Workflow ticket hậu mãi (LỊch sử)
+
+Từ 2026-07-05, workflow tạo ticket hậu mãi là **LIVE và đã E2E-verify**:
+
+![Danh sách ticket hậu mãi hiển thị loại (In lại / Hoàn tiền / Hoàn trả), trạng thái (open → in_progress → resolved)](img/hau-mai-ticket-list.png)
+
+![Form ticket hậu mãi chi tiết với thanh trạng thái và lịch sử xử lý](img/hau-mai-ticket-form.png)
+
+**Quy trình:**
+1. BA Marketing **tạo ticket** khi nhận yêu cầu hậu mãi từ khách (in lại / hoàn tiền / hoàn trả).
+2. Ticket ở trạng thái **open**.
+3. BA Lead **duyệt** → chuyển **in_progress** (xác nhận quyết định hậu mãi).
+4. BA Lead **đánh dấu hoàn tiền** (nếu là loại refund) → chuyển **resolved** (đã hoàn xong).
+5. Chatter ghi log tự động từng bước.
+
+**Phần chuyển tiền thực tế** vẫn thực hiện thủ công trong Etsy Shop Manager (Admin xử lý cuối tháng).
+
+### 6.1 Quy trình thủ công hôm nay (lịch sử)
 
 ### 6.1 Quy trình thủ công hôm nay
 

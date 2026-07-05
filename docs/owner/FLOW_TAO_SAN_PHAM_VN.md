@@ -1,6 +1,6 @@
 # Quy trình tạo sản phẩm mới (cho Chủ shop)
 
-**Phiên bản:** 1.2 · **Ngày:** 2026-05-28 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.3 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 
 > Tài liệu này hướng dẫn cách thêm sản phẩm mới vào hệ thống. Dùng cho Chủ shop và nhân viên BA. Không có thuật ngữ kỹ thuật.
 
@@ -11,6 +11,11 @@
 ## Tổng quan
 
 Sản phẩm trong hệ thống là "bản gốc duy nhất" — sau khi tạo, nó tự động sẵn sàng để đăng bán trên các kênh (Etsy, sau này là Amazon, Website…). Mỗi sản phẩm chỉ tồn tại **một** lần trong hệ thống — các kênh chỉ là "nơi xuất hiện" chứ không phải nơi lưu sản phẩm.
+
+### Màn hình thực tế
+
+![Form sản phẩm chuẩn với trường thông tin cơ bản, biến thể, giá bán và các kênh áp dụng](img/listing-form-overview.png)
+*Giao diện form Sản phẩm chuẩn trên hệ thống.*
 
 Có **một** cách tạo sản phẩm bằng tay (đã hoạt động):
 

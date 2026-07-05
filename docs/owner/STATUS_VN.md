@@ -1,6 +1,8 @@
 # Dashboard Tình hình Dự án (Daily View)
 
-**Cập nhật:** 2026-05-25 | **Soạn:** BA | **Đọc cho:** Chủ dự án (CDA)
+**Cập nhật:** 2026-07-05 | **Soạn:** BA | **Đọc cho:** Chủ dự án (CDA)
+
+> **Mốc lớn 2026-07-05:** Cả **5 luồng nghiệp vụ chính** (Tạo sản phẩm → Nhận đơn → Giao nội bộ → Dropship Gearment → Hậu mãi) đã **kiểm thử E2E đầy đủ trên môi trường staging**, chạy bằng API thật (Etsy + Gearment). Lỗi báo giá Gearment đã đóng — báo giá thật $12.99 trả về đúng. Bộ tài liệu hướng dẫn kèm ảnh chụp màn hình thật đã sẵn sàng gửi người dùng UAT.
 
 > File 1 trang. Đọc trong 2 phút. Chi tiết xem `SRS_VN.md` hoặc Jira board.
 
@@ -32,9 +34,11 @@
 
 | # | Việc | Tại sao gấp | Hạn |
 |---|------|-------------|-----|
-| 1 | **Bật API cho 1 shop pilot** | Chặn toàn bộ Phase 1 mở rộng; biggest single unblock | Tuần này |
+| 1 | **Bật API cho 1 shop pilot** (cutover chính thức) | Chặn xác nhận "push tracking lên Etsy" trên đơn thật — bước cuối trước go-live | Tuần này |
 | 2 | **Submit lại Etsy app xin quyền `conversations_r`** | Etsy duyệt 3-8 tuần; submit muộn = chậm Phase 5 từng tuần | Tuần này |
-| 3 | **Lấy API key Gearment (sandbox + production)** | Hiện nhận được thông báo tự động từ Gearment, nhưng đẩy đơn vẫn phải bấm tay; có key thì mới đẩy được tự động | Tuần này |
+| 3 | **Huỷ các đơn NHÁP test trên Gearment dashboard** | Kiểm thử E2E tạo đơn nháp thật trên Gearment (không xác nhận, không mất phí) — cần vào dashboard huỷ | Khi tiện |
+
+> ~~Lấy API key Gearment~~ — **XONG**: key production hoạt động; báo giá + đẩy đơn nháp tự động chạy được từ 2026-07-05.
 
 ---
 
@@ -56,6 +60,10 @@
 - ✅ **Trung tâm sản phẩm + chuẩn hoá SKU + backfill listing Etsy** (Epic 7 — Story 7.1 → 7.5) — đã go-live 2026-05-23
 - ✅ **Pilot live publish Etsy JaHandmadeArt thành công** (2026-05-25) — tạo được listing thật trên Etsy, đã sửa 7 lỗi đường biên Etsy 2025 API
 - ✅ 4 quy trình Việt Nam (Tạo sản phẩm / Nhập đơn / Giao hàng / Hậu mãi) — tài liệu hoàn chỉnh 2026-05-23
+- ✅ **Kiểm thử E2E cả 5 luồng chính trên staging bằng API thật** — Tạo sản phẩm→publish Etsy live, nhận đơn API+email, giao nội bộ (MO→tracking GKE), dropship Gearment (đơn nháp + báo giá thật $12.99), hậu mãi (đổi địa chỉ / in lại / ticket hoàn tiền) (2026-07-04 → 07-05)
+- ✅ **Lỗi báo giá Gearment đóng hẳn** — schema đơn nháp + báo giá sửa theo phản hồi live 200 (2026-07-05)
+- ✅ Tab "Original Design" lưu file thiết kế gốc trên form sản phẩm + huy hiệu "Design Ready" trên lệnh sản xuất (2026-07-05)
+- ✅ Bộ hướng dẫn UAT kèm ảnh chụp màn hình thật (8 tài liệu + PDF hợp nhất) (2026-07-05)
 
 ---
 

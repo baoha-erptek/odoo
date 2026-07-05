@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng — Tiếp nhận đơn hàng Etsy
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-26 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User, Đội Kỹ thuật
 **Hệ thống:** Odoo 19 — module `etsy_integration`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_DON_HANG_ETSY_VN.md`](./FLOW_DON_HANG_ETSY_VN.md)
@@ -49,6 +49,8 @@
 > _Admin/BA Lead làm một lần cho mỗi shop._
 
 ### 3.1 Tạo bản ghi Etsy Shop
+
+![Biểu mẫu shop Etsy với các trường ID và cấu hình mặc định](img/don-hang-etsy-shop-form.png)
 
 1. Mở menu **Etsy → Shops**.
 2. Bấm **Tạo mới**.
@@ -129,6 +131,8 @@ Mỗi dòng có:
 
 ### 5.3 Xem nhật ký email
 
+![Danh sách email log hiển thị trạng thái xử lý: processed, failed_parse, duplicate](img/don-hang-email-log-list.png)
+
 **Menu:** Etsy → **Email Log** → danh sách email đã xử lý.
 
 | Trạng thái | Ý nghĩa | Xử lý |
@@ -151,6 +155,8 @@ Mỗi dòng có:
 ## 6. Xem đơn hàng vừa vào
 
 ### 6.1 Operations Dashboard
+
+![Operations Dashboard hiển thị danh sách đơn hàng với cột DATE, SHOP, ORDER_ID, SKU, QUANTITY, Pipeline State, BA Pic](img/don-hang-order-list.png)
 
 **Menu:** Vận hành → **Operations Dashboard**
 
@@ -179,6 +185,8 @@ Mỗi dòng có:
 2. Hoặc dùng saved filter **"Đơn mới hôm nay"**.
 
 ### 6.4 Mở chi tiết đơn
+
+![Form đơn hàng chi tiết với các tab Order Lines, Other Info, Etsy, Design Files, Pipeline](img/don-hang-order-form.png)
 
 Bấm vào ORDER_ID → form đơn `sale.order` hiển thị:
 - Tab **Order Lines** — danh sách sản phẩm
@@ -231,6 +239,8 @@ Nếu khách báo đổi địa chỉ sau đặt:
 ---
 
 ## 8. Khắc phục sự cố
+
+![Bảng Sync Health hiển thị tình trạng đồng bộ API và email, số đơn vừa vào, trạng thái cron](img/don-hang-sync-health.png)
 
 ### 8.1 Đơn không xuất hiện trong 5-10 phút
 

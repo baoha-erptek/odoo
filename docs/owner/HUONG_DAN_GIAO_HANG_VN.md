@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng — Giao hàng (MTO nội bộ + Dropship Gearment)
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-26 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** BA Lead, BA Shipping, Đội sản xuất, Đội QC + Đóng gói, PD, Marketing
 **Hệ thống:** Odoo 19 — module `multichannel_hub_core` + `multichannel_hub_fulfillment` + `etsy_integration`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_GIAO_HANG_VN.md`](./FLOW_GIAO_HANG_VN.md)
@@ -25,6 +25,8 @@
 ---
 
 ## 1. Tổng quan 2 đường
+
+![Operations Dashboard hiển thị tổng quan đơn hàng test E2E đang ở các trạng thái khác nhau](img/giao-hang-operations-dashboard.png)
 
 | Đường | Khi nào dùng | Ai làm | Tracking từ đâu |
 |---|---|---|---|
@@ -53,6 +55,8 @@ Một đơn có thể có **cả hai loại** — hệ thống xử lý từng d
 
 ### 3.1 17 trạng thái pipeline VN
 
+![Kanban pipeline MTO hiển thị 17 trạng thái từ "Mới nhận" đến "Hoàn tất"](img/giao-hang-order-pipeline.png)
+
 | # | Trạng thái | Ai chuyển | Ý nghĩa |
 |---|---|---|---|
 | 1 | Mới nhận | _Auto khi đơn vào_ | Đơn vừa vào, chờ BA |
@@ -75,6 +79,8 @@ Một đơn có thể có **cả hai loại** — hệ thống xử lý từng d
 
 ### 3.2 Chuyển trạng thái
 
+![Form đơn hàng chi tiết với tab Pipeline và các nút chuyển trạng thái](img/giao-hang-order-form-tracking.png)
+
 > ⚠️ **Không** sửa trực tiếp trường "Pipeline State" trên form đơn. Phải dùng **nút hành động** (action button) trên form hoặc kanban.
 
 **Cách 1 — Trên form đơn:**
@@ -87,7 +93,13 @@ Một đơn có thể có **cả hai loại** — hệ thống xử lý từng d
 2. Bấm **Action → "Bulk advance pipeline"**.
 3. Chọn trạng thái đích.
 
-### 3.3 Xem lịch sử chuyển trạng thái
+### 3.3 Lệnh sản xuất (MO) — huy hiệu "Design Ready"
+
+![Form lệnh sản xuất với huy hiệu "Design Ready" hiển thị trạng thái thiết kế đã duyệt](img/giao-hang-mo-form.png)
+
+Từ 2026-07, khi sản phẩm được PD/Sản xuất duyệt thiết kế, lệnh sản xuất (MO - Manufacturing Order) tự động hiển thị huy hiệu **"Design Ready"** — báo hiệu thiết kế đã được phê duyệt và sẵn sàng in. Huy hiệu này là **chỉ thị thông tin** (tính toán từ trạng thái Design Files của đơn), giúp sản xuất nhanh nhận biết tiến độ mà không cần mở tab khác.
+
+### 3.4 Xem lịch sử chuyển trạng thái
 
 **Menu:** Vận hành → **Pipeline Transitions** → lọc theo Sale Order = số đơn.
 
@@ -96,6 +108,8 @@ Mỗi dòng có: ai bấm, từ bước nào sang bước nào, thời điểm, 
 ---
 
 ## 4. Quy trình Design Files
+
+![Form Design File với trường lưu trữ URL hoặc file, trạng thái Pending/Approved/Rejected](img/giao-hang-design-file-form.png)
 
 ### 4.1 Upload file thiết kế (Marketing)
 
@@ -191,6 +205,8 @@ Khi cron sync tự động bị tạm dừng (debug / bảo trì):
 
 ### 6.1 Tự động sau khi có tracking
 
+![Form chi tiết fulfillment/tracking với tracking number, carrier, ngày dự kiến giao](img/giao-hang-fulfillment-detail.png)
+
 - Nguồn tracking: Gearment webhook (Dropship) hoặc Excel GKE (MTO).
 - Cron push: chạy ngay sau khi tracking được ghi.
 - Gọi Etsy API → đặt receipt sang **"Shipped"** + đính kèm tracking + tên carrier.
@@ -222,6 +238,8 @@ Mở đơn → tab **Etsy** → khu vực "Tracking push status":
 **Menu:** Logistics → **Nhập tracking GKE**
 
 ### 7.2 Upload file
+
+![Wizard Nhập tracking GKE hiển thị preview số dòng khớp, không khớp, lỗi format](img/giao-hang-tracking-import-log.png)
 
 1. Bấm **"Chọn file"** → upload Excel GKE (định dạng đã duyệt).
 2. Hệ thống bóc tách:

@@ -1,8 +1,13 @@
 # Quy trình hậu mãi — In lại, Tin nhắn, Hoàn trả & Hoàn tiền
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-23 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 
-> Tài liệu mô tả các quy trình hậu mãi (sau khi đơn đã giao đến khách). Dùng cho Chủ shop, BA và Marketing. Phần "Hoàn trả & Hoàn tiền" hiện đang xây dựng — sẽ hoàn thiện ở phiên bản kế tiếp.
+> Tài liệu mô tả các quy trình hậu mãi (sau khi đơn đã giao đến khách). Dùng cho Chủ shop, BA và Marketing. Phần "Hoàn trả & Hoàn tiền" đã hoạt động — quy trình ticket đã được E2E xác thực (2026-07-05).
+
+### Màn hình thực tế
+
+![Form ticket hậu mãi với các trường loại ticket, lý do, trạng thái và ghi chú](img/hau-mai-ticket-form.png)
+*Giao diện form Ticket hậu mãi để theo dõi yêu cầu hoàn trả, hoàn tiền, in lại.*
 
 ---
 
@@ -74,23 +79,23 @@ Khi khách yêu cầu đổi địa chỉ:
 
 ---
 
-## 3. Hoàn trả & Hoàn tiền (đang xây dựng)
+## 3. Hoàn trả & Hoàn tiền (đang hoạt động)
 
-> Phần này đang được thiết kế. Hiện tại đội BA xử lý thủ công qua chatter + giao dịch Etsy buyer. Mô tả dưới đây là **kế hoạch** cho phiên bản kế tiếp.
+Quy trình ticket hậu mãi đã được E2E xác thực (2026-07-05). Hoàn tiền vẫn thực hiện thủ công trên Etsy.
 
-### Kế hoạch
+### Quy trình Ticket (đang hoạt động)
 
-1. Tạo model `etsy.order.ticket` để theo dõi mỗi yêu cầu hậu mãi (loại: hoàn trả / hoàn tiền / in lại / khác).
+1. Tạo Ticket để theo dõi mỗi yêu cầu hậu mãi (loại: hoàn trả / hoàn tiền / in lại / khác).
 2. BA Marketing tạo ticket trên đơn khi khách báo vấn đề.
 3. Workflow: `open` → `in_progress` → `resolved` (đã hoàn / đã in lại / đã đóng).
-4. Khi resolved=đã hoàn tiền:
+4. BA Lead duyệt + xác nhận xử lý trong ticket.
+5. Khi resolved=đã hoàn tiền:
    - Ghi nhận chi phí hoàn vào đơn.
    - Báo cáo hoàn tiền hàng tháng cho Kế toán + Chủ shop.
-5. Đồng bộ với Etsy Cases (nếu Etsy mở API).
 
-### Hiện tại
+### Hoàn tiền (vẫn thủ công)
 
-- Hoàn tiền: BA refund trên Etsy buyer + ghi chú vào chatter đơn.
+- Hoàn tiền: BA refund trên Etsy buyer + ghi chú vào ticket trên hệ thống.
 - Hoàn trả vật lý: chưa có quy trình hoá đơn ngược; đội kho ghi nhận thủ công.
 - Báo cáo: BA xuất Excel hàng tháng từ Etsy Shop Manager.
 

@@ -1,8 +1,13 @@
 # Quy trình giao hàng — In nội bộ (MTO) & Dropship Gearment
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-23 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 
 > Tài liệu mô tả cách một đơn Etsy đi từ khi vào hệ thống đến khi khách nhận hàng. Hai đường: **MTO** (in nội bộ, đội xưởng thực hiện) và **Dropship** (Gearment thực hiện). Dùng cho Chủ shop và các đội liên quan.
+
+### Màn hình thực tế
+
+![Trạng thái pipeline giao hàng hiển thị 17 bước từ "Mới nhận" đến "Hoàn tất"](img/giao-hang-order-pipeline.png)
+*Giao diện trạng thái pipeline VN trong quy trình giao hàng.*
 
 ---
 

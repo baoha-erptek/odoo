@@ -1,8 +1,13 @@
 # Quy trình tiếp nhận đơn hàng Etsy (cho Chủ shop)
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-05-23 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 
 > Tài liệu này mô tả cách đơn hàng Etsy chạy từ lúc khách bấm mua đến lúc đơn vào hệ thống quản lý. Dùng cho Chủ shop và đội BA. Không có thuật ngữ kỹ thuật.
+
+### Màn hình thực tế
+
+![Danh sách các đơn hàng trong Dashboard Vận hành với cột mã đơn, khách hàng, trạng thái và tổng tiền](img/don-hang-order-list.png)
+*Giao diện Dashboard Vận hành hiển thị danh sách đơn hàng Etsy.*
 
 ---
 

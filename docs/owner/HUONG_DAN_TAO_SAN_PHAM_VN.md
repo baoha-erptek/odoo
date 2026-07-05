@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng — Tạo sản phẩm mới
 
-**Phiên bản:** 1.4 · **Ngày:** 2026-06-11 · **Ngôn ngữ:** Tiếng Việt
+**Phiên bản:** 1.5 · **Ngày:** 2026-07-05 · **Ngôn ngữ:** Tiếng Việt
 **Đối tượng:** Chủ shop, BA Lead, BA User
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
 
@@ -11,6 +11,8 @@
 > **Cập nhật v1.3 (2026-06-08):** Thêm nút **Publish to Etsy** ngay trên form **Listing** (Operations → Listings). Marketing không phải nhảy giữa form Listing và form Sản phẩm nữa — bấm nút trên Listing, hệ thống tự chọn shop từ Listing và mở Wizard publish đã điền sẵn. Form Sản phẩm vẫn giữ nút Publish cũ (dành cho BA). Xem mục 7.2.
 
 > **Cập nhật v1.4 (2026-06-11):** Thêm **Phụ lục A — Từ điển các ô nhập trong chức năng Listing** (giải thích chi tiết TỪNG ô trên form Listing, form Sản phẩm, cài đặt Shop và Wizard publish, kèm **ảnh chụp màn hình thật** từ hệ thống). Đây là tài liệu trả lời câu hỏi "ô này là gì, điền gì vào đây?". Đồng thời chốt 3 tính năng listing mới: đặt **thời gian xử lý / phí vận chuyển** (qua Shipping Profile), **Matching Attribute** (ánh xạ thuộc tính sang Etsy), và **xem trước giá quy đổi theo tiền tệ của shop**. Xem Phụ lục A.
+
+> **Cập nhật v1.5 (2026-07-05):** Thêm tab **Original Design** trên form sản phẩm — nơi lưu file thiết kế gốc (AI/PSD/PDF) riêng biệt khỏi Documents chung. Giới hạn dung lượng file ≤10 MB. Xem mục 4.8.
 
 ---
 
@@ -221,6 +223,21 @@ Mặc định mỗi sản phẩm dùng giá trị chung của shop Etsy (Admin c
 - Muốn thêm hoặc tắt loại thuộc tính khác → liên hệ Admin (cài đặt theo shop, BA không tự đổi).
 
 > Nếu một thuộc tính chưa cài ID Etsy đầy đủ → hệ thống vẫn gửi nhãn tên (vd `Material`) + ghi cảnh báo cho Admin xem.
+
+### 4.8 Tab "Original Design" — lưu file thiết kế gốc
+
+![Tab Original Design trên form sản phẩm lưu trữ file thiết kế gốc (AI/PSD/PDF)](img/product-tab-original-design.png)
+
+**Vị trí trên form:** trang **Original Design** trong khu vực Channels.
+
+Từ 2026-07, sản phẩm có tab mới **"Original Design"** — dành cho lưu trữ file thiết kế gốc (Adobe Illustrator, Photoshop, PDF, v.v.) riêng biệt khỏi khu vực **Documents** chung. Đây là nơi lưu "bản nháp thiết kế" trước khi bóc tách thành các ảnh hay thông tin đăng Etsy.
+
+**Quy tắc:**
+- **Loại file chấp nhận:** AI, PSD, PDF, SVG, SKETCH, XD, v.v. (bất kỳ format thiết kế đồ hoạ).
+- **Giới hạn dung lượng:** ≤ 10 MB (một file).
+- **Số lượng file:** 1 file gốc (nếu muốn nhiều version, dùng Google Drive link thay vào ô URL).
+- **Mục đích:** BA/Marketing tham khảo file gốc khi cần chỉnh sửa hoặc xuất lại; Marketing không phải tải file từ email hay chat riêng.
+- **Không ảnh hưởng Etsy:** file thiết kế gốc KHÔNG được gửi lên Etsy — chỉ dùng nội bộ.
 
 ---
 
