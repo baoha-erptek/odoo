@@ -16,7 +16,7 @@
             <xpath expr="//header" position="inside">
                 <button name="action_get_gearment_quote"
                         type="object"
-                        string="Sync to Gearment"
+                        string="Request Gearment Quote"
                         groups="multichannel_hub_fulfillment.group_ba_shipping"
                         invisible="sales_channel != 'etsy' or x_gearment_outbound_ref or x_gearment_outbound_state not in ('draft', 'quoted', 'operator_review')"/>
                 <button name="action_open_gearment_quote_wizard"
@@ -26,13 +26,19 @@
                         invisible="x_gearment_outbound_state != 'quoted'"/>
             </xpath>
 
-            <!-- D5: Gearment notebook tab -->
+            <!-- D5: Gearment notebook tab. P-POLISH-01: label aligned to
+                 mockup ("Fulfillment"); name stays gearment_tab for
+                 xmlid/selector stability. -->
             <xpath expr="//notebook" position="inside">
-                <page string="Gearment" name="gearment_tab"
+                <page string="Fulfillment" name="gearment_tab"
                       invisible="sales_channel != 'etsy'">
                     <group>
                         <group string="Outbound State">
-                            <field name="x_gearment_outbound_state"/>
+                            <field name="x_gearment_outbound_state"
+                                   widget="badge"
+                                   decoration-success="x_gearment_outbound_state == 'confirmed'"
+                                   decoration-warning="x_gearment_outbound_state in ('quoted', 'operator_review')"
+                                   decoration-danger="x_gearment_outbound_state == 'cancelled'"/>
                             <field name="x_gearment_outbound_ref" readonly="1"/>
                             <field name="x_gearment_pushed_at" readonly="1"/>
                             <field name="x_gearment_status" readonly="1"/>
@@ -62,7 +68,8 @@
         progress notifications.
     -->
     <record id="action_server_gearment_bulk_sync" model="ir.actions.server">
-        <field name="name">Sync to Gearment</field>
+        <!-- P-POLISH-01: label aligned with the form-header button. -->
+        <field name="name">Request Gearment Quote</field>
         <field name="model_id" ref="sale.model_sale_order_line"/>
         <field name="binding_model_id" ref="sale.model_sale_order_line"/>
         <field name="binding_view_types">list</field>
