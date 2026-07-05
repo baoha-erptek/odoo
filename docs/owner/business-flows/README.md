@@ -1,6 +1,11 @@
 # Business flows — sơ đồ + ảnh chụp UAT
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Đối tượng:** Chủ shop, BA Lead, Đội vận hành
+> **Bản mới nhất: [`v3/`](./v3/index.html) (2026-07-05)** — ảnh chụp thật từ hệ thống
+> đã lên giao diện Hatafa mới (menu Vận hành, thẻ KPI, tiếng Việt). Các file `flow-*`
+> ở thư mục gốc và `v2/` là bản lưu trữ (màn hình mô phỏng); `v2-uiux-improved/` đã
+> được hiện thực hóa và thay bằng v3.
+
+**Phiên bản:** 1.1 · **Ngày:** 2026-07-05 · **Đối tượng:** Chủ shop, BA Lead, Đội vận hành
 
 Bộ sơ đồ kiến trúc nghiệp vụ + ảnh chụp màn hình thực tế cho 5 luồng chính
 của hệ thống Odoo 19 + Etsy + Gearment.
