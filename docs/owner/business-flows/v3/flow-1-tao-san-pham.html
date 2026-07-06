@@ -175,10 +175,12 @@
     <li><b>Etsy API cấp quyền cho 4 scope.</b> Mỗi scope cho phép hành động khác (tạo listing, cập nhật giá, xoá listing, v.v.). Nếu gặp lỗi 403 Unauthorized, liên hệ Quản trị viên để re-authorize OAuth.</li>
     <li><b>Publish có hai chế độ:</b> Draft (có thể chỉnh sửa trên Etsy) hoặc Published (bán ngay). Hầu hết quy trình dùng Draft để QC trước khi bán.</li>
     <li><b>Metadata Etsy (Taxonomy, Shipping Profile, Who Made).</b> Các default được set ở Etsy &gt; Cửa hàng &gt; [shop] &gt; Publisher Defaults. Bạn có thể override per-listing hoặc per-product.</li>
+    <li><b>SKU biến thể tự sinh khi đăng bán được LƯU LẠI (mới từ 06-07-2026).</b> Nếu một biến thể chưa có SKU lúc đăng, mã tự sinh gửi lên Etsy nay được ghi ngược vào biến thể trong Odoo — đơn hàng quay về sẽ khớp đúng biến thể, không rơi vào diện "SKU không khớp". SKU do người dùng tự đặt không bao giờ bị ghi đè.</li>
+    <li><b>Tự châm số lượng listing in-theo-đơn (sắp bật).</b> Etsy trừ tồn kho mỗi lần bán và tự ẩn listing khi về 0. Hệ thống đã có cơ chế mỗi giờ tự châm lại số lượng cho listing in-theo-đơn — hiện <b>đang tắt</b>, sẽ bật sau khi chốt số lượng mục tiêu với quản trị.</li>
   </ul>
 </div>
 
-<footer>Cẩm nang vận hành Hatafa Ops v3 — Quy trình 1: Tạo sản phẩm &amp; đăng bán Etsy · 2026-07-05</footer>
+<footer>Cẩm nang vận hành Hatafa Ops v3 — Quy trình 1: Tạo sản phẩm &amp; đăng bán Etsy · 2026-07-06</footer>
 </div>
 
 </body>

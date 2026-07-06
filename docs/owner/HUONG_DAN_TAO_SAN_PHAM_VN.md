@@ -564,6 +564,8 @@ A: Mã Gearment của mỗi biến thể là **khác nhau** (mỗi màu-size là
 3. Khi đẩy đơn sang Gearment, hệ thống lấy mã theo đúng biến thể khách đặt. Nếu sản phẩm nhiều biến thể mà thiếu mã của biến thể trong đơn, hệ thống sẽ **chặn đẩy đơn** và báo rõ thiếu ở sản phẩm nào — để tránh in nhầm màu/size.
 Sản phẩm chỉ có một biến thể (ví dụ ly sứ một cỡ) thì không cần bước 2 — mã ở mức sản phẩm là đủ.
 
+![Dòng nhà cung cấp Gearment gán cho đúng biến thể kèm mã](img/flw-tao-san-pham-variant-supplierinfo.png)
+
 **Q:** _Listing trên Etsy bán hết số lượng thì có bị tắt không?_
 A: Etsy trừ dần số lượng mỗi khi có đơn; về 0 là Etsy tự tắt listing. Hệ thống
 có **cron tự bơm lại số lượng** mỗi giờ cho các listing đang bán sắp cạn.

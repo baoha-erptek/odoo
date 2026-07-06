@@ -229,6 +229,8 @@ mới** nữa (tránh giao nhầm màu/size). BA xử lý:
 3. Sửa dòng đơn: đổi "Etsy Unresolved Item" thành đúng sản phẩm.
 4. Bỏ tick **Chặn sản xuất** → đơn chạy tiếp bình thường.
 
+![Đơn bị giữ — lý do chặn nêu rõ SKU không khớp](img/flw-don-hang-held-order.png)
+
 ### 7.3 Bước 3 — Gán BA phụ trách
 
 1. Mở form đơn.
