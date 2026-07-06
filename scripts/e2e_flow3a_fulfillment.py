@@ -420,8 +420,23 @@ def section_5_delivery_validate(ctx: Context) -> StepResult:
     rpc_void(ctx, "admin", "stock.picking", "button_validate", [[ctx.picking_id]])
     state = rpc(ctx, "admin", "stock.picking", "read",
                 [[ctx.picking_id], ["state"]])[0]["state"]
-    return StepResult("5", state == "done",
-                      f"DO {pick['name']} state={state}")
+    # FLW-06: validating an outgoing picking must auto-advance the SO
+    # pipeline to 'shipped' (was a manual operator move before 2026-07-06).
+    row = rpc(ctx, "admin", "sale.order", "read",
+              [[ctx.order_id], ["x_pipeline_id", "x_pipeline_state_id"]])[0]
+    pipe_code = state_code = ""
+    if row.get("x_pipeline_state_id"):
+        st = rpc(ctx, "admin", "order.pipeline.state", "read",
+                 [[row["x_pipeline_state_id"][0]], ["code"]])[0]
+        state_code = st["code"]
+    if row.get("x_pipeline_id"):
+        pipe_code = rpc(ctx, "admin", "order.pipeline", "read",
+                        [[row["x_pipeline_id"][0]], ["code"]])[0]["code"]
+    ok = state == "done" and state_code == "shipped"
+    return StepResult("5", ok,
+                      f"DO {pick['name']} state={state}; FLW-06 pipeline "
+                      f"{pipe_code} auto-advanced to {state_code!r} "
+                      f"(expect 'shipped')")
 
 
 def section_6_gke_xlsx(ctx: Context) -> StepResult:
@@ -584,6 +599,9 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
         "",
         "## Notes",
         "",
+        "- §5 asserts the FLW-06 auto-advance: outgoing-picking validation "
+        "moves the SO pipeline to 'shipped' (ĐÃ GỬI) — no manual state "
+        "write in this runner since the 2026-07-06 rerun.",
         "- §6 GENERATES the GKE xlsx from this run's actual order ref "
         "(closes the MF-E2E-0 residue: the static sample matched 0/9).",
         "- §8 proves the tracking-push path to the Etsy API boundary with a "

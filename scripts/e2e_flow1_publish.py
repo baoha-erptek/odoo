@@ -446,8 +446,10 @@ def section_2_product_create(ctx: Context, page: Page) -> StepResult:
                    {"fields": ["product_template_attribute_value_ids"]})
     if len(variants) != 2:
         return StepResult("2", False, f"expected 2 variants, got {len(variants)}")
-    # Deterministic per-variant SKUs (the SKU-builder path BA uses in prod).
-    sku_by_size = {"11 oz": "MUG-CR-F11", "15 oz": "MUG-CR-F15"}
+    # FLW-02: set the SKU on the 11 oz variant only; the 15 oz variant is
+    # left EMPTY so §3b can assert the publish-time synthesized-SKU
+    # write-back (push_inventory persists {base}-{SLUG} to default_code).
+    sku_by_size = {"11 oz": "MUG-CR-F11", "15 oz": None}
     ctx.variant_ids, ctx.variant_skus = [], []
     for v in variants:
         names = rpc(ctx, "admin", "product.template.attribute.value", "read",
@@ -455,10 +457,14 @@ def section_2_product_create(ctx: Context, page: Page) -> StepResult:
         size = next((n["name"] for n in names if n["name"] in sku_by_size), None)
         if not size:
             return StepResult("2", False, f"variant {v['id']} has no size value")
-        rpc(ctx, "admin", "product.product", "write",
-            [[v["id"]], {"default_code": sku_by_size[size]}])
+        if sku_by_size[size]:
+            rpc(ctx, "admin", "product.product", "write",
+                [[v["id"]], {"default_code": sku_by_size[size]}])
+            ctx.variant_skus.append(sku_by_size[size])
+        else:
+            rpc(ctx, "admin", "product.product", "write",
+                [[v["id"]], {"default_code": False}])
         ctx.variant_ids.append(v["id"])
-        ctx.variant_skus.append(sku_by_size[size])
     # Real on-hand stock (5/variant): the publisher floors offering qty to 1
     # for zero-stock products, which §8's drift reporter would (correctly)
     # flag as qty_drift vs Odoo's 0.
@@ -495,6 +501,62 @@ def section_3_publish_draft(ctx: Context) -> StepResult:
         "3", ok,
         f"listing_id={ctx.listing_id} channel.status state={st.get('state')} "
         f"external_ref={st.get('external_ref')}")
+
+
+def section_3b_sku_writeback(ctx: Context) -> StepResult:
+    """FLW-02: publish-time synthesized SKUs must persist to the variants
+    and etsy.listing.product mirror rows must link back to them."""
+    rows = rpc(ctx, "admin", "product.product", "read",
+               [ctx.variant_ids, ["default_code"]])
+    codes = {r["id"]: (r["default_code"] or "") for r in rows}
+    empty = [vid for vid, c in codes.items() if not c.strip()]
+    # refresh ctx.variant_skus with the ACTUAL persisted codes so the
+    # downstream Etsy readback assertions (§4/§7/§8) key on reality.
+    ctx.variant_skus = sorted(c for c in codes.values() if c.strip())
+    links = rpc(ctx, "admin", "etsy.listing.product", "search_read",
+                [[("sku", "in", ctx.variant_skus),
+                  ("product_id", "!=", False)]],
+                {"fields": ["sku", "product_id"]})
+    linked_skus = {r["sku"] for r in links}
+    checks = {
+        "all variant SKUs persisted (write-back)": not empty,
+        "MUG-CR-F11 untouched (operator code kept)":
+            "MUG-CR-F11" in ctx.variant_skus,
+        "listing.product rows linked to variants":
+            set(ctx.variant_skus) <= linked_skus,
+    }
+    bad = [k for k, v in checks.items() if not v]
+    return StepResult(
+        "3b", not bad,
+        f"variant codes={sorted(codes.values())} linked={sorted(linked_skus)}"
+        + (f" FAILED={bad}" if bad else ""))
+
+
+def section_t_topup_noop(ctx: Context) -> StepResult:
+    """FLW-07: cron_etsy_qty_topup exists and is a strict no-op while the
+    ICP etsy_integration.pod_topup_quantity is unset (owner decision)."""
+    cron_id = _xmlid_to_res_id(ctx, "etsy_integration", "cron_etsy_qty_topup")
+    if not cron_id:
+        return StepResult("T", False, "cron_etsy_qty_topup xmlid not found")
+    icp = rpc(ctx, "admin", "ir.config_parameter", "search_read",
+              [[("key", "=", "etsy_integration.pod_topup_quantity")]],
+              {"fields": ["value"]})
+    if icp and (icp[0]["value"] or "").strip() not in ("", "0"):
+        return StepResult(
+            "T", False,
+            f"ICP pod_topup_quantity unexpectedly SET ({icp[0]['value']!r}) "
+            "— owner decision; do not run the no-op probe")
+    before = rpc(ctx, "admin", "etsy.api.log", "search_count",
+                 [[("endpoint", "like", "inventory")]])
+    rpc_void(ctx, "admin", "ir.cron", "method_direct_trigger", [[cron_id]])
+    time.sleep(10)  # async worker window
+    after = rpc(ctx, "admin", "etsy.api.log", "search_count",
+                [[("endpoint", "like", "inventory")]])
+    ok = after == before
+    return StepResult(
+        "T", ok,
+        f"cron exists (id={cron_id}); ICP unset; inventory api-log rows "
+        f"{before}->{after} (no-op {'confirmed' if ok else 'VIOLATED'})")
 
 
 def _readback(ctx: Context) -> dict | None:
@@ -645,6 +707,13 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
         "",
         "## Notes",
         "",
+        "- §3b asserts the FLW-02 round-trip: the 15 oz variant is created "
+        "with an EMPTY default_code and the publish-time synthesized SKU "
+        "must be written back to the variant + linked in "
+        "etsy.listing.product (2026-07-06 fix).",
+        "- §T asserts the FLW-07 top-up cron exists and is a strict no-op "
+        "while ICP etsy_integration.pod_topup_quantity is unset (owner "
+        "decision — never set by this runner).",
         "- §9 deactivates (PATCH state=inactive) instead of deleting: Etsy "
         "`deleteListing` requires the `listings_d` OAuth scope, which the "
         "current grant (transactions_r/w, listings_r/w, shops_r/w, email_r) "
@@ -669,7 +738,7 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
 # ─── main ──────────────────────────────────────────────────────────────────────
 
 
-SECTIONS = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+SECTIONS = ("0", "1", "2", "3", "3b", "4", "5", "6", "7", "8", "T", "9")
 
 
 def _safe(section: str, fn, *args, **kwargs) -> StepResult:
@@ -711,11 +780,13 @@ def main() -> int:
             "1": lambda: section_1_sku_chain(ctx),
             "2": lambda: section_2_product_create(ctx, page),
             "3": lambda: section_3_publish_draft(ctx),
+            "3b": lambda: section_3b_sku_writeback(ctx),
             "4": lambda: section_4_verify_draft(ctx),
             "5": lambda: section_5_publish_active(ctx, page),
             "6": lambda: section_6_verify_active(ctx),
             "7": lambda: section_7_inventory_repush(ctx),
             "8": lambda: section_8_drift_report(ctx),
+            "T": lambda: section_t_topup_noop(ctx),
             "9": lambda: section_9_hygiene(ctx),
         }
         abort = False

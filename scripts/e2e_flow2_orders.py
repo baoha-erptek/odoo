@@ -61,6 +61,11 @@ API_CRON_XMLID = ("etsy_integration", "cron_etsy_order_sync")
 EMAIL_CRON_XMLID = ("etsy_integration", "ir_cron_fetch_etsy_emails")
 SAMPLE_EMAIL_PATH = (REPO_ROOT / "custom_addons" / "etsy_integration"
                      / "tests" / "data" / "sample_single_order.txt")
+# SSH → odoo shell channel for the §G API-payload injection (same recipe as
+# the flow-1/3a/3b runners; the ingest service only runs server-side).
+SSH_KEY = REPO_ROOT / "secrets" / "ssh-key-2023-02-24.key"
+SSH_HOST = "ubuntu@129.150.63.207"
+STAGING_CONTAINER = "esty19_odoo"
 # ids embedded in the sample fixture — replaced per-run with unique ones
 FIXTURE_ORDER_ID = "3708050001"
 FIXTURE_RECEIPT_ID = "4625001001"
@@ -169,6 +174,18 @@ def _dupe_receipts(ctx: Context) -> list:
                   ["etsy_order_id"], ["etsy_order_id"]])
     return [g["etsy_order_id"] for g in groups
             if (g.get("etsy_order_id_count") or 0) > 1]
+
+
+def _odoo_shell(ctx: Context, snippet: str, env: dict[str, str] | None = None,
+                timeout: int = 180) -> str:
+    env_flags = " ".join(f"-e {k}='{v}'" for k, v in (env or {}).items())
+    remote = (f"sudo docker exec {env_flags} -i {STAGING_CONTAINER} "
+              f"odoo shell -d {ctx.db} --no-http")
+    cmd = ["ssh", "-i", str(SSH_KEY), "-o", "StrictHostKeyChecking=no",
+           "-o", "BatchMode=yes", SSH_HOST, remote]
+    proc = subprocess.run(cmd, input=snippet, capture_output=True,
+                          text=True, timeout=timeout)
+    return proc.stdout + proc.stderr
 
 
 # ─── Playwright evidence helpers ──────────────────────────────────────────────
@@ -431,6 +448,117 @@ def section_f_restore(ctx: Context) -> StepResult:
         f"{len(ctx.email_log_ids)} log(s)")
 
 
+_HOLD_SNIPPET = """
+import os
+from datetime import datetime
+from odoo.addons.etsy_integration.services.etsy_order_payload import (
+    EtsyAddressPayload, EtsyLineItemPayload, EtsyOrderPayload)
+from odoo.addons.etsy_integration.services.order_creator import OrderCreator
+
+marker = os.environ['F2G_MARKER']
+shop = env['etsy.shop'].browse(int(os.environ['F2G_SHOP']))
+before = env['product.product'].search_count([])
+payload = EtsyOrderPayload(
+    etsy_shop_id=shop.id,
+    etsy_receipt_id='95%s' % marker,
+    etsy_order_id='95%s' % marker,
+    buyer_name='E2E-F2G Holder %s' % marker,
+    buyer_country='US',
+    order_date=datetime.utcnow(),
+    currency='USD',
+    amount_total=25.0,
+    shipping_total=0.0,
+    line_items=(EtsyLineItemPayload(
+        listing_id='L-F2G-%s' % marker,
+        transaction_id='T-F2G-%s' % marker,
+        title='E2E-F2G Mystery Tee %s' % marker,
+        sku='E2E-NO-SUCH-SKU-%s' % marker,
+        quantity=1, unit_price=25.0,
+    ),),
+    shipping_address=EtsyAddressPayload(
+        name='E2E-F2G Holder %s' % marker, street_1='1 Hold St',
+        street_2=None, city='Boston', state='MA', zip='02108',
+        country_code='US'),
+    buyer_message=None,
+    buyer_email='e2e-f2g-%s@example.com' % marker,
+    listing_id='L-F2G-%s' % marker,
+    payment_status='paid',
+    is_gift=False,
+    gift_message=None,
+    source='api',
+    fetched_at=datetime.utcnow(),
+    raw_source_id='receipt:95%s' % marker,
+)
+order = OrderCreator(env).process_etsy_payload(payload, shop)
+after = env['product.product'].search_count([])
+env.cr.commit()
+print('F2G_RESULT:%s|%s|%s' % (order.id if order else 0, before, after))
+"""
+
+
+def section_g_unresolved_hold(ctx: Context, page: Page) -> StepResult:
+    """FLW-03: API-ingested order with an unknown SKU books the 'Etsy
+    Unresolved Item' placeholder and holds the order (production_blocked)
+    — NO product auto-created (the pre-2026-07-06 auto-create is gone)."""
+    # hygiene: drop held fixtures from PRIOR runs (keep this run's for the
+    # screenshot harvest; Phase-5 cleanup removes it).
+    stale = rpc(ctx, "admin", "sale.order", "search",
+                [[("partner_id.name", "like", "E2E-F2G Holder"),
+                  ("etsy_order_id", "like", "95")]])
+    for oid in stale:
+        try:
+            rpc_void(ctx, "admin", "sale.order", "action_cancel", [[oid]])
+            rpc(ctx, "admin", "sale.order", "unlink", [[oid]])
+        except xmlrpc.client.Fault:
+            pass
+    out = _odoo_shell(ctx, _HOLD_SNIPPET,
+                      {"F2G_MARKER": ctx.run_marker,
+                       "F2G_SHOP": str(ctx.shop_id)})
+    line = next((ln for ln in out.splitlines()
+                 if ln.startswith("F2G_RESULT:")), "")
+    if not line:
+        return StepResult("G", False,
+                          f"injection snippet failed: {out[-300:]}")
+    order_id, before, after = (
+        int(x) for x in line.replace("F2G_RESULT:", "").split("|"))
+    if not order_id:
+        return StepResult("G", False, "ingest returned no order")
+    ctx.hold_order_id = order_id  # type: ignore[attr-defined]
+    row = rpc(ctx, "admin", "sale.order", "read",
+              [[order_id], ["name", "production_blocked", "block_reason"]])[0]
+    lines = rpc(ctx, "admin", "sale.order.line", "search_read",
+                [[("order_id", "=", order_id)]],
+                {"fields": ["name", "product_id"]})
+    placeholder_tmpl = _xmlid_to_res_id(
+        ctx, "etsy_integration", "product_etsy_unresolved")
+    placeholder_variants = rpc(
+        ctx, "admin", "product.product", "search",
+        [[("product_tmpl_id", "=", placeholder_tmpl)]]) if placeholder_tmpl else []
+    item_lines = [ln for ln in lines
+                  if "Mystery Tee" in (ln["name"] or "")
+                  or (ln["product_id"]
+                      and ln["product_id"][0] in placeholder_variants)]
+    checks = {
+        "order held (production_blocked)": bool(row["production_blocked"]),
+        "block_reason names the SKU":
+            f"E2E-NO-SUCH-SKU-{ctx.run_marker}" in (row["block_reason"] or ""),
+        "line books the unresolved placeholder": bool(item_lines) and all(
+            ln["product_id"] and ln["product_id"][0] in placeholder_variants
+            for ln in item_lines),
+        "buyer-facing title kept on the line": any(
+            "Mystery Tee" in (ln["name"] or "") for ln in item_lines),
+        "NO product auto-created": after == before,
+    }
+    bad = [k for k, v in checks.items() if not v]
+    shot = _record_screenshot(ctx, page, "sale.order", order_id,
+                              "f2_sG_unresolved_hold")
+    return StepResult(
+        "G", not bad,
+        f"order {row['name']} (id {order_id}) blocked={row['production_blocked']} "
+        f"products {before}->{after}; cleaned {len(stale)} stale fixture(s)"
+        + (f" FAILED={bad}" if bad else ""), shot)
+
+
 # ─── report writer ─────────────────────────────────────────────────────────────
 
 
@@ -482,6 +610,12 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
         "- Sync-health rows for BOTH paths (`etsy_api_receipts_sync`, "
         "`etsy_email_fetch`) landed in etsy_integration 19.0.3.16.0 "
         "(report_run wired into both crons — spec 015 MF-E2E-2 criterion).",
+        "- §G asserts the FLW-03 hold (2026-07-06): API ingest with an "
+        "unknown SKU books the 'Etsy Unresolved Item' placeholder, holds "
+        "the order via production_blocked/block_reason, and creates NO "
+        "product (the old auto-create contract is gone). The held order is "
+        "kept for the screenshot harvest and removed by the run-level "
+        "cleanup phase.",
         "- Production-shop assertions deferred to P1-11 per the gate scope.",
         "",
         "## Reproducing",
@@ -498,7 +632,7 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
 # ─── main ──────────────────────────────────────────────────────────────────────
 
 
-SECTIONS = ("0", "A", "B", "C", "D", "E", "F")
+SECTIONS = ("0", "A", "B", "C", "D", "E", "F", "G")
 
 
 def _safe(section: str, fn, *args, **kwargs) -> StepResult:
@@ -540,6 +674,7 @@ def main() -> int:
             "D": lambda: section_d_email_ingest(ctx, page),
             "E": lambda: section_e_email_cron_health(ctx),
             "F": lambda: section_f_restore(ctx),
+            "G": lambda: section_g_unresolved_hold(ctx, page),
         }
         abort = False
         for sec in SECTIONS:
