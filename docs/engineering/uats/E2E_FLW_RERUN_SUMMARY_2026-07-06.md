@@ -59,9 +59,13 @@ Per-flow section detail: `E2E_FLOW{1,2,3A,3B,4}_*_2026-07-06.md` in this directo
   (S03412), `260706P-GM3MUJU-4VSXP3T8` (S03413), `260706P-GM3MUJU-4VX0BER4`
   (S03414).
 - **Etsy Shop Manager** — flow-1 listings `4533253493`, `4533267304` were
-  deactivated by §9 (PATCH state=inactive → shows `edit`); true DELETE still
-  needs the ungranted `listings_d` scope. Playwright live-publish drafts are
-  cleaned by `scripts/cleanup_uat_etsy_drafts.py` (cleanup phase).
+  deactivated by §9 (PATCH state=inactive → shows `edit`). True DELETE was
+  re-probed this run: still `403 requires scope: listings_d`. **60 UAT
+  draft listings** (invisible to buyers, no fee) have accumulated on
+  JaHandmadeArt across the 07-04/05/06 gate runs — 12 from today's
+  Playwright live runs (`UAT-TAOSP * tc005/tc009/tc011/tc013/tc014/tc015`,
+  ids 4533274087–4533290434). Owner: bulk-delete drafts in Shop Manager,
+  or grant `listings_d` + re-authorize so future teardowns can delete.
 - `test:hau-mai` decision (see table above).
 
 ## Test-data ref list (written BEFORE cleanup — audit anchor)
@@ -78,6 +82,18 @@ design.file 125–135, address-change requests 24–28, products
 (688 kept unarchived only for the supplierinfo screenshot), partners
 `E2E-*`/`UAT-*` buyers. Email-fixture orders S03401/02/04/05 and the
 run-1 held order S03403 were already removed by runner hygiene (§F/§G).
+
+## Cleanup outcome (verified)
+
+Residual test data on `esty_odoo19` after cleanup = **0** across all
+checked classes: active test products / non-cancelled test sale orders /
+active test partners / open test MOs / open test pickings / non-cancelled
+test POs / pending address-change requests / held test orders. Also
+swept 2026-07-04/05 leftovers (S03355–S03376 test range + draft POs
+P00005–P00016). Kept untouched as NON-test: real-buyer pickings
+WH/OUT/00078/79/80/86 (Thao Nguyen, Fiona Kellett, Nikki Cioca,
+Kiersten Ruedy), P00003/P00004 (Demo Gearment Buyer / Uyen BA demo
+records), and the auto-seeded UAT BA users (suite fixtures).
 
 ## Environment notes
 
