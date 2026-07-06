@@ -50,7 +50,9 @@ export class TrackingImportWizardPage {
     this.errorModal = page.locator('.modal-dialog', {
       has: page.locator(
         '.modal-title:has-text("Validation Error"), .modal-title:has-text("User Error"), ' +
-        '.modal-title:has-text("Warning")',
+        '.modal-title:has-text("Warning"), .modal-title:has-text("Lỗi xác nhận"), ' +
+        '.modal-title:has-text("Lỗi người dùng"), ' +
+        '.modal-title:has-text("Cảnh báo")',
       ),
     }).locator('.modal-body');
   }
@@ -79,7 +81,7 @@ export class TrackingImportWizardPage {
     // Lines" is a LAZY page — click its tab before waiting for the list
     // (2026-07-04). An error modal is the alternate outcome.
     const previewTab = this.page.locator('.modal-dialog .o_notebook .nav-link',
-      { hasText: /Preview Lines/ }).first();
+      { hasText: /Preview Lines|Dòng xem trước/ }).first();
     await Promise.race([
       previewTab.waitFor({ state: 'visible', timeout: 30000 }),
       this.errorModal.waitFor({ state: 'visible', timeout: 30000 }),
@@ -106,13 +108,13 @@ export class TrackingImportWizardPage {
   async clickImport(): Promise<void> {
     await this.importButton.click();
     // Done state shows "Close" button (special=cancel) instead of action buttons.
-    const closeBtn = this.modal.locator('.modal-footer button', { hasText: /^Close$/ }).first();
+    const closeBtn = this.modal.locator('.modal-footer button', { hasText: /^(Close|Đóng)$/ }).first();
     await closeBtn.waitFor({ state: 'visible', timeout: 30000 });
   }
 
   /** Cancel/close the wizard without import. */
   async cancel(): Promise<void> {
-    const btn = this.cancelButton.or(this.modal.locator('.modal-footer button', { hasText: /Cancel|Close/ }).first());
+    const btn = this.cancelButton.or(this.modal.locator('.modal-footer button', { hasText: /Cancel|Close|Hủy|Đóng/ }).first());
     await btn.click();
     await this.modal.waitFor({ state: 'hidden', timeout: 8000 }).catch(() => undefined);
   }
@@ -132,7 +134,7 @@ export class TrackingImportWizardPage {
     // isChecked() lies. The warning alert ("New schema fingerprint
     // detected...") is the reliable signal (2026-07-04).
     const alert = this.page.locator('.modal-dialog .alert-warning',
-      { hasText: /new schema/i }).first();
+      { hasText: /new schema|lược đồ mới/i }).first();
     if (await alert.isVisible().catch(() => false)) return true;
     if (await this.isNewSchemaField.count() === 0) return false;
     return await this.isNewSchemaField.isChecked().catch(() => false);
