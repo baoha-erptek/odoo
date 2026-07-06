@@ -1,6 +1,6 @@
 {
     'name': 'Multichannel Hub - Fulfillment',
-    'version': '19.0.1.0.32',
+    'version': '19.0.1.0.33',
     'category': 'Sales/Fulfillment',
     'summary': 'Fulfillment integration service for multichannel operations',
     'author': 'Etsy Migration Team',

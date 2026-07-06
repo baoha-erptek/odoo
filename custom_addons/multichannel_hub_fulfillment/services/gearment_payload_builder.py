@@ -217,7 +217,6 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
             variant_id=sku,
             quantity=int(line.product_uom_qty or 0),
             printing_options=printing_options,
-            personalisation=getattr(line, 'etsy_personalisation', None) or None,
         ))
 
     store_id = ''
@@ -235,6 +234,9 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         addresses=(address,),
         line_items=tuple(line_items),
         shipping_method=_resolve_shipping_method(order),
+        # FLW-05: documented draft field; buyer already paid the gift fee
+        # on Etsy. mhc shadow field (P1-01b), so no ei dependency.
+        gift_message_body=(order.gift_message or '').strip() or None,
     )
 
 

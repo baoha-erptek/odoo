@@ -103,6 +103,17 @@ Khi cron đồng bộ tự động bị tạm dừng:
 - Chỉ **BA Shipping** mới được bấm "Báo giá Gearment" và "Đồng bộ Gearment hàng loạt".
 - Người dùng thường có thể xem nhưng không gửi đơn sang Gearment.
 
+### Cá nhân hoá (personalization) & lời chúc quà tặng
+
+- **Chữ cá nhân hoá** (tên, ngày, câu khắc…) khách nhập trên Etsy **không gửi
+  dạng chữ sang Gearment** — Gearment chỉ in theo file thiết kế. Đội thiết kế
+  đọc nội dung cá nhân hoá trên dòng đơn hàng và **đưa thẳng vào file thiết
+  kế** trước khi duyệt. File duyệt xong mới đẩy đơn được (hệ thống đã chặn đơn
+  thiếu file).
+- **Lời chúc quà tặng** (gift message) khách trả tiền trên Etsy thì hệ thống
+  **gửi kèm sang Gearment** (trường gift_message_body chính thức của Gearment)
+  để in thiệp kèm gói hàng.
+
 ### Lưu ý về dịch vụ vận chuyển nhanh
 
 Hiện Gearment chỉ nhận **giao tiêu chuẩn (Standard)**. Nếu khách Etsy đã trả
