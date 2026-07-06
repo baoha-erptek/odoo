@@ -43,10 +43,14 @@ export class ProductFormPage {
     this.discardButton = page.locator('button.o_form_button_cancel').first();
     this.publishButton = page.locator('button[name="action_open_etsy_publish_wizard"]').first();
     // ValidationError / UserError surface as a modal dialog over the form.
+    // Titles are LOCALIZED for vi_VN personas ("Lỗi xác nhận" = Validation
+    // Error, "Lỗi người dùng" = User Error, "Lưu ý" = notice) — 2026-07-06.
     this.errorModal = page.locator('.modal-dialog', {
       has: page.locator(
         '.modal-title:has-text("Validation Error"), .modal-title:has-text("User Error"), ' +
-        '.modal-title:has-text("Invalid Operation"), .modal-title:has-text("Access Error")',
+        '.modal-title:has-text("Invalid Operation"), .modal-title:has-text("Access Error"), ' +
+        '.modal-title:has-text("Lỗi xác nhận"), .modal-title:has-text("Lỗi người dùng"), ' +
+        '.modal-title:has-text("Thao tác không hợp lệ"), .modal-title:has-text("Lỗi truy cập")',
       ),
     }).locator('.modal-body');
   }
@@ -81,7 +85,22 @@ export class ProductFormPage {
   }
 
   /** Switch to a notebook page by its visible tab label. */
+  /** Close a transient notice dialog if one covers the form (e.g. the
+   *  standard duplicate-Internal-Reference warning "Mã nội bộ ... đã tồn
+   *  tại" that pops when the auto-SKU collides with residue products —
+   *  it intercepts every click until dismissed, 2026-07-06 rerun). */
+  private async _dismissNoticeDialog(): Promise<void> {
+    const close = this.page.locator(
+      '.modal:visible .btn-close, .modal:visible footer .btn-primary',
+      { hasText: /^$|Đóng|Close|OK/ }).first();
+    if (await close.isVisible().catch(() => false)) {
+      await close.click().catch(() => {});
+      await this.page.waitForTimeout(200);
+    }
+  }
+
   async openTab(label: string | RegExp): Promise<void> {
+    await this._dismissNoticeDialog();
     const tab = this.page.locator('.o_notebook .nav-link', { hasText: label }).first();
     await tab.waitFor({ state: 'visible', timeout: 8000 });
     await tab.click();
@@ -95,6 +114,7 @@ export class ProductFormPage {
    * always re-open before reading/filling them.
    */
   async openGeneralTab(): Promise<void> {
+    await this._dismissNoticeDialog();
     const tab = this.page.locator('.o_notebook .nav-link').first();
     if (await tab.count() > 0) {
       await tab.click();
@@ -160,6 +180,52 @@ export class ProductFormPage {
    * domain filter; abbreviations silently pick the wrong value — see memory
    * feedback_attribute_value_display_name_drift).
    */
+  /**
+   * Resolve a seeded record's display name in the SESSION language.
+   *
+   * Specs reference attribute values by their en_US seed names, but the UAT
+   * personas run in vi_VN — since the 2026-07-05 i18n import some values
+   * render translated (e.g. "Ceramic + Chrome" → "Gốm + Chrome"), so typing
+   * the en name matched nothing and the quick-create row silently minted a
+   * DUPLICATE value with no x_code (broke the SKU derive, 2026-07-06 rerun).
+   * Falls back to the given name when the seed lookup misses.
+   */
+  private async _displayNameInSessionLang(
+    model: string, domain: unknown[], fallback: string,
+  ): Promise<string> {
+    try {
+      const call = async (method: string, args: unknown[], kwargs: object = {}) => {
+        const res = await this.page.request.post(
+          `/web/dataset/call_kw/${model}/${method}`,
+          { data: { jsonrpc: '2.0', params: { model, method, args, kwargs } } });
+        return (await res.json())?.result;
+      };
+      // call_kw applies ONLY the context passed in params — the session
+      // user's lang is NOT implicit. Fetch it, then read the translated
+      // name explicitly in that lang (what the autocomplete renders).
+      const sessRes = await this.page.request.post('/web/session/get_session_info',
+        { data: { jsonrpc: '2.0', params: {} } });
+      const lang = (await sessRes.json())?.result?.user_context?.lang || 'en_US';
+      const ids = await call('search', [domain],
+        { context: { lang: 'en_US' }, limit: 1 });
+      if (!ids?.length) return fallback;
+      // `name`, not `display_name` — attribute values prefix display_name
+      // with "Attribute: " which the autocomplete input does not show.
+      const rows = await call('read', [ids, ['name']], { context: { lang } });
+      return rows?.[0]?.name || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  /** Dropdown items excluding quick-create / "Search more" rows — selecting
+   *  a seeded record must never silently create a new one. */
+  private _realOption(text: string): Locator {
+    return this.page.locator(
+      '.o-autocomplete--dropdown-item:not(:has(.o_m2o_dropdown_option)):not(.o_m2o_dropdown_option)',
+      { hasText: text }).first();
+  }
+
   async addVariantAttribute(attributeName: string, valueName: string | string[]): Promise<void> {
     const values = Array.isArray(valueName) ? valueName : [valueName];
     await this.openTab(/Attributes|Variants|Thuộc tính|Biến thể/);
@@ -170,16 +236,21 @@ export class ProductFormPage {
     // Scope selectors to the active row so we never touch existing rows.
     const row = this.page.locator('tr.o_selected_row');
     await row.waitFor({ state: 'visible', timeout: 8000 });
+    const attrLabel = await this._displayNameInSessionLang(
+      'product.attribute', [['name', '=', attributeName]], attributeName);
     const attrInput = row.locator('[name="attribute_id"] input');
     await attrInput.click();
-    await attrInput.fill(attributeName);
-    await this.page.locator('.o-autocomplete--dropdown-item', { hasText: attributeName }).first().click();
+    await attrInput.fill(attrLabel);
+    await this._realOption(attrLabel).click();
     await this.page.waitForTimeout(300); // value_ids domain re-filters on attribute pick
     const valInput = row.locator('[name="value_ids"] input');
     for (const v of values) {
+      const valLabel = await this._displayNameInSessionLang(
+        'product.attribute.value',
+        [['attribute_id.name', '=', attributeName], ['name', '=', v]], v);
       await valInput.click();
-      await valInput.fill(v);
-      await this.page.locator('.o-autocomplete--dropdown-item', { hasText: v }).first().click();
+      await valInput.fill(valLabel);
+      await this._realOption(valLabel).click();
       await this.page.waitForTimeout(300); // tag commits; input clears for the next value
     }
     await valInput.press('Escape'); // blur the m2m input (Color needs explicit blur)
@@ -217,7 +288,7 @@ export class ProductFormPage {
     charCount?: number;
     instructions?: string;
   }): Promise<void> {
-    await this.openTab(/Listing Options/);
+    await this.openTab(/Listing Options|Tùy chọn danh sách/);
     const enableBox = this.page.locator('[name="x_is_personalizable"] input').first();
     if (opts.enable !== (await enableBox.isChecked())) await enableBox.click();
     if (!opts.enable) return;
@@ -237,7 +308,7 @@ export class ProductFormPage {
   }
 
   async setListingDefaults(opts: { taxonomyId?: string; whoMade?: string; whenMade?: string }): Promise<void> {
-    await this.openTab(/Listing Defaults/);
+    await this.openTab(/Listing Defaults|Mặc định danh sách/);
     if (opts.taxonomyId !== undefined) {
       await this.page.locator('[name="x_taxonomy_id"] input').first().fill(opts.taxonomyId);
     }

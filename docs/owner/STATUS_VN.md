@@ -1,8 +1,10 @@
 # Dashboard Tình hình Dự án (Daily View)
 
-**Cập nhật:** 2026-07-05 | **Soạn:** BA | **Đọc cho:** Chủ dự án (CDA)
+**Cập nhật:** 2026-07-06 | **Soạn:** BA | **Đọc cho:** Chủ dự án (CDA)
 
 > **Mốc lớn 2026-07-05A:** Cả **5 luồng nghiệp vụ chính** (Tạo sản phẩm → Nhận đơn → Giao nội bộ → Dropship Gearment → Hậu mãi) đã **kiểm thử E2E đầy đủ trên môi trường staging**, chạy bằng API thật (Etsy + Gearment). Lỗi báo giá Gearment đã đóng — báo giá thật $12.99 trả về đúng. Bộ tài liệu hướng dẫn kèm ảnh chụp màn hình thật đã sẵn sàng gửi người dùng UAT.
+>
+> **Mốc lớn 2026-07-06:** **Kiểm thử lại toàn bộ 5 luồng chính sau đợt sửa luồng sản phẩm (06-07)** — mỗi luồng chạy 2 lần ĐẠT trên staging với API thật. Các hành vi mới đã kiểm chứng: đơn SKU lạ bị GIỮ thay vì tự tạo sản phẩm; giao nội bộ tự nhảy "Đã gửi" khi xuất kho; lời chúc tặng quà gửi kèm đơn Gearment; sản phẩm nhiều biến thể phải gán mã Gearment từng biến thể (thiếu là chặn đẩy đơn); SKU tự sinh khi đăng bán được lưu lại để đơn quay về khớp đúng biến thể. Phát hiện + sửa 1 lỗi bản dịch tiếng Việt làm hỏng nút duyệt đổi địa chỉ. Ảnh chụp màn hình + tài liệu + trang docs.hatafa đã làm mới.
 >
 > **Mốc lớn 2026-07-05B:** **Hatafa UI live + v2.0 guides ready** — Giao diện hệ thống được làm mới với theme Hatafa (thanh điều hướng tím, sidebar tối), menu chính sắp xếp lại thành "Vận hành" (hub 6 phần). Tất cả 4 bộ HUONG_DAN (Tiếp nhận đơn, Giao hàng, Hậu mãi, Tạo sản phẩm) đã cập nhật v2.0 với menu paths mới + ảnh chụp màn hình thật từ staging 2026-07-05.
 
@@ -38,7 +40,7 @@
 |---|------|-------------|-----|
 | 1 | **Bật API cho 1 shop pilot** (cutover chính thức) | Chặn xác nhận "push tracking lên Etsy" trên đơn thật — bước cuối trước go-live | Tuần này |
 | 2 | **Submit lại Etsy app xin quyền `conversations_r`** | Etsy duyệt 3-8 tuần; submit muộn = chậm Phase 5 từng tuần | Tuần này |
-| 3 | **Huỷ các đơn NHÁP test trên Gearment dashboard** | Kiểm thử E2E tạo đơn nháp thật trên Gearment (không xác nhận, không mất phí) — cần vào dashboard huỷ | Khi tiện |
+| 3 | **Huỷ các đơn NHÁP test trên Gearment dashboard** | Kiểm thử E2E tạo đơn nháp thật trên Gearment (không xác nhận, không mất phí) — cần vào dashboard huỷ. Đợt 06-07 thêm 6 đơn nháp mới (mã 260706P-GM3MUJU-*, danh sách đầy đủ trong tài liệu kiểm thử) | Khi tiện |
 
 > ~~Lấy API key Gearment~~ — **XONG**: key production hoạt động; báo giá + đẩy đơn nháp tự động chạy được từ 2026-07-05.
 

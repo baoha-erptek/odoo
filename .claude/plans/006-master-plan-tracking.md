@@ -23,6 +23,19 @@
 > `nanos` cents-scale + non-US (VN) address transliteration/state-code cap.
 > Next session: `docs/NEXT_SESSION_PROMPT_CLOSEOUT.md` (P1-11 cutover → XLS verify → MF-E2E-4).
 
+> **2026-07-06 SESSION ADDENDUM — FLW rerun:** all 5 MF-E2E gates **re-run ×2 PASS** on staging
+> after FLW-01..07 (branch `feature/flw-e2e-rerun`; evidence
+> `docs/engineering/uats/E2E_FLW_RERUN_SUMMARY_2026-07-06.md` + per-flow docs). FLW deltas each
+> covered by ≥1 gate assertion (flow1 §3b/§T, flow2 §G, flow3a §5, flow3b §W/§V). Defects:
+> vi.po placeholder line-wrap crash (ei 19.0.3.22.1 + regression test
+> `test_i18n_po_placeholders`), Playwright vi_VN locale-drift class (page objects made
+> locale-robust). Screenshots: correct-view verification pass + `docs/owner/img/manifest.json`,
+> 4 new FLW shots; v3 + HUONG_DAN/FLOW + STATUS_VN refreshed; PDFs rebuilt; Confluence synced;
+> docs.hatafa.erptek.net redeployed (docroot `/var/www/hatafa-docs/business-flows` verified).
+> Staging test-data residual = 0 (verified; 07-04/05 leftovers swept too). Owner actions:
+> 6 Gearment draft refs + 60 Etsy UAT draft listings (`listings_d` still ungranted, re-probed
+> 403) + `test:hau-mai` spec decision (npm script exists, spec file never written).
+
 **Created**: 2026-04-13
 **Source of truth**: [specs/006-master-plan/MASTER_PLAN.md](../../specs/006-master-plan/MASTER_PLAN.md) + [ADR-008](../../specs/006-master-plan/adrs/ADR-008-api-first-pivot.md)
 **Update cadence**: weekly (every Monday), or on phase-boundary events

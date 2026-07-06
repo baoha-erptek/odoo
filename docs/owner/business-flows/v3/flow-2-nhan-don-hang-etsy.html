@@ -129,6 +129,21 @@
   <figcaption>Sale Order List — Danh sách đơn Etsy. Mỗi SO có người mua, địa chỉ, sản phẩm, và trạng thái giao hàng.</figcaption>
 </figure>
 
+<h2>Bước 2b — Đơn bị giữ khi SKU không khớp (mới từ 06-07-2026)</h2>
+<p><b>Vai trò:</b> BA Lead xử lý</p>
+
+<p class="lead">Trước đây, nếu đơn Etsy chứa SKU mà Odoo không nhận ra, hệ thống tự tạo một sản phẩm mới — sản phẩm này không có mã nhà in, không có quy trình, và đơn dropship có thể bị đưa nhầm vào luồng sản xuất nội bộ. Từ nay hệ thống <b>không tự tạo sản phẩm nữa</b>:</p>
+<ul>
+  <li>Dòng hàng không khớp được ghi tạm vào sản phẩm giữ chỗ <b>"Etsy Unresolved Item"</b>, vẫn giữ nguyên tên hàng người mua nhìn thấy.</li>
+  <li>Đơn bị <b>chặn sản xuất</b> (ruy băng đỏ "BỊ CHẶN") kèm lý do nêu rõ từng dòng: tên hàng, SKU, listing.</li>
+  <li>BA Lead vào form, đổi dòng hàng sang đúng biến thể sản phẩm, rồi bỏ chặn — đơn tiếp tục chạy bình thường.</li>
+</ul>
+
+<figure>
+  <img src="../../img/flw-don-hang-held-order.png" alt="Đơn bị giữ — lý do chặn nêu rõ SKU không khớp">
+  <figcaption>Đơn bị giữ — ô "Sản xuất bị chặn" được đánh dấu, Block Reason liệt kê từng dòng hàng chưa khớp SKU để BA Lead xử lý.</figcaption>
+</figure>
+
 <h2>Bước 3 — Cập nhật trạng thái đối soát kênh Etsy</h2>
 <p><b>Menu:</b> Vận hành ▸ Bán ▸ Trạng thái kênh hoặc Sync Health</p>
 
@@ -182,14 +197,14 @@
   <h3><span class="num">i</span>Ghi chú cho BA &amp; Quản trị viên</span></h3>
   <ul>
     <li><b>Cron job polling Etsy 10 phút/lần.</b> Nếu muốn nhận ngay, bấm nút "Manual Sync" trên form cửa hàng Etsy.</li>
-    <li><b>Email từ Etsy thường chứa tất cả thông tin cần thiết,</b> nhưng nếu có lỗi parse (ví dụ SKU không tìm thấy trên Odoo), hệ thống sẽ dừng và yêu cầu can thiệp thủ công.</li>
+    <li><b>Email từ Etsy thường chứa tất cả thông tin cần thiết,</b> nhưng nếu SKU không tìm thấy trên Odoo, đơn được giữ lại với lý do rõ ràng (xem Bước 2b) — hệ thống không còn tự tạo sản phẩm mới.</li>
     <li><b>Buyer note (ghi chú khách) được ghi vào Chatter SO</b> để mọi người có thể thấy. Ví dụ: "Bản in bằng vải dù, không có lót".</li>
     <li><b>Nếu khách chưa từng mua:</b> Hệ thống tự tạo Partner mới với email và địa chỉ từ Etsy. Bạn có thể sau đó merge nếu phát hiện trùng khách.</li>
     <li><b>Etsy tiền tệ:</b> SO tính giá bằng VND (hoặc tiền tệ shop), nhưng Etsy API trả USD. Hệ thộng tự convert dựa trên tỉ giá ngày.</li>
   </ul>
 </div>
 
-<footer>Cẩm nang vận hành Hatafa Ops v3 — Quy trình 2: Tiếp nhận đơn hàng Etsy · 2026-07-05</footer>
+<footer>Cẩm nang vận hành Hatafa Ops v3 — Quy trình 2: Tiếp nhận đơn hàng Etsy · 2026-07-06</footer>
 </div>
 
 </body>

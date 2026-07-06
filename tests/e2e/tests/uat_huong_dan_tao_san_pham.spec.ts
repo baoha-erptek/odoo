@@ -218,7 +218,7 @@ test.describe('ESTY-183 — HUONG_DAN_TAO_SAN_PHAM_VN v1.2 (standard form)', () 
     await f.addChannel('Etsy');
     await f.setPersonalization({ enable: true, charCount: 0 });
     const err = await f.saveExpectingError();
-    expect(err.toLowerCase()).toMatch(/between 1 and 1024|char count/);
+    expect(err.toLowerCase()).toMatch(/between 1 and 1024|char count|từ 1 đến 1024/);
   });
 
   test('TC-011 — Vật liệu auto từ biến thể → publish draft', async ({ page, request }) => {

@@ -77,6 +77,8 @@ Các bước tự động hiện có trên đường MTO:
 - **Đơn sản xuất được xác nhận** → đơn bán tự sang bước "CHỜ FILE".
 - **Xác nhận Phiếu xuất kho (giao hàng)** → đơn bán tự sang bước **"ĐÃ GỬI"**
   (mới từ 2026-07-06 — trước đây BA phải tự đổi tay).
+
+  ![Đơn tự chuyển sang Đã Gửi sau khi xuất kho](img/flw-giao-hang-pipeline-shipped.png)
 - **Tất cả đơn sản xuất hoàn thành** → đơn bán tự sang "HOÀN THÀNH".
 
 Các bước giữa (ĐÃ SẢN XUẤT, ĐÃ ĐÓNG GÓI) vẫn do đội thao tác đổi tay.
@@ -120,6 +122,8 @@ Khi cron đồng bộ tự động bị tạm dừng:
 - **Lời chúc quà tặng** (gift message) khách trả tiền trên Etsy thì hệ thống
   **gửi kèm sang Gearment** (trường gift_message_body chính thức của Gearment)
   để in thiệp kèm gói hàng.
+
+  ![Nhật ký gửi đơn Gearment có kèm lời chúc tặng quà](img/flw-giao-hang-gift-message-log.png)
 
 ### Lưu ý về dịch vụ vận chuyển nhanh
 

@@ -255,8 +255,7 @@ msgstr "Yêu cầu đổi địa chỉ"
 #: code:addons/etsy_integration/models/etsy_address_change_request.py:0
 msgid "Address change approved by %(user)s. Updated fields: %(fields)s."
 msgstr ""
-"Đổi địa chỉ được %(user)s phê duyệt. Các trường đã cập nhật: %(fields)\n"
-"s.\n"
+"Đổi địa chỉ được %(user)s phê duyệt. Các trường đã cập nhật: %(fields)s."
 
 #. module: etsy_integration
 #. odoo-python
@@ -3347,8 +3346,8 @@ msgid ""
 "Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, %(errors)s "
 "errors."
 msgstr ""
-"Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, %(erro\n"
-"rs)s errors.\n"
+"Pulled Etsy orders: %(ingested)s ingested, %(audited)s audited, "
+"%(errors)s errors."
 
 #. module: etsy_integration
 #. odoo-python

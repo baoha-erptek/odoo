@@ -109,6 +109,7 @@ class Context:
     confirmed_state_id: int | None = None
     catalog_legacy_id: str = ""
     catalog_variant_id: str = ""
+    catalog_variant_ids: list[str] = field(default_factory=list)
     catalog_name: str = ""
     artwork_url: str = ""
     product_id: int | None = None
@@ -116,6 +117,9 @@ class Context:
     order_name: str = ""
     outbound_ref: str = ""
     tracking_number: str = ""
+    gift_message: str = ""
+    mv_order_id: int | None = None
+    mv_outbound_ref: str = ""
 
 
 def _authenticate(ctx: Context, role: str) -> int:
@@ -263,6 +267,10 @@ def section_0_preflight(ctx: Context) -> StepResult:
     # variant. x_gearment_sku carries this value (Defect-2026-05-10-02).
     variants = item.get("variants") or []
     ctx.catalog_variant_id = str((variants[0] or {}).get("variant_id") or "") if variants else ""
+    # FLW-01 (§V): distinct GM variant ids for the multi-variant leg.
+    ctx.catalog_variant_ids = [
+        str(v.get("variant_id"))
+        for v in variants[:2] if v and v.get("variant_id")]
     ctx.catalog_name = item.get("product_name") or "?"
     ctx.artwork_url = item.get("product_avatar_url") or ""
     if not ctx.catalog_variant_id or not ctx.artwork_url:
@@ -300,10 +308,15 @@ def section_1_fixtures(ctx: Context) -> StepResult:
         "state_id": state_tx[0] if state_tx else False,
         "phone": "+1 512 555 0100",
     }])
+    # FLW-05: buyer gift message must ride the draft wire as
+    # gift_message_body (asserted in §W). ASCII on purpose — VN diacritics
+    # trip Gearment's validator on other fields; keep the fixture clean.
+    ctx.gift_message = f"Happy birthday from E2E-F3B {ctx.marker}"
     ctx.order_id = rpc(ctx, "admin", "sale.order", "create", [{
         "partner_id": partner,
         "etsy_order_id": f"96{int(time.time()) % 100_000_000}",
         "etsy_shop_id": ctx.shop_id,
+        "gift_message": ctx.gift_message,
         "order_line": [[0, 0, {"product_id": ctx.product_id,
                                "product_uom_qty": 1.0, "price_unit": 20.0}]],
     }])
@@ -468,6 +481,50 @@ def section_4_quote(ctx: Context) -> StepResult:
         + (f" err={quote_err!r}" if quote_err else ""))
 
 
+def section_w_gift_wire(ctx: Context) -> StepResult:
+    """FLW-05: the draft request payload carries gift_message_body and the
+    line_items carry NO personalisation/personalization key (removed from
+    the wire 2026-07-06 — the vendor schema has no such field). Reads the
+    PII-scrubbed gearment.api.log request_payload_summary (keys survive the
+    scrub; addresses are dropped)."""
+    logs = rpc(ctx, "admin", "gearment.api.log", "search_read",
+               [[("endpoint", "like", "draft"),
+                 ("sale_order_id", "=", ctx.order_id)]],
+               {"fields": ["request_payload_summary", "http_status"],
+                "order": "id desc", "limit": 1})
+    if not logs or not logs[0].get("request_payload_summary"):
+        return StepResult(
+            "W", False,
+            "no gearment.api.log draft row with request_payload_summary "
+            f"for order {ctx.order_id} (logs={logs})")
+    try:
+        payload = json.loads(logs[0]["request_payload_summary"])
+    except ValueError:
+        return StepResult(
+            "W", False,
+            f"payload summary not JSON: {logs[0]['request_payload_summary'][:150]}")
+    payload = payload.get("data", payload)  # adapter wraps the body in {"data": ...}
+    items = payload.get("line_items") or []
+    forbidden = {"personalisation", "personalization"}
+    bad_keys = sorted(
+        k for it in items if isinstance(it, dict)
+        for k in it if k.lower() in forbidden)
+    checks = {
+        "gift_message_body on wire":
+            payload.get("gift_message_body") == ctx.gift_message,
+        "no personalisation key on any line": not bad_keys,
+        "shipping_method is METHOD_STANDARD":
+            payload.get("shipping_method") == "METHOD_STANDARD",
+    }
+    bad = [k for k, v in checks.items() if not v]
+    return StepResult(
+        "W", not bad,
+        f"draft http={logs[0]['http_status']} "
+        f"gift_message_body={payload.get('gift_message_body')!r} "
+        f"line_item_keys={sorted({k for it in items if isinstance(it, dict) for k in it})}"
+        + (f" FAILED={bad}" if bad else ""))
+
+
 def section_5_tracking_webhook(ctx: Context) -> StepResult:
     # 22 digits (USPS seed regex cap), suffixed from the numeric part of the
     # run marker for cross-run uniqueness.
@@ -524,20 +581,174 @@ def section_6_verify(ctx: Context, page: Page) -> StepResult:
         + (f" FAILED={bad}" if bad else ""), shot)
 
 
-def section_7_cleanup(ctx: Context) -> StepResult:
+def section_v_multivariant(ctx: Context) -> StepResult:
+    """FLW-01 + FLW-04. A multi-variant product without variant-specific
+    Gearment codes must BLOCK the push (UserError), and with per-variant
+    supplierinfo product_code rows the draft must carry DISTINCT GM
+    variant_ids. Expedited shipping_service_label logs a WARNING but stays
+    METHOD_STANDARD on the wire (FLW-04)."""
+    def _attr_pair():
+        attr = rpc(ctx, "admin", "product.attribute", "search",
+                   [[("name", "=", "Fluid oz")]])
+        if not attr:
+            return None, []
+        vals = rpc(ctx, "admin", "product.attribute.value", "search",
+                   [[("attribute_id", "=", attr[0])]], {"limit": 2})
+        return attr[0], vals
+
+    attr_id, val_ids = _attr_pair()
+    if not attr_id or len(val_ids) < 2:
+        return StepResult("V", False,
+                          "no 2-value attribute available on staging")
+    tmpl = rpc(ctx, "admin", "product.template", "create", [{
+        "name": f"{PRODUCT_PREFIX} MV {ctx.marker} ({ctx.catalog_name[:16]})",
+        "is_storable": False,
+        "list_price": 20.0,
+        "x_gearment_sku": ctx.catalog_variant_id,
+        "attribute_line_ids": [
+            [0, 0, {"attribute_id": attr_id, "value_ids": [[6, 0, val_ids]]}],
+        ],
+    }])
+    variants = rpc(ctx, "admin", "product.product", "search",
+                   [[("product_tmpl_id", "=", tmpl)]])
+    if len(variants) != 2:
+        return StepResult("V", False, f"expected 2 variants, got {len(variants)}")
+    country = rpc(ctx, "admin", "res.country", "search",
+                  [[("code", "=", "US")]])[0]
+    partner = rpc(ctx, "admin", "res.partner", "create", [{
+        "name": f"{PRODUCT_PREFIX} MV Buyer {ctx.marker}",
+        "street": "200 Congress Ave", "city": "Austin", "zip": "78701",
+        "country_id": country, "phone": "+1 512 555 0101",
+    }])
+    ctx.mv_order_id = rpc(ctx, "admin", "sale.order", "create", [{
+        "partner_id": partner,
+        "etsy_order_id": f"95{int(time.time()) % 100_000_000}",
+        "etsy_shop_id": ctx.shop_id,
+        # FLW-04: expedited hint → WARNING + METHOD_STANDARD on the wire.
+        "shipping_service_label": "Express Shipping",
+        "order_line": [
+            [0, 0, {"product_id": vid, "product_uom_qty": 1.0,
+                    "price_unit": 20.0}]
+            for vid in variants],
+    }])
+    rpc_void(ctx, "admin", "sale.order", "action_confirm", [[ctx.mv_order_id]])
+    rpc_void(ctx, "admin", "sale.order", "write",
+             [[ctx.mv_order_id],
+              {"x_pipeline_id": ctx.pipeline_id,
+               "x_pipeline_state_id": ctx.confirmed_state_id}],
+             {"context": {"bypass_pipeline_state_guard": True}})
+    for line in rpc(ctx, "admin", "sale.order.line", "search",
+                    [[("order_id", "=", ctx.mv_order_id)]]):
+        rpc(ctx, "admin", "design.file", "create", [{
+            "name": f"{PRODUCT_PREFIX}-MV-ART-{ctx.marker}-{line}",
+            "order_line_id": line,
+            "storage_mode": "url",
+            "file_url": ctx.artwork_url,
+            "state": "approved",
+        }])
+
+    # Leg 1 — BLOCK path: template-level fallback on a multi-variant product
+    # must refuse the push with the FLW-01 UserError.
+    block_msg = ""
     try:
-        rpc_void(ctx, "admin", "sale.order", "action_cancel", [[ctx.order_id]])
-    except xmlrpc.client.Fault:
-        pass
+        rpc(ctx, "ba_shipping", "sale.order", "action_push_to_gearment",
+            [[ctx.mv_order_id]])
+    except xmlrpc.client.Fault as exc:
+        block_msg = (exc.faultString or "").splitlines()[-1][:200]
+    blocked = "no Gearment variant code" in block_msg
+    ref_after_block = rpc(ctx, "admin", "sale.order", "read",
+                          [[ctx.mv_order_id], ["x_gearment_outbound_ref"]]
+                          )[0]["x_gearment_outbound_ref"]
+
+    # Leg 2 — mapped path: per-variant supplierinfo rows with DISTINCT GM
+    # variant ids, then a LIVE draft push (owner discards).
+    mapped_note = "skipped (catalog exposed <2 variant ids)"
+    distinct_ok = warn_ok = True
+    if len(ctx.catalog_variant_ids) >= 2 and blocked and not ref_after_block:
+        gm_partner = rpc(ctx, "admin", "ir.model.data", "search_read",
+                         [[("module", "=", "multichannel_hub_fulfillment"),
+                           ("name", "=", "partner_gearment_vendor")],
+                          ["res_id"]])[0]["res_id"]
+        for vid, gm_id in zip(variants, ctx.catalog_variant_ids):
+            rpc(ctx, "admin", "product.supplierinfo", "create", [{
+                "partner_id": gm_partner,
+                "product_tmpl_id": tmpl,
+                "product_id": vid,
+                "product_code": gm_id,
+                "min_qty": 1,
+            }])
+        push_err = ""
+        try:
+            rpc_void(ctx, "ba_shipping", "sale.order",
+                     "action_push_to_gearment", [[ctx.mv_order_id]])
+        except xmlrpc.client.Fault as exc:
+            push_err = (exc.faultString or "").splitlines()[-1][:200]
+        ctx.mv_outbound_ref = rpc(
+            ctx, "admin", "sale.order", "read",
+            [[ctx.mv_order_id], ["x_gearment_outbound_ref"]]
+        )[0]["x_gearment_outbound_ref"] or ""
+        wire_ids: list[str] = []
+        logs = rpc(ctx, "admin", "gearment.api.log", "search_read",
+                   [[("endpoint", "like", "draft"),
+                     ("sale_order_id", "=", ctx.mv_order_id)]],
+                   {"fields": ["request_payload_summary", "http_status"],
+                    "order": "id desc", "limit": 1})
+        if logs and logs[0].get("request_payload_summary"):
+            try:
+                pl = json.loads(logs[0]["request_payload_summary"])
+                pl = pl.get("data", pl)  # {"data": ...} wrapper
+                wire_ids = [str(it.get("variant_id"))
+                            for it in (pl.get("line_items") or [])
+                            if isinstance(it, dict)]
+                warn_ok = pl.get("shipping_method") == "METHOD_STANDARD"
+            except ValueError:
+                pass
+        distinct_ok = (sorted(wire_ids)
+                       == sorted(ctx.catalog_variant_ids[:2]))
+        # FLW-04 WARNING in the server log (fires during build_payload on
+        # the mapped push).
+        grep = subprocess.run(
+            ["ssh", "-i", str(SSH_KEY), "-o", "StrictHostKeyChecking=no",
+             "-o", "BatchMode=yes", SSH_HOST,
+             f"sudo docker logs --since 15m {STAGING_CONTAINER} 2>&1 | "
+             f"grep -c 'only METHOD_STANDARD is available' || true"],
+            capture_output=True, text=True, timeout=60)
+        warn_count = int((grep.stdout or "0").strip() or 0)
+        warn_ok = warn_ok and warn_count >= 1
+        mapped_note = (f"mapped push ref={ctx.mv_outbound_ref!r} "
+                       f"err={push_err!r} wire_variant_ids={wire_ids} "
+                       f"flw04_warnings={warn_count}")
+    checks = {
+        "multi-variant push BLOCKED w/o variant codes": blocked,
+        "no draft created by the blocked push": not ref_after_block,
+        "distinct GM variant_ids on the wire": distinct_ok,
+        "FLW-04: WARNING logged + METHOD_STANDARD kept": warn_ok,
+    }
+    bad = [k for k, v in checks.items() if not v]
+    return StepResult(
+        "V", not bad,
+        f"block UserError={block_msg!r}; {mapped_note}"
+        + (f" FAILED={bad}" if bad else ""))
+
+
+def section_7_cleanup(ctx: Context) -> StepResult:
+    for oid in (ctx.order_id, ctx.mv_order_id):
+        if not oid:
+            continue
+        try:
+            rpc_void(ctx, "admin", "sale.order", "action_cancel", [[oid]])
+        except xmlrpc.client.Fault:
+            pass
     tmpl_ids = rpc(ctx, "admin", "product.template", "search",
                    [[("name", "like", PRODUCT_PREFIX), ("active", "=", True)]])
     if tmpl_ids:
         rpc(ctx, "admin", "product.template", "write",
             [tmpl_ids, {"active": False}])
+    refs = [r for r in (ctx.outbound_ref, ctx.mv_outbound_ref) if r]
     return StepResult(
         "7", True,
-        f"SO cancelled; {len(tmpl_ids)} product(s) archived. OWNER ACTION: "
-        f"discard Gearment DRAFT order ref={ctx.outbound_ref!r} in the "
+        f"SO(s) cancelled; {len(tmpl_ids)} product(s) archived. OWNER "
+        f"ACTION: discard Gearment DRAFT order ref(s) {refs!r} in the "
         f"dashboard (never confirmed/labeled by this runner).")
 
 
@@ -588,6 +799,15 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
         "the signature verification live (X-Connect-Signature).",
         "- Etsy tracking push runs to the API boundary (synthetic receipt → "
         "recorded outcome); live `pushed` belongs to P1-11.",
+        "- §W (FLW-05, 2026-07-06): the draft wire carries "
+        "`gift_message_body` from the order's gift message and line_items "
+        "carry NO `personalisation` key (removed — not in the vendor "
+        "schema). Asserted on the PII-scrubbed request_payload_summary.",
+        "- §V (FLW-01/FLW-04, 2026-07-06): multi-variant product without "
+        "variant-specific Gearment codes must BLOCK the push (UserError); "
+        "with per-variant supplierinfo product_code rows the draft carries "
+        "DISTINCT GM variant_ids. Expedited shipping_service_label logs a "
+        "WARNING but ships METHOD_STANDARD (only wire-documented method).",
         "",
         "## Reproducing",
         "",
@@ -600,7 +820,7 @@ def write_report(results: list[StepResult], ctx: Context) -> Path:
     return canonical
 
 
-SECTIONS = ("0", "1", "2", "3", "4", "5", "6", "7")
+SECTIONS = ("0", "1", "2", "3", "4", "W", "5", "6", "V", "7")
 
 
 def _safe(section: str, fn, *args, **kwargs) -> StepResult:
@@ -640,8 +860,10 @@ def main() -> int:
             "2": lambda: section_2_confirm_pipeline(ctx),
             "3": lambda: section_3_push_draft(ctx),
             "4": lambda: section_4_quote(ctx),
+            "W": lambda: section_w_gift_wire(ctx),
             "5": lambda: section_5_tracking_webhook(ctx),
             "6": lambda: section_6_verify(ctx, page),
+            "V": lambda: section_v_multivariant(ctx),
             "7": lambda: section_7_cleanup(ctx),
         }
         abort = False
