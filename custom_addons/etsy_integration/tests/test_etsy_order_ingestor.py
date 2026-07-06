@@ -125,13 +125,21 @@ class TestOrderCreatorProcessEtsyPayload(TransactionCase):
         order = self.creator.process_etsy_payload(payload, self.shop)
         self.assertEqual(order.partner_id.id, existing.id)
 
-    def test_creates_product_for_first_listing(self):
+    def test_unknown_sku_line_books_placeholder_and_holds(self):
+        """FLW-03 (2026-07-06): the API path no longer auto-creates a product
+        for an unknown SKU — the line books the shared 'Etsy Unresolved
+        Item' placeholder and the order is production-blocked. (Supersedes
+        the original test_creates_product_for_first_listing contract.)"""
         payload = _build_payload()
         order = self.creator.process_etsy_payload(payload, self.shop)
-        line = order.order_line.filtered(lambda l: l.product_id.name == "Custom Mug")
+        placeholder = self.env.ref('etsy_integration.product_etsy_unresolved')
+        line = order.order_line.filtered(
+            lambda l: l.product_id == placeholder.product_variant_id)
         self.assertTrue(line)
         self.assertEqual(line.product_uom_qty, 1)
         self.assertEqual(line.price_unit, 100.00)
+        self.assertIn('Custom Mug', line.name)
+        self.assertTrue(order.production_blocked)
 
     def test_appends_shipping_line_when_shipping_total_positive(self):
         payload = _build_payload(amount_total=115.00, shipping_total=15.00)
