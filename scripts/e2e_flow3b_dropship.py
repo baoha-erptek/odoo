@@ -503,6 +503,7 @@ def section_w_gift_wire(ctx: Context) -> StepResult:
         return StepResult(
             "W", False,
             f"payload summary not JSON: {logs[0]['request_payload_summary'][:150]}")
+    payload = payload.get("data", payload)  # adapter wraps the body in {"data": ...}
     items = payload.get("line_items") or []
     forbidden = {"personalisation", "personalization"}
     bad_keys = sorted(
@@ -695,6 +696,7 @@ def section_v_multivariant(ctx: Context) -> StepResult:
         if logs and logs[0].get("request_payload_summary"):
             try:
                 pl = json.loads(logs[0]["request_payload_summary"])
+                pl = pl.get("data", pl)  # {"data": ...} wrapper
                 wire_ids = [str(it.get("variant_id"))
                             for it in (pl.get("line_items") or [])
                             if isinstance(it, dict)]
