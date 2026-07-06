@@ -102,3 +102,9 @@ graphify-out/
 # Gearment doc crawl — raw HTML snapshots (curated .md is committed; raw is not)
 docs/vendor/gearment/_raw/
 docs/vendor/**/*.tmp
+
+# Video user guides — generated media stays out of git (MANIFEST.txt is committed);
+# distribute MP4s via GDrive. Rebuild: scripts/build_guide_videos.sh
+docs/owner/videos/*.mp4
+docs/owner/videos/chapters/
+tests/e2e/.guide-state.json

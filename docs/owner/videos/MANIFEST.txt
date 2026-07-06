@@ -1,0 +1,26 @@
+# Video user guides — build manifest (2026-07-06T18:24Z)
+huong_dan_dropship.mp4  232s  8.8MB
+huong_dan_mto.mp4  187s  6.2MB
+--- run refs (cleanup targets)
+gmVariantId: GM0249020374
+gmArtworkUrl: https://origin-x.geaflare.com/exproduct/avatar_1775457720_hfavt.png
+productName: video demo dropship mug ii465
+productTmplId: 740
+productVariantId: 711
+productSku: MUG
+etsyListingRef: 4533486683
+demoOrderId: 3407
+demoOrderName: S03424
+dropOrderId: 3408
+dropOrderName: S03425
+dropPoId: 25
+gearmentDraftRef: 260706P-GM3MUJU-J41UP0UF
+mtoProductName: video demo mto keepsake jeiq0
+mtoProductTmplId: 741
+mtoVariantId: 712
+mtoComponentTmplId: 742
+mtoListingRef: 4533498695
+mtoOrderId: 3409
+mtoOrderName: S03426
+mtoMoId: 30
+mtoPickingId: 111

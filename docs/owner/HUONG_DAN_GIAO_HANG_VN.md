@@ -12,6 +12,12 @@ Từ phiên bản này, giao diện hệ thống được làm mới với **Hat
 
 ---
 
+> **Video hướng dẫn (2026-07-06):** Hai quy trình đầy đủ đã được quay video từng bước trên giao diện hệ thống:
+> - **Dropship từ A-Z** (tạo sản phẩm → đăng Etsy → đơn hàng → Gearment → tracking): [videos/huong_dan_dropship.mp4](./videos/huong_dan_dropship.mp4)
+> - **Sản xuất nội bộ (MTO) từ A-Z** (tạo sản phẩm → đăng Etsy → đơn hàng → lệnh sản xuất → giao hàng → tracking): [videos/huong_dan_mto.mp4](./videos/huong_dan_mto.mp4)
+>
+> Video không lưu trong kho mã nguồn — tải từ Google Drive dự án, hoặc dựng lại bằng `scripts/build_guide_videos.sh`.
+
 ## Mục lục
 
 1. [Tổng quan 2 đường](#1-tổng-quan-2-đường)
