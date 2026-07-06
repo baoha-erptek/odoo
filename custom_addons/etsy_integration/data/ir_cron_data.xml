@@ -61,6 +61,19 @@
         <field name="active" eval="True"/>
     </record>
 
+    <!-- FLW-07: quantity top-up for POD listings. The cron is active but a
+         no-op until the owner sets the target ICP
+         `etsy_integration.pod_topup_quantity` (> 0). -->
+    <record id="cron_etsy_qty_topup" model="ir.cron">
+        <field name="name">Etsy: POD Quantity Top-Up</field>
+        <field name="model_id" ref="model_etsy_listing"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_topup_pod_quantities()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="cron_etsy_listing_variant_sync" model="ir.cron">
         <field name="name">Etsy: Listing Variant Inventory Sync</field>
         <field name="model_id" ref="model_etsy_listing_product"/>

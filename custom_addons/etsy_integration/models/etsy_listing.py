@@ -133,6 +133,65 @@ class EtsyListing(models.Model):
                 )
 
     @api.model
+    def _cron_topup_pod_quantities(self):
+        """FLW-07 — re-push a target quantity to active listings running low.
+
+        Etsy decrements listing quantity per sale and auto-deactivates at 0;
+        POD products carry no Odoo stock, so the top-up target is the ICP
+        `etsy_integration.pod_topup_quantity` (absent/0 = disabled — the
+        cron ships OFF until the owner sets a target, e.g. 50). Any active
+        `etsy.listing.product` mirror row below the target triggers one
+        `push_inventory` for its listing with the target as quantity
+        override. Per-listing isolation: one Etsy 4xx/5xx must not block
+        the remaining top-ups.
+        """
+        if not self.env.user._is_system():
+            raise AccessError(
+                'Etsy quantity top-up is restricted to system tasks; '
+                'this method is only callable by the cron runner.'
+            )
+        icp = self.env['ir.config_parameter'].sudo()
+        try:
+            target = int(icp.get_param(
+                'etsy_integration.pod_topup_quantity', '0') or 0)
+        except ValueError:
+            _logger.warning(
+                'FLW-07: non-numeric etsy_integration.pod_topup_quantity; '
+                'top-up disabled.')
+            return
+        if target <= 0:
+            return
+        rows = self.env['etsy.listing.product'].search([
+            ('is_active', '=', True),
+            ('quantity', '<', target),
+            ('product_id', '!=', False),
+            ('listing_id.state', '=', 'active'),
+        ])
+        if not rows:
+            return
+        from ..services.etsy_listing_publisher import EtsyListingPublisher
+        publisher = EtsyListingPublisher(
+            self.with_context(etsy_qty_override=target).env)
+        done_listing_ids = set()
+        for row in rows:
+            listing = row.listing_id
+            if listing.id in done_listing_ids:
+                continue
+            done_listing_ids.add(listing.id)
+            try:
+                publisher.push_inventory(
+                    row.product_id.product_tmpl_id,
+                    listing.etsy_listing_id,
+                    listing.shop_id,
+                )
+            except Exception:
+                _logger.warning(
+                    'FLW-07 quantity top-up failed for listing %s (shop %s)',
+                    listing.etsy_listing_id, listing.shop_id.name,
+                    exc_info=True,
+                )
+
+    @api.model
     def _sync_shop_listings(self, shop):
         """One read-only pull pass for `shop`: upsert fetched listings,
         soft-delete any active listing absent from the fetch, write one

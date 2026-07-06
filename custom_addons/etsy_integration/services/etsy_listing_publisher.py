@@ -810,6 +810,9 @@ class EtsyListingPublisher:
         t = tmpl.sudo()
         base_sku = self._resolve_sku(t)
         readiness = shop.sudo().default_readiness_state_id
+        # FLW-07: the quantity top-up cron passes a fixed target quantity via
+        # context; 0/absent keeps the stock-based behavior.
+        qty_override = int(self.env.context.get('etsy_qty_override') or 0)
         # iter2 currency conversion is invoked per offering inside the loop;
         # we still pre-compute the template-level fallback price once.
         template_price = self._convert_to_shop_currency(t.list_price, shop)
@@ -897,7 +900,11 @@ class EtsyListingPublisher:
                     price = self._convert_to_shop_currency(variant.lst_price, shop)
                 else:
                     price = template_price
-                qty = variant.qty_available if variant else t.qty_available
+                # FLW-07: the top-up cron pushes a configured target quantity
+                # (POD products carry no Odoo stock, so qty_available is
+                # meaningless there).
+                qty = qty_override or (
+                    variant.qty_available if variant else t.qty_available)
                 products_payload.append({
                     'sku': sku,
                     'property_values': props,
@@ -908,7 +915,8 @@ class EtsyListingPublisher:
             products_payload.append({
                 'sku': base_sku,
                 'property_values': fixed_props,
-                'offerings': [_offering(t.qty_available, template_price)],
+                'offerings': [_offering(
+                    qty_override or t.qty_available, template_price)],
             })
 
         # SKU collision guard (code-reviewer iter3 HIGH): if synthesized or
