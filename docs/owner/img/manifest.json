@@ -1,0 +1,272 @@
+{
+  "don-hang-email-log-list": {
+    "action": "etsy_integration.action_etsy_email_log",
+    "action_id": 461,
+    "breadcrumb": "Nhật ký Email",
+    "captured_at": "2026-07-06T12:45:37.733210Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Nhật ký Email",
+    "url": "https://odoo.hatafax.com/odoo/action-461"
+  },
+  "don-hang-etsy-shop-form": {
+    "breadcrumb": "JaHandmadeArt",
+    "captured_at": "2026-07-06T12:45:31.024422Z",
+    "kind": "form",
+    "marker": null,
+    "model": "etsy.shop",
+    "record": "JaHandmadeArt",
+    "res_id": 10,
+    "url": "https://odoo.hatafax.com/odoo/etsy.shop/10"
+  },
+  "don-hang-order-form": {
+    "breadcrumb": "S03372",
+    "captured_at": "2026-07-06T12:45:35.667771Z",
+    "kind": "form",
+    "marker": null,
+    "model": "sale.order",
+    "record": "S03372",
+    "res_id": 3355,
+    "url": "https://odoo.hatafax.com/odoo/action-458/3355"
+  },
+  "don-hang-order-list": {
+    "action": "etsy_integration.action_etsy_orders",
+    "action_id": 458,
+    "breadcrumb": "Đơn hàng Etsy",
+    "captured_at": "2026-07-06T12:45:33.059533Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Đơn hàng Etsy",
+    "url": "https://odoo.hatafax.com/odoo/action-458"
+  },
+  "don-hang-sync-health": {
+    "action": "etsy_integration.action_etsy_sync_health",
+    "action_id": 662,
+    "breadcrumb": "Tình trạng Đồng bộ",
+    "captured_at": "2026-07-06T12:45:39.697502Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Tình trạng Đồng bộ",
+    "url": "https://odoo.hatafax.com/odoo/action-662"
+  },
+  "flw-don-hang-held-order": {
+    "breadcrumb": "sale.order.fulfillment,3412",
+    "captured_at": "2026-07-06T12:47:14.056279Z",
+    "kind": "form",
+    "marker": "Unresolved Etsy line",
+    "model": "sale.order.fulfillment",
+    "record": "sale.order.fulfillment,3412",
+    "res_id": 3412,
+    "url": "https://odoo.hatafax.com/odoo/sale.order.fulfillment/3412"
+  },
+  "flw-giao-hang-gift-message-log": {
+    "breadcrumb": "gearment.api.log,61",
+    "captured_at": "2026-07-06T12:46:43.987713Z",
+    "kind": "form",
+    "marker": "gift_message_body",
+    "model": "gearment.api.log",
+    "record": "gearment.api.log,61",
+    "res_id": 61,
+    "url": "https://odoo.hatafax.com/odoo/gearment.api.log/61"
+  },
+  "flw-giao-hang-pipeline-shipped": {
+    "breadcrumb": "S03408",
+    "captured_at": "2026-07-06T12:46:31.187153Z",
+    "kind": "form",
+    "marker": "Đã Gửi",
+    "model": "sale.order",
+    "record": "S03408",
+    "res_id": 3391,
+    "url": "https://odoo.hatafax.com/odoo/sale.order/3391"
+  },
+  "flw-tao-san-pham-variant-supplierinfo": {
+    "breadcrumb": "Gearment (1.0 Đơn vị - $ 0,00)",
+    "captured_at": "2026-07-06T12:47:20.853025Z",
+    "kind": "form",
+    "marker": "GM0249020374",
+    "model": "product.supplierinfo",
+    "record": "Gearment (1.0 Đơn vị - $ 0,00)",
+    "res_id": 69,
+    "url": "https://odoo.hatafax.com/odoo/product.supplierinfo/69"
+  },
+  "giao-hang-design-file-form": {
+    "breadcrumb": "E2E-F3B-ART-b0bbaf",
+    "captured_at": "2026-07-06T12:45:50.393210Z",
+    "kind": "form",
+    "marker": null,
+    "model": "design.file",
+    "record": "E2E-F3B-ART-b0bbaf",
+    "res_id": 111,
+    "url": "https://odoo.hatafax.com/odoo/design.file/111"
+  },
+  "giao-hang-fulfillment-detail": {
+    "action": "multichannel_hub_fulfillment.action_sale_order_fulfillment_detail",
+    "action_id": 698,
+    "breadcrumb": "Theo dõi giao hàng",
+    "captured_at": "2026-07-06T12:45:54.494579Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Theo dõi giao hàng",
+    "url": "https://odoo.hatafax.com/odoo/action-698"
+  },
+  "giao-hang-gearment-po-form": {
+    "breadcrumb": "P00016",
+    "captured_at": "2026-07-06T12:46:16.175613Z",
+    "kind": "form",
+    "marker": "Gearment",
+    "model": "purchase.order",
+    "record": "P00016",
+    "res_id": 16,
+    "url": "https://odoo.hatafax.com/odoo/purchase.order/16"
+  },
+  "giao-hang-mo-form": {
+    "breadcrumb": "WH/MO/00020",
+    "captured_at": "2026-07-06T12:45:48.408403Z",
+    "kind": "form",
+    "marker": null,
+    "model": "mrp.production",
+    "record": "WH/MO/00020",
+    "res_id": 20,
+    "url": "https://odoo.hatafax.com/odoo/mrp.production/20"
+  },
+  "giao-hang-operations-dashboard": {
+    "action": "multichannel_hub_core.action_operations_dashboard",
+    "action_id": 633,
+    "breadcrumb": "Bảng điều hành",
+    "captured_at": "2026-07-06T12:45:41.709942Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Bảng điều hành",
+    "url": "https://odoo.hatafax.com/odoo/action-633"
+  },
+  "giao-hang-order-form-tracking": {
+    "breadcrumb": "S03372",
+    "captured_at": "2026-07-06T12:45:46.350259Z",
+    "kind": "form",
+    "marker": null,
+    "model": "sale.order",
+    "record": "S03372",
+    "res_id": 3355,
+    "url": "https://odoo.hatafax.com/odoo/sale.order/3355"
+  },
+  "giao-hang-order-pipeline": {
+    "action": "multichannel_hub_core.action_order_pipeline",
+    "action_id": 638,
+    "breadcrumb": "Quy trình thực hiện",
+    "captured_at": "2026-07-06T12:45:43.651403Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Quy trình thực hiện",
+    "url": "https://odoo.hatafax.com/odoo/action-638"
+  },
+  "giao-hang-picking-gearment-status": {
+    "breadcrumb": "WH/OUT/00094",
+    "captured_at": "2026-07-06T12:46:18.279680Z",
+    "kind": "form",
+    "marker": null,
+    "model": "stock.picking",
+    "record": "WH/OUT/00094",
+    "res_id": 102,
+    "url": "https://odoo.hatafax.com/odoo/stock.picking/102"
+  },
+  "giao-hang-tracking-import-log": {
+    "action": "multichannel_hub_fulfillment.action_tracking_import_log",
+    "action_id": 648,
+    "breadcrumb": "Nhập theo dõi GKE",
+    "captured_at": "2026-07-06T12:45:52.543594Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Nhập theo dõi GKE",
+    "url": "https://odoo.hatafax.com/odoo/action-648"
+  },
+  "hau-mai-address-change-form": {
+    "breadcrumb": "etsy.address.change.request,22",
+    "captured_at": "2026-07-06T12:46:02.466509Z",
+    "kind": "form",
+    "marker": null,
+    "model": "etsy.address.change.request",
+    "record": "etsy.address.change.request,22",
+    "res_id": 22,
+    "url": "https://odoo.hatafax.com/odoo/action-665/22"
+  },
+  "hau-mai-address-change-list": {
+    "action": "etsy_integration.action_etsy_address_change_request",
+    "action_id": 665,
+    "breadcrumb": "Yêu cầu đổi địa chỉ",
+    "captured_at": "2026-07-06T12:46:00.378098Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Yêu cầu đổi địa chỉ",
+    "url": "https://odoo.hatafax.com/odoo/action-665"
+  },
+  "hau-mai-ticket-form": {
+    "breadcrumb": "RT00004",
+    "captured_at": "2026-07-06T12:45:58.359768Z",
+    "kind": "form",
+    "marker": null,
+    "model": "etsy.order.ticket",
+    "record": "RT00004",
+    "res_id": 4,
+    "url": "https://odoo.hatafax.com/odoo/action-694/4"
+  },
+  "hau-mai-ticket-list": {
+    "action": "etsy_integration.action_etsy_order_ticket",
+    "action_id": 694,
+    "breadcrumb": "Phiếu hậu mãi",
+    "captured_at": "2026-07-06T12:45:56.498275Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Phiếu hậu mãi",
+    "url": "https://odoo.hatafax.com/odoo/action-694"
+  },
+  "listing-form-overview": {
+    "breadcrumb": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake @ etsy/jahandmadeart",
+    "captured_at": "2026-07-06T12:46:09.644507Z",
+    "kind": "form",
+    "marker": null,
+    "model": "multichannel.listing",
+    "record": "Personalized Coordinates Leather Tray, Where We Met Gift, Custom GPS Location Tray, Anniversary Gift for Him, Couple Keepsake @ etsy/jahandmadeart",
+    "res_id": 62,
+    "url": "https://odoo.hatafax.com/odoo/multichannel.listing/62"
+  },
+  "product-form-header": {
+    "breadcrumb": "Handmade Ceramic Mug Personalized Name Coffee Cup Gift For Her",
+    "captured_at": "2026-07-06T12:46:07.643057Z",
+    "kind": "form",
+    "marker": null,
+    "model": "product.template",
+    "record": "Handmade Ceramic Mug Personalized Name Coffee Cup Gift For Her",
+    "res_id": 614,
+    "url": "https://odoo.hatafax.com/odoo/product.template/614"
+  },
+  "product-tab-original-design": {
+    "breadcrumb": "Handmade Ceramic Mug Personalized Name Coffee Cup Gift For Her",
+    "captured_at": "2026-07-06T12:46:05.567602Z",
+    "kind": "form",
+    "marker": null,
+    "model": "product.template",
+    "record": "Handmade Ceramic Mug Personalized Name Coffee Cup Gift For Her",
+    "res_id": 614,
+    "url": "https://odoo.hatafax.com/odoo/product.template/614"
+  },
+  "tao-san-pham-channel-status-kanban": {
+    "action": "multichannel_hub_core.action_product_channel_status",
+    "action_id": 695,
+    "breadcrumb": "Trạng thái kênh bán",
+    "captured_at": "2026-07-06T12:46:11.678696Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Trạng thái kênh bán",
+    "url": "https://odoo.hatafax.com/odoo/action-695"
+  },
+  "tao-san-pham-sku-drift": {
+    "action": "multichannel_hub_core.action_product_sku_drift",
+    "action_id": 671,
+    "breadcrumb": "Đánh giá độ lệch SKU",
+    "captured_at": "2026-07-06T12:46:13.619949Z",
+    "kind": "action",
+    "marker": null,
+    "record": "Đánh giá độ lệch SKU",
+    "url": "https://odoo.hatafax.com/odoo/action-671"
+  }
+}
