@@ -282,6 +282,16 @@ Existing products with legacy SKU (`MUG-1`, etc.) get `x_sku_v2_status='ba_appro
 
 ## 9. Amendment log
 
+### v2.2 — 2026-07-06 (FLW-02: publish-time variant SKU persistence)
+
+**Change:** When publishing to Etsy, a variant with an **empty** internal
+reference gets an auto-SKU `{base}-{SLUG}` (e.g. `LT-4IN`). Since FLW-02, that
+auto-SKU is **saved back onto the variant** (Internal Reference /
+`default_code`) at publish time — before, it was sent to Etsy but stored
+nowhere, so returning orders could not be matched to the right variant.
+Operator-entered SKUs are never overwritten; the write-back only fills empty
+codes. Grammar itself unchanged.
+
 ### v2.1 — 2026-05-26 (this revision)
 
 **Change:** Remove `DSGN` segment and `sku.design.code` registry from the grammar.

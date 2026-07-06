@@ -886,6 +886,13 @@ class EtsyListingPublisher:
                 else:
                     value_names = [v.name for v in combo]
                     sku = self._synthesize_variant_sku(base_sku, value_names)
+                    if variant:
+                        # FLW-02: persist the exact SKU sent to Etsy so the
+                        # order round-trip resolves this variant by
+                        # default_code (ingest + _match_variant both key on
+                        # it). Only fills EMPTY codes — operator-set values
+                        # take the `if` branch above and are never touched.
+                        variant.default_code = sku
                 if variant and variant.lst_price and variant.lst_price > 0:
                     price = self._convert_to_shop_currency(variant.lst_price, shop)
                 else:
