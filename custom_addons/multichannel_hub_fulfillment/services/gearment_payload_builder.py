@@ -100,9 +100,11 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
     `design_files` should be pre-filtered to states in
     `{'approved', 'proof_sent'}` by the caller.
 
-    Each `sale.order.line` with a non-empty `x_gearment_sku` becomes a
-    GearmentLineItem. Lines without the SKU are skipped (e.g. shipping line,
-    or items on a non-Gearment fulfilment route).
+    Each `sale.order.line` with a resolvable GM variant id becomes a
+    GearmentLineItem (FLW-01: variant-level supplierinfo `product_code`
+    first, template `x_gearment_sku` fallback). Lines without one are
+    skipped (e.g. shipping line, or items on a non-Gearment route);
+    multi-variant products without a variant-specific code raise.
     """
     order.ensure_one()
     partner = order.partner_shipping_id or order.partner_id
@@ -135,10 +137,26 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
 
     line_items: list[GearmentLineItem] = []
     for line in order.order_line:
-        sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+        product = line.product_id
+        # FLW-01: per-variant GM id (Gearment vendor supplierinfo.product_code)
+        # first, template x_gearment_sku fallback (single-variant products).
+        sku = product._gearment_resolved_sku()
         if not sku:
             continue
-        product_label = line.product_id.display_name or line.name or sku
+        product_label = product.display_name or line.name or sku
+        if (product.product_tmpl_id.product_variant_count > 1
+                and not product._gearment_variant_code()):
+            # Template fallback on a multi-variant product would push the
+            # SAME GM variant for every size/color — the FLW-01 bug. Push
+            # is the hard gate; fail loudly so the operator maps variants.
+            raise UserError(_(
+                "Cannot push to Gearment: product '%(product)s' has "
+                "variants, but this variant has no Gearment variant code. "
+                "On the product's Purchase tab, add the Gearment vendor "
+                "line for this exact variant with its GM variant id as "
+                "Vendor Product Code.",
+                product=product_label,
+            ))
         line_designs = designs_by_line.get(line.id, [])
         if not line_designs:
             # P-GEAR-PRINT-SIDES: was a silent `continue` that shipped the
@@ -161,8 +179,9 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
             for side, df in _assign_sides(line_designs, product_label)
         )
         line_items.append(GearmentLineItem(
-            # x_gearment_sku holds the GM-prefixed catalog variant_id
-            # (e.g. GM0249020374) — the draft's line-item key (Defect-05-10-02).
+            # sku is the GM-prefixed catalog variant_id (e.g. GM0249020374)
+            # — the draft's line-item key (Defect-05-10-02); per-variant
+            # resolution since FLW-01.
             variant_id=sku,
             quantity=int(line.product_uom_qty or 0),
             printing_options=printing_options,
@@ -203,7 +222,9 @@ def build_quote_body(order, design_files) -> dict:
 
     line_items: list[dict] = []
     for line in order.order_line:
-        sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+        # FLW-01: same per-variant resolution as build_payload, but no
+        # multi-variant strictness — the quote is advisory; push is the gate.
+        sku = line.product_id._gearment_resolved_sku()
         if not sku:
             continue
         line_designs = designs_by_line.get(line.id, [])

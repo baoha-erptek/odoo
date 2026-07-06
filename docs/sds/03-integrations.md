@@ -171,28 +171,30 @@ Secrets are used to HMAC-SHA256-sign inbound webhook payloads. See § 2.4 below.
 | `POST /api/v3/orders/{order_id}/cancel` | POST | Cancel quote/order | P4-01-C | Shipped |
 | `GET /api/v3/orders/{order_id}` | GET | Fetch order status | P4-01-D | Shipped |
 
-**Payload Contract (POST /api/v3/orders/draft):**
+**Payload Contract (POST /api/v3/orders/draft)** — proven-live 200 shape (2026-07-05); built by `services/gearment_payload_builder.py` + `gearment_payload.py`:
 
 ```json
 {
-  "reference": "SO-12345",
-  "shipping_address": { ... },
-  "line_items": [
-    {
-      "variant_id": "prod-456",
-      "quantity": 2,
-      "printing_options": [
-        {
-          "name": "Color",
-          "value": "Red"
-        }
-      ]
-    }
-  ],
-  "currency": "USD",
-  "total_price": 99.99
+  "data": {
+    "reference_id": "SO-12345",
+    "store_id": "60752333",
+    "platform": "MARKETPLACE_PLATFORM_ETSY",
+    "address": { "first_name": "...", "street_1": "...", "state_code": "MA", "country_code": "US" },
+    "shipping_method": "METHOD_STANDARD",
+    "line_items": [
+      {
+        "variant_id": "GM0249020374",
+        "quantity": 2,
+        "printing_options": [
+          { "location_code": "PRINT_LOCATION_CODE_FRONT", "url": "https://.../front.png" }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+**`variant_id` resolution (FLW-01, 2026-07-06):** per order line, the GM catalog variant_id resolves variant-first — the Gearment vendor's `product.supplierinfo` row pinned to the exact `product.product` (`product_code` field) wins; template-level `x_gearment_sku` is the fallback for single-variant products. A multi-variant product whose ordered variant has no variant-specific code **blocks the push** with a UserError (prevents pushing the same GM variant for every size/color). Resolver: `product.product._gearment_resolved_sku()` (`mhf/models/product_product.py`).
 
 ### 2.3 Rate Limiting
 
