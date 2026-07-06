@@ -82,3 +82,4 @@ from . import test_gm_printing_location_enum
 from . import test_gear_print_sides
 from . import test_gear_confirm_button
 from . import test_flw01_variant_gearment_sku
+from . import test_flw04_shipping_method

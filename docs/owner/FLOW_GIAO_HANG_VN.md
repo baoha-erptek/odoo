@@ -103,6 +103,15 @@ Khi cron đồng bộ tự động bị tạm dừng:
 - Chỉ **BA Shipping** mới được bấm "Báo giá Gearment" và "Đồng bộ Gearment hàng loạt".
 - Người dùng thường có thể xem nhưng không gửi đơn sang Gearment.
 
+### Lưu ý về dịch vụ vận chuyển nhanh
+
+Hiện Gearment chỉ nhận **giao tiêu chuẩn (Standard)**. Nếu khách Etsy đã trả
+tiền cho dịch vụ nhanh (Express / Priority / Rush), hệ thống vẫn gửi Standard
+nhưng **ghi cảnh báo** vào log để đội vận hành biết và chủ động xử lý với
+khách (hoàn phí ship nhanh hoặc báo trước thời gian giao). Khi Gearment công
+bố các phương thức nhanh qua API, hệ thống sẽ nối thẳng — không cần đổi quy
+trình.
+
 ---
 
 ## Trạng thái Etsy được cập nhật từ hệ thống

@@ -10,6 +10,8 @@ schema, so it is no longer built.
 """
 from __future__ import annotations
 
+import logging
+
 from odoo import _
 from odoo.exceptions import UserError
 
@@ -18,6 +20,8 @@ from .gearment_payload import (
     GearmentLineItem,
     GearmentOrderPayload,
 )
+
+_logger = logging.getLogger(__name__)
 
 # Gearment's draft validator wants the proto3 enum `PRINT_LOCATION_CODE_*`, NOT
 # the bare human names (front/back/pocket/whole) it quotes in its 400 message —
@@ -40,10 +44,38 @@ _WIRE_LOCATION = {
 # ponytail: hard-coded ETSY — add a channel->platform map when a 2nd channel ships.
 _PLATFORM_ETSY = 'MARKETPLACE_PLATFORM_ETSY'
 
-# Draft `shipping_method` enum (proto MethodType). Only STANDARD is proven live.
-# ponytail: single value — map carrier.gearment_carrier_name -> METHOD_* when
-# expedited/priority services are actually offered.
+# Draft `shipping_method` enum (proto MethodType). Only STANDARD is proven live
+# (200 on 2026-07-05); the vendor doc crawl exposes no other MethodType values,
+# so unverified METHOD_* constants would 400 the draft.
 _SHIPPING_METHOD_DEFAULT = 'METHOD_STANDARD'
+
+# FLW-04: Etsy shipping-service label (lowercased substring) -> Gearment
+# MethodType. Grows once Gearment confirms its enum values; until then every
+# service ships METHOD_STANDARD, but expedited buyer-paid services are flagged
+# loudly (WARNING) instead of silently downgraded.
+_SHIPPING_METHOD_MAP: dict[str, str] = {}
+_EXPEDITED_HINTS = ('express', 'priority', 'expedited', 'rush', 'overnight')
+
+
+def _resolve_shipping_method(order):
+    """Map the order's channel shipping-service label to a Gearment method.
+
+    Uses the channel-agnostic `sale.order.shipping_service_label` shadow
+    (P1-01b, mhc) so this stays Etsy-independent.
+    """
+    label = (order.shipping_service_label or '').strip().lower()
+    for needle, method in _SHIPPING_METHOD_MAP.items():
+        if needle in label:
+            return method
+    if any(hint in label for hint in _EXPEDITED_HINTS):
+        _logger.warning(
+            "Gearment push %s: buyer paid for shipping service %r but only "
+            "METHOD_STANDARD is available on the Gearment wire — shipping "
+            "standard. Extend _SHIPPING_METHOD_MAP once Gearment confirms "
+            "its MethodType enum values.",
+            order.name, order.shipping_service_label,
+        )
+    return _SHIPPING_METHOD_DEFAULT
 
 # The QUOTE endpoint (POST /api/v3/orders/price) uses a DIFFERENT, lowercase
 # vocabulary than the draft: `order_platform: "etsy"`, `print_locations: ["front"]`,
@@ -202,7 +234,7 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         platform=_PLATFORM_ETSY,
         addresses=(address,),
         line_items=tuple(line_items),
-        shipping_method=_SHIPPING_METHOD_DEFAULT,
+        shipping_method=_resolve_shipping_method(order),
     )
 
 
