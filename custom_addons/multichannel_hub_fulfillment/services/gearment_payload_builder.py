@@ -10,6 +10,8 @@ schema, so it is no longer built.
 """
 from __future__ import annotations
 
+import logging
+
 from odoo import _
 from odoo.exceptions import UserError
 
@@ -18,6 +20,8 @@ from .gearment_payload import (
     GearmentLineItem,
     GearmentOrderPayload,
 )
+
+_logger = logging.getLogger(__name__)
 
 # Gearment's draft validator wants the proto3 enum `PRINT_LOCATION_CODE_*`, NOT
 # the bare human names (front/back/pocket/whole) it quotes in its 400 message —
@@ -40,10 +44,38 @@ _WIRE_LOCATION = {
 # ponytail: hard-coded ETSY — add a channel->platform map when a 2nd channel ships.
 _PLATFORM_ETSY = 'MARKETPLACE_PLATFORM_ETSY'
 
-# Draft `shipping_method` enum (proto MethodType). Only STANDARD is proven live.
-# ponytail: single value — map carrier.gearment_carrier_name -> METHOD_* when
-# expedited/priority services are actually offered.
+# Draft `shipping_method` enum (proto MethodType). Only STANDARD is proven live
+# (200 on 2026-07-05); the vendor doc crawl exposes no other MethodType values,
+# so unverified METHOD_* constants would 400 the draft.
 _SHIPPING_METHOD_DEFAULT = 'METHOD_STANDARD'
+
+# FLW-04: Etsy shipping-service label (lowercased substring) -> Gearment
+# MethodType. Grows once Gearment confirms its enum values; until then every
+# service ships METHOD_STANDARD, but expedited buyer-paid services are flagged
+# loudly (WARNING) instead of silently downgraded.
+_SHIPPING_METHOD_MAP: dict[str, str] = {}
+_EXPEDITED_HINTS = ('express', 'priority', 'expedited', 'rush', 'overnight')
+
+
+def _resolve_shipping_method(order):
+    """Map the order's channel shipping-service label to a Gearment method.
+
+    Uses the channel-agnostic `sale.order.shipping_service_label` shadow
+    (P1-01b, mhc) so this stays Etsy-independent.
+    """
+    label = (order.shipping_service_label or '').strip().lower()
+    for needle, method in _SHIPPING_METHOD_MAP.items():
+        if needle in label:
+            return method
+    if any(hint in label for hint in _EXPEDITED_HINTS):
+        _logger.warning(
+            "Gearment push %s: buyer paid for shipping service %r but only "
+            "METHOD_STANDARD is available on the Gearment wire — shipping "
+            "standard. Extend _SHIPPING_METHOD_MAP once Gearment confirms "
+            "its MethodType enum values.",
+            order.name, order.shipping_service_label,
+        )
+    return _SHIPPING_METHOD_DEFAULT
 
 # The QUOTE endpoint (POST /api/v3/orders/price) uses a DIFFERENT, lowercase
 # vocabulary than the draft: `order_platform: "etsy"`, `print_locations: ["front"]`,
@@ -100,9 +132,11 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
     `design_files` should be pre-filtered to states in
     `{'approved', 'proof_sent'}` by the caller.
 
-    Each `sale.order.line` with a non-empty `x_gearment_sku` becomes a
-    GearmentLineItem. Lines without the SKU are skipped (e.g. shipping line,
-    or items on a non-Gearment fulfilment route).
+    Each `sale.order.line` with a resolvable GM variant id becomes a
+    GearmentLineItem (FLW-01: variant-level supplierinfo `product_code`
+    first, template `x_gearment_sku` fallback). Lines without one are
+    skipped (e.g. shipping line, or items on a non-Gearment route);
+    multi-variant products without a variant-specific code raise.
     """
     order.ensure_one()
     partner = order.partner_shipping_id or order.partner_id
@@ -135,10 +169,26 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
 
     line_items: list[GearmentLineItem] = []
     for line in order.order_line:
-        sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+        product = line.product_id
+        # FLW-01: per-variant GM id (Gearment vendor supplierinfo.product_code)
+        # first, template x_gearment_sku fallback (single-variant products).
+        sku = product._gearment_resolved_sku()
         if not sku:
             continue
-        product_label = line.product_id.display_name or line.name or sku
+        product_label = product.display_name or line.name or sku
+        if (product.product_tmpl_id.product_variant_count > 1
+                and not product._gearment_variant_code()):
+            # Template fallback on a multi-variant product would push the
+            # SAME GM variant for every size/color — the FLW-01 bug. Push
+            # is the hard gate; fail loudly so the operator maps variants.
+            raise UserError(_(
+                "Cannot push to Gearment: product '%(product)s' has "
+                "variants, but this variant has no Gearment variant code. "
+                "On the product's Purchase tab, add the Gearment vendor "
+                "line for this exact variant with its GM variant id as "
+                "Vendor Product Code.",
+                product=product_label,
+            ))
         line_designs = designs_by_line.get(line.id, [])
         if not line_designs:
             # P-GEAR-PRINT-SIDES: was a silent `continue` that shipped the
@@ -161,12 +211,12 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
             for side, df in _assign_sides(line_designs, product_label)
         )
         line_items.append(GearmentLineItem(
-            # x_gearment_sku holds the GM-prefixed catalog variant_id
-            # (e.g. GM0249020374) — the draft's line-item key (Defect-05-10-02).
+            # sku is the GM-prefixed catalog variant_id (e.g. GM0249020374)
+            # — the draft's line-item key (Defect-05-10-02); per-variant
+            # resolution since FLW-01.
             variant_id=sku,
             quantity=int(line.product_uom_qty or 0),
             printing_options=printing_options,
-            personalisation=getattr(line, 'etsy_personalisation', None) or None,
         ))
 
     store_id = ''
@@ -183,7 +233,10 @@ def build_payload(order, design_files) -> GearmentOrderPayload:
         platform=_PLATFORM_ETSY,
         addresses=(address,),
         line_items=tuple(line_items),
-        shipping_method=_SHIPPING_METHOD_DEFAULT,
+        shipping_method=_resolve_shipping_method(order),
+        # FLW-05: documented draft field; buyer already paid the gift fee
+        # on Etsy. mhc shadow field (P1-01b), so no ei dependency.
+        gift_message_body=(order.gift_message or '').strip() or None,
     )
 
 
@@ -203,7 +256,9 @@ def build_quote_body(order, design_files) -> dict:
 
     line_items: list[dict] = []
     for line in order.order_line:
-        sku = (line.product_id.product_tmpl_id.x_gearment_sku or '').strip()
+        # FLW-01: same per-variant resolution as build_payload, but no
+        # multi-variant strictness — the quote is advisory; push is the gate.
+        sku = line.product_id._gearment_resolved_sku()
         if not sku:
             continue
         line_designs = designs_by_line.get(line.id, [])

@@ -61,7 +61,7 @@ class TestP401BAdapterUrls(TransactionCase):
                 variant_id='GM0249020374', quantity=1,
                 printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
                                    'url': 'https://x/y.png'},),
-                personalisation=None, custom_attributes=None,
+                custom_attributes=None,
             ),),
             shipping_method=None, notes=None, custom_attributes=None,
         )

@@ -70,9 +70,16 @@ Một đơn có thể chứa cả hai loại — hệ thống xử lý từng d�
   nhanh Phiếu Design. Trước khi duyệt, đơn sản xuất báo vàng "chờ duyệt thiết kế".
   Đây chỉ là chỉ báo — không chặn xưởng bắt đầu sản xuất.
 
-### Tự động chuyển trạng thái (sắp ra mắt)
+### Tự động chuyển trạng thái
 
-Khi đội sản xuất bấm "Hoàn thành work order" trong module MRP → trạng thái pipeline tự động sang bước tiếp theo. Hôm nay BA phải tự đổi trạng thái thủ công.
+Các bước tự động hiện có trên đường MTO:
+
+- **Đơn sản xuất được xác nhận** → đơn bán tự sang bước "CHỜ FILE".
+- **Xác nhận Phiếu xuất kho (giao hàng)** → đơn bán tự sang bước **"ĐÃ GỬI"**
+  (mới từ 2026-07-06 — trước đây BA phải tự đổi tay).
+- **Tất cả đơn sản xuất hoàn thành** → đơn bán tự sang "HOÀN THÀNH".
+
+Các bước giữa (ĐÃ SẢN XUẤT, ĐÃ ĐÓNG GÓI) vẫn do đội thao tác đổi tay.
 
 ---
 
@@ -102,6 +109,26 @@ Khi cron đồng bộ tự động bị tạm dừng:
 
 - Chỉ **BA Shipping** mới được bấm "Báo giá Gearment" và "Đồng bộ Gearment hàng loạt".
 - Người dùng thường có thể xem nhưng không gửi đơn sang Gearment.
+
+### Cá nhân hoá (personalization) & lời chúc quà tặng
+
+- **Chữ cá nhân hoá** (tên, ngày, câu khắc…) khách nhập trên Etsy **không gửi
+  dạng chữ sang Gearment** — Gearment chỉ in theo file thiết kế. Đội thiết kế
+  đọc nội dung cá nhân hoá trên dòng đơn hàng và **đưa thẳng vào file thiết
+  kế** trước khi duyệt. File duyệt xong mới đẩy đơn được (hệ thống đã chặn đơn
+  thiếu file).
+- **Lời chúc quà tặng** (gift message) khách trả tiền trên Etsy thì hệ thống
+  **gửi kèm sang Gearment** (trường gift_message_body chính thức của Gearment)
+  để in thiệp kèm gói hàng.
+
+### Lưu ý về dịch vụ vận chuyển nhanh
+
+Hiện Gearment chỉ nhận **giao tiêu chuẩn (Standard)**. Nếu khách Etsy đã trả
+tiền cho dịch vụ nhanh (Express / Priority / Rush), hệ thống vẫn gửi Standard
+nhưng **ghi cảnh báo** vào log để đội vận hành biết và chủ động xử lý với
+khách (hoàn phí ship nhanh hoặc báo trước thời gian giao). Khi Gearment công
+bố các phương thức nhanh qua API, hệ thống sẽ nối thẳng — không cần đổi quy
+trình.
 
 ---
 

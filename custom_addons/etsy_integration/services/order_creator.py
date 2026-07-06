@@ -159,6 +159,7 @@ class OrderCreator:
     # lazily and memoized per-instance via the helpers below.
     _XMLID_SHIPPING_PRODUCT = 'etsy_integration.product_etsy_shipping'
     _XMLID_GIFT_WRAP_PRODUCT = 'etsy_integration.product_etsy_gift_wrap'
+    _XMLID_UNRESOLVED_PRODUCT = 'etsy_integration.product_etsy_unresolved'
     _XMLID_FISCAL_POSITION = 'etsy_integration.fiscal_pos_etsy_marketplace'
     _XMLID_PAYMENT_TERM = 'etsy_integration.payment_term_etsy_prepaid'
     _XMLID_SALES_TEAM = 'etsy_integration.team_etsy'
@@ -197,6 +198,16 @@ class OrderCreator:
         tmpl = self._ref('gift_wrap_template', self._XMLID_GIFT_WRAP_PRODUCT)
         product = tmpl.product_variant_id if tmpl else False
         self._cache['gift_wrap_product'] = product
+        return product
+
+    def _get_unresolved_product(self):
+        """Returns the product.product variant of the Etsy Unresolved Item
+        placeholder (FLW-03)."""
+        if 'unresolved_product' in self._cache:
+            return self._cache['unresolved_product']
+        tmpl = self._ref('unresolved_template', self._XMLID_UNRESOLVED_PRODUCT)
+        product = tmpl.product_variant_id if tmpl else False
+        self._cache['unresolved_product'] = product
         return product
 
     def _get_fiscal_position(self):
@@ -514,6 +525,24 @@ class OrderCreator:
             return name_match
         return self.find_or_create_product(title, image_url)
 
+    def _resolve_line_product_api(self, sku, listing_id=None):
+        """FLW-03 strict resolution for the API ingest path.
+
+        listing-variant match → default_code match → EMPTY recordset.
+        No title match (all variants share the template name — limit-1
+        picked an arbitrary sibling) and no auto-create (the created
+        product had no Gearment SKU and no pipeline, silently routing a
+        dropship order onto the default MTO pipeline). Unresolved lines
+        book against the placeholder and hold the order instead.
+        """
+        clean_sku = (sku or '').strip()
+        if not clean_sku:
+            return self._env['product.product'].browse()
+        return (
+            self._resolve_listing_product(clean_sku, listing_id)
+            or self._resolve_default_code_product(clean_sku)
+        )
+
     def _resolve_listing_product(self, sku, listing_id=None):
         ListingProduct = self._env['etsy.listing.product']
         candidates = ListingProduct.search([
@@ -695,13 +724,18 @@ class OrderCreator:
             discount_pct = round(
                 payload.discount_amount / pre_discount_total * 100.0, 4)
 
+        unresolved_labels = []
         for item in product_items:
-            product = self._resolve_line_product(
-                item.sku,
-                item.title,
-                item.listing_id,
-                getattr(item, 'image_url', '') or '',
-            )
+            # FLW-03: strict resolution on the API path — no title match,
+            # no auto-create. Misses book the placeholder + hold the order.
+            product = self._resolve_line_product_api(item.sku, item.listing_id)
+            item_is_unresolved = not product
+            if item_is_unresolved:
+                product = self._get_unresolved_product()
+                unresolved_labels.append(
+                    '%s (SKU %r, listing %s)'
+                    % (item.title or 'unknown item', item.sku or '',
+                       item.listing_id or '?'))
             line_vals = {
                 'product_id': product.id,
                 'product_uom_qty': item.quantity or 1,
@@ -729,7 +763,27 @@ class OrderCreator:
             # honour it. None means "use product.display_name" (default).
             if getattr(item, 'name_override', None):
                 line_vals['name'] = item.name_override
+            elif item_is_unresolved and item.title:
+                # Keep the buyer-facing title on the placeholder line so the
+                # operator sees what was actually bought.
+                line_vals['name'] = item.title
             order_vals['order_line'].append((0, 0, line_vals))
+
+        if unresolved_labels:
+            # FLW-03 hold: reuse the shipped production-block machinery
+            # (delegated sale.order.fulfillment fields; existing dashboard
+            # filter + bus notification surface the held order).
+            order_vals['production_blocked'] = True
+            order_vals['block_reason'] = (
+                'Unresolved Etsy line(s) — map each to the right product '
+                'variant, swap the line product, then unblock:\n- '
+                + '\n- '.join(unresolved_labels)
+            )
+            _logger.warning(
+                'Etsy order %s held: %d unresolved line(s): %s',
+                payload.etsy_order_id, len(unresolved_labels),
+                '; '.join(unresolved_labels),
+            )
 
         if not order_vals['order_line']:
             _logger.warning(

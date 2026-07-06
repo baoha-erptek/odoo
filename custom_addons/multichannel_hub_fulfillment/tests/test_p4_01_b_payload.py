@@ -165,7 +165,7 @@ def _make_line_item(**overrides):
         variant_id='GM0249020374', quantity=1,
         printing_options=({'location_code': 'PRINT_LOCATION_CODE_FRONT',
                            'url': 'https://example/x.png'},),
-        personalisation=None, custom_attributes=None,
+        custom_attributes=None,
     )
     defaults.update(overrides)
     return GearmentLineItem(**defaults)

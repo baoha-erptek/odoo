@@ -557,6 +557,19 @@ A: Hôm nay chỉ Etsy hoạt động. Khi Amazon ra mắt, BA chỉ cần tích
 **Q:** _Mã SKU Gearment có bắt buộc không?_
 A: Không. Để trống → sản phẩm chạy theo đường MTO (sản xuất nội bộ). Có giá trị → chạy theo đường Dropship Gearment (chế độ Dropship tự bật).
 
+**Q:** _Sản phẩm Dropship có nhiều biến thể (màu / size) thì khai mã Gearment thế nào?_
+A: Mã Gearment của mỗi biến thể là **khác nhau** (mỗi màu-size là một mã riêng bên Gearment). Cách khai:
+1. Vẫn điền **Mã SKU Gearment** ở mức sản phẩm (để bật đường Dropship).
+2. Mở tab **Mua hàng (Purchase)** của sản phẩm → thêm một dòng nhà cung cấp **Gearment** cho **từng biến thể**: chọn đúng Biến thể ở cột Variant và điền mã Gearment của biến thể đó vào cột **Mã sản phẩm NCC (Vendor Product Code)**.
+3. Khi đẩy đơn sang Gearment, hệ thống lấy mã theo đúng biến thể khách đặt. Nếu sản phẩm nhiều biến thể mà thiếu mã của biến thể trong đơn, hệ thống sẽ **chặn đẩy đơn** và báo rõ thiếu ở sản phẩm nào — để tránh in nhầm màu/size.
+Sản phẩm chỉ có một biến thể (ví dụ ly sứ một cỡ) thì không cần bước 2 — mã ở mức sản phẩm là đủ.
+
+**Q:** _Listing trên Etsy bán hết số lượng thì có bị tắt không?_
+A: Etsy trừ dần số lượng mỗi khi có đơn; về 0 là Etsy tự tắt listing. Hệ thống
+có **cron tự bơm lại số lượng** mỗi giờ cho các listing đang bán sắp cạn.
+Mặc định tính năng này **tắt** — Admin bật bằng cách đặt tham số hệ thống
+`etsy_integration.pod_topup_quantity` = số lượng mục tiêu (ví dụ `50`).
+
 **Q:** _Trước đây có Wizard cũ và SKU Builder — sao bây giờ không thấy nữa?_
 A: Từ phiên bản này, **form Sản phẩm chuẩn đã đủ** — hệ thống tự sinh Mã SKU từ Danh mục + Biến thể nên không cần Wizard riêng nữa. Wizard cũ đã được ẩn khỏi menu để tránh nhầm lẫn.
 

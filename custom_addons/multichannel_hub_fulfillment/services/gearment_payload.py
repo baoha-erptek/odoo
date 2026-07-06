@@ -77,7 +77,12 @@ class GearmentLineItem:
     variant_id: str
     quantity: int
     printing_options: tuple[dict, ...] = ()
-    personalisation: str | None = None
+    # FLW-05: `personalisation` removed — the draft line_items schema has no
+    # personalization field (vendor doc: variant_id/legacy_id/quantity/
+    # printing_options/barcode_url) and Gearment's strict validator 400s on
+    # unexpected shapes (Defect-2026-05-10-05 family). Buyer personalization
+    # is baked into the approved design artwork; the text stays visible on
+    # the sale.order.line for the design team.
     custom_attributes: dict | None = None
 
 
@@ -96,6 +101,10 @@ class GearmentOrderPayload:
     addresses: tuple[GearmentAddress, ...]
     line_items: tuple[GearmentLineItem, ...]
     shipping_method: str | None = None
+    # FLW-05: order-level gift message — a documented draft-request field
+    # (`gift_message_body`, adds a Gearment fee the buyer already paid on
+    # Etsy). Mapped from the channel-agnostic sale.order.gift_message shadow.
+    gift_message_body: str | None = None
     notes: str | None = None
     custom_attributes: dict | None = None
 
@@ -129,6 +138,7 @@ class GearmentOrderPayload:
                     _without_none(asdict(item)) for item in self.line_items
                 ],
                 'shipping_method': self.shipping_method,
+                'gift_message_body': self.gift_message_body or None,
             }),
         }
 

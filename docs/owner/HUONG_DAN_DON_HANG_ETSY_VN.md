@@ -218,6 +218,17 @@ Hệ thống đã tự phân tuyến từng dòng:
 
 BA không cần đổi — chỉ kiểm tra hệ thống chọn đúng.
 
+**Đơn bị giữ vì "Etsy Unresolved Item":** nếu đơn kéo về có mã SKU mà hệ thống
+không tìm thấy sản phẩm tương ứng, dòng đó sẽ hiển thị sản phẩm giữ chỗ
+**"Etsy Unresolved Item"** và đơn tự chuyển sang **Chặn sản xuất** (Production
+Blocked) kèm lý do ghi rõ dòng nào chưa khớp. Hệ thống **không tự tạo sản phẩm
+mới** nữa (tránh giao nhầm màu/size). BA xử lý:
+
+1. Đọc **Lý do chặn** trên đơn → biết tên món hàng + SKU chưa khớp.
+2. Tìm / tạo đúng sản phẩm-biến thể, điền SKU vào **Internal Reference**.
+3. Sửa dòng đơn: đổi "Etsy Unresolved Item" thành đúng sản phẩm.
+4. Bỏ tick **Chặn sản xuất** → đơn chạy tiếp bình thường.
+
 ### 7.3 Bước 3 — Gán BA phụ trách
 
 1. Mở form đơn.
