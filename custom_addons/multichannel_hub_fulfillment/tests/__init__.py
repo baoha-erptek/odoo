@@ -84,3 +84,4 @@ from . import test_gear_confirm_button
 from . import test_flw01_variant_gearment_sku
 from . import test_flw04_shipping_method
 from . import test_flw05_personalization_wire
+from . import test_flw06_mto_picking_shipped

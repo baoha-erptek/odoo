@@ -62,11 +62,17 @@ class StockPicking(models.Model):
 
     def _action_done(self):
         """Override to advance linked SO pipelines to 'shipped' for
-        completed dropship pickings.
+        completed dropship AND outgoing pickings.
+
+        FLW-06 (2026-07-06): originally dropship-only — validating the
+        delivery order of a VN-internal (MTO) sale left the pipeline stuck
+        mid-stage until an operator moved it by hand. `_advance_pipeline_to`
+        is idempotent and no-ops when the order's pipeline has no 'shipped'
+        state, so extending to outgoing pickings is safe for every pipeline.
         """
         result = super()._action_done()
         for picking in self:
-            if picking.picking_type_id.code != 'dropship':
+            if picking.picking_type_id.code not in ('dropship', 'outgoing'):
                 continue
             if not picking.sale_id:
                 continue

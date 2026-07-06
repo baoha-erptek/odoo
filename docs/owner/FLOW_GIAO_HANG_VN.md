@@ -70,9 +70,16 @@ Một đơn có thể chứa cả hai loại — hệ thống xử lý từng d�
   nhanh Phiếu Design. Trước khi duyệt, đơn sản xuất báo vàng "chờ duyệt thiết kế".
   Đây chỉ là chỉ báo — không chặn xưởng bắt đầu sản xuất.
 
-### Tự động chuyển trạng thái (sắp ra mắt)
+### Tự động chuyển trạng thái
 
-Khi đội sản xuất bấm "Hoàn thành work order" trong module MRP → trạng thái pipeline tự động sang bước tiếp theo. Hôm nay BA phải tự đổi trạng thái thủ công.
+Các bước tự động hiện có trên đường MTO:
+
+- **Đơn sản xuất được xác nhận** → đơn bán tự sang bước "CHỜ FILE".
+- **Xác nhận Phiếu xuất kho (giao hàng)** → đơn bán tự sang bước **"ĐÃ GỬI"**
+  (mới từ 2026-07-06 — trước đây BA phải tự đổi tay).
+- **Tất cả đơn sản xuất hoàn thành** → đơn bán tự sang "HOÀN THÀNH".
+
+Các bước giữa (ĐÃ SẢN XUẤT, ĐÃ ĐÓNG GÓI) vẫn do đội thao tác đổi tay.
 
 ---
 
