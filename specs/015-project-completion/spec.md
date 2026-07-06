@@ -89,6 +89,14 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 Deep audit of the dropship + MTO order lifecycles vs Etsy/Gearment contract expectations (plan `~/.claude/plans/check-for-master-plan-robust-curry.md`). Code anchors hand-verified 2026-07-06. FLW-01..03 are **go-live blockers for any variantful dropship product** — the live proof (MF-E2E-3b) used single-variant mugs only.
 
+> **E2E-verified 2026-07-06 (same-day rerun):** all 5 MF-E2E gates re-run **×2 PASS** on staging
+> with every FLW delta asserted live — incl. a REAL multi-variant Gearment draft carrying distinct
+> `variant_id`s (closes the single-variant-only caveat above) and the FLW-01 block path.
+> Evidence: `docs/engineering/uats/E2E_FLW_RERUN_SUMMARY_2026-07-06.md`. Two defects found+fixed
+> during the rerun: vi.po placeholder line-wrap (ei 19.0.3.22.1 + `test_i18n_po_placeholders`)
+> and the Playwright vi_VN locale-drift class (page objects). `test:hau-mai` npm script has NO
+> spec file (never written, ESTY-186) — owner decision: author it or drop the script.
+
 | ID | Title | State | Priority | Size | Notes (code anchors verified) |
 |---|---|---|---|---|---|
 | **FLW-01** | Gearment variant mapping at product.product level | **done** (2026-07-06, no new field — standard supplierinfo.product_code per variant; mhf 19.0.1.0.31) | **P1** | M | CRITICAL. `x_gearment_sku` is template-level (`mhf/models/product_template.py:24`); payload + quote builders read `line.product_id.product_tmpl_id.x_gearment_sku` (`gearment_payload_builder.py:138,206`), guard at `mhf/models/sale_order.py:437`. Gearment `variant_id` encodes color+size → every variant of a template pushes the SAME GM variant (wrong physical product). Fix: variant-level mapping — evaluate `product.supplierinfo.product_code` per-variant reuse FIRST (Standard-Odoo-First); else `x_gearment_variant_id` on product.product with template fallback. Migration copies template value to sole variant. `owner-approval` required for any new field. |
