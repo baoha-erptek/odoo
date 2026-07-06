@@ -179,12 +179,12 @@ This section covers:
 
 ---
 
-### SRS-ORD-14: Fulfillment Dashboard & Real-Time Updates
+### SRS-ORD-14: Fulfillment Dashboard
 
 | Property | Detail |
 |----------|--------|
-| **Statement** | Operations Dashboard shall display all active orders grouped by pipeline stage (VN internal queue, Gearment processing, shipped/delivered). Dashboard updates in real-time via bus.bus channel when order state or tracking changes. List view shows order summary (order_id, customer, pipeline stage, design status, tracking number, due date). Filters by shop, date range, carrier, state. Export to Excel. |
-| **Rationale** | Unified ops dashboard provides single pane of glass for all fulfillment activity; real-time updates enable quick reaction to bottlenecks. |
+| **Statement** | Operations Dashboard shall display all active orders grouped by pipeline stage (VN internal queue, Gearment processing, shipped/delivered). Dashboard reflects order state and tracking changes on sync cadence (order sync / tracking import crons, 5–15 min). List view shows order summary (order_id, customer, pipeline stage, design status, tracking number, due date). Filters by shop, date range, carrier, state. Export to Excel. *(Real-time bus.bus clause removed 2026-07-06 — never implemented; real-time push remains open backlog item T038 if ops requests it.)* |
+| **Rationale** | Unified ops dashboard provides single pane of glass for all fulfillment activity; cron-cadence refresh is sufficient at current order volume. |
 | **Origin Spec(s)** | Spec 003 (tracking dashboard), Spec 004 P1-01 (order dashboard), CEO directive (unified dashboard 2026-05-03) |
 | **Implementing Module + Model** | `multichannel_hub_core` / computed fields `stuck_route_badge`, `is_overdue_approval` on `sale.order`; view `operations_dashboard_views.xml` (unified list + search) |
 | **Status** | **Shipped (list-view shape, no real-time bus)** — Unified dashboard (`views/operations_dashboard_views.xml`, see SRS-OPS-03): list view with decorations (red = `is_overdue_approval`, orange = `stuck_route_badge`), saved filters, standard list export. Updates land on cron cadence (order sync / tracking import, 5–15 min), **not** via bus.bus — no bus broadcast exists on state change. Tests: `test_operations_dashboard_db.py`/`_orm.py`, `test_order_dashboard.py`. |

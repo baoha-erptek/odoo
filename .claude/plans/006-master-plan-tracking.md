@@ -481,6 +481,22 @@ Source of slices: 11 Jira tickets in `IN PROCESS` on 2026-06-04 — owner publis
 
 ---
 
+## Product-flow audit slices (FLW-01…07, added 2026-07-06)
+
+Deep audit of dropship + MTO lifecycles vs Etsy/Gearment contract expectations (audit plan `~/.claude/plans/check-for-master-plan-robust-curry.md`; backlog + dispatch blocks in `specs/015-project-completion/spec.md` + `tasks.md`). Code anchors hand-verified. **FLW-01..03 gate variantful-dropship go-live** — MF-E2E-3b live proof used single-variant mugs only; the template-level `x_gearment_sku` and SKU round-trip gaps do not bite until a multi-variant product ships.
+
+| ID | Task | Owner | State | Depends on | Notes |
+|---|---|---|---|---|---|
+| FLW-01 | Gearment variant mapping at product.product level (CRITICAL — template-level `x_gearment_sku` pushes SAME GM variant_id for every variant; `gearment_payload_builder.py:138,206`, `mhf/sale_order.py:437`) | Dev | `todo` | — (before any variantful product gets a GM SKU) | Standard-Odoo-First: evaluate `product.supplierinfo.product_code` per-variant reuse FIRST; else `x_gearment_variant_id` on product.product w/ template fallback. **Owner ping required either way** (new-field rule). Migration copies template value to sole variant. |
+| FLW-02 | Persist publish-time variant SKUs — synthesized `{base}-{SLUG}` SKUs (`etsy_listing_publisher.py:71-121,888`) stored nowhere; ingest `_resolve_listing_product` needs `product_id != False` (`order_creator.py:517`) → round-trip resolves to wrong variant | Dev | `todo` | pairs with FLW-01 | Write-back to `variant.default_code` (respect dirty-flag/legacy) and/or upsert `etsy.listing.product` at publish; add create()-path SKU derivation (onchange-only today). |
+| FLW-03 | Unresolved-line hold queue for API ingest — name-match limit-1 picks lowest-id variant, then auto-create makes pipeline-less product → dropship order silently routes MTO (`order_creator.py:500-515`) | Dev | `todo` | merge target for AUD-02 screen | API path: flag + hold, no auto-create. Email legacy path keeps auto-create. |
+| FLW-04 | Etsy shipping service → Gearment METHOD_* mapping (hardcoded `METHOD_STANDARD`, `gearment_payload_builder.py:46`) | Dev | `todo` | FLW-01 | Buyer-paid expedited currently ships standard. |
+| FLW-05 | Push line `etsy_personalisation` to Gearment payload (captured at ingest `order_creator.py:711,893`, never emitted) | Dev | `todo` | live probe of wire field first | Custom-text POD orders reach production without buyer text. |
+| FLW-06 | MTO picking-done → pipeline `shipped` (hook dropship-only today, `mhf/stock_picking.py:63-74`) | Dev | `todo` | — | Parity with dropship auto-advance; small diff. |
+| FLW-07 | Etsy quantity top-up cron for POD listings (sell-through → qty 0 → Etsy auto-deactivates) | Dev | `todo` | P-PUB shipped ✓ | Narrow slice of Phase-4 inventory sync; reuses `push_inventory`. |
+
+---
+
 ## Phase 5 — Inventory / catalog / scan / Amazon / website (parallel tracks)
 
 | ID | Task | Owner | State | Depends on | Notes |
@@ -556,6 +572,8 @@ All architectural decisions live in `specs/006-master-plan/adrs/`:
 ---
 
 ## Change log
+
+- **2026-07-06**: **Product-flow audit (dropship + MTO)** — deep trace of both route lifecycles vs Etsy/Gearment contracts; 7 new slices FLW-01..07 registered (this file §"Product-flow audit slices" + spec 015 FLW table + tasks.md dispatch blocks). Headline: template-level `x_gearment_sku` breaks variantful dropship (FLW-01 CRITICAL); synthesized publish SKUs not persisted → order round-trip resolves wrong variant (FLW-02); API-ingest auto-create fallback mis-routes dropship orders to MTO pipeline (FLW-03). SRS drift fixed same session (SRS-CAT-07 → Shipped; SRS-ORD-14 bus.bus claim removed). Audit plan: `~/.claude/plans/check-for-master-plan-robust-curry.md`.
 
 - **2026-07-05 (B)**: **Mockup-v3 / UI-UX session** (out-of-band, owner-directed; branch `feature/mockup-v3-uiux` → main `c112194d2e5`). MuK theme + Hatafa palette; unified "Vận hành" hub nav (Etsy app folded, Flow-4 menus added, P0 gating fixes + BA-Lead shops fix); KPI band (js_class renderer — banner_route removed in 19); Gearment→Fulfillment naming; **full vi_VN i18n (closes spec-015 P1-07)**; staging deployed; **business-flows v3 + HUONG_DAN v2.0 + PDF (closes P-DOCS-FLOW-VN)**; Confluence + docs.hatafa synced. Local env de-Enterprised (45 OEEL modules purged, ADR-004 now true locally). Details: `specs/015-project-completion/findings.md` 2026-07-05 entry + memory `feedback_mockup_v3_uiux_session.md`.
 

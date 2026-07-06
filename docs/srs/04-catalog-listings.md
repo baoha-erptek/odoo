@@ -100,7 +100,7 @@ This section covers:
 | **Rationale** | Odoo becomes canonical product source for Etsy. Automated publish eliminates manual Etsy dashboard data entry. |
 | **Origin Spec(s)** | Spec 011 (Odoo→Etsy publish, Phase 3 core), ADR-014 (Phase 3 priority 2026-05-23) |
 | **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_publish_to_etsy); `etsy_integration` / `etsy.shop` (default_taxonomy_id, default_shipping_profile_id, etc. from SRS-ETSY-09); `etsy_integration` / `etsy.api.log` (log publish event) |
-| **Status** | **Planned** — Spec 011 slice P3-LIST-03 (Publish new listing), target 2026-07-25. Model fields defined; API endpoint documented. Service layer drafted (services/etsy_listing_publisher.py sketch, 200-line outline). Requires SRS-ETSY-09 completion (taxonomy/shipping/return picker UI). **CRITICAL PATH:** Phase 3 is 16-slice epic; publish is core blocker. Tracker: `.claude/plans/006-master-plan-tracking.md` (Phase 3 = 1% complete as of 2026-07-03). |
+| **Status** | **Shipped** (reclassified 2026-07-06; was misreported "Planned") — full publish pipeline live in `etsy_integration/services/etsy_listing_publisher.py` (19.0.3.16.0+): create draft (`create_draft`), image upload + variant image assignment, inventory push (`push_inventory`), draft→active transition. **E2E-proven**: MF-E2E-1 runner 10/10 sections ×2 PASS on staging 2026-07-04 (live listings created→activated→verified→deactivated on JaHandmadeArt); 2 defects found+fixed (shop-scoped PATCH path, variant default_code with non-publishable axis). Known follow-ups: personalization fields NOT published (Etsy deprecated inline fields; dedicated endpoint slice pending), publish-time variant SKUs not persisted back to Odoo (FLW-02, spec 015). |
 
 ---
 
@@ -112,7 +112,7 @@ This section covers:
 | **Rationale** | Incremental updates reduce API bandwidth; change detection avoids unnecessary API calls. |
 | **Origin Spec(s)** | Spec 011 (listing publish), Spec 004 P3-LIST (Phase 3) |
 | **Implementing Module + Model** | `multichannel_hub_core` / `multichannel.listing` (action button action_update_etsy_listing); change-detection logic via `@api.depends` or manual field comparison |
-| **Status** | **Planned** — Spec 011 slice P3-LIST-04 (Update listing), target 2026-07-25. Service layer drafted. Requires SRS-CAT-07 completion. **Blocked by Phase 3 schedule.** |
+| **Status** | **Planned** — Spec 011 slice P3-LIST-04 (Update listing), target 2026-07-25. Service layer drafted. SRS-CAT-07 (publish) is now Shipped, so no longer blocked by it; note `updateListing` PATCH itself is already used by the publisher for the draft→active transition (shop-scoped path, 19.0.3.16.0) — this item covers post-publish field-change detection + incremental PATCH. |
 
 ---
 
@@ -186,7 +186,7 @@ This section covers:
 | SRS-CAT-04 | Bulk Catalog Import | Shipped | multichannel_hub_core | multichannel.product.import.wizard | Spec 004 P-HUB |
 | SRS-CAT-05 | Listing Model & Intent | Shipped | multichannel_hub_core | multichannel.listing | Spec 004 P-LIST-MODEL |
 | SRS-CAT-06 | Channel Overrides | Shipped | multichannel_hub_core | multichannel.listing | Spec 011 |
-| SRS-CAT-07 | Listing Publish (Odoo→Etsy) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-03 (2026-07-25) |
+| SRS-CAT-07 | Listing Publish (Odoo→Etsy) | Shipped | etsy_integration | etsy_listing_publisher service, multichannel.listing | MF-E2E-1 ×2 PASS (2026-07-04) |
 | SRS-CAT-08 | Listing Update (PATCH) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-04 (2026-07-25) |
 | SRS-CAT-09 | Listing Unpublish/Archive | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-05 (2026-08-01) |
 | SRS-CAT-10 | Listing Sync (Inbound from Etsy) | Planned | multichannel_hub_core | multichannel.listing | P3-LIST-02b (2026-08-05) |

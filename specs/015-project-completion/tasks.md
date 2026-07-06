@@ -182,6 +182,67 @@ These blocks stay below as historical planning record. **Dispatch instead from t
 
 ---
 
+## FLW Items — Dispatch Blocks (2026-07-06 product-flow audit)
+
+Full evidence in `specs/015-project-completion/spec.md` FLW table + audit plan. FLW-01..03 gate variantful-dropship go-live (MF-E2E-3b proved single-variant mugs only).
+
+### FLW-01 — Gearment Variant Mapping at product.product Level (P1, CRITICAL)
+
+**Owner**: Dev  
+**Estimated Duration**: 2–3 days  
+**Dependencies**: none (must land before any variantful product gets `x_gearment_sku`)
+
+**Scope**: Move Gearment `variant_id` mapping from `product.template.x_gearment_sku` to per-variant. Standard-Odoo-first gate: evaluate `product.supplierinfo.product_code` with `product_id` set (per-variant vendor code on the existing Gearment vendor row P1-DROP-SEED already creates) BEFORE adding `x_gearment_variant_id` on `product.product`; **owner ping required either way**. Switch `gearment_payload_builder.py:138,206` line keys, `mhf/models/sale_order.py:437` guard, and quote builder to variant-level with template fallback. Migration copies template value onto single-variant templates.
+
+**Exit Criteria**:
+- [ ] Multi-variant order pushes DISTINCT GM variant_ids per line (Two-Phase tests)
+- [ ] Single-variant products unchanged (regression on MF-E2E-3b payload shape)
+- [ ] `HUONG_DAN_TAO_SAN_PHAM_VN.md` + flow-3 hatafa page + SDS 03-integrations updated
+
+### FLW-02 — Persist Publish-Time Variant SKUs (P1)
+
+**Owner**: Dev  
+**Estimated Duration**: 2–3 days  
+**Dependencies**: none (pairs naturally with FLW-01)
+
+**Scope**: Publisher writes synthesized `{base}-{SLUG}` SKU back to `variant.default_code` when empty (respect dirty-flag + `ba_approved_legacy`) and/or upserts `etsy.listing.product` rows (sku → product_id) at publish time. Add create()-path variant SKU derivation (today onchange-only — import/API-created variants get no default_code).
+
+**Exit Criteria**:
+- [ ] Publish → simulated order round-trip resolves the EXACT variant by SKU starting from empty default_code
+- [ ] No overwrite of operator-set default_code (dirty-flag test)
+- [ ] `SKU_GRAMMAR.md` + `HUONG_DAN_TAO_SAN_PHAM_VN.md` updated
+
+### FLW-03 — Unresolved-Line Hold Queue for API Ingest (P1)
+
+**Owner**: Dev  
+**Estimated Duration**: 3–4 days  
+**Dependencies**: merge target for AUD-02 screen (build one queue, two entry reasons)
+
+**Scope**: API-path order ingest stops name-match + auto-create fallback (`order_creator.py:500-515`): unresolved SKU flags the order (needs-mapping) into a hold queue instead of creating a pipeline-less product that silently routes to `vn_internal_production`. Legacy email path keeps auto-create.
+
+**Exit Criteria**:
+- [ ] Unknown-SKU API payload → order held + flagged, NO product created (Two-Phase tests)
+- [ ] Operator resolve action maps line → product and releases order into correct pipeline
+- [ ] `HUONG_DAN_DON_HANG_ETSY_VN.md` + flow-2 hatafa page updated
+
+### FLW-04 — Etsy Shipping Service → Gearment METHOD_* (P2)
+
+**Scope**: Replace hardcoded `METHOD_STANDARD` (`gearment_payload_builder.py:46`) with mapping from `sale.order.etsy_shipping_service`; default standard. Update `FLOW_GIAO_HANG_VN.md`.
+
+### FLW-05 — Push Line Personalization to Gearment (P2)
+
+**Scope**: Emit `sale.order.line.etsy_personalisation` in Gearment draft payload. Live-probe the wire field first (capture response body per memory `feedback_capture_response_body_before_blackbox_probe`). Update `FLOW_GIAO_HANG_VN.md`.
+
+### FLW-06 — MTO Picking-Done → Pipeline `shipped` (P2)
+
+**Scope**: Extend `mhf/models/stock_picking.py:_action_done` beyond `code == 'dropship'`: outgoing pickings on `vn_internal_production` orders advance pipeline to `shipped`. Update `FLOW_GIAO_HANG_VN.md` + SRS 03.
+
+### FLW-07 — Etsy Quantity Top-Up Cron (P3)
+
+**Scope**: Cron re-pushes quantity for active POD listings below threshold so Etsy sell-through never auto-deactivates a listing. Narrow slice of Phase-4 inventory sync; reuses `push_inventory`.
+
+---
+
 ## Execution Strategy
 
 **Critical Path**: P1 items gate production release; P2 items gate full E2E validation; P3 items are deferred post-E2E polish.

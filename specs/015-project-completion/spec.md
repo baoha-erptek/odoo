@@ -85,6 +85,20 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 | **AUD-04** | Sync-health alerting escalation | **todo** | P3 | M | `multichannel.sync.health`/`etsy.sync.health` record checkpoints only — no consecutive-failure threshold, no mail.activity alert (SRS-OPS-04 fiction removed). Include token-refresh-failure activity (SRS-ETSY-02 leftover). |
 | **AUD-05** | Real material BoMs (replace 1:1 pass-through) | **todo** | P4 | L | `product_mto_bom_wizard.py:76-84` creates phantom 1:1 BOM; real định mức nguyên liệu needs owner-supplied data. `owner-action`. Prereq for P5-01 raw-material forecasts. |
 
+### New items from product-flow audit (FLW-01…FLW-07, 2026-07-06)
+
+Deep audit of the dropship + MTO order lifecycles vs Etsy/Gearment contract expectations (plan `~/.claude/plans/check-for-master-plan-robust-curry.md`). Code anchors hand-verified 2026-07-06. FLW-01..03 are **go-live blockers for any variantful dropship product** — the live proof (MF-E2E-3b) used single-variant mugs only.
+
+| ID | Title | State | Priority | Size | Notes (code anchors verified) |
+|---|---|---|---|---|---|
+| **FLW-01** | Gearment variant mapping at product.product level | **todo** | **P1** | M | CRITICAL. `x_gearment_sku` is template-level (`mhf/models/product_template.py:24`); payload + quote builders read `line.product_id.product_tmpl_id.x_gearment_sku` (`gearment_payload_builder.py:138,206`), guard at `mhf/models/sale_order.py:437`. Gearment `variant_id` encodes color+size → every variant of a template pushes the SAME GM variant (wrong physical product). Fix: variant-level mapping — evaluate `product.supplierinfo.product_code` per-variant reuse FIRST (Standard-Odoo-First); else `x_gearment_variant_id` on product.product with template fallback. Migration copies template value to sole variant. `owner-approval` required for any new field. |
+| **FLW-02** | Persist publish-time variant SKUs (round-trip integrity) | **todo** | **P1** | M | `_synthesize_variant_sku` (`etsy_listing_publisher.py:71-121,888`) pushes `{base}-{SLUG}` SKUs to Etsy but stores them nowhere; ingest `_resolve_listing_product` requires `product_id != False` (`order_creator.py:517-532`, set only by pull-side default_code discovery) → synthesized SKUs resolve to nothing → name-match fallback picks arbitrary variant. Fix: at publish, write synthesized SKU back to `variant.default_code` (respect dirty-flag/`ba_approved_legacy`) and/or upsert `etsy.listing.product` (sku→product_id) at publish; add create()-path variant SKU derivation (auto-derive is onchange-only today). |
+| **FLW-03** | Unresolved-order-line hold queue for API ingest | **todo** | **P1** | M | `_resolve_line_product` (`order_creator.py:500-515`) name-matches `('name','=',title)` limit 1 (all variants share name → lowest-id variant) then `find_or_create_product` → new product with no GM SKU, no pipeline → order silently routes to default `vn_internal_production` (dropship order becomes MTO). Fix: API-path unresolved lines flag the order into a hold queue (merge with AUD-02 screen); keep auto-create on legacy email path only. |
+| **FLW-04** | Map Etsy shipping service → Gearment METHOD_* | **todo** | P2 | S | `_SHIPPING_METHOD_DEFAULT = 'METHOD_STANDARD'` hardcoded (`gearment_payload_builder.py:46`; ponytail comment already names the upgrade path). Buyer-paid expedited ships standard. Map from `sale.order.etsy_shipping_service`. |
+| **FLW-05** | Push line personalization to Gearment | **todo** | P2 | S | Ingest captures `etsy_personalisation` on order line (`order_creator.py:711,893`) but payload builder never emits it → custom-text POD orders reach production without the buyer's text. Verify Gearment wire field via live probe first (capture response body per memory). Listing-side personalization publish stays separate (Phase 3). |
+| **FLW-06** | MTO picking-done → pipeline `shipped` automation | **todo** | P2 | S | `stock_picking._action_done` advances pipeline only when `picking_type_id.code == 'dropship'` (`mhf/models/stock_picking.py:63-74`). MTO delivery validate leaves SO pipeline manual. Extend hook to outgoing pickings on `vn_internal_production` orders; tracking import stamps fulfillment → advance. |
+| **FLW-07** | Etsy quantity top-up cron for POD listings | **todo** | P3 | S | Quantity pushed once at publish; Etsy decrements per sale → listing hits 0 and auto-deactivates (lost sales). Cron re-pushes quantity for active listings below threshold — narrow slice of the Phase-4 inventory sync. |
+
 ---
 
 ## Consolidated Backlog (60 items as consolidated 2026-07-03 — states re-verified 2026-07-04, see Alignment Update)
@@ -262,9 +276,9 @@ Docs promised these; code never had them. Corrected docs now say "not implemente
 
 | Priority | Active Count | Est. Duration | Critical Path? |
 |---|---|---|---|
-| **P1** (Production Cutover = Main-Flow E2E Gate) | 11 (MF-E2E-0..4 + P1-11, P1-13, P2-07, P2-08, T067, T073) | **3–5 weeks** (publish/hub/tracking code already shipped) | YES — gates production release |
-| **P2** (Hardening) | 14 (incl. AUD-01, AUD-02) | 4–6 weeks | Parallel |
-| **P3** (Polish/Reporting) | 18 (incl. AUD-03, AUD-04) | 4–6 weeks | NO — post-E2E |
+| **P1** (Production Cutover = Main-Flow E2E Gate) | 14 (MF-E2E-0..4 + P1-11, P1-13, P2-07, P2-08, T067, T073 + FLW-01..03) | **3–5 weeks** (publish/hub/tracking code already shipped) | YES — gates production release; FLW-01..03 gate variantful-dropship go-live |
+| **P2** (Hardening) | 17 (incl. AUD-01, AUD-02, FLW-04..06) | 4–6 weeks | Parallel |
+| **P3** (Polish/Reporting) | 19 (incl. AUD-03, AUD-04, FLW-07) | 4–6 weeks | NO — post-E2E |
 | **P4** (Deferred) | 4 (incl. AUD-05) | — | NO |
 
 > Duration collapsed from 8–10 weeks to 3–5: the audit showed Phase 3 publish + hub + catalog-sync + tracking-import code is already on `main`; remaining P1 work is E2E verification, cutovers, and reconciliation — not implementation.
