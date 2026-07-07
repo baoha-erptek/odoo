@@ -382,7 +382,6 @@ PAGES = [
     # Engineering planning (NOT end-user; for Architect + Dev team reference on Confluence)
     ("SKU_GRAMMAR.md", "SKU Grammar — Canonical Specification", False),
     # UAT walkthroughs (v1.2 covers Wave 2/3 ESTY-187..199; v1.0 retained for TC-006..TC-012)
-    ("UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md", "UAT Walkthrough — Tạo sản phẩm v1.2 (Wave 2/3)", False),
     # Business-flows companions (added 2026-06-07 alongside Figma HTML exports)
     ("business-flows/README.md", "Business Flows — Sơ đồ + ảnh chụp UAT", False),
     ("business-flows/flow-1-tao-san-pham.md", "Flow 1 — Tạo sản phẩm + publish Etsy", False),

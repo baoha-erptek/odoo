@@ -966,7 +966,6 @@ Hiện ra khi bấm **Publish to Etsy** (trên form Listing hoặc form Sản ph
 
 > **Tài liệu liên quan:**
 > - Tổng quan nghiệp vụ: [`FLOW_TAO_SAN_PHAM_VN.md`](./FLOW_TAO_SAN_PHAM_VN.md)
-> - Walkthrough UAT click-by-click: [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](./UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md)
+> - Luồng + ảnh chụp UAT hiện hành: [`business-flows/flow-1-tao-san-pham.md`](./business-flows/flow-1-tao-san-pham.md)
 > - Định dạng Mã SKU chi tiết: [`SKU_GRAMMAR.md`](./SKU_GRAMMAR.md)
-> - Báo cáo sẵn sàng đăng Etsy: [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](./ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md)
 > - BRD: `docs/owner/BRD_VN.md` (Epic 7)

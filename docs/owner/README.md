@@ -6,14 +6,13 @@ Thư mục này chứa tài liệu nghiệp vụ về dự án **Hệ thống qu
 
 ---
 
-## 5 file chính
+## 4 file chính
 
 | File | Đọc trong | Ai đọc | Mục đích |
 |------|-----------|--------|----------|
 | **[BRD_VN.md](BRD_VN.md)** | 10 phút | Chủ dự án (ký) | Bức tranh kinh doanh: vấn đề, tầm nhìn, lợi ích, phạm vi, lộ trình, tiêu chí thành công, rủi ro |
 | **[SRS_VN.md](SRS_VN.md)** | 30 phút | CDA + BA | Chi tiết 55 chức năng (Story) trong 7 phase, mỗi chức năng có trạng thái, ưu tiên, ngày dự kiến |
 | **[STATUS_VN.md](STATUS_VN.md)** | 2 phút | CDA (hàng tuần) | Dashboard nhanh: % xong, đang làm gì, cần CDA xử lý gì |
-| **[JIRA_SYNC_PLAN.md](JIRA_SYNC_PLAN.md)** | (BA tham khảo) | BA | Kế hoạch đẩy 6 Epic + 48 Story lên Jira ESTY |
 | **[JIRA_SYNC_REPORT.md](JIRA_SYNC_REPORT.md)** | 3 phút | CDA + BA | Báo cáo sau khi sync — Epic/Story key, link Jira, filter quick-links |
 
 > **Đã sync lên Jira ngày 2026-05-21** (lần đầu) **+ delta sync 2026-05-25** (3 Story Done + Epic 7).
@@ -48,7 +47,7 @@ Sơ đồ bơi làn (swimlane) — ai làm gì, theo thứ tự nào — dùng �
 | Hậu mãi | [`FLOW_HAU_MAI_VN.md`](FLOW_HAU_MAI_VN.md) | [`HUONG_DAN_HAU_MAI_VN.md`](HUONG_DAN_HAU_MAI_VN.md) | [`business-flows/flow-4-hau-mai.md`](business-flows/flow-4-hau-mai.md) |
 
 Chỉ mục business-flows: [`business-flows/README.md`](business-flows/README.md)
-Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.html)
+Site business-flows hiện hành: [`business-flows/v3/index.html`](business-flows/v3/index.html)
 
 > **Bộ PDF UAT hợp nhất** (gửi người dùng cuối, kèm ảnh chụp màn hình thật):
 > [`../pdf/docs_huong_dan_uat_vn.pdf`](../pdf/docs_huong_dan_uat_vn.pdf) — gồm cả 4 luồng, mỗi luồng = tài liệu nghiệp vụ (FLOW) + hướng dẫn thao tác (HUONG_DAN). Build lại: `bash docs/pdf/build-pdfs.sh`.
@@ -57,16 +56,15 @@ Bộ sơ đồ Figma export: [`business-flows/index.html`](business-flows/index.
 
 | File | Mục đích | Phiên bản |
 |---|---|---|
-| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md) | Kịch bản click-by-click cho Wave 2/3 (ESTY-189..199) | 1.2 — **dùng** |
-| [`UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md`](UAT_WALKTHROUGH_TAO_SAN_PHAM_VN.md) | Phiên bản trước (TC-006..TC-012 vẫn còn dùng) | 1.0 |
-| [`ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md`](ETSY_PUBLISH_READINESS_ASSESSMENT_VN.md) | Checklist trước khi publish live | — |
-| [`INVENTORY_SETUP_VN.md`](INVENTORY_SETUP_VN.md) | Cấu hình kho + bin | — |
+| [`HUONG_DAN_TAO_SAN_PHAM_VN.md`](HUONG_DAN_TAO_SAN_PHAM_VN.md) | Hướng dẫn hiện hành cho luồng tạo sản phẩm; mục 9 chứa checklist UAT | 2.0 — **dùng** |
+| [`business-flows/flow-1-tao-san-pham.md`](business-flows/flow-1-tao-san-pham.md) | Luồng 1 kèm ảnh chụp UAT và liên kết sang site `v3/` | 1.0 |
 | [`SKU_GRAMMAR.md`](SKU_GRAMMAR.md) | Ngữ pháp SKU + defect matrix | — |
 
 ## Lưu trữ (đã archive)
 
 Tài liệu cũ / chạy log / draft email đã chuyển sang [`../archive/2026-06-07/`](../archive/2026-06-07/).
 Kết quả UAT các đợt cũ (2026-05/06) đã chuyển sang [`../archive/2026-07-05/`](../archive/2026-07-05/).
+Batch 2026-07-07: walkthrough v1.0 + v1.2, readiness assessment, inventory setup, Jira sync plan, business-flows mockup/superseded HTML, và `design-system/` đã chuyển sang [`../archive/2026-07-07/`](../archive/2026-07-07/).
 Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 
 ---
@@ -81,7 +79,7 @@ Báo cáo UAT cấp engineering: [`../engineering/uats/`](../engineering/uats/).
 5. Ký `BRD_VN.md` §10
 
 ### Sau khi duyệt
-1. BA chạy `JIRA_SYNC_PLAN.md` (phase 2) — đẩy 48 Story lên Jira
+1. BA dùng `JIRA_SYNC_REPORT.md` để mở đúng Jira filter / Epic / Story sau mỗi đợt sync
 2. CDA mở Jira board hàng ngày để theo dõi tiến độ
 3. BA refresh `STATUS_VN.md` mỗi 2 tuần
 

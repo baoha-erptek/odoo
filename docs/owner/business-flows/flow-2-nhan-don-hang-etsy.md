@@ -1,7 +1,7 @@
 # Flow 2 — Tiếp nhận đơn hàng từ Etsy
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Mã luồng:** flow-2
-**Sơ đồ kiến trúc:** [`flow-2-nhan-don-hang-etsy.html`](./flow-2-nhan-don-hang-etsy.html)
+**Sơ đồ kiến trúc:** [`v3/flow-2-nhan-don-hang-etsy.html`](./v3/flow-2-nhan-don-hang-etsy.html)
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_DON_HANG_ETSY_VN.md`](../HUONG_DAN_DON_HANG_ETSY_VN.md)
 **Tài liệu nghiệp vụ:** [`../FLOW_DON_HANG_ETSY_VN.md`](../FLOW_DON_HANG_ETSY_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_don_hang_etsy.spec.ts`

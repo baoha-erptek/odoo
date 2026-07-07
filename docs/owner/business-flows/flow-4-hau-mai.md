@@ -1,7 +1,7 @@
 # Flow 4 — Hậu mãi (đổi, trả, refund)
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Mã luồng:** flow-4
-**Sơ đồ kiến trúc:** [`flow-4-hau-mai.html`](./flow-4-hau-mai.html)
+**Sơ đồ kiến trúc:** [`v3/flow-4-hau-mai.html`](./v3/flow-4-hau-mai.html)
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_HAU_MAI_VN.md`](../HUONG_DAN_HAU_MAI_VN.md)
 **Tài liệu nghiệp vụ:** [`../FLOW_HAU_MAI_VN.md`](../FLOW_HAU_MAI_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_hau_mai.spec.ts` (TBD)

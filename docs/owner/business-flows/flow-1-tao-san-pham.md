@@ -1,9 +1,9 @@
 # Flow 1 — Tạo sản phẩm và publish lên Etsy
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Mã luồng:** flow-1
-**Sơ đồ kiến trúc:** [`flow-1-tao-san-pham.html`](./flow-1-tao-san-pham.html)
+**Sơ đồ kiến trúc:** [`v3/flow-1-tao-san-pham.html`](./v3/flow-1-tao-san-pham.html)
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_TAO_SAN_PHAM_VN.md`](../HUONG_DAN_TAO_SAN_PHAM_VN.md)
-**Kịch bản UAT:** [`../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md)
+**Checklist UAT hiện hành:** [`../HUONG_DAN_TAO_SAN_PHAM_VN.md`](../HUONG_DAN_TAO_SAN_PHAM_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_wave_2_3_listing.spec.ts`
 
 > Luồng 1 mô tả chuỗi thao tác từ lúc BA Lead tạo sản phẩm mới trong Odoo
@@ -15,7 +15,7 @@
 
 ## Sơ đồ tóm tắt (swimlane)
 
-Mở [`flow-1-tao-san-pham.html`](./flow-1-tao-san-pham.html) trong trình
+Mở [`v3/flow-1-tao-san-pham.html`](./v3/flow-1-tao-san-pham.html) trong trình
 duyệt để xem sơ đồ swimlane đầy đủ.
 
 ```
@@ -157,7 +157,7 @@ RUN_ETSY_PUBLISH=1 E2E_LISTING_PRICE=250000 npm run test:wave-2-3:publish
 python3 ../../scripts/cleanup_uat_etsy_drafts.py --apply
 ```
 
-UAT walkthrough thủ công: [`../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md`](../UAT_WALKTHROUGH_TAO_SAN_PHAM_VN_v1.2.md)
+Checklist UAT thủ công hiện hành: [`../HUONG_DAN_TAO_SAN_PHAM_VN.md`](../HUONG_DAN_TAO_SAN_PHAM_VN.md)
 
 ---
 
