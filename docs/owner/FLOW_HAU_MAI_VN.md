@@ -37,7 +37,7 @@
 
 - **Không tạo đơn Etsy mới** — chỉ tạo phiếu in lại nội bộ. Etsy vẫn nhìn đơn gốc.
 - Đếm chi phí: phiếu in lại được ghi nhận chi phí riêng để dashboard Pricing Audit (đang xây) tính margin cuối tháng.
-- Tracking thứ hai: hệ thống lưu cả tracking gốc lẫn tracking in-lại (chuỗi tracking xem trên form đơn → tab "Etsy" → trường "Lịch sử tracking").
+- Tracking thứ hai: tracking của lần in lại được push lên Etsy trên cùng receipt đơn gốc (Etsy hiển thị cả hai) — không tạo đơn Etsy mới.
 
 ---
 
@@ -85,11 +85,11 @@ Quy trình ticket hậu mãi đã được E2E xác thực (2026-07-05). Hoàn t
 
 ### Quy trình Ticket (đang hoạt động)
 
-1. Tạo Ticket để theo dõi mỗi yêu cầu hậu mãi (loại: hoàn trả / hoàn tiền / in lại / khác).
+1. Tạo Ticket để theo dõi mỗi yêu cầu hậu mãi (loại: hoàn trả / hoàn tiền / gửi lại).
 2. BA Marketing tạo ticket trên đơn khi khách báo vấn đề.
-3. Workflow: `open` → `in_progress` → `resolved` (đã hoàn / đã in lại / đã đóng).
+3. Workflow: `draft` → `approved` / `rejected` → `refunded` (đã hoàn / đã gửi lại / đã đóng).
 4. BA Lead duyệt + xác nhận xử lý trong ticket.
-5. Khi resolved=đã hoàn tiền:
+5. Khi refunded=đã hoàn tiền:
    - Ghi nhận chi phí hoàn vào đơn.
    - Báo cáo hoàn tiền hàng tháng cho Kế toán + Chủ shop.
 
@@ -113,7 +113,7 @@ A: Tạo phiếu in lại lần 2 + ghi rõ lý do "in lại lần 2" trong chat
 A: Tin nhắn ở "Buffer" 7 ngày → sau đó chuyển sang trạng thái "orphaned" để BA review. Nếu khách hỏi về đơn cụ thể nhưng không kèm Receipt ID, BA Marketing copy nội dung vào chatter đơn tương ứng.
 
 **Q:** _Refund trên Etsy có tự cập nhật vào hệ thống không?_
-A: Hiện tại chưa. BA Marketing phải ghi note vào chatter đơn. Tự động hoá phần này nằm trong kế hoạch hoàn trả/refund ở phiên bản kế tiếp.
+A: Hiện tại chưa. BA Marketing phải ghi note vào chatter đơn (và cập nhật ticket hậu mãi). Tự động đồng bộ refund từ Etsy về hệ thống nằm trong kế hoạch phiên bản kế tiếp.
 
 ---
 
@@ -123,4 +123,4 @@ A: Hiện tại chưa. BA Marketing phải ghi note vào chatter đơn. Tự đ�
 - In lại do lỗi sản xuất → BA Lead + Sản xuất.
 - Hoàn trả vật lý / Hoàn tiền → BA Lead + Kế toán + Chủ shop.
 
-> Quy trình chi tiết hoàn trả/refund sẽ được tài liệu hoá khi tính năng `etsy.order.ticket` ra mắt (phiên bản kế tiếp).
+> Tính năng `etsy.order.ticket` đã LIVE (E2E-verify 2026-07-05); phần tự động đồng bộ refund từ Etsy sẽ bổ sung ở phiên bản kế tiếp.

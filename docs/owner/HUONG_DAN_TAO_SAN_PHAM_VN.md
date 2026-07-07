@@ -15,7 +15,7 @@
 > **Cập nhật v1.5 (2026-07-05):** Thêm tab **Original Design** trên form sản phẩm — nơi lưu file thiết kế gốc (AI/PSD/PDF) riêng biệt khỏi Documents chung. Giới hạn dung lượng file ≤10 MB. Xem mục 4.8.
 
 ### Cập nhật v2.0 (2026-07-05)
-Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme** (thanh điều hướng tím, sidebar tối). Menu **Sản phẩm** vẫn giữ nguyên tên. Tất cả menu paths chính (Listings, SKU Drift, Channels) nằm dưới **"Vận hành"** hub trung tâm. Giao diện hoàn toàn **Tiếng Việt**.
+Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme** (thanh điều hướng tím, sidebar tối). Menu **Sản phẩm** vẫn giữ nguyên tên. Các menu chính (Listings, SKU Drift) nằm dưới **"Vận hành"** hub trung tâm; "Channels" là một thẻ (tab) trên form Sản phẩm, không phải menu. Giao diện hoàn toàn **Tiếng Việt**.
 
 ---
 
@@ -424,7 +424,7 @@ Hệ thống làm các bước:
 
 **Đồng bộ taxonomy từ Etsy:**
 - Hệ thống tự đồng bộ cây taxonomy Etsy hàng tuần (cron `Etsy: Taxonomy Cache Sync`).
-- Admin có thể bấm thủ công nút **Sync Etsy Taxonomy** trên form cửa hàng nếu cần refresh ngay.
+- Việc đồng bộ chạy tự động theo cron ở trên; hiện chưa có nút bấm đồng bộ thủ công trên form cửa hàng.
 - Toàn bộ cây hiển thị ở menu **Vận hành → Cấu hình** (chỉ Admin).
 
 **Cách chọn category cho 1 listing:**
@@ -444,8 +444,8 @@ Hệ thống làm các bước:
 > Mới từ 2026-06-06 (P-LIST-SHIPPING). Tương tự Etsy Category nhưng theo từng shop.
 
 **Đồng bộ:**
-- Cron `Etsy: Shipping Profile Cache Sync` chạy hàng ngày.
-- Admin có thể bấm thủ công nút **Sync Etsy Shipping Profiles** trên form cửa hàng.
+- Cron `Etsy: Shipping Profile Cache Sync` chạy hàng ngày (tự động; chưa có nút bấm đồng bộ thủ công trên form cửa hàng).
+- Trên form cửa hàng có nút **Tạo Shipping Profile mới** (mở wizard tạo hồ sơ trực tiếp trên Etsy).
 - **Vận hành → Cấu hình** (Admin) — xem cache.
 
 **Chọn per-listing:** **Vận hành → Bán & Đăng bán → Listings** → tab Etsy → trường **Etsy Shipping Profile** (autocomplete chỉ hiển thị profile của shop đó).
