@@ -631,4 +631,4 @@
 
 ---
 
-*Hết SRS v1.0. Theo dõi tiến độ chi tiết trong Jira sau khi sync (xem `JIRA_SYNC_PLAN.md`).*
+*Hết SRS v1.0. Theo dõi tiến độ chi tiết trong Jira sau khi sync; dùng `JIRA_SYNC_REPORT.md` để mở đúng filter và đối chiếu Epic/Story.*

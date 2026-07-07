@@ -42,6 +42,14 @@ build_set() {
   done
   export SRC_BASE="$srcdir"
 
+  # UAT set: restructure the concatenated md into one coherent guide
+  # (front matter + Part dividers + strip the 4 embedded TOCs). Source files
+  # stay untouched — this only rewrites the build-dir concatenation.
+  if [ "$name" = "huong_dan_uat_vn" ]; then
+    echo ">> [$name] restructuring (front matter + Part dividers + strip embedded TOCs) ..."
+    python3 "$OUT/uat_restructure.py" "$src"
+  fi
+
   echo ">> [$name] rendering mermaid with mmdc ..."
   npx --no-install @mermaid-js/mermaid-cli \
       -i "$src" -o "$BUILD/$name.rendered.md" \

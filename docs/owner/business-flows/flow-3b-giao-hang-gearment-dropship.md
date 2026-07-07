@@ -1,7 +1,7 @@
 # Flow 3b — Giao hàng (Gearment dropship)
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Mã luồng:** flow-3b
-**Sơ đồ kiến trúc:** [`flow-3b-giao-hang-gearment-dropship.html`](./flow-3b-giao-hang-gearment-dropship.html)
+**Sơ đồ kiến trúc:** [`v3/flow-3b-giao-hang-gearment-dropship.html`](./v3/flow-3b-giao-hang-gearment-dropship.html)
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_GIAO_HANG_VN.md`](../HUONG_DAN_GIAO_HANG_VN.md) (mục Gearment)
 **API reference:** [`../../GEARMENT_API_REFERENCE.md`](../../GEARMENT_API_REFERENCE.md)
 

@@ -1,7 +1,7 @@
 # Flow 3a — Giao hàng (In nội bộ)
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-06-07 · **Mã luồng:** flow-3a
-**Sơ đồ kiến trúc:** [`flow-3a-giao-hang-in-noi-bo.html`](./flow-3a-giao-hang-in-noi-bo.html)
+**Sơ đồ kiến trúc:** [`v3/flow-3a-giao-hang-in-noi-bo.html`](./v3/flow-3a-giao-hang-in-noi-bo.html)
 **Hướng dẫn chi tiết:** [`../HUONG_DAN_GIAO_HANG_VN.md`](../HUONG_DAN_GIAO_HANG_VN.md)
 **Tài liệu nghiệp vụ:** [`../FLOW_GIAO_HANG_VN.md`](../FLOW_GIAO_HANG_VN.md)
 **Test tự động:** `tests/e2e/tests/uat_huong_dan_giao_hang.spec.ts`

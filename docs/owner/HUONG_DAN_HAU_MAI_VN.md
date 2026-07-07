@@ -86,10 +86,10 @@ Từ phiên bản này, **Hậu mãi** (sau mãi) bây giờ có menu trực ti�
 **Đơn MTO:**
 1. BA Shipping in nhãn mới + giao đối tác bưu vận.
 2. Nhập tracking mới qua wizard "Nhập tracking GKE" (xem [`HUONG_DAN_GIAO_HANG_VN.md`](./HUONG_DAN_GIAO_HANG_VN.md)).
-3. Hệ thống lưu tracking thứ hai trong **Lịch sử tracking** (tab Etsy của đơn gốc).
+3. Tracking mới ghi vào đơn gốc (không tạo đơn mới) và được push lên Etsy ở bước dưới.
 
 **Đơn Dropship:**
-1. BA Shipping bấm **"Tạo phiếu Gearment in lại"** trên form đơn.
+1. BA Shipping tạo đơn in lại với Gearment theo quy trình thủ công (chưa có nút riêng trên form) — chạy lại luồng **Báo giá Gearment → Xác nhận sản xuất Gearment**, tham chiếu đơn gốc.
 2. Hệ thống tạo Gearment order mới (không gửi tracking gốc).
 3. Gearment in + gửi → tracking mới về qua webhook.
 
@@ -126,11 +126,7 @@ Từ phiên bản này, **Hậu mãi** (sau mãi) bây giờ có menu trực ti�
 
 #### Xử lý tin nhắn không khớp đơn (orphaned)
 
-1. **Menu:** Vận hành → Giám sát → **Buyer Messages Buffer**.
-2. Lọc `state = orphaned` (đã hết 7 ngày).
-3. Mở từng tin → đọc nội dung.
-4. Nếu khách nhắc Receipt ID → copy nội dung vào chatter đơn tương ứng + đóng tin buffer.
-5. Nếu là spam → đánh dấu `discarded`.
+Tin nhắn không khớp Receipt ID được giữ ở trạng thái **buffered**; sau 7 ngày chuyển **orphaned**. Bộ đệm này hiện chạy nền (chưa có menu riêng cho BA). Khi cần tra soát tin `orphaned`, BA Marketing phối hợp Đội Kỹ thuật xuất danh sách từ bản ghi khử trùng lặp (`etsy.message.dedupe`), rồi copy nội dung vào chatter đơn tương ứng nếu nhận diện được khách.
 
 ### 4.2 Đường API (chờ Etsy duyệt scope `conversations_r`)
 
@@ -210,20 +206,18 @@ Khách yêu cầu sửa địa chỉ sau khi đặt hàng — phải xử lý qu
 
 Từ 2026-07-05, workflow tạo ticket hậu mãi là **LIVE và đã E2E-verify**:
 
-![Danh sách ticket hậu mãi hiển thị loại (In lại / Hoàn tiền / Hoàn trả), trạng thái (open → in_progress → resolved)](img/hau-mai-ticket-list.png)
+![Danh sách ticket hậu mãi hiển thị loại (Hoàn trả / Hoàn tiền / Gửi lại), trạng thái (draft → approved/rejected → refunded)](img/hau-mai-ticket-list.png)
 
 ![Form ticket hậu mãi chi tiết với thanh trạng thái và lịch sử xử lý](img/hau-mai-ticket-form.png)
 
 **Quy trình:**
-1. BA Marketing **tạo ticket** khi nhận yêu cầu hậu mãi từ khách (in lại / hoàn tiền / hoàn trả).
-2. Ticket ở trạng thái **open**.
-3. BA Lead **duyệt** → chuyển **in_progress** (xác nhận quyết định hậu mãi).
-4. BA Lead **đánh dấu hoàn tiền** (nếu là loại refund) → chuyển **resolved** (đã hoàn xong).
+1. BA Marketing **tạo ticket** khi nhận yêu cầu hậu mãi từ khách (hoàn trả / hoàn tiền / gửi lại).
+2. Ticket ở trạng thái **draft**.
+3. BA Lead **duyệt** → chuyển **approved** (hoặc **rejected** nếu từ chối).
+4. BA Lead **đánh dấu đã hoàn tất** → chuyển **refunded** (đã hoàn tiền / đã xử lý xong).
 5. Chatter ghi log tự động từng bước.
 
 **Phần chuyển tiền thực tế** vẫn thực hiện thủ công trong Etsy Shop Manager (Admin xử lý cuối tháng).
-
-### 6.1 Quy trình thủ công hôm nay (lịch sử)
 
 ### 6.1 Quy trình thủ công hôm nay
 
@@ -252,28 +246,27 @@ Từ 2026-07-05, workflow tạo ticket hậu mãi là **LIVE và đã E2E-verify
 - BA Marketing xuất Excel từ Etsy Shop Manager → tab Reports → Refunds.
 - Gửi cho Chủ shop + Kế toán cuối tháng.
 
-### 6.2 Kế hoạch tự động hoá (phiên bản kế tiếp)
+### 6.2 Model ticket hậu mãi (`etsy.order.ticket`)
 
-Hệ thống sẽ có model **`etsy.order.ticket`** theo dõi mỗi yêu cầu hậu mãi:
+Model **`etsy.order.ticket`** đã LIVE, theo dõi mỗi yêu cầu hậu mãi:
 
 #### Loại ticket
 
 | Loại | Khi nào dùng |
 |---|---|
-| `reprint` | In lại đơn lỗi |
-| `refund` | Hoàn tiền |
-| `return` | Hoàn trả vật lý |
-| `other` | Khiếu nại khác |
+| `return` (Hoàn trả) | Khách gửi hàng về |
+| `refund` (Hoàn tiền) | Hoàn tiền cho khách |
+| `reship` (Gửi lại) | Gửi lại hàng thay thế |
 
 #### Workflow
 
 ```
-open → in_progress → resolved
+draft → approved / rejected → refunded
 ```
 
-- **open**: BA Marketing tạo khi nhận yêu cầu.
-- **in_progress**: BA Lead/Marketing đang xử lý.
-- **resolved**: đã xong (đã refund / đã in lại / đã đóng).
+- **draft**: BA Marketing tạo khi nhận yêu cầu.
+- **approved / rejected**: BA Lead duyệt hoặc từ chối.
+- **refunded**: đã hoàn tất (đã hoàn tiền / đã gửi lại / đã đóng).
 
 #### Tích hợp tương lai
 
@@ -294,7 +287,7 @@ A: Thường không hủy được — BA Marketing trả lời khách qua chatt
 A: Tạo phiếu in lại lần 2 + ghi rõ "Lần 2" trong chatter. BA Lead xem xét đổi đội thiết kế hoặc đối tác in.
 
 **Q:** _Tin nhắn buyer không liên kết được với đơn nào — phải làm gì?_
-A: Tin trong "Buffer" 7 ngày → sau đó chuyển `orphaned`. BA Marketing review hàng tuần, copy nội dung vào chatter đơn tương ứng (nếu tìm được) hoặc đánh dấu `discarded`.
+A: Tin ở trạng thái `buffered` trong 7 ngày → sau đó chuyển `orphaned`. Bộ đệm chạy nền (chưa có menu riêng); khi cần, BA Marketing phối hợp Đội Kỹ thuật tra soát tin `orphaned` và copy nội dung vào chatter đơn tương ứng nếu nhận diện được khách.
 
 **Q:** _Refund trên Etsy có tự cập nhật vào hệ thống không?_
 A: Hôm nay chưa. BA Marketing ghi note vào chatter đơn thủ công. Tự động hoá nằm trong P4-02 (sắp ra mắt).
@@ -306,7 +299,7 @@ A: Không đổi được. BA Marketing trả lời khách: "Đơn đã giao đ�
 A: Hôm nay chưa tự động. BA Lead ghi tay trong chatter. Dashboard Pricing Audit (đang xây) sẽ tính tự động.
 
 **Q:** _Một đơn in lại nhiều lần — tracking lưu thế nào?_
-A: Tất cả tracking lưu trong tab Etsy → "Lịch sử tracking" của đơn gốc. Mỗi push lên Etsy = 1 dòng. Etsy hiển thị tất cả tracking trên cùng receipt.
+A: Mỗi lần in lại, tracking mới được push lên Etsy trên cùng receipt của đơn gốc — Etsy hiển thị tất cả tracking cùng một receipt. Hệ thống không tạo đơn Etsy mới cho lần in lại.
 
 ---
 
@@ -328,7 +321,7 @@ A: Tất cả tracking lưu trong tab Etsy → "Lịch sử tracking" của đơ
 
 - [ ] Tạo đơn UAT Dropship đã hoàn tất
 - [ ] Chuyển sang "In lại"
-- [ ] BA Shipping bấm "Tạo phiếu Gearment in lại"
+- [ ] BA Shipping tạo đơn in lại với Gearment (quy trình thủ công, tham chiếu đơn gốc)
 - [ ] **Mong đợi:** Phiếu Gearment mới được tạo, không gửi tracking gốc, tracking thứ hai về qua webhook
 - [ ] **Pass / Fail:** _____
 
@@ -342,7 +335,7 @@ A: Tất cả tracking lưu trong tab Etsy → "Lịch sử tracking" của đơ
 ### TC-MSG-002: Tin nhắn email — không match → Buffer
 
 - [ ] Forward email không có Receipt ID
-- [ ] **Mong đợi:** Tin trong Buyer Messages Buffer, `state = pending`
+- [ ] **Mong đợi:** Bản ghi khử trùng lặp (`etsy.message.dedupe`) ở `state = buffered`
 - [ ] Đợi 7 ngày (hoặc giả lập thời gian) → `state = orphaned`
 - [ ] **Pass / Fail:** _____
 

@@ -5,7 +5,7 @@
 **Hệ thống:** Odoo 19 — module `multichannel_hub_core` + `multichannel_hub_fulfillment` + `etsy_integration`
 **Tài liệu nghiệp vụ tham chiếu:** [`FLOW_GIAO_HANG_VN.md`](./FLOW_GIAO_HANG_VN.md)
 
-> Hướng dẫn từng bước cho hai đường giao hàng: MTO (in nội bộ) và Dropship Gearment. Bao gồm 17 trạng thái pipeline VN, quy trình design files, gọi Gearment, và push tracking lên Etsy.
+> Hướng dẫn từng bước cho hai đường giao hàng: MTO (in nội bộ) và Dropship Gearment. Bao gồm quy trình pipeline MTO, quy trình design files, gọi Gearment, và push tracking lên Etsy.
 
 ### Cập nhật v2.0 (2026-07-05)
 Từ phiên bản này, giao diện hệ thống được làm mới với **Hatafa theme**. Menu chính được sắp xếp lại thành **"Vận hành"** (hub trung tâm) với các phần: Công việc hằng ngày, Bán & Đăng bán, Giao hàng, Hậu mãi, Giám sát, Cấu hình. Lệnh sản xuất (MO) bây giờ hiển thị huy hiệu **"Design Ready"** khi thiết kế đã được duyệt. Tất cả menu paths đã được cập nhật.
@@ -22,7 +22,7 @@ Từ phiên bản này, giao diện hệ thống được làm mới với **Hat
 
 1. [Tổng quan 2 đường](#1-tổng-quan-2-đường)
 2. [Vai trò và quyền](#2-vai-trò-và-quyền)
-3. [Đường MTO — 17 trạng thái pipeline VN](#3-đường-mto)
+3. [Đường MTO — quy trình pipeline MTO](#3-đường-mto)
 4. [Quy trình Design Files](#4-quy-trình-design-files)
 5. [Đường Dropship Gearment](#5-đường-dropship-gearment)
 6. [Push tracking lên Etsy](#6-push-tracking-lên-etsy)
@@ -62,9 +62,9 @@ Một đơn có thể có **cả hai loại** — hệ thống xử lý từng d
 
 ## 3. Đường MTO
 
-### 3.1 17 trạng thái pipeline VN
+### 3.1 quy trình pipeline MTO
 
-![Kanban pipeline MTO hiển thị 17 trạng thái từ "Mới nhận" đến "Hoàn tất"](img/giao-hang-order-pipeline.png)
+![Kanban pipeline MTO hiển thị các bước từ "Mới nhận" đến "Hoàn tất"](img/giao-hang-order-pipeline.png)
 
 | # | Trạng thái | Ai chuyển | Ý nghĩa |
 |---|---|---|---|
@@ -118,7 +118,7 @@ Mỗi dòng có: ai bấm, từ bước nào sang bước nào, thời điểm, 
 
 ## 4. Quy trình Design Files
 
-![Form Design File với trường lưu trữ URL hoặc file, trạng thái Pending/Approved/Rejected](img/giao-hang-design-file-form.png)
+![Form Design File với trường lưu trữ URL hoặc file, trạng thái Chờ duyệt/Đã gửi proof/Duyệt/Cần chỉnh lại](img/giao-hang-design-file-form.png)
 
 ### 4.1 Upload file thiết kế (Marketing)
 
@@ -136,10 +136,11 @@ Mỗi dòng có: ai bấm, từ bước nào sang bước nào, thời điểm, 
 
 ### 4.2 Duyệt file (PD / Sản xuất)
 
-Mở **Design Files Kanban** (3 cột: Pending / Approved / Rejected):
+Mở **Design Files Kanban** (4 trạng thái: Chờ duyệt `pending` / Đã gửi proof `proof_sent` / Duyệt `approved` / Cần chỉnh lại `rejected`):
 
-- Kéo file từ Pending → Approved → file chuyển sang Approved.
-- Kéo file từ Pending → Rejected → wizard hỏi lý do → file Rejected, Marketing được thông báo qua chatter.
+- Gửi proof cho khách → file chuyển **Đã gửi proof** (`proof_sent`).
+- Duyệt file → **Duyệt** (`approved`).
+- Từ chối → wizard hỏi lý do → **Cần chỉnh lại** (`rejected`), Marketing được thông báo qua chatter.
 
 > Hoặc bấm trực tiếp nút **"Duyệt"** / **"Từ chối"** trên form file.
 
@@ -338,7 +339,7 @@ A: Không có giới hạn cứng. Mỗi dòng `sale.order.line` có thể có n
 
 ### Đường MTO
 
-#### TC-MTO-001: Chuyển pipeline qua đủ 17 trạng thái
+#### TC-MTO-001: Chuyển pipeline qua đủ các trạng thái pipeline (pending_file → in_production → packed → shipped → done)
 
 - [ ] Tạo đơn UAT MTO (sản phẩm không có Mã SKU Gearment)
 - [ ] Lần lượt: Mới nhận → BA kiểm tra → Thiết kế → Chờ duyệt → Đã duyệt → Sản xuất → QC → Đóng gói → Chờ nhãn → Đã in nhãn → Giao bưu vận → Đang vận chuyển → Đã giao → Hoàn tất

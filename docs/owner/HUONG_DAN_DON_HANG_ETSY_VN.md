@@ -70,12 +70,13 @@ Từ phiên bản này, giao diện hệ thống được làm mới với **Hat
    - **Default Taxonomy ID** — taxonomy mặc định cho listing (Admin cấu hình).
    - **Default Shipping Profile ID** — shipping profile mặc định.
    - **Default Return Policy ID** — return policy mặc định.
-   - **Default Readiness State ID** — trạng thái sẵn sàng (ví dụ `1406133708616` cho made_to_order 3-5 ngày).
 4. Bấm **Lưu**.
+
+> Ghi chú: readiness state (trạng thái sẵn sàng, ví dụ `1406133708616` cho made_to_order 3-5 ngày) được đặt ở lớp listing/wizard khi đăng bán, không phải là ô nhập trên form cửa hàng.
 
 ### 3.2 Kiểm tra cấu hình
 
-- [ ] Form shop hiển thị đầy đủ 4 ID mặc định.
+- [ ] Form shop hiển thị đủ 3 ID mặc định (Taxonomy, Shipping Profile, Return Policy).
 - [ ] Cờ **active_source** đặt đúng (`api` cho shop đã chuyển, `email` cho shop chưa chuyển).
 
 ---
@@ -127,7 +128,7 @@ Mỗi dòng có:
 > _Admin làm một lần._
 
 1. Mở **Vận hành → Cấu hình** → tìm **Gmail Settings**.
-2. Bấm **"Connect Gmail"**.
+2. Bấm **"Authorize Gmail"** (giao diện tiếng Việt: "Xác thực Gmail").
 3. Đăng nhập tài khoản Gmail nhận email Etsy.
 4. Cấp quyền đọc thư.
 5. Hệ thống lưu token và bắt đầu poll.
@@ -140,20 +141,19 @@ Mỗi dòng có:
 
 ### 5.3 Xem nhật ký email
 
-![Danh sách email log hiển thị trạng thái xử lý: processed, failed_parse, duplicate](img/don-hang-email-log-list.png)
+![Danh sách email log hiển thị trạng thái xử lý: success, failed, skipped](img/don-hang-email-log-list.png)
 
 **Menu:** Vận hành → Giám sát → **Nhật ký Email** → danh sách email đã xử lý.
 
-| Trạng thái | Ý nghĩa | Xử lý |
+| Trạng thái (`parse_status`) | Ý nghĩa | Xử lý |
 |---|---|---|
-| `processed` | Tạo đơn thành công | — |
-| `duplicate` | Email lặp (đơn đã tạo trước đó) | — |
-| `failed_parse` | Không bóc tách được | BA xem thủ công |
-| `pending` | Chưa xử lý xong | Chờ cron |
+| `success` | Tạo đơn thành công | — |
+| `skipped` | Bỏ qua (email lặp / không phải đơn) | — |
+| `failed` | Không bóc tách được | BA xem thủ công |
 
 ### 5.4 Xử lý email parse failed
 
-1. Mở email log → lọc `state = failed_parse`.
+1. Mở email log → lọc `parse_status = failed`.
 2. Bấm vào dòng để xem nội dung email gốc.
 3. Lý do thường gặp: định dạng email mới của Etsy, ký tự lạ trong tên khách.
 4. Báo Đội Kỹ thuật cập nhật parser.
@@ -165,7 +165,7 @@ Mỗi dòng có:
 
 ### 6.1 Operations Dashboard
 
-![Operations Dashboard hiển thị danh sách đơn hàng với cột DATE, SHOP, ORDER_ID, SKU, QUANTITY, Pipeline State, BA Pic](img/don-hang-order-list.png)
+![Operations Dashboard hiển thị danh sách đơn hàng với cột DATE, SHOP, ORDER_ID, SKU, QUANTITY, Label Status, BA Pic](img/don-hang-order-list.png)
 
 **Menu:** Vận hành → **Operations Dashboard**
 
@@ -183,7 +183,6 @@ Mỗi dòng có:
 | **PERSONALISATION** | Chữ khắc / yêu cầu cá nhân hoá |
 | **SKU** | Mã SKU sản phẩm |
 | **QUANTITY** | Số lượng |
-| **Pipeline State** | Bước hiện tại (17 trạng thái VN) |
 | **Label Status** | Nhãn xếp loại (US-od, VN-Tattoo, Chờ duyệt, …) |
 | **BA Pic** | BA đang phụ trách |
 | **PD Pic** | PD đang phụ trách |
@@ -285,7 +284,7 @@ Nếu khách báo đổi địa chỉ sau đặt:
 ### 8.3 Đơn có nhưng thiếu thông tin
 
 - **Đường email:** parser có thể bị thiếu trường mới của Etsy.
-  - Xem Email Log → bấm `state = failed_parse` để xem email gốc.
+  - Xem Email Log → bấm `parse_status = failed` để xem email gốc.
   - Báo Đội Kỹ thuật + chuyển sang đường API cho shop đó nếu được.
 - **Đường API:** thường không thiếu. Nếu có → báo Đội Kỹ thuật + cung cấp Receipt ID.
 
@@ -343,16 +342,16 @@ A: Có. Trường `gift_message` trên `sale.order` + hiển thị trong Operati
 - [ ] Chuyển một shop sang `active_source = email`
 - [ ] Forward một email "New order from your Etsy shop" vào Gmail đã cấu hình
 - [ ] Đợi ≤ 10 phút
-- [ ] **Mong đợi:** Đơn xuất hiện + Email Log `state = processed`
+- [ ] **Mong đợi:** Đơn xuất hiện + Email Log `parse_status = success`
 - [ ] **Pass / Fail:** _____
 
 ### TC-005: Email parse failed → retry sau khi fix parser
 
 - [ ] Gửi email có định dạng lạ (giả lập)
-- [ ] **Mong đợi ban đầu:** Email Log `state = failed_parse`
+- [ ] **Mong đợi ban đầu:** Email Log `parse_status = failed`
 - [ ] Đội Kỹ thuật cập nhật parser
 - [ ] Bấm "Retry Parse"
-- [ ] **Mong đợi sau:** `state = processed` + đơn được tạo
+- [ ] **Mong đợi sau:** `parse_status = success` + đơn được tạo
 - [ ] **Pass / Fail:** _____
 
 ### TC-006: Yêu cầu đổi địa chỉ — workflow duyệt

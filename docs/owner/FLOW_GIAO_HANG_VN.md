@@ -24,9 +24,9 @@ Một đơn có thể chứa cả hai loại — hệ thống xử lý từng d�
 
 ## Đường MTO (in nội bộ)
 
-### 17 trạng thái pipeline VN
+### Quy trình MTO theo bước nghiệp vụ
 
-Đơn MTO chạy qua các trạng thái:
+Đơn MTO đi qua các bước nghiệp vụ sau (mô tả quy trình con người; hệ thống lưu một tập trạng thái pipeline gọn hơn — xem ghi chú cuối mục):
 
 1. **Mới nhận** — đơn vừa vào, chờ BA tiếp nhận.
 2. **BA kiểm tra** — BA xác minh thông tin khách + cá nhân hoá.
@@ -46,10 +46,12 @@ Một đơn có thể chứa cả hai loại — hệ thống xử lý từng d�
 16. **In lại** — đơn cần in lại.
 17. **Hoàn tất** — đóng đơn.
 
+> **Trạng thái pipeline hệ thống (VN)** thực tế được seed gọn hơn — gồm: `pending_file` (chờ file thiết kế) → `in_production` (đang sản xuất) → `packed` (đóng gói) → `shipped` (đã giao vận) → `done` (hoàn tất), cùng `reprint` (in lại). Các bước nghiệp vụ liệt kê ở trên được gộp vào các trạng thái này. Đơn Dropship Gearment dùng một tập trạng thái riêng.
+
 ### Các đội tham gia
 
 - **BA Lead / BA User** — kiểm tra đơn + chốt thiết kế.
-- **Marketing** — upload file thiết kế (kanban 3 cột Pending/Approved/Rejected).
+- **Marketing** — upload file thiết kế (kanban theo trạng thái: Chờ duyệt / Đã gửi proof / Duyệt / Cần chỉnh lại).
 - **PD (Production Design)** — chuyển file thiết kế thành file in chuẩn.
 - **Sản xuất** — in / khắc.
 - **QC + Đóng gói** — kiểm tra + đóng gói.

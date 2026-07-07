@@ -72,7 +72,7 @@ Mỗi shop chỉ dùng **một** đường tại một thời điểm — cấu 
 - Khách hàng + địa chỉ giao
 - Danh sách sản phẩm + cá nhân hoá (chữ khắc, ảnh thiết kế đính kèm…)
 - Tổng tiền + chi phí vận chuyển + tổng chiết khấu
-- Trạng thái pipeline VN — 17 trạng thái mô tả từ "mới nhận" đến "đã giao"
+- Trạng thái pipeline VN — tập trạng thái gọn (`pending_file` → `in_production` → `packed` → `shipped` → `done`, cùng `reprint`) mô tả từ "mới nhận" đến "đã giao"
 
 ### Quyết định đầu tiên: in nội bộ hay dropship?
 
